@@ -855,14 +855,13 @@ CASSIA <- function(
       DF_rm[i] = min(max(sugar.roots[i-1]+starch.roots[i-1] - sperling[c("myco.thresh"),c(site)],0), sugar.roots[i-1])
 
       # Rm.a matainence resperation seperated into organs
-
       sugar.needles[i] <- sugar.needles[i-1] + P[i] -
         RmN[i] * storage_term_needles[i] - # maintenance respiration
         (1 + common[[c("Rg.N")]]) * storage_term_needles[i] * (needle.pot.growth[i] + bud.pot.growth[i]) - # growth
         en.pot.growth[i] + en.pot.release[i] - # growth use and release and to the rest of the organs
         sperling[c("k_np"),c(site)] * DF_np[i] + # transfer between organs
         (Kd.needles[i] - Ks.needles[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * needle_mass[n.year] # links to the needle growth process
-
+      
       ### coefficient is from mass ratio in starch and sugar 2015 xls
       sugar.phloem[i] <- sugar.phloem[i-1] -
         0.082179938 * RmS[i] * storage_term_phloem[i] - # maintenance respiration
@@ -879,7 +878,7 @@ CASSIA <- function(
         (Kd.roots[i] - Ks.roots[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 -
         (1 + common[[c("Rg.R")]]) * storage_term_roots[i] * root.pot.growth[i] - # growth
         RmR[i] * storage_term_roots[i] # maintenance respiration
-
+      
       ### coefficient is from mass ratio in starch and sugar 2015 xls
       sugar.xylem.sh[i] <- sugar.xylem.sh[i-1] -
         0.096020683 * RmS[i] * storage_term_xylem.sh[i] - # maintenance respiration
@@ -912,6 +911,7 @@ CASSIA <- function(
       # This is a proxy for a starch metabolism system, which seems to be present under stress in literature
       # but I can't find a mechanism for scots pine
       # values are below the lowest recorded value
+      
       to_sugar.needles[i] <- if (sugar.needles[i] < 0.05) (min(starch.needles[i], max((0.05 - sugar.needles[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
       to_sugar.phloem[i] <- if (sugar.phloem[i] < 0.12) (min(starch.phloem[i], max((0.12 - sugar.phloem[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
       to_sugar.roots[i] <- if (sugar.roots[i] < 0.005) (min(starch.roots[i], max((0.005 - sugar.roots[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
