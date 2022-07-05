@@ -1,4 +1,4 @@
-data.direct <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/Research Assistant/CASSIA/Package/CASSIA/data"
+data.direct <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/CASSIA/Package/CASSIA/data"
 
 ######
 ## ratios_p
@@ -9,7 +9,7 @@ names(ratios_p) <- c("Hyde", "Lettosuo")
 # Lettosuo: The multiplier between a cylinder (with diam=D0, height=h0) and the total biomass of stem, coarse roots and branches
 ratios_p[1,] <- c(0.6,0.6) # form_factor
 # Lettosuo: Helmisaari et al. 2006 Tree physiology -> 2.0 for VT, 3.8 for MT, 5.7 for OMT. Very nice curve for needles / fine roots vs. fine root N %
-# leads now to ~ 100 gC m-2 (roots < 2 mm) but result lower than in Leppälammi-Kujansuu et al. (2013, Plant Soil) where they found ca 225 gC m-2 (roots < 2 mm) in control and 300-350 in fertilized
+# leads now to ~ 100 gC m-2 (roots < 2 mm) but ressult lower than in Leppälammi-Kujansuu et al. (2013, Plant Soil) where they found ca 225 gC m-2 (roots < 2 mm) in control and 300-350 in fertilized
 # ca 225 gC m-2 (roots < 2 mm) in control and 300-350 in fertilized (Leppälammi-Kujansuu et al. 2013, Plant Soil)
 ratios_p[2,] <- c(NA,1/2.9) # needle_fineroot_ratio
 # depends on tree size, specicies and site
@@ -315,7 +315,7 @@ save(leap_years, file = paste0(data.direct, "/leap_years.RData"))
 ## Weather data for Hyde data between 2010 and 2019
 ######
 
-inputdirectory <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/Research Assistant/CASSIA/Input/"
+inputdirectory <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/CASSIA/Original Model/Input/"
 files <- list.files(path = inputdirectory, pattern = "Hyde_enfact")
 files <- paste0(inputdirectory, files)
 Hyde_weather.list <- lapply(files, read.table, header=TRUE, sep="\t", col.names=c("T","P","TSA","TSB", "MB", "Rain"))
