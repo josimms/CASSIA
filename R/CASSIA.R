@@ -824,6 +824,7 @@ CASSIA <- function(
     DF_pxst[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - 11*max(sugar.xylem.st[1]+starch.xylem.st[1], 0)
 
     for (i in 2 : n.days) { # Sperling model has been added here, SC = sugar and ST = starch to match the variable names already in CASSIA
+      print(i)
       storage_term_needles[i] <- max(0 , min(1, a.k.needles * (1 - 1 / exp(sperling[c("alfa.needles"),c(site)] * (starch.needles[i-1] + sugar.needles[i-1] - sperling[c("Wala.needles"),c(site)])))))
       storage_term_phloem[i] <- max(0 , min(1, a.k.phloem * (1 - 1 / exp(sperling[c("alfa.phloem"),c(site)] * (starch.phloem[i-1] + sugar.phloem[i-1] - sperling[c("Wala.phloem"),c(site)])))))
       storage_term_roots[i] <- max(0 , min(1, a.k.roots * (1 - 1 / exp(sperling[c("alfa.roots"),c(site)] * (starch.roots[i-1] + sugar.roots[i-1] - sperling[c("Wala.roots"),c(site)])))))
@@ -1219,15 +1220,6 @@ names(out) <- c("Daily", "Yearly")
 return(out)
 
 }
-
-
-
-
-
-
-
-
-
 
 
 
