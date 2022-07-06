@@ -40,6 +40,8 @@ CASSIA <- function(
   growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
   needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
 
+  phloem.trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
+
   mychorrhiza = TRUE, 			# If allocation to mychorrhiza is taken into account
   root_as_Ding = TRUE,
 
@@ -956,13 +958,24 @@ CASSIA <- function(
 
     }
 
-    if (count%%2 != 0) {
-      if (length(which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])) == 0) {
-        warning(paste("Never cold enough for the model to trigger bud burst, sugar never lower than", sperling[c("SCb"),c(site)], "kg C"))
-      } else {
-        sB0 <- which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])[1]
+    if (phloem.trigger == T) {
+      if (count%%2 != 0) {
+        if (length(which(sugar.phloem < sperling[c("SCb"),c(site)])) == 0) {
+          warning(paste("Never cold enough for the model to trigger bud burst, sugar never lower than", sperling[c("SCb"),c(site)], "kg C"))
+        } else {
+          sB0 <- which(sugar.phloem < sperling[c("SCb"),c(site)])[1]
+        }
+      }
+    } else {
+      if (count%%2 != 0) {
+        if (length(which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])) == 0) {
+          warning(paste("Never cold enough for the model to trigger bud burst, sugar never lower than", sperling[c("SCb"),c(site)], "kg C"))
+        } else {
+          sB0 <- which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])[1]
+        }
       }
     }
+
 
     if (storage.reset == FALSE) {
       if (n.year != 1) {
@@ -1232,6 +1245,36 @@ names(out) <- c("Daily", "Yearly")
 return(out)
 
 }
+
+
+sperling_2018 <- sperling_p
+sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
+                           0.034, 0.166, # as no data for 2018, used 2015 data
+                           0.057, 0.2088, 0.4, 0.1, # 2018
+                           0.0249, 0.021) # as no data for 2018, used 2015 data
+sperling_2018_bayes <- sperling_2018
+CASSIA_cali <- CASSIA(Hyde_weather[2923:3652,], "Hyde", sperling_model = TRUE,
+                      mychorrhiza = FALSE, storage.reset = FALSE,
+                      sperling = sperling_2018_bayes)[[1]][,c(1, 25:34)]
+rownames(CASSIA_cali) <- CASSIA_cali$date
+CASSIA_cali$date <- as.POSIXct(as.character(CASSIA_cali$date), format = "%Y-%m-%d")
+
+par(mfrow = c(2, 1))
+plot(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, main = "Sugar", col = "blue", type = "l", ylim = c(0, 0.8), xlab = "Days of the Year", ylab = "Sugar, kg C")
+abline(h = 0, lty = 2, col = "grey")
+lines(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, col = "blue")
+lines(CASSIA_cali$date, CASSIA_cali$sugar.needles, col = "green")
+lines(CASSIA_cali$date, CASSIA_cali$sugar.phloem, col = "brown")
+lines(CASSIA_cali$date, CASSIA_cali$sugar.roots, col = "black")
+points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), tidyr::replace_na(yu.data$sugar.needles, 0) + tidyr::replace_na(yu.data$sugar.phloem, 0) + tidyr::replace_na(yu.data$sugar.roots, 0), col = "blue")
+points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.needles, col = "green")
+points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.phloem, col = "brown")
+points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.roots, col = "black")
+abline(h = 0.41, lty = 2, col = "blue")
+text(30, 0.43, "Expected Equilibrium", col = "blue", cex = 0.75)
+SCb <- 0.23
+abline(h = 0.23, lty = 2, col = "pink")
+text(25, SCb, "\"bloom\" threshold", col = "pink", cex = 0.75)
 
 
 
