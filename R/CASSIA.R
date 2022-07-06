@@ -856,7 +856,7 @@ CASSIA <- function(
       # This one works from a threshold as mycrorhiza is not considered as an organ in the model
       DF_rm[i] = min(max(sugar.roots[i-1]+starch.roots[i-1] - sperling[c("myco.thresh"),c(site)],0), sugar.roots[i-1])
 
-      # Rm.a matainence resperation seperated into organs
+      # Rm.a maintenance respiration separated into organs
 
       sugar.needles[i] <- sugar.needles[i-1] + P[i] -
         RmN[i] * storage_term_needles[i] - # maintenance respiration
@@ -990,6 +990,18 @@ CASSIA <- function(
         sperling[c("sugar.xylem.sh0"), c(site)] = sugar.xylem.sh[n.days]
         sperling[c("sugar.xylem.st0"), c(site)] = sugar.xylem.st[n.days]
         sperling[c("sugar.roots0"), c(site)] = sugar.roots[n.days]
+
+        As0.needles=sperling[c("Ad0.needles"),c(site)]*exp(Te0*(Bd-Bs)) 	# Initial As by Ad0 and initial Te
+        As0.phloem=sperling[c("Ad0.phloem"),c(site)]*exp(Te0*(Bd-Bs))
+        As0.roots=sperling[c("Ad0.roots"),c(site)]*exp(Te0*(Bd-Bs))
+        As0.xylem.sh=sperling[c("Ad0.xylem.sh"),c(site)]*exp(Te0*(Bd-Bs))
+        As0.xylem.st=sperling[c("Ad0.xylem.st"),c(site)]*exp(Te0*(Bd-Bs))
+        sperling[c("Ad0.needles"),c(site)]
+        sperling[c("Ad0.phloem"),c(site)]
+        sperling[c("Ad0.roots"),c(site)]
+        sperling[c("Ad0.xylem.sh"),c(site)]
+        sperling[c("Ad0.xylem.st"),c(site)]
+
       }
     }
 
@@ -1247,34 +1259,34 @@ return(out)
 }
 
 
-sperling_2018 <- sperling_p
-sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
-                           0.034, 0.166, # as no data for 2018, used 2015 data
-                           0.057, 0.2088, 0.4, 0.1, # 2018
-                           0.0249, 0.021) # as no data for 2018, used 2015 data
-sperling_2018_bayes <- sperling_2018
-CASSIA_cali <- CASSIA(Hyde_weather[2923:3652,], "Hyde", sperling_model = TRUE,
-                      mychorrhiza = FALSE, storage.reset = FALSE,
-                      sperling = sperling_2018_bayes)[[1]][,c(1, 25:34)]
-rownames(CASSIA_cali) <- CASSIA_cali$date
-CASSIA_cali$date <- as.POSIXct(as.character(CASSIA_cali$date), format = "%Y-%m-%d")
+#sperling_2018 <- sperling_p
+#sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
+#                           0.034, 0.166, # as no data for 2018, used 2015 data
+#                           0.057, 0.2088, 0.4, 0.1, # 2018
+#                           0.0249, 0.021) # as no data for 2018, used 2015 data
+#sperling_2018_bayes <- sperling_2018
+#CASSIA_cali <- CASSIA(Hyde_weather[2923:3652,], "Hyde", sperling_model = TRUE,
+#                      mychorrhiza = FALSE, storage.reset = FALSE,
+#                      sperling = sperling_2018_bayes)[[1]][,c(1, 25:34)]
+#rownames(CASSIA_cali) <- CASSIA_cali$date
+#CASSIA_cali$date <- as.POSIXct(as.character(CASSIA_cali$date), format = "%Y-%m-%d")
 
-par(mfrow = c(2, 1))
-plot(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, main = "Sugar", col = "blue", type = "l", ylim = c(0, 0.8), xlab = "Days of the Year", ylab = "Sugar, kg C")
-abline(h = 0, lty = 2, col = "grey")
-lines(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, col = "blue")
-lines(CASSIA_cali$date, CASSIA_cali$sugar.needles, col = "green")
-lines(CASSIA_cali$date, CASSIA_cali$sugar.phloem, col = "brown")
-lines(CASSIA_cali$date, CASSIA_cali$sugar.roots, col = "black")
-points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), tidyr::replace_na(yu.data$sugar.needles, 0) + tidyr::replace_na(yu.data$sugar.phloem, 0) + tidyr::replace_na(yu.data$sugar.roots, 0), col = "blue")
-points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.needles, col = "green")
-points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.phloem, col = "brown")
-points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.roots, col = "black")
-abline(h = 0.41, lty = 2, col = "blue")
-text(30, 0.43, "Expected Equilibrium", col = "blue", cex = 0.75)
-SCb <- 0.23
-abline(h = 0.23, lty = 2, col = "pink")
-text(25, SCb, "\"bloom\" threshold", col = "pink", cex = 0.75)
+#par(mfrow = c(2, 1))
+#plot(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, main = "Sugar", col = "blue", type = "l", ylim = c(0, 0.8), xlab = "Days of the Year", ylab = "Sugar, kg C")
+#abline(h = 0, lty = 2, col = "grey")
+#lines(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, col = "blue")
+#lines(CASSIA_cali$date, CASSIA_cali$sugar.needles, col = "green")
+#lines(CASSIA_cali$date, CASSIA_cali$sugar.phloem, col = "brown")
+#lines(CASSIA_cali$date, CASSIA_cali$sugar.roots, col = "black")
+#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), tidyr::replace_na(yu.data$sugar.needles, 0) + tidyr::replace_na(yu.data$sugar.phloem, 0) + tidyr::replace_na(yu.data$sugar.roots, 0), col = "blue")
+#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.needles, col = "green")
+#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.phloem, col = "brown")
+#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.roots, col = "black")
+#abline(h = 0.41, lty = 2, col = "blue")
+#text(30, 0.43, "Expected Equilibrium", col = "blue", cex = 0.75)
+#SCb <- 0.23
+#abline(h = 0.23, lty = 2, col = "pink")
+#text(25, SCb, "\"bloom\" threshold", col = "pink", cex = 0.75)
 
 
 
