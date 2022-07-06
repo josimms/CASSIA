@@ -676,7 +676,7 @@ CASSIA <- function(
   if (sperling_model == FALSE) {
     # Initial storage values
     starch <- sugar <- storage <- to_sugar <- to_starch <- storage_term <- storage_term_Rm <- NULL
-    if (storage.reset == TRUE) {
+    if (storage.reset == TRUE | n.year == 1) {
       sperling[c("starch0"), c(site)] = sperling[c("starch00"), c(site)]
       sperling[c("sugar0"), c(site)] = sperling[c("sugar00"), c(site)]
     }
@@ -964,6 +964,22 @@ CASSIA <- function(
       }
     }
 
+    if (storage.reset == FALSE) {
+      if (n.year != 1) {
+        sperling[c("starch.needles0"), c(site)] = starch.needles[n.days]
+        sperling[c("starch.phloem0"), c(site)] = starch.phloem[n.days]
+        sperling[c("starch.xylem.sh0"), c(site)] = starch.xylem.sh[n.days]
+        sperling[c("starch.xylem.st0"), c(site)] = starch.xylem.st[n.days]
+        sperling[c("starch.roots0"), c(site)] = starch.roots[n.days]
+
+        sperling[c("sugar.needles0"), c(site)] = sugar.needles[n.days]
+        sperling[c("sugar.phloem0"), c(site)] = sugar.phloem[n.days]
+        sperling[c("sugar.xylem.sh0"), c(site)] = sugar.xylem.sh[n.days]
+        sperling[c("sugar.xylem.st0"), c(site)] = sugar.xylem.st[n.days]
+        sperling[c("sugar.roots0"), c(site)] = sugar.roots[n.days]
+      }
+    }
+
   }
 
     ########### Total growth and carbon consumption
@@ -1216,8 +1232,6 @@ names(out) <- c("Daily", "Yearly")
 return(out)
 
 }
-
-
 
 
 
