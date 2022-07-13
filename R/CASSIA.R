@@ -1,64 +1,64 @@
 CASSIA <- function(
-  #####
-  ## Weather Inputs - input in a dataframe with date, temperature, Photosynthesis, soil temperature a and b horizon, soil moisture and precipitation
-  #####
-  # TODO: is this a sensible input?
+    #####
+    ## Weather Inputs - input in a dataframe with date, temperature, Photosynthesis, soil temperature a and b horizon, soil moisture and precipitation
+    #####
+    # TODO: is this a sensible input?
 
-  weather,
+    weather,
 
-  #####
-  ## Site
-  #####
+    #####
+    ## Site
+    #####
 
-  site,
+    site,
 
-  #####
-  ## Parameters
-  #####
-  ratios = ratios_p,
-  parameters = parameters_p,
-  common = common_p,
-  sperling = sperling_p,
-  repo = repo_p,
+    #####
+    ## Parameters
+    #####
+    ratios = ratios_p,
+    parameters = parameters_p,
+    common = common_p,
+    sperling = sperling_p,
+    repo = repo_p,
 
-  #####
-  ## Default values of the set up
-  #####
+    #####
+    ## Default values of the set up
+    #####
 
-  storage.reset = TRUE,			# storage.reset<-TRUE=Same initial storage each year, storage.reset<-False, The storage on the last day of year X is  postponded to the first day of the year X+1
-  storage.grows = FALSE,			# TRUE if the critical storage level increases with tree size.
+    storage.reset = TRUE,			# storage.reset<-TRUE=Same initial storage each year, storage.reset<-False, The storage on the last day of year X is  postponded to the first day of the year X+1
+    storage.grows = FALSE,			# TRUE if the critical storage level increases with tree size.
 
-  LN.estim = TRUE,				# LN depends on the GPP during previous july-august
-  mN.varies = TRUE,				# needle mass (in maintenance respiration) is 2/3 of the total during period 1.10 - 31.5.
+    LN.estim = TRUE,				# LN depends on the GPP during previous july-august
+    mN.varies = TRUE,				# needle mass (in maintenance respiration) is 2/3 of the total during period 1.10 - 31.5.
 
-  LD.estim = TRUE,				# LD depends on the GPP during March-August
-  sD.estim.T.count = FALSE,			# sD depends on the number of days when g in growing window - analogue to needles
+    LD.estim = TRUE,				# LD depends on the GPP during March-August
+    sD.estim.T.count = FALSE,			# sD depends on the number of days when g in growing window - analogue to needles
 
-  LH.estim = TRUE,
+    LH.estim = TRUE,
 
-  trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
-  growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
-  needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
+    trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
+    growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
+    needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
 
-  phloem.trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
+    phloem.trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
 
-  mychorrhiza = TRUE, 			# If allocation to mychorrhiza is taken into account
-  root_as_Ding = TRUE,
+    mychorrhiza = TRUE, 			# If allocation to mychorrhiza is taken into account
+    root_as_Ding = TRUE,
 
-  sperling_model = FALSE,       # Dynamic sugar model using Sperling's enzyme dynamics
-  xylogenesis = FALSE,
+    sperling_model = FALSE,       # Dynamic sugar model using Sperling's enzyme dynamics
+    xylogenesis = FALSE,
 
-  PRELES_GPP = FALSE,
-  environment_effect_xylogenesis = FALSE,
+    PRELES_GPP = FALSE,
+    environment_effect_xylogenesis = FALSE,
 
-  photoparameters = 3,
-  temp_rise = FALSE,
-  drought = FALSE,
-  Rm_acclimation = TRUE,
+    photoparameters = 3,
+    temp_rise = FALSE,
+    drought = FALSE,
+    Rm_acclimation = TRUE,
 
-  s.D0 = 79,					# DOY to start the calculation of temperature sum, 1=Jan 1; 69=March 1; 79=March 20 for diameter growth. Valid for Finland
-  s.H0 = 1					# and for shoot grwoth
-  ) {
+    s.D0 = 79,					# DOY to start the calculation of temperature sum, 1=Jan 1; 69=March 1; 79=March 20 for diameter growth. Valid for Finland
+    s.H0 = 1					# and for shoot grwoth
+) {
 
   #####
   ## Input tests!
@@ -73,7 +73,7 @@ CASSIA <- function(
   if (sperling_model == TRUE) {if (mychorrhiza == T) {
     mychorrhiza = FALSE
     warning("Mycorrhiza has been changed to mycorrhiza = false as mycorrhiza is included explicitly in the Sperling submodel")
-    }
+  }
   }
 
   if (xylogenesis == TRUE) {
@@ -675,337 +675,331 @@ CASSIA <- function(
       (1 + common[[c("Rg.S")]]) * height.pot.growth + (1 + common[[c("Rg.S")]]) * wall.pot.growth +
       (1 + common[[c("Rg.N")]]) * needle.pot.growth + Rm.a
 
-  if (sperling_model == FALSE) {
-    # Initial storage values
-    starch <- sugar <- storage <- to_sugar <- to_starch <- storage_term <- storage_term_Rm <- NULL
-    if (storage.reset == TRUE | n.year == 1) {
-      sperling[c("starch0"), c(site)] = sperling[c("starch00"), c(site)]
-      sperling[c("sugar0"), c(site)] = sperling[c("sugar00"), c(site)]
-    }
+    if (sperling_model == FALSE) {
+      # Initial storage values
+      starch <- sugar <- storage <- to_sugar <- to_starch <- storage_term <- storage_term_Rm <- NULL
+      if (storage.reset == TRUE | n.year == 1) {
+        sperling[c("starch0"), c(site)] = sperling[c("starch00"), c(site)]
+        sperling[c("sugar0"), c(site)] = sperling[c("sugar00"), c(site)]
+      }
 
-    starch[1] <- sperling[c("starch0"), c(site)]
-    sugar[1] <- sperling[c("sugar0"), c(site)]
-    if (n.year == 1) {
-      optimal.level <- W.crit <- starch[1] + sugar[1]
-      sugar.level <- sugar[1]
-      optimal.level.myco <- optimal.level + 0.3
-    }
-    storage[1] <- starch[1] + sugar[1]
-    to_sugar[1] <- to_starch[1] <- 0
-    storage_term[1] <- 1
-    storage_term_Rm[1] <- 1
+      starch[1] <- sperling[c("starch0"), c(site)]
+      sugar[1] <- sperling[c("sugar0"), c(site)]
+      if (n.year == 1) {
+        optimal.level <- W.crit <- starch[1] + sugar[1]
+        sugar.level <- sugar[1]
+        optimal.level.myco <- optimal.level + 0.3
+      }
+      storage[1] <- starch[1] + sugar[1]
+      to_sugar[1] <- to_starch[1] <- 0
+      storage_term[1] <- 1
+      storage_term_Rm[1] <- 1
 
-    # Modifying storage parameters if storage is assumed to grow as trees grow
-    if (storage.grows == TRUE) {
-      sperling[c("Wala"),c(site)] <- parameters[c("D0"), c(site)] / D00 * sperling[c("Wala"),c(site)]
-      W.crit <- parameters[c("D0"), c(site)] / D00 * optimal.level
-      sugar.level <- parameters[c("D0"), c(site)] / D00 * sugar[1]
-    }
-    a.k <- 1 / (1 - 1/exp(sperling[c("alfa"),c(site)] * (W.crit - sperling[c("Wala"),c(site)])))
+      # Modifying storage parameters if storage is assumed to grow as trees grow
+      if (storage.grows == TRUE) {
+        sperling[c("Wala"),c(site)] <- parameters[c("D0"), c(site)] / D00 * sperling[c("Wala"),c(site)]
+        W.crit <- parameters[c("D0"), c(site)] / D00 * optimal.level
+        sugar.level <- parameters[c("D0"), c(site)] / D00 * sugar[1]
+      }
+      a.k <- 1 / (1 - 1/exp(sperling[c("alfa"),c(site)] * (W.crit - sperling[c("Wala"),c(site)])))
 
-    if(mychorrhiza == FALSE){
-      parameters[c("growth.myco"),c(site)] = 0
-    }
+      if(mychorrhiza == FALSE){
+        parameters[c("growth.myco"),c(site)] = 0
+      }
 
-    root.tot.growth <- height.tot.growth <- needle.tot.growth <- wall.tot.growth <- bud.tot.growth <- GD.tot <- NULL
-    root.tot <- height.tot <- needle.tot <- wall.tot <- Daily.H.tot <- Daily.N.tot <- cum.Daily.H.tot <- cum.Daily.N.tot <- wall.tot <- tot.cells.tot <- Rm.tot <- RmR.tot <- NULL
+      root.tot.growth <- height.tot.growth <- needle.tot.growth <- wall.tot.growth <- bud.tot.growth <- GD.tot <- NULL
+      root.tot <- height.tot <- needle.tot <- wall.tot <- Daily.H.tot <- Daily.N.tot <- cum.Daily.H.tot <- cum.Daily.N.tot <- wall.tot <- tot.cells.tot <- Rm.tot <- RmR.tot <- NULL
 
-    for(i in 2 : n.days) {
-      storage_term[i] <- max(0 , min(1 , a.k * (1 - 1 / exp(sperling[c("alfa"),c(site)] * (storage[i-1] - sperling[c("Wala"),c(site)])))))
-      storage_term_Rm[i] <- if (storage[i-1] < 0.1) 0 else 1
-      sugar[i] <- sugar[i-1] + P[i] - en.pot.growth[i] + en.pot.release[i] - storage_term_Rm[i] * Rm.a[i]-
-        (1 + common[[c("Rg.S")]]) * storage_term[i] * height.pot.growth[i]-
-        (1 + common[[c("Rg.S")]]) * storage_term[i] * wall.pot.growth[i]-
-        (1 + common[[c("Rg.N")]]) * storage_term[i] * needle.pot.growth[i]-
-        (1 + common[[c("Rg.R")]]) * storage_term[i] * root.pot.growth[i]-
-        (1 + common[[c("Rg.N")]]) * storage_term[i] * bud.pot.growth[i]-
-        (sH[i] > parameters[c("sHc"), c(site)]) * (storage[i-1] > optimal.level.myco) * P[i] * parameters[c("growth.myco"),c(site)]
-      to_sugar[i] <- if (sugar[i] < sugar.level) (min(starch[i-1], (sugar.level - sugar[i]) / sperling[c("tau.t"), c(site)])) else 0
-      to_starch[i] <- if (sugar[i] > sugar.level) (sugar[i] - sugar.level) / sperling[c("tau.s"), c(site)] else 0
-      starch[i] <- starch[i-1] + to_starch[i] - to_sugar[i]
-      sugar[i] <- sugar[i] + to_sugar[i] - to_starch[i]
-      storage[i] <- starch[i] + sugar[i]
-    }
+      for(i in 2 : n.days) {
+        storage_term[i] <- max(0 , min(1 , a.k * (1 - 1 / exp(sperling[c("alfa"),c(site)] * (storage[i-1] - sperling[c("Wala"),c(site)])))))
+        storage_term_Rm[i] <- if (storage[i-1] < 0.1) 0 else 1
+        sugar[i] <- sugar[i-1] + P[i] - en.pot.growth[i] + en.pot.release[i] - storage_term_Rm[i] * Rm.a[i]-
+          (1 + common[[c("Rg.S")]]) * storage_term[i] * height.pot.growth[i]-
+          (1 + common[[c("Rg.S")]]) * storage_term[i] * wall.pot.growth[i]-
+          (1 + common[[c("Rg.N")]]) * storage_term[i] * needle.pot.growth[i]-
+          (1 + common[[c("Rg.R")]]) * storage_term[i] * root.pot.growth[i]-
+          (1 + common[[c("Rg.N")]]) * storage_term[i] * bud.pot.growth[i]-
+          (sH[i] > parameters[c("sHc"), c(site)]) * (storage[i-1] > optimal.level.myco) * P[i] * parameters[c("growth.myco"),c(site)]
+        to_sugar[i] <- if (sugar[i] < sugar.level) (min(starch[i-1], (sugar.level - sugar[i]) / sperling[c("tau.t"), c(site)])) else 0
+        to_starch[i] <- if (sugar[i] > sugar.level) (sugar[i] - sugar.level) / sperling[c("tau.s"), c(site)] else 0
+        starch[i] <- starch[i-1] + to_starch[i] - to_sugar[i]
+        sugar[i] <- sugar[i] + to_sugar[i] - to_starch[i]
+        storage[i] <- starch[i] + sugar[i]
+      }
 
-  } else if (sperling_model == TRUE) {
+    } else if (sperling_model == TRUE) {
 
-    ########### Sperling Model
+      ########### Sperling Model
 
-    #####
-    ## Set up equilibrium points and initial values
-    #####
+      #####
+      ## Set up equilibrium points and initial values
+      #####
 
-    storage_term <- storage_term_Rm <- storage_term_needles <- storage_term_phloem <- storage_term_roots <- storage_term_xylem.sh <- storage_term_xylem.st <- NULL
-    root.tot.growth <- height.tot.growth <- needle.tot.growth <- wall.tot.growth <- bud.tot.growth <- GD.tot <- NULL
-    root.tot <- height.tot <- needle.tot <- wall.tot <- Daily.H.tot <- Daily.N.tot <- cum.Daily.H.tot <- cum.Daily.N.tot <- wall.tot <- tot.cells.tot <- Rm.tot <- RmR.tot <- NULL
-    Ad.needles <- Ad.phloem <- Ad.roots <- Ad.xylem.sh <- Ad.xylem.st <- As.needles <- As.phloem <- As.roots <- As.xylem.sh <- As.xylem.st <- NULL
-    Ks.needles <- Ks.phloem <- Ks.roots <- Ks.xylem.sh <- Ks.xylem.st <- Kd.needles <- Kd.phloem <- Kd.roots <- Kd.xylem.sh <- Kd.xylem.st <-  NULL
-    sugar.needles <- sugar.phloem <- sugar.roots <- sugar.xylem.sh <- sugar.xylem.st <- starch.needles <- starch.phloem <- starch.roots <- starch.xylem.sh <- starch.xylem.st <- NULL
-    to_sugar.needles <- to_sugar.phloem <- to_sugar.roots <- to_sugar.xylem.sh <- to_sugar.xylem.st <- to.mycorrhiza <-  NULL
-    sugar.to_phloem <- sugar.to_roots <- starch.to_phloem <- starch.to_roots <- sugar.to_xylem.sh <- sugar.to_xylem.st <- sugar.to_myco <- NULL
-    DF_np <- DF_pr <- DF_rm <- DF_pxsh <- DF_pxst <- NULL
+      storage_term <- storage_term_Rm <- storage_term_needles <- storage_term_phloem <- storage_term_roots <- storage_term_xylem.sh <- storage_term_xylem.st <- NULL
+      root.tot.growth <- height.tot.growth <- needle.tot.growth <- wall.tot.growth <- bud.tot.growth <- GD.tot <- NULL
+      root.tot <- height.tot <- needle.tot <- wall.tot <- Daily.H.tot <- Daily.N.tot <- cum.Daily.H.tot <- cum.Daily.N.tot <- wall.tot <- tot.cells.tot <- Rm.tot <- RmR.tot <- NULL
+      Ad.needles <- Ad.phloem <- Ad.roots <- Ad.xylem.sh <- Ad.xylem.st <- As.needles <- As.phloem <- As.roots <- As.xylem.sh <- As.xylem.st <- NULL
+      Ks.needles <- Ks.phloem <- Ks.roots <- Ks.xylem.sh <- Ks.xylem.st <- Kd.needles <- Kd.phloem <- Kd.roots <- Kd.xylem.sh <- Kd.xylem.st <-  NULL
+      sugar.needles <- sugar.phloem <- sugar.roots <- sugar.xylem.sh <- sugar.xylem.st <- starch.needles <- starch.phloem <- starch.roots <- starch.xylem.sh <- starch.xylem.st <- NULL
+      to_sugar.needles <- to_sugar.phloem <- to_sugar.roots <- to_sugar.xylem.sh <- to_sugar.xylem.st <- to.mycorrhiza <-  NULL
+      sugar.to_phloem <- sugar.to_roots <- starch.to_phloem <- starch.to_roots <- sugar.to_xylem.sh <- sugar.to_xylem.st <- sugar.to_myco <- NULL
+      DF_np <- DF_pr <- DF_rm <- DF_pxsh <- DF_pxst <- NULL
 
-    As0 <- Te0 <- NULL
+      As0 <- Te0 <- NULL
 
 
-    starch0 <- sperling[c("starch.needles0"),c(site)] + sperling[c("starch.phloem0"),c(site)] + sperling[c("starch.roots0"),c(site)] + sperling[c("starch.xylem.sh0"),c(site)] + sperling[c("starch.xylem.st00"),c(site)]
-    sugar0 <- sperling[c("sugar.needles0"),c(site)] + sperling[c("sugar.phloem0"),c(site)] + sperling[c("sugar.roots0"),c(site)] + sperling[c("sugar.xylem.sh0"),c(site)] + sperling[c("sugar.xylem.st00"),c(site)]
-    W.crit.needles <- sperling[c("starch.needles0"),c(site)] + sperling[c("sugar.needles0"),c(site)]
-    W.crit.phloem <- sperling[c("starch.phloem0"),c(site)] + sperling[c("sugar.phloem0"),c(site)]
-    W.crit.roots <- sperling[c("starch.roots0"),c(site)] + sperling[c("sugar.roots0"),c(site)]
-    W.crit.xylem.sh <- sperling[c("starch.xylem.sh0"),c(site)] + sperling[c("sugar.xylem.sh0"),c(site)]
-    W.crit.xylem.st <- sperling[c("starch.xylem.st0"),c(site)] + sperling[c("sugar.xylem.st0"),c(site)]
-    a.k.needles <- 1 / (1 - 1/exp(sperling[c("alfa.needles"),c(site)] * (W.crit.needles - sperling[c("Wala.needles"),c(site)])))
-    a.k.phloem <- 1 / (1 - 1/exp(sperling[c("alfa.phloem"),c(site)] * (W.crit.phloem - sperling[c("Wala.phloem"),c(site)])))
-    a.k.roots <- 1 / (1 - 1/exp(sperling[c("alfa.roots"),c(site)]* (W.crit.roots - sperling[c("Wala.roots"),c(site)])))
-    a.k.xylem.st <- 1 / (1 - 1/exp(sperling[c("alfa.xylem.st"),c(site)]* (W.crit.xylem.st - sperling[c("Wala.xylem.st"),c(site)])))
-    a.k.xylem.sh <- 1 / (1 - 1/exp(sperling[c("alfa.xylem.sh"),c(site)]* (W.crit.xylem.sh - sperling[c("Wala.xylem.sh"),c(site)])))
+      starch0 <- sperling[c("starch.needles0"),c(site)] + sperling[c("starch.phloem0"),c(site)] + sperling[c("starch.roots0"),c(site)] + sperling[c("starch.xylem.sh0"),c(site)] + sperling[c("starch.xylem.st00"),c(site)]
+      sugar0 <- sperling[c("sugar.needles0"),c(site)] + sperling[c("sugar.phloem0"),c(site)] + sperling[c("sugar.roots0"),c(site)] + sperling[c("sugar.xylem.sh0"),c(site)] + sperling[c("sugar.xylem.st00"),c(site)]
+      W.crit.needles <- sperling[c("starch.needles0"),c(site)] + sperling[c("sugar.needles0"),c(site)]
+      W.crit.phloem <- sperling[c("starch.phloem0"),c(site)] + sperling[c("sugar.phloem0"),c(site)]
+      W.crit.roots <- sperling[c("starch.roots0"),c(site)] + sperling[c("sugar.roots0"),c(site)]
+      W.crit.xylem.sh <- sperling[c("starch.xylem.sh0"),c(site)] + sperling[c("sugar.xylem.sh0"),c(site)]
+      W.crit.xylem.st <- sperling[c("starch.xylem.st0"),c(site)] + sperling[c("sugar.xylem.st0"),c(site)]
+      a.k.needles <- 1 / (1 - 1/exp(sperling[c("alfa.needles"),c(site)] * (W.crit.needles - sperling[c("Wala.needles"),c(site)])))
+      a.k.phloem <- 1 / (1 - 1/exp(sperling[c("alfa.phloem"),c(site)] * (W.crit.phloem - sperling[c("Wala.phloem"),c(site)])))
+      a.k.roots <- 1 / (1 - 1/exp(sperling[c("alfa.roots"),c(site)]* (W.crit.roots - sperling[c("Wala.roots"),c(site)])))
+      a.k.xylem.st <- 1 / (1 - 1/exp(sperling[c("alfa.xylem.st"),c(site)]* (W.crit.xylem.st - sperling[c("Wala.xylem.st"),c(site)])))
+      a.k.xylem.sh <- 1 / (1 - 1/exp(sperling[c("alfa.xylem.sh"),c(site)]* (W.crit.xylem.sh - sperling[c("Wala.xylem.sh"),c(site)])))
 
-    if (storage.grows == TRUE) {
-      sperling[c("Wala.needles"),c(site)] <- HN0 / D00 * sperling[c("Wala.needles"),c(site)]
-      sperling[c("Wala.phloem"),c(site)] <- D0 / D00 * sperling[c("Wala.phloem"),c(site)]
-      sperling[c("Wala.roots"),c(site)] <- LR0 / D00 * sperling[c("Wala.roots"),c(site)]
-      sperling[c("Wala.xylem.st"),c(site)] <- LR0 / D00 * sperling[c("Wala.xylem.st"),c(site)]
-      sperling[c("Wala.xylem.sh"),c(site)] <- LR0 / D00 * sperling[c("Wala.xylem.sh"),c(site)]
-      W.crit.needles <- HN0 / D00 * W.crit.needles
-      W.crit.phloem <- D0 / D00 * W.crit.phloem
-      W.crit.roots <- LR0 / D00 * W.crit.roots
-      W.crit.xylem.st <- LR0 / D00 * W.crit.xylem.st
-      W.crit.xylem.sh <- LR0 / D00 * W.crit.xylem.sh
-    }
+      if (storage.grows == TRUE) {
+        sperling[c("Wala.needles"),c(site)] <- HN0 / D00 * sperling[c("Wala.needles"),c(site)]
+        sperling[c("Wala.phloem"),c(site)] <- D0 / D00 * sperling[c("Wala.phloem"),c(site)]
+        sperling[c("Wala.roots"),c(site)] <- LR0 / D00 * sperling[c("Wala.roots"),c(site)]
+        sperling[c("Wala.xylem.st"),c(site)] <- LR0 / D00 * sperling[c("Wala.xylem.st"),c(site)]
+        sperling[c("Wala.xylem.sh"),c(site)] <- LR0 / D00 * sperling[c("Wala.xylem.sh"),c(site)]
+        W.crit.needles <- HN0 / D00 * W.crit.needles
+        W.crit.phloem <- D0 / D00 * W.crit.phloem
+        W.crit.roots <- LR0 / D00 * W.crit.roots
+        W.crit.xylem.st <- LR0 / D00 * W.crit.xylem.st
+        W.crit.xylem.sh <- LR0 / D00 * W.crit.xylem.sh
+      }
 
-    storage_term_needles <- storage_term_phloem <- storage_term_roots <- storage_term_xylem.sh <- storage_term_xylem.st <- rep(1, length = n.days)
+      storage_term_needles <- storage_term_phloem <- storage_term_roots <- storage_term_xylem.sh <- storage_term_xylem.st <- rep(1, length = n.days)
 
-    Bd=log(sperling[c("Q10d"),c(site)])/10 		# Compute energies of activation
-    Bs=log(sperling[c("Q10s"),c(site)])/10
-    Te0=mean(Temp[274:281], na.rm = T)+3 	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
-    # The indexes changed here as CASSIA is from Jan not Oct, also changed to represent days not hours
-    As0.needles=sperling[c("Ad0.needles"),c(site)]*exp(Te0*(Bd-Bs)) 	# Initial As by Ad0 and initial Te
-    As0.phloem=sperling[c("Ad0.phloem"),c(site)]*exp(Te0*(Bd-Bs))
-    As0.roots=sperling[c("Ad0.roots"),c(site)]*exp(Te0*(Bd-Bs))
-    As0.xylem.sh=sperling[c("Ad0.xylem.sh"),c(site)]*exp(Te0*(Bd-Bs))
-    As0.xylem.st=sperling[c("Ad0.xylem.st"),c(site)]*exp(Te0*(Bd-Bs))
-    As.needles[1] <- As0.needles
-    As.phloem[1] <- As0.phloem
-    As.roots[1] <- As0.roots
-    As.xylem.sh[1] <- As0.xylem.sh
-    As.xylem.st[1] <- As0.xylem.st
-    Ad.needles[1] <- sperling[c("Ad0.needles"),c(site)]
-    Ad.phloem[1] <- sperling[c("Ad0.phloem"),c(site)]
-    Ad.roots[1] <- sperling[c("Ad0.roots"),c(site)]
-    Ad.xylem.sh[1] <- sperling[c("Ad0.xylem.sh"),c(site)]
-    Ad.xylem.st[1] <- sperling[c("Ad0.xylem.st"),c(site)]
-    Kd.needles=sperling[c("Ad0.needles"),c(site)]*exp(Bd*Temp)
-    Kd.phloem=sperling[c("Ad0.phloem"),c(site)]*exp(Bd*Temp)
-    Kd.roots=sperling[c("Ad0.roots"),c(site)]*exp(Bd*Temp)
-    Kd.xylem.sh=sperling[c("Ad0.xylem.sh"),c(site)]*exp(Bd*Temp)
-    Kd.xylem.st=sperling[c("Ad0.xylem.st"),c(site)]*exp(Bd*Temp)
-    Ks.needles=As0.needles*exp(Bs*Temp)
-    Ks.phloem=As0.phloem*exp(Bs*Temp)
-    Ks.roots=As0.roots*exp(Bs*Temp)
-    Ks.xylem.sh=As0.xylem.sh*exp(Bs*Temp)
-    Ks.xylem.st=As0.xylem.st*exp(Bs*Temp)
+      Bd=log(sperling[c("Q10d"),c(site)])/10 		# Compute energies of activation
+      Bs=log(sperling[c("Q10s"),c(site)])/10
+      Te0=mean(Temp[274:281], na.rm = T)+3 	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
+      # The indexes changed here as CASSIA is from Jan not Oct, also changed to represent days not hours
+      As0.needles=sperling[c("Ad0.needles"),c(site)]*exp(Te0*(Bd-Bs)) 	# Initial As by Ad0 and initial Te
+      As0.phloem=sperling[c("Ad0.phloem"),c(site)]*exp(Te0*(Bd-Bs))
+      As0.roots=sperling[c("Ad0.roots"),c(site)]*exp(Te0*(Bd-Bs))
+      As0.xylem.sh=sperling[c("Ad0.xylem.sh"),c(site)]*exp(Te0*(Bd-Bs))
+      As0.xylem.st=sperling[c("Ad0.xylem.st"),c(site)]*exp(Te0*(Bd-Bs))
+      As.needles[1] <- As0.needles
+      As.phloem[1] <- As0.phloem
+      As.roots[1] <- As0.roots
+      As.xylem.sh[1] <- As0.xylem.sh
+      As.xylem.st[1] <- As0.xylem.st
+      Ad.needles[1] <- sperling[c("Ad0.needles"),c(site)]
+      Ad.phloem[1] <- sperling[c("Ad0.phloem"),c(site)]
+      Ad.roots[1] <- sperling[c("Ad0.roots"),c(site)]
+      Ad.xylem.sh[1] <- sperling[c("Ad0.xylem.sh"),c(site)]
+      Ad.xylem.st[1] <- sperling[c("Ad0.xylem.st"),c(site)]
+      Kd.needles=sperling[c("Ad0.needles"),c(site)]*exp(Bd*Temp)
+      Kd.phloem=sperling[c("Ad0.phloem"),c(site)]*exp(Bd*Temp)
+      Kd.roots=sperling[c("Ad0.roots"),c(site)]*exp(Bd*Temp)
+      Kd.xylem.sh=sperling[c("Ad0.xylem.sh"),c(site)]*exp(Bd*Temp)
+      Kd.xylem.st=sperling[c("Ad0.xylem.st"),c(site)]*exp(Bd*Temp)
+      Ks.needles=As0.needles*exp(Bs*Temp)
+      Ks.phloem=As0.phloem*exp(Bs*Temp)
+      Ks.roots=As0.roots*exp(Bs*Temp)
+      Ks.xylem.sh=As0.xylem.sh*exp(Bs*Temp)
+      Ks.xylem.st=As0.xylem.st*exp(Bs*Temp)
 
-    # initial values from 17.3
-    starch.needles[1] <- sperling[c("starch.needles0"),c(site)] # kg C / raw material
-    starch.phloem[1] <- sperling[c("starch.phloem0"),c(site)]
-    starch.roots[1] <- sperling[c("starch.roots0"),c(site)]
-    starch.xylem.sh[1] <- sperling[c("starch.xylem.sh0"),c(site)]
-    starch.xylem.st[1] <- sperling[c("starch.xylem.st0"),c(site)]
-    sugar.needles[1] <- sperling[c("sugar.needles0"),c(site)]
-    sugar.phloem[1] <- sperling[c("sugar.phloem0"),c(site)]
-    sugar.roots[1] <- sperling[c("sugar.roots0"),c(site)]
-    sugar.xylem.sh[1] <- sperling[c("sugar.xylem.sh0"),c(site)]
-    sugar.xylem.st[1] <- sperling[c("sugar.xylem.st0"),c(site)]
+      # initial values from 17.3
+      starch.needles[1] <- sperling[c("starch.needles0"),c(site)] # kg C / raw material
+      starch.phloem[1] <- sperling[c("starch.phloem0"),c(site)]
+      starch.roots[1] <- sperling[c("starch.roots0"),c(site)]
+      starch.xylem.sh[1] <- sperling[c("starch.xylem.sh0"),c(site)]
+      starch.xylem.st[1] <- sperling[c("starch.xylem.st0"),c(site)]
+      sugar.needles[1] <- sperling[c("sugar.needles0"),c(site)]
+      sugar.phloem[1] <- sperling[c("sugar.phloem0"),c(site)]
+      sugar.roots[1] <- sperling[c("sugar.roots0"),c(site)]
+      sugar.xylem.sh[1] <- sperling[c("sugar.xylem.sh0"),c(site)]
+      sugar.xylem.st[1] <- sperling[c("sugar.xylem.st0"),c(site)]
 
-    DF_np[1] = (sugar.needles[1]+starch.needles[1] - (1/3)*(sugar.phloem[1]+starch.phloem[1]))
-    DF_pr[1] = (sugar.phloem[1]+starch.phloem[1] - 11*(sugar.roots[1]+starch.roots[1]))
-    DF_rm[1] = (sugar.roots[1]+starch.roots[1] - sperling[c("myco.thresh"),c(site)])
-    DF_pxsh[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - 11*max(sugar.xylem.sh[1]+starch.xylem.sh[1], 0)
-    DF_pxst[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - 11*max(sugar.xylem.st[1]+starch.xylem.st[1], 0)
+      DF_np[1] = (sugar.needles[1]+starch.needles[1] - (1/3)*(sugar.phloem[1]+starch.phloem[1]))
+      DF_pr[1] = (sugar.phloem[1]+starch.phloem[1] - 11*(sugar.roots[1]+starch.roots[1]))
+      DF_rm[1] = (sugar.roots[1]+starch.roots[1] - sperling[c("myco.thresh"),c(site)])
+      DF_pxsh[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - 11*max(sugar.xylem.sh[1]+starch.xylem.sh[1], 0)
+      DF_pxst[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - 11*max(sugar.xylem.st[1]+starch.xylem.st[1], 0)
 
-    for (i in 2 : n.days) { # Sperling model has been added here, SC = sugar and ST = starch to match the variable names already in CASSIA
-      storage_term_needles[i] <- max(0 , min(1, a.k.needles * (1 - 1 / exp(sperling[c("alfa.needles"),c(site)] * (starch.needles[i-1] + sugar.needles[i-1] - sperling[c("Wala.needles"),c(site)])))))
-      storage_term_phloem[i] <- max(0 , min(1, a.k.phloem * (1 - 1 / exp(sperling[c("alfa.phloem"),c(site)] * (starch.phloem[i-1] + sugar.phloem[i-1] - sperling[c("Wala.phloem"),c(site)])))))
-      storage_term_roots[i] <- max(0 , min(1, a.k.roots * (1 - 1 / exp(sperling[c("alfa.roots"),c(site)] * (starch.roots[i-1] + sugar.roots[i-1] - sperling[c("Wala.roots"),c(site)])))))
-      storage_term_xylem.sh[i] <- max(0 , min(1, a.k.xylem.sh * (1 - 1 / exp(sperling[c("alfa.xylem.sh"),c(site)] * (starch.xylem.sh[i-1] + sugar.xylem.sh[i-1] - sperling[c("Wala.xylem.sh"),c(site)])))))
-      storage_term_xylem.st[i] <- max(0 , min(1, a.k.xylem.st * (1 - 1 / exp(sperling[c("alfa.xylem.st"),c(site)] * (starch.xylem.st[i-1] + sugar.xylem.st[i-1] - sperling[c("Wala.xylem.st"),c(site)])))))
+      for (i in 2 : n.days) { # Sperling model has been added here, SC = sugar and ST = starch to match the variable names already in CASSIA
+        storage_term_needles[i] <- max(0 , min(1, a.k.needles * (1 - 1 / exp(sperling[c("alfa.needles"),c(site)] * (starch.needles[i-1] + sugar.needles[i-1] - sperling[c("Wala.needles"),c(site)])))))
+        storage_term_phloem[i] <- max(0 , min(1, a.k.phloem * (1 - 1 / exp(sperling[c("alfa.phloem"),c(site)] * (starch.phloem[i-1] + sugar.phloem[i-1] - sperling[c("Wala.phloem"),c(site)])))))
+        storage_term_roots[i] <- max(0 , min(1, a.k.roots * (1 - 1 / exp(sperling[c("alfa.roots"),c(site)] * (starch.roots[i-1] + sugar.roots[i-1] - sperling[c("Wala.roots"),c(site)])))))
+        storage_term_xylem.sh[i] <- max(0 , min(1, a.k.xylem.sh * (1 - 1 / exp(sperling[c("alfa.xylem.sh"),c(site)] * (starch.xylem.sh[i-1] + sugar.xylem.sh[i-1] - sperling[c("Wala.xylem.sh"),c(site)])))))
+        storage_term_xylem.st[i] <- max(0 , min(1, a.k.xylem.st * (1 - 1 / exp(sperling[c("alfa.xylem.st"),c(site)] * (starch.xylem.st[i-1] + sugar.xylem.st[i-1] - sperling[c("Wala.xylem.st"),c(site)])))))
 
-      Ks.needles[i]=As.needles[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
-      Ks.phloem[i]=As.phloem[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
-      Ks.roots[i]=As.roots[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
-      Ks.xylem.sh[i]=As.xylem.sh[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
-      Ks.xylem.st[i]=As.xylem.st[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
-      Kd.needles[i]=Ad.needles[i-1]*exp(Bd*Temp[i])
-      Kd.phloem[i]=Ad.phloem[i-1]*exp(Bd*Temp[i])
-      Kd.roots[i]=Ad.roots[i-1]*exp(Bd*Temp[i])
-      Kd.xylem.sh[i]=Ad.xylem.sh[i-1]*exp(Bd*Temp[i])
-      Kd.xylem.st[i]=Ad.xylem.st[i-1]*exp(Bd*Temp[i])
+        Ks.needles[i]=As.needles[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
+        Ks.phloem[i]=As.phloem[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
+        Ks.roots[i]=As.roots[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
+        Ks.xylem.sh[i]=As.xylem.sh[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
+        Ks.xylem.st[i]=As.xylem.st[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
+        Kd.needles[i]=Ad.needles[i-1]*exp(Bd*Temp[i])
+        Kd.phloem[i]=Ad.phloem[i-1]*exp(Bd*Temp[i])
+        Kd.roots[i]=Ad.roots[i-1]*exp(Bd*Temp[i])
+        Kd.xylem.sh[i]=Ad.xylem.sh[i-1]*exp(Bd*Temp[i])
+        Kd.xylem.st[i]=Ad.xylem.st[i-1]*exp(Bd*Temp[i])
 
-      # if there is a surplus goes to next organ down - concentration driven model
-      # The differences are normalised by a multiplier which represents the average difference in magnitude between the two stores
-      # otherwise all of the sugar would just immediately go to the roots
-      # NOTE: the forces and therefore sugar transfered are worked out for all organs based on the amount of sugar there in the beginning
-      # this could lead to a slight error, but should be corrected by the starch latter just have to imagine that all of the sugar
-      # goes to the allocated organs simultaneously
+        # if there is a surplus goes to next organ down - concentration driven model
+        # The differences are normalised by a multiplier which represents the average difference in magnitude between the two stores
+        # otherwise all of the sugar would just immediately go to the roots
+        # NOTE: the forces and therefore sugar transfered are worked out for all organs based on the amount of sugar there in the beginning
+        # this could lead to a slight error, but should be corrected by the starch latter just have to imagine that all of the sugar
+        # goes to the allocated organs simultaneously
 
-      DF_np[i] = 3*max(sugar.needles[i-1]+starch.needles[i-1], 0) - max(sugar.phloem[i-1]+starch.phloem[i-1], 0)
-      DF_pr[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 11*max(sugar.roots[i-1]+starch.roots[i-1], 0)
-      DF_pxsh[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 8*max(sugar.xylem.sh[i-1]+starch.xylem.sh[i-1], 0)
-      DF_pxst[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 2*max(sugar.xylem.st[i-1]+starch.xylem.st[i-1], 0)
-      # This one works from a threshold as mycrorhiza is not considered as an organ in the model
-      DF_rm[i] = min(max(sugar.roots[i-1]+starch.roots[i-1] - sperling[c("myco.thresh"),c(site)],0), sugar.roots[i-1])
+        DF_np[i] = 3*max(sugar.needles[i-1]+starch.needles[i-1], 0) - max(sugar.phloem[i-1]+starch.phloem[i-1], 0)
+        DF_pr[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 11*max(sugar.roots[i-1]+starch.roots[i-1], 0)
+        DF_pxsh[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 8*max(sugar.xylem.sh[i-1]+starch.xylem.sh[i-1], 0)
+        DF_pxst[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 2*max(sugar.xylem.st[i-1]+starch.xylem.st[i-1], 0)
+        # This one works from a threshold as mycrorhiza is not considered as an organ in the model
+        DF_rm[i] = min(max(sugar.roots[i-1]+starch.roots[i-1] - sperling[c("myco.thresh"),c(site)],0), sugar.roots[i-1])
 
-      # Rm.a maintenance respiration separated into organs
+        # Rm.a maintenance respiration separated into organs
 
-      sugar.needles[i] <- sugar.needles[i-1] + P[i] -
-        RmN[i] * storage_term_needles[i] - # maintenance respiration
-        (1 + common[[c("Rg.N")]]) * storage_term_needles[i] * (needle.pot.growth[i] + bud.pot.growth[i]) - # growth
-        en.pot.growth[i] + en.pot.release[i] - # growth use and release and to the rest of the organs
-        sperling[c("k_np"),c(site)] * DF_np[i] + # transfer between organs
-        (Kd.needles[i] - Ks.needles[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * needle_mass[n.year] # links to the needle growth process
+        sugar.needles[i] <- sugar.needles[i-1] + P[i] -
+          RmN[i] * storage_term_needles[i] - # maintenance respiration
+          (1 + common[[c("Rg.N")]]) * storage_term_needles[i] * (needle.pot.growth[i] + bud.pot.growth[i]) - # growth
+          en.pot.growth[i] + en.pot.release[i] - # growth use and release and to the rest of the organs
+          sperling[c("k_np"),c(site)] * DF_np[i] + # transfer between organs
+          (Kd.needles[i] - Ks.needles[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * needle_mass[n.year] # links to the needle growth process
 
-      ### coefficient is from mass ratio in starch and sugar 2015 xls
-      sugar.phloem[i] <- sugar.phloem[i-1] -
-        0.082179938 * RmS[i] * storage_term_phloem[i] - # maintenance respiration
-        0.082179938 * (1 + common[[c("Rg.S")]]) * storage_term_phloem[i] * (wall.pot.growth[i] + height.pot.growth[i]) + # growth
-        sperling[c("k_np"),c(site)] * DF_np[i] - # transfer between organs
-        sperling[c("k_pr"),c(site)] * DF_pr[i] - # transfer between organs
-        sperling[c("k_pxsh"),c(site)] * DF_pxsh[i] -
-        sperling[c("k_pxst"),c(site)] * DF_pxst[i] +
-        (Kd.phloem[i] - Ks.phloem[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 7.4
+        ### coefficient is from mass ratio in starch and sugar 2015 xls
+        sugar.phloem[i] <- sugar.phloem[i-1] -
+          0.082179938 * RmS[i] * storage_term_phloem[i] - # maintenance respiration
+          0.082179938 * (1 + common[[c("Rg.S")]]) * storage_term_phloem[i] * (wall.pot.growth[i] + height.pot.growth[i]) + # growth
+          sperling[c("k_np"),c(site)] * DF_np[i] - # transfer between organs
+          sperling[c("k_pr"),c(site)] * DF_pr[i] - # transfer between organs
+          sperling[c("k_pxsh"),c(site)] * DF_pxsh[i] -
+          sperling[c("k_pxst"),c(site)] * DF_pxst[i] +
+          (Kd.phloem[i] - Ks.phloem[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 7.4
 
-      sugar.roots[i] <- sugar.roots[i-1] +
-        sperling[c("k_pr"),c(site)] * DF_pr[i] - # transfer between organs
-        DF_rm[i] + # transfer between organs, no multiplier as this is for mycorhiza and the model just takes the extra sugar
-        (Kd.roots[i] - Ks.roots[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 -
-        (1 + common[[c("Rg.R")]]) * storage_term_roots[i] * root.pot.growth[i] - # growth
-        RmR[i] * storage_term_roots[i] # maintenance respiration
+        sugar.roots[i] <- sugar.roots[i-1] +
+          sperling[c("k_pr"),c(site)] * DF_pr[i] - # transfer between organs
+          DF_rm[i] + # transfer between organs, no multiplier as this is for mycorhiza and the model just takes the extra sugar
+          (Kd.roots[i] - Ks.roots[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 -
+          (1 + common[[c("Rg.R")]]) * storage_term_roots[i] * root.pot.growth[i] - # growth
+          RmR[i] * storage_term_roots[i] # maintenance respiration
 
-      ### coefficient is from mass ratio in starch and sugar 2015 xls
-      sugar.xylem.sh[i] <- sugar.xylem.sh[i-1] -
-        0.096020683 * RmS[i] * storage_term_xylem.sh[i] - # maintenance respiration
-        0.096020683 * (1 + common[[c("Rg.S")]]) * storage_term_xylem.sh[i] * (wall.pot.growth[i] + height.pot.growth[i]) + # growth
-        sperling[c("k_pxsh"),c(site)] * DF_pxsh[i] +
-        (Kd.xylem.sh[i] - Ks.xylem.sh[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8
+        ### coefficient is from mass ratio in starch and sugar 2015 xls
+        sugar.xylem.sh[i] <- sugar.xylem.sh[i-1] -
+          0.096020683 * RmS[i] * storage_term_xylem.sh[i] - # maintenance respiration
+          0.096020683 * (1 + common[[c("Rg.S")]]) * storage_term_xylem.sh[i] * (wall.pot.growth[i] + height.pot.growth[i]) + # growth
+          sperling[c("k_pxsh"),c(site)] * DF_pxsh[i] +
+          (Kd.xylem.sh[i] - Ks.xylem.sh[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8
 
-      ### coefficient is from mass ratio in starch and sugar 2015 xls
-      sugar.xylem.st[i] <- sugar.xylem.st[i-1] -
-        0.821799379 * RmS[i] * storage_term_xylem.st[i] - # maintenance respiration
-        0.821799379 * (1 + common[[c("Rg.S")]]) * storage_term_xylem.st[i] * (wall.pot.growth[i] + height.pot.growth[i]) + # growth
-        sperling[c("k_pxst"),c(site)] * DF_pxst[i] +
-        (Kd.xylem.st[i] - Ks.xylem.st[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8
+        ### coefficient is from mass ratio in starch and sugar 2015 xls
+        sugar.xylem.st[i] <- sugar.xylem.st[i-1] -
+          0.821799379 * RmS[i] * storage_term_xylem.st[i] - # maintenance respiration
+          0.821799379 * (1 + common[[c("Rg.S")]]) * storage_term_xylem.st[i] * (wall.pot.growth[i] + height.pot.growth[i]) + # growth
+          sperling[c("k_pxst"),c(site)] * DF_pxst[i] +
+          (Kd.xylem.st[i] - Ks.xylem.st[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8
 
-      to.mycorrhiza[i] <- DF_rm[i]
-      # As the tree now has the bucket model I have changed photosynthesis derived allocation to just excess in roots as it should get here from the tree
-      # I am assuming that that this is why photosynthesis was driving it before, it was just a measure of the excess photosynthates
-      # (sH[i] > sHc) * ((sugar.roots[i-1] + starch.roots[i-1]) > optimal.level.myco) * P[i] * growth.myco # belowground allocation
+        to.mycorrhiza[i] <- DF_rm[i]
+        # As the tree now has the bucket model I have changed photosynthesis derived allocation to just excess in roots as it should get here from the tree
+        # I am assuming that that this is why photosynthesis was driving it before, it was just a measure of the excess photosynthates
+        # (sH[i] > sHc) * ((sugar.roots[i-1] + starch.roots[i-1]) > optimal.level.myco) * P[i] * growth.myco # belowground allocation
 
-      # carbon sugar is used here as the model was in terms of sugar and is being transformed to kg C
-      starch.needles[i] <- starch.needles[i-1] + (- Kd.needles[i] + Ks.needles[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * needle_mass[n.year] # Subtract starch degradation and add synthase to ST
-      starch.phloem[i] <- starch.phloem[i-1] + (- Kd.phloem[i] + Ks.phloem[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 7.4 # Subtract starch degradation and add synthase to ST
-      starch.roots[i] <- starch.roots[i-1] + (- Kd.roots[i] + Ks.roots[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 # Subtract starch degradation and add synthase to ST
-      # TOOD: are the densities right here?
-      starch.xylem.sh[i] <- starch.xylem.sh[i-1] + (- Kd.xylem.sh[i] + Ks.xylem.sh[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 # Subtract starch degradation and add synthase to ST
-      starch.xylem.st[i] <- starch.xylem.st[i-1] + (- Kd.xylem.st[i] + Ks.xylem.st[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 # Subtract starch degradation and add synthase to ST
-      # Sugar already done above
+        # carbon sugar is used here as the model was in terms of sugar and is being transformed to kg C
+        starch.needles[i] <- starch.needles[i-1] + (- Kd.needles[i] + Ks.needles[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * needle_mass[n.year] # Subtract starch degradation and add synthase to ST
+        starch.phloem[i] <- starch.phloem[i-1] + (- Kd.phloem[i] + Ks.phloem[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 7.4 # Subtract starch degradation and add synthase to ST
+        starch.roots[i] <- starch.roots[i-1] + (- Kd.roots[i] + Ks.roots[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 # Subtract starch degradation and add synthase to ST
+        # TOOD: are the densities right here?
+        starch.xylem.sh[i] <- starch.xylem.sh[i-1] + (- Kd.xylem.sh[i] + Ks.xylem.sh[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 # Subtract starch degradation and add synthase to ST
+        starch.xylem.st[i] <- starch.xylem.st[i-1] + (- Kd.xylem.st[i] + Ks.xylem.st[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * 2.8 # Subtract starch degradation and add synthase to ST
+        # Sugar already done above
 
-      # If sugar is below a certain value starch is released so the sugar doesn't go negative before starch
-      # This is a proxy for a starch metabolism system, which seems to be present under stress in literature
-      # but I can't find a mechanism for scots pine
-      # values are below the lowest recorded value
-      to_sugar.needles[i] <- if (sugar.needles[i] < 0.05) (min(starch.needles[i], max((0.05 - sugar.needles[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-      to_sugar.phloem[i] <- if (sugar.phloem[i] < 0.12) (min(starch.phloem[i], max((0.12 - sugar.phloem[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-      to_sugar.roots[i] <- if (sugar.roots[i] < 0.005) (min(starch.roots[i], max((0.005 - sugar.roots[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-      to_sugar.xylem.sh[i] <- if (sugar.xylem.sh[i] < 0.009) (min(starch.xylem.sh[i], max((0.009 - sugar.xylem.sh[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-      to_sugar.xylem.st[i] <- if (sugar.xylem.st[i] < 0.001) (min(starch.xylem.st[i], max((0.001 - sugar.xylem.st[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        # If sugar is below a certain value starch is released so the sugar doesn't go negative before starch
+        # This is a proxy for a starch metabolism system, which seems to be present under stress in literature
+        # but I can't find a mechanism for scots pine
+        # values are below the lowest recorded value
+        to_sugar.needles[i] <- if (sugar.needles[i] < 0.05) (min(starch.needles[i], max((0.05 - sugar.needles[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.phloem[i] <- if (sugar.phloem[i] < 0.12) (min(starch.phloem[i], max((0.12 - sugar.phloem[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.roots[i] <- if (sugar.roots[i] < 0.005) (min(starch.roots[i], max((0.005 - sugar.roots[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.xylem.sh[i] <- if (sugar.xylem.sh[i] < 0.009) (min(starch.xylem.sh[i], max((0.009 - sugar.xylem.sh[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.xylem.st[i] <- if (sugar.xylem.st[i] < 0.001) (min(starch.xylem.st[i], max((0.001 - sugar.xylem.st[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
 
-      # storage update, both bucket and emergency as the level shouldn't be in both
-      starch.needles[i] <- starch.needles[i] - to_sugar.needles[i]
-      starch.phloem[i] <- starch.phloem[i] - to_sugar.phloem[i]
-      starch.roots[i] <- starch.roots[i] - to_sugar.roots[i]
-      starch.xylem.sh[i] <- starch.xylem.sh[i] - to_sugar.xylem.sh[i]
-      starch.xylem.st[i] <- starch.xylem.st[i] - to_sugar.xylem.st[i]
-      sugar.needles[i] <- sugar.needles[i]  + to_sugar.needles[i]
-      sugar.phloem[i] <- sugar.phloem[i]  + to_sugar.phloem[i]
-      sugar.roots[i] <- sugar.roots[i]  + to_sugar.roots[i]
-      sugar.xylem.sh[i] <- sugar.xylem.sh[i]  + to_sugar.xylem.sh[i]
-      sugar.xylem.st[i] <- sugar.xylem.st[i]  + to_sugar.xylem.st[i]
+        # storage update, both bucket and emergency as the level shouldn't be in both
+        starch.needles[i] <- starch.needles[i] - to_sugar.needles[i]
+        starch.phloem[i] <- starch.phloem[i] - to_sugar.phloem[i]
+        starch.roots[i] <- starch.roots[i] - to_sugar.roots[i]
+        starch.xylem.sh[i] <- starch.xylem.sh[i] - to_sugar.xylem.sh[i]
+        starch.xylem.st[i] <- starch.xylem.st[i] - to_sugar.xylem.st[i]
+        sugar.needles[i] <- sugar.needles[i]  + to_sugar.needles[i]
+        sugar.phloem[i] <- sugar.phloem[i]  + to_sugar.phloem[i]
+        sugar.roots[i] <- sugar.roots[i]  + to_sugar.roots[i]
+        sugar.xylem.sh[i] <- sugar.xylem.sh[i]  + to_sugar.xylem.sh[i]
+        sugar.xylem.st[i] <- sugar.xylem.st[i]  + to_sugar.xylem.st[i]
 
-      As.needles[i]=(1-sperling[c("lamda.needles"),c(site)])*As.needles[i-1]
-      As.phloem[i]=(1-sperling[c("lamda.phloem"),c(site)])*As.phloem[i-1]
-      As.roots[i]=(1-sperling[c("lamda.roots"),c(site)])*As.roots[i-1]
-      As.xylem.sh[i]=(1-sperling[c("lamda.xylem.sh"),c(site)])*As.xylem.sh[i-1]
-      As.xylem.st[i]=(1-sperling[c("lamda.xylem.st"),c(site)])*As.xylem.st[i-1]
-      Ad.needles[i]=(1-sperling[c("lamda.needles"),c(site)])*Ad.needles[i-1]
-      Ad.phloem[i]=(1-sperling[c("lamda.phloem"),c(site)])*Ad.phloem[i-1]
-      Ad.roots[i]=(1-sperling[c("lamda.roots"),c(site)])*Ad.roots[i-1]
-      Ad.xylem.sh[i]=(1-sperling[c("lamda.xylem.sh"),c(site)])*Ad.xylem.sh[i-1]
-      Ad.xylem.st[i]=(1-sperling[c("lamda.xylem.st"),c(site)])*Ad.xylem.st[i-1]
-      # Induce starch synthase if SC is high or degradation if it is low
-      # These numbers are from september 2018
-      # xylem not changed as no data to support it
-      if  (sugar.needles[i]>0.1351581) {As.needles[i]=As.needles[i]+sperling[c("delta.needles"),c(site)]}
-      else if (sugar.needles[i]<0.1351581 && starch.needles[i]> 0) {Ad.needles[i]=Ad.needles[i]+sperling[c("delta.needles"),c(site)]}
-      if  (sugar.phloem[i]>0.5269149) {As.phloem[i]=As.phloem[i]+sperling[c("delta.phloem"),c(site)]}
-      else if (sugar.phloem[i]<0.5269149 && starch.phloem[i]> 0) {Ad.phloem[i]=Ad.phloem[i]+sperling[c("delta.phloem"),c(site)]}
-      if  (sugar.roots[i]>0.04911007) {As.roots[i]=As.roots[i]+sperling[c("delta.roots"),c(site)]}
-      else if (sugar.roots[i]<0.04911007 && starch.roots[i]> 0) {Ad.roots[i]=Ad.roots[i]+sperling[c("delta.roots"),c(site)]}
-      if  (sugar.xylem.sh[i]>0.0199) {As.xylem.sh[i]=As.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
-      else if (sugar.xylem.sh[i]<0.0199 && starch.xylem.sh[i]> 0) {Ad.xylem.sh[i]=Ad.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
-      if  (sugar.xylem.st[i]>0.0199) {As.xylem.st[i]=As.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
-      else if (sugar.xylem.st[i]<0.0199 && starch.xylem.st[i]> 0) {Ad.xylem.st[i]=Ad.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
+        As.needles[i]=(1-sperling[c("lamda.needles"),c(site)])*As.needles[i-1]
+        As.phloem[i]=(1-sperling[c("lamda.phloem"),c(site)])*As.phloem[i-1]
+        As.roots[i]=(1-sperling[c("lamda.roots"),c(site)])*As.roots[i-1]
+        As.xylem.sh[i]=(1-sperling[c("lamda.xylem.sh"),c(site)])*As.xylem.sh[i-1]
+        As.xylem.st[i]=(1-sperling[c("lamda.xylem.st"),c(site)])*As.xylem.st[i-1]
+        Ad.needles[i]=(1-sperling[c("lamda.needles"),c(site)])*Ad.needles[i-1]
+        Ad.phloem[i]=(1-sperling[c("lamda.phloem"),c(site)])*Ad.phloem[i-1]
+        Ad.roots[i]=(1-sperling[c("lamda.roots"),c(site)])*Ad.roots[i-1]
+        Ad.xylem.sh[i]=(1-sperling[c("lamda.xylem.sh"),c(site)])*Ad.xylem.sh[i-1]
+        Ad.xylem.st[i]=(1-sperling[c("lamda.xylem.st"),c(site)])*Ad.xylem.st[i-1]
+        # Induce starch synthase if SC is high or degradation if it is low
+        # These numbers are from september 2018
+        # xylem not changed as no data to support it
+        if  (sugar.needles[i]>0.1351581) {As.needles[i]=As.needles[i]+sperling[c("delta.needles"),c(site)]}
+        else if (sugar.needles[i]<0.1351581 && starch.needles[i]> 0) {Ad.needles[i]=Ad.needles[i]+sperling[c("delta.needles"),c(site)]}
+        if  (sugar.phloem[i]>0.5269149) {As.phloem[i]=As.phloem[i]+sperling[c("delta.phloem"),c(site)]}
+        else if (sugar.phloem[i]<0.5269149 && starch.phloem[i]> 0) {Ad.phloem[i]=Ad.phloem[i]+sperling[c("delta.phloem"),c(site)]}
+        if  (sugar.roots[i]>0.04911007) {As.roots[i]=As.roots[i]+sperling[c("delta.roots"),c(site)]}
+        else if (sugar.roots[i]<0.04911007 && starch.roots[i]> 0) {Ad.roots[i]=Ad.roots[i]+sperling[c("delta.roots"),c(site)]}
+        if  (sugar.xylem.sh[i]>0.0199) {As.xylem.sh[i]=As.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
+        else if (sugar.xylem.sh[i]<0.0199 && starch.xylem.sh[i]> 0) {Ad.xylem.sh[i]=Ad.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
+        if  (sugar.xylem.st[i]>0.0199) {As.xylem.st[i]=As.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
+        else if (sugar.xylem.st[i]<0.0199 && starch.xylem.st[i]> 0) {Ad.xylem.st[i]=Ad.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
 
-    }
+      }
 
-    if (phloem.trigger == T) {
-      if (count%%2 != 0) {
-        if (length(which(sugar.phloem < sperling[c("SCb"),c(site)])) == 0) {
-          warning(paste("Never cold enough for the model to trigger bud burst, sugar never lower than", sperling[c("SCb"),c(site)], "kg C"))
-        } else {
-          sB0 <- which(sugar.phloem < sperling[c("SCb"),c(site)])[1]
+      if (phloem.trigger == T) {
+        if (count%%2 != 0) {
+          if (length(which(sugar.phloem < sperling[c("SCb"),c(site)])) == 0) {
+            warning(paste("Never cold enough for the model to trigger bud burst, sugar never lower than", sperling[c("SCb"),c(site)], "kg C"))
+          } else {
+            sB0 <- which(sugar.phloem < sperling[c("SCb"),c(site)])[1]
+          }
+        }
+      } else {
+        if (count%%2 != 0) {
+          if (length(which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])) == 0) {
+            warning(paste("Never cold enough for the model to trigger bud burst, sugar never lower than", sperling[c("SCb"),c(site)], "kg C"))
+          } else {
+            sB0 <- which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])[1]
+          }
         }
       }
-    } else {
-      if (count%%2 != 0) {
-        if (length(which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])) == 0) {
-          warning(paste("Never cold enough for the model to trigger bud burst, sugar never lower than", sperling[c("SCb"),c(site)], "kg C"))
-        } else {
-          sB0 <- which(sugar.needles+sugar.phloem+sugar.roots+sugar.xylem.sh+sugar.xylem.st < sperling[c("SCb"),c(site)])[1]
+
+
+      if (storage.reset == FALSE) {
+        if (n.year != 1) {
+          sperling[c("starch.needles0"), c(site)] = starch.needles[n.days]
+          sperling[c("starch.phloem0"), c(site)] = starch.phloem[n.days]
+          sperling[c("starch.xylem.sh0"), c(site)] = starch.xylem.sh[n.days]
+          sperling[c("starch.xylem.st0"), c(site)] = starch.xylem.st[n.days]
+          sperling[c("starch.roots0"), c(site)] = starch.roots[n.days]
+
+          sperling[c("sugar.needles0"), c(site)] = sugar.needles[n.days]
+          sperling[c("sugar.phloem0"), c(site)] = sugar.phloem[n.days]
+          sperling[c("sugar.xylem.sh0"), c(site)] = sugar.xylem.sh[n.days]
+          sperling[c("sugar.xylem.st0"), c(site)] = sugar.xylem.st[n.days]
+          sperling[c("sugar.roots0"), c(site)] = sugar.roots[n.days]
+
+          sperling[c("Ad0.needles"),c(site)] = Ad.needles[n.days]
+          sperling[c("Ad0.phloem"),c(site)] = Ad.phloem[n.days]
+          sperling[c("Ad0.roots"),c(site)] = Ad.roots[n.days]
+          sperling[c("Ad0.xylem.sh"),c(site)] = Ad.xylem.sh[n.days]
+          sperling[c("Ad0.xylem.st"),c(site)] = Ad.xylem.st[n.days]
         }
       }
+
     }
-
-
-    if (storage.reset == FALSE) {
-      if (n.year != 1) {
-        sperling[c("starch.needles0"), c(site)] = starch.needles[n.days]
-        sperling[c("starch.phloem0"), c(site)] = starch.phloem[n.days]
-        sperling[c("starch.xylem.sh0"), c(site)] = starch.xylem.sh[n.days]
-        sperling[c("starch.xylem.st0"), c(site)] = starch.xylem.st[n.days]
-        sperling[c("starch.roots0"), c(site)] = starch.roots[n.days]
-
-        sperling[c("sugar.needles0"), c(site)] = sugar.needles[n.days]
-        sperling[c("sugar.phloem0"), c(site)] = sugar.phloem[n.days]
-        sperling[c("sugar.xylem.sh0"), c(site)] = sugar.xylem.sh[n.days]
-        sperling[c("sugar.xylem.st0"), c(site)] = sugar.xylem.st[n.days]
-        sperling[c("sugar.roots0"), c(site)] = sugar.roots[n.days]
-
-        As0.needles=sperling[c("Ad0.needles"),c(site)]*exp(Te0*(Bd-Bs)) 	# Initial As by Ad0 and initial Te
-        As0.phloem=sperling[c("Ad0.phloem"),c(site)]*exp(Te0*(Bd-Bs))
-        As0.roots=sperling[c("Ad0.roots"),c(site)]*exp(Te0*(Bd-Bs))
-        As0.xylem.sh=sperling[c("Ad0.xylem.sh"),c(site)]*exp(Te0*(Bd-Bs))
-        As0.xylem.st=sperling[c("Ad0.xylem.st"),c(site)]*exp(Te0*(Bd-Bs))
-        sperling[c("Ad0.needles"),c(site)]
-        sperling[c("Ad0.phloem"),c(site)]
-        sperling[c("Ad0.roots"),c(site)]
-        sperling[c("Ad0.xylem.sh"),c(site)]
-        sperling[c("Ad0.xylem.st"),c(site)]
-
-      }
-    }
-
-  }
 
     ########### Total growth and carbon consumption
     #  Occurred growth kg C day-1 (potential growth * storage effect)
@@ -1249,13 +1243,12 @@ CASSIA <- function(
     count <- count + 1 # For Sperling
   }   # loop of the years ends
 
-export_daily[, 1] <- format(seq(as.POSIXct(as.character(paste0(years[1], "0101")), format = "%Y%m%d"), as.POSIXct(as.character(paste0(years[n.year-1], "1231")), format = "%Y%m%d"), by = "day"), "%Y-%m-%d")
-out <- list(export_daily, export_yearly)
-names(out) <- c("Daily", "Yearly")
+  export_daily[, 1] <- format(seq(as.POSIXct(as.character(paste0(years[1], "0101")), format = "%Y%m%d"), as.POSIXct(as.character(paste0(years[n.year-1], "1231")), format = "%Y%m%d"), by = "day"), "%Y-%m-%d")
+  out <- list(export_daily, export_yearly)
+  names(out) <- c("Daily", "Yearly")
 
 
-return(out)
-
+  return(out)
 }
 
 
@@ -1263,10 +1256,10 @@ return(out)
 #sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
 #                           0.034, 0.166, # as no data for 2018, used 2015 data
 #                           0.057, 0.2088, 0.4, 0.1, # 2018
-#                           0.0249, 0.021) # as no data for 2018, used 2015 data
+#                         0.0249, 0.021) # as no data for 2018, used 2015 data
 #sperling_2018_bayes <- sperling_2018
 #CASSIA_cali <- CASSIA(Hyde_weather[2923:3652,], "Hyde", sperling_model = TRUE,
-#                      mychorrhiza = FALSE, storage.reset = FALSE,
+#                      mychorrhiza = FALSE, storage.reset = FALSE, phloem.trigger = T,
 #                      sperling = sperling_2018_bayes)[[1]][,c(1, 25:34)]
 #rownames(CASSIA_cali) <- CASSIA_cali$date
 #CASSIA_cali$date <- as.POSIXct(as.character(CASSIA_cali$date), format = "%Y-%m-%d")
@@ -1287,9 +1280,6 @@ return(out)
 #SCb <- 0.23
 #abline(h = 0.23, lty = 2, col = "pink")
 #text(25, SCb, "\"bloom\" threshold", col = "pink", cex = 0.75)
-
-
-
 
 
 
