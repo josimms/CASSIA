@@ -187,7 +187,7 @@ sperling_p[5,] <- c(0.034, NA) # starch.xylem.sh0
 sperling_p[6,] <- c(0.166, NA) # starch.xylem.st0
 sperling_p[7,] <- c(0.057, NA) # starch.roots0
 sperling_p[8,] <- c(0.087, NA) # sugar.needles0
-sperling_p[9,] <- c(0.027, NA) # sugar.phloem0
+sperling_p[9,] <- c(0.27, NA) # sugar.phloem0
 sperling_p[10,] <- c(0.014, NA) # sugar.roots0
 sperling_p[11,] <- c(0.0249, NA) # sugar.xylem.sh0
 sperling_p[12,] <- c(0.021, NA) # sugar.xylem.st0
