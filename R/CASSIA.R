@@ -15,6 +15,7 @@ CASSIA <- function(
     #####
     ## Parameters
     #####
+    ratio_sugar = c(11, 1/3, 11, 11), # Determins the concentration difference between organs
     ratios = ratios_p,
     parameters = parameters_p,
     common = common_p,
@@ -818,11 +819,11 @@ CASSIA <- function(
       sugar.xylem.sh[1] <- sperling[c("sugar.xylem.sh0"),c(site)]
       sugar.xylem.st[1] <- sperling[c("sugar.xylem.st0"),c(site)]
 
-      DF_np[1] = (sugar.needles[1]+starch.needles[1] - (1/3)*(sugar.phloem[1]+starch.phloem[1]))
-      DF_pr[1] = (sugar.phloem[1]+starch.phloem[1] - 11*(sugar.roots[1]+starch.roots[1]))
+      DF_np[1] = (sugar.needles[1]+starch.needles[1] - ratio_sugar[1]*(sugar.phloem[1]+starch.phloem[1]))
+      DF_pr[1] = (sugar.phloem[1]+starch.phloem[1] - ratio_sugar[2]*(sugar.roots[1]+starch.roots[1]))
       DF_rm[1] = (sugar.roots[1]+starch.roots[1] - sperling[c("myco.thresh"),c(site)])
-      DF_pxsh[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - 11*max(sugar.xylem.sh[1]+starch.xylem.sh[1], 0)
-      DF_pxst[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - 11*max(sugar.xylem.st[1]+starch.xylem.st[1], 0)
+      DF_pxsh[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - ratio_sugar[3]*max(sugar.xylem.sh[1]+starch.xylem.sh[1], 0)
+      DF_pxst[1] = max(sugar.phloem[1]+starch.phloem[1], 0) - ratio_sugar[4]*max(sugar.xylem.st[1]+starch.xylem.st[1], 0)
 
       for (i in 2 : n.days) { # Sperling model has been added here, SC = sugar and ST = starch to match the variable names already in CASSIA
         storage_term_needles[i] <- max(0 , min(1, a.k.needles * (1 - 1 / exp(sperling[c("alfa.needles"),c(site)] * (starch.needles[i-1] + sugar.needles[i-1] - sperling[c("Wala.needles"),c(site)])))))
@@ -849,10 +850,10 @@ CASSIA <- function(
         # this could lead to a slight error, but should be corrected by the starch latter just have to imagine that all of the sugar
         # goes to the allocated organs simultaneously
 
-        DF_np[i] = 3*max(sugar.needles[i-1]+starch.needles[i-1], 0) - max(sugar.phloem[i-1]+starch.phloem[i-1], 0)
-        DF_pr[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 11*max(sugar.roots[i-1]+starch.roots[i-1], 0)
-        DF_pxsh[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 8*max(sugar.xylem.sh[i-1]+starch.xylem.sh[i-1], 0)
-        DF_pxst[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - 2*max(sugar.xylem.st[i-1]+starch.xylem.st[i-1], 0)
+        DF_np[i] = max(sugar.needles[i-1]+starch.needles[i-1], 0) - ratio_sugar[1]*max(sugar.phloem[i-1]+starch.phloem[i-1], 0)
+        DF_pr[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - ratio_sugar[2]*max(sugar.roots[i-1]+starch.roots[i-1], 0)
+        DF_pxsh[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - ratio_sugar[3]*max(sugar.xylem.sh[i-1]+starch.xylem.sh[i-1], 0)
+        DF_pxst[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - ratio_sugar[4]*max(sugar.xylem.st[i-1]+starch.xylem.st[i-1], 0)
         # This one works from a threshold as mycrorhiza is not considered as an organ in the model
         DF_rm[i] = min(max(sugar.roots[i-1]+starch.roots[i-1] - sperling[c("myco.thresh"),c(site)],0), sugar.roots[i-1])
 
@@ -914,11 +915,11 @@ CASSIA <- function(
         # This is a proxy for a starch metabolism system, which seems to be present under stress in literature
         # but I can't find a mechanism for scots pine
         # values are below the lowest recorded value
-        to_sugar.needles[i] <- if (sugar.needles[i] < 0.05) (min(starch.needles[i], max((0.05 - sugar.needles[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.phloem[i] <- if (sugar.phloem[i] < 0.12) (min(starch.phloem[i], max((0.12 - sugar.phloem[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.roots[i] <- if (sugar.roots[i] < 0.005) (min(starch.roots[i], max((0.005 - sugar.roots[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.xylem.sh[i] <- if (sugar.xylem.sh[i] < 0.009) (min(starch.xylem.sh[i], max((0.009 - sugar.xylem.sh[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.xylem.st[i] <- if (sugar.xylem.st[i] < 0.001) (min(starch.xylem.st[i], max((0.001 - sugar.xylem.st[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.needles[i] <- if (sugar.needles[i] < ratio_sugar[5]) (min(starch.needles[i], max((ratio_sugar[5] - sugar.needles[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.phloem[i] <- if (sugar.phloem[i] < ratio_sugar[6]) (min(starch.phloem[i], max((ratio_sugar[6] - sugar.phloem[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.roots[i] <- if (sugar.roots[i] < ratio_sugar[7]) (min(starch.roots[i], max((ratio_sugar[7] - sugar.roots[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.xylem.sh[i] <- if (sugar.xylem.sh[i] < ratio_sugar[8]) (min(starch.xylem.sh[i], max((ratio_sugar[8] - sugar.xylem.sh[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.xylem.st[i] <- if (sugar.xylem.st[i] < ratio_sugar[9]) (min(starch.xylem.st[i], max((ratio_sugar[9] - sugar.xylem.st[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
 
         # storage update, both bucket and emergency as the level shouldn't be in both
         starch.needles[i] <- starch.needles[i] - to_sugar.needles[i]
@@ -945,16 +946,16 @@ CASSIA <- function(
         # Induce starch synthase if SC is high or degradation if it is low
         # These numbers are from september 2018
         # xylem not changed as no data to support it
-        if  (sugar.needles[i]>0.1351581) {As.needles[i]=As.needles[i]+sperling[c("delta.needles"),c(site)]}
-        else if (sugar.needles[i]<0.1351581 && starch.needles[i]> 0) {Ad.needles[i]=Ad.needles[i]+sperling[c("delta.needles"),c(site)]}
-        if  (sugar.phloem[i]>0.5269149) {As.phloem[i]=As.phloem[i]+sperling[c("delta.phloem"),c(site)]}
-        else if (sugar.phloem[i]<0.5269149 && starch.phloem[i]> 0) {Ad.phloem[i]=Ad.phloem[i]+sperling[c("delta.phloem"),c(site)]}
-        if  (sugar.roots[i]>0.04911007) {As.roots[i]=As.roots[i]+sperling[c("delta.roots"),c(site)]}
-        else if (sugar.roots[i]<0.04911007 && starch.roots[i]> 0) {Ad.roots[i]=Ad.roots[i]+sperling[c("delta.roots"),c(site)]}
-        if  (sugar.xylem.sh[i]>0.0199) {As.xylem.sh[i]=As.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
-        else if (sugar.xylem.sh[i]<0.0199 && starch.xylem.sh[i]> 0) {Ad.xylem.sh[i]=Ad.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
-        if  (sugar.xylem.st[i]>0.0199) {As.xylem.st[i]=As.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
-        else if (sugar.xylem.st[i]<0.0199 && starch.xylem.st[i]> 0) {Ad.xylem.st[i]=Ad.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
+        if  (sugar.needles[i]>ratio_sugar[10]) {As.needles[i]=As.needles[i]+sperling[c("delta.needles"),c(site)]}
+        else if (sugar.needles[i]<ratio_sugar[10] && starch.needles[i]> 0) {Ad.needles[i]=Ad.needles[i]+sperling[c("delta.needles"),c(site)]}
+        if  (sugar.phloem[i]>ratio_sugar[11]) {As.phloem[i]=As.phloem[i]+sperling[c("delta.phloem"),c(site)]}
+        else if (sugar.phloem[i]<ratio_sugar[11] && starch.phloem[i]> 0) {Ad.phloem[i]=Ad.phloem[i]+sperling[c("delta.phloem"),c(site)]}
+        if  (sugar.roots[i]>ratio_sugar[12]) {As.roots[i]=As.roots[i]+sperling[c("delta.roots"),c(site)]}
+        else if (sugar.roots[i]<ratio_sugar[12] && starch.roots[i]> 0) {Ad.roots[i]=Ad.roots[i]+sperling[c("delta.roots"),c(site)]}
+        if  (sugar.xylem.sh[i]>ratio_sugar[13]) {As.xylem.sh[i]=As.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
+        else if (sugar.xylem.sh[i]<ratio_sugar[13] && starch.xylem.sh[i]> 0) {Ad.xylem.sh[i]=Ad.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
+        if  (sugar.xylem.st[i]>ratio_sugar[14]) {As.xylem.st[i]=As.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
+        else if (sugar.xylem.st[i]<ratio_sugar[14] && starch.xylem.st[i]> 0) {Ad.xylem.st[i]=Ad.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
 
       }
 
@@ -1251,8 +1252,8 @@ CASSIA <- function(
 }
 
 
-#sperling_2018 <- sperling_p
-#sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
+# sperling_2018 <- sperling_p
+# sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
 #                           0.034, 0.166, # as no data for 2018, used 2015 data
 #                           0.057, 0.2088, 0.4, 0.1, # 2018
 #                         0.0249, 0.021) # as no data for 2018, used 2015 data
@@ -1279,7 +1280,6 @@ CASSIA <- function(
 #SCb <- 0.23
 #abline(h = 0.23, lty = 2, col = "pink")
 #text(25, SCb, "\"bloom\" threshold", col = "pink", cex = 0.75)
-
 
 
 
