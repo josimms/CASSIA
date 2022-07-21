@@ -6,7 +6,7 @@ This model has been used in numerous papers (see Literature) - mainly considerin
 
 ### Ongoing
 
-Alexis Lehtonen - parameterisation for the CASSIA suo site
+Alexis Lehtonen - parameterisation for the CASSIA Lehtosuo site
 
 ### Literature (Please add if any missing!)
 
