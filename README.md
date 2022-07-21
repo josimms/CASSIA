@@ -1,19 +1,20 @@
-### CASSIA Model
+## CASSIA Model
 
 CASSIA model is an intra-annual growth model for an individual tree in boreal conditions. Seasonal organ level cell growth is modelled, as well as sugar and water when the appropriate settings are chosen. 
 
 This model has been used in numerous papers (see Literature) - mainly considering Hyytiälä (SMEAR II Station, University of Helsinki).
 
+### Ongoing Projects
+
+Alexis Lehtonen - parameterisation for the CASSIA Lehtosuo site
+
 ### Downloading Package for Use
+
 ```{r}
 install.packages("githubinstall")  # source: https://github.com/hoxo-m/githubinstall
 library(githubinstall)
 githubinstall("CASSIA")
 ```
-
-### Ongoing
-
-Alexis Lehtonen - parameterisation for the CASSIA Lehtosuo site
 
 ## Literature
 ### (please add if any missing!)
