@@ -1,14 +1,22 @@
 ### CASSIA Model
 
-CASSIA model is an intra-annual growth model for an individual tree in boreal conditions. Seasonal cell level growth is modelled, as well as sugar and water when the appropriate settings are chosen. 
+CASSIA model is an intra-annual growth model for an individual tree in boreal conditions. Seasonal organ level cell growth is modelled, as well as sugar and water when the appropriate settings are chosen. 
 
 This model has been used in numerous papers (see Literature) - mainly considering Hyytiälä (SMEAR II Station, University of Helsinki).
+
+### Downloading Package for Use
+```{r}
+install.packages("githubinstall")  # source: https://github.com/hoxo-m/githubinstall
+library(githubinstall)
+githubinstall("CASSIA")
+```
 
 ### Ongoing
 
 Alexis Lehtonen - parameterisation for the CASSIA Lehtosuo site
 
-### Literature (Please add if any missing!)
+### Literature
+# (please add if any missing!)
 
 Ding, Yiyang, et al. "Temperature and moisture dependence of daily growth of Scots pine (Pinus sylvestris L.) roots in Southern Finland." Tree Physiology 40.2 (2020): 272-283.
 
@@ -20,7 +28,8 @@ Schiestl‐Aalto, Pauliina, et al. "CASSIA–a dynamic model for predicting intr
 
 Schiestl-Aalto, Pauliina, et al. "Physiological growth model CASSIA predicts carbon allocation and wood formation of Scots pine." CyberPlantS: a European initiative towards collaborative plant modeling (2013): 159.
 
-### Used in (Please add if any missing!)
+### Used in
+# (please add if any missing!)
 
 Ding, Yiyang, et al. "Distinct patterns of below-and aboveground growth phenology and litter carbon inputs along a boreal site type gradient." Forest Ecology and Management 489 (2021): 119081.
 
