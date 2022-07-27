@@ -79,15 +79,16 @@ colnames(ratios_p)
 
 | Parameter Name   | Meaning   | Reference |
 |:----------------:|:---------:|:---------:|
-| form_factor      |  | |
-| needle_fineroot_ratio | | |
-| spawood.share | | |
-| height_growth_coefficient 
-| diameter_growth_coefficient 
-| height_growth_coefficient 
-| height_growth_coefficient 
-| diameter_growth_coefficient 
-| diameter_growth_coefficient 
+| form_factor      | Controls the cylindrical equation that models secondary wood biomass | 2015 |
+| needle_fineroot_ratio | Difference in biomass between organs used for growth equations | 2015 |
+| spawood.share | The reduction of maintenance respiration due to shortage of stored carbon | 2015 |
+| height_growth_coefficient | Coefficient to represent the mean growth at Hyytiälä | TODO |
+| diameter_growth_coefficient | Coefficient to represent the mean growth at Hyytiälä | TODO |
+| height_growth_coefficient_min | Coefficient to represent the growth at Hyytiälä 1997 | TODO |
+| height_growth_coefficient_max | Coefficient to represent the growth at Hyytiälä 2020 | TODO |
+| diameter_growth_coefficient_min | Coefficient to represent the growth at Hyytiälä 1997 | TODO |
+| diameter_growth_coefficient_max | Coefficient to represent the growth at Hyytiälä 2020| TODO |
+
 
 ```{r setup}
 library(CASSIA)
