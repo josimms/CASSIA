@@ -16,6 +16,12 @@ CASSIA <- function(
     ## Parameters
     #####
     ratio_sugar = c(11, 1/3, 11, 11), # Determins the concentration difference between organs
+    tau.myco = 3,
+    tau.t.needles = 3,
+    tau.t.phloem = 3,
+    tau.t.roots = 3,
+    tau.t.xylem.sh = 3,
+    tau.t.xylem.st = 3,
     ratios = ratios_p,
     parameters = parameters_p,
     common = common_p,
@@ -58,7 +64,9 @@ CASSIA <- function(
     Rm_acclimation = TRUE,
 
     s.D0 = 79,					# DOY to start the calculation of temperature sum, 1=Jan 1; 69=March 1; 79=March 20 for diameter growth. Valid for Finland
-    s.H0 = 1					# and for shoot grwoth
+    s.H0 = 1,					# and for shoot grwoth
+
+    tests = FALSE ## Means that the development tests are on
 ) {
 
   #####
@@ -71,30 +79,35 @@ CASSIA <- function(
   # Check that the sites are within the sites allowed
   if ((site %in% c("Hyde", "Lettosuo", "Flakaliden_c")) == F) {stop("Unknown site: Please pick between Hyde and Lettosuo")}
 
-  if (sperling_model == TRUE) {if (mychorrhiza == T) {
-    mychorrhiza = FALSE
-    warning("Mycorrhiza has been changed to mycorrhiza = false as mycorrhiza is included explicitly in the Sperling submodel")
-  }
+  if (sperling_model == TRUE) {
+    if (mychorrhiza == T) {
+      mychorrhiza = FALSE
+      warning("Mycorrhiza has been changed to mycorrhiza = FALSE as mycorrhiza is included explicitly in the Sperling submodel")
+    }
+    if (growth.myco == T) {
+      growht.myco = FALSE
+      warning("growht.myco has been changed to growht.myco = FALSE for your information, it is not included in the sperling_model")
+    }
+  } else {
+    if (phloem.trigger == T) {phloem.trigger == F}
+    warning("phloem.trigger has be set to FALSE as this feature is only possible with the variability given by the sperling_model.")
   }
 
   if (xylogenesis == TRUE) {
     # TODO: this is not set in stone, but fits the initial setup of Lettosuo
-    warning("As xylogenesis is TRUE, LN.estim and trees_grow set to FALSE and TRUE respectively")
+    warning("As xylogenesis is TRUE, LN.estim, trees_grow, myorrhiza and phloem.trigger set to FALSE, TRUE, FALSE and FALSE respectively")
     LN.estim = FALSE   # LN depends on the GPP during previous july-august
     trees_grow = TRUE  # can be false if mature trees are modelled and not for a very long period
     mycorrhiza = FALSE
+    phloem.trigger = FALSE
   }
 
-  #if (nrow(sperling) != nrow(sperling_p)) {stop("Sperling input is the wrong size!")}
-  #if (nrow(parameters) != nrow(parameters_p)) {stop("Parameters input is the wrong size!")}
-  #if (nrow(ratios) != nrow(ratios_p)) {stop("Ratios input is the wrong size!")}
-  #if (length(common) != length(common_p)) {stop("Common input is the wrong size!")}
-  #if (length(repo) != length(repo_p)) {stop("Common input is the wrong size!")}
-  #if (rownames(sperling) != names(sperling_p)) {stop("Sperling has the wrong row names")}
-  #if (rownames(parameters) != rownames(parameters_p)) {stop("Parameters have the wrong row names")}
-  #if (rownames(ratios) != rownames(ratios_p)) {stop("Ratios have the wrong row names")}
-  #if (names(common) != names(common_p)) {stop("Ratios have the wrong row names")}
-  #if (names(repo) != names(repo_p)) {stop("Ratios have the wrong row names")}
+  # Check size!
+  #if (sum(dim(sperling) == dim(sperling_p)) != 2) {stop("Sperling input is the wrong size!")}
+  #if (sum(dim(parameters) == nrow(parameters_p)) != 2) {stop("Parameters input is the wrong size!")}
+  #if (sum(dim(ratios) == dim(ratios_p)) != 2) {stop("Sperling input is the wrong size!")}
+  #if (sum(dim(common) == nrow(common_p)) != 2) {stop("Parameters input is the wrong size!")}
+  #if (sum(dim(repo) == nrow(repo_p)) != 2) {stop("Parameters input is the wrong size!")}
 
   #####
   ## Model conditions derived from model inputs
@@ -122,6 +135,9 @@ CASSIA <- function(
                              "P", "to_sugar", "to_starch", "Daily.H.tot", "Daily.N.tot", "GD.tot",
                              "sugar.needles", "sugar.phloem", "sugar.xylem.sh", "sugar.xylem.st", "sugar.roots",
                              "starch.needles", "starch.phloem", "starch.xylem.sh", "starch.xylem.st", "starch.roots")
+    if (tests == T) {
+      if (xylogenesis == T) {warning("Line 112: This should not print if xylogenesis is true!")}
+    }
   } else if (xylogenesis == T) {
     export_yearly <- data.frame(matrix(ncol=20, nrow=length(years)))
     export_daily <- data.frame(matrix(ncol=27, nrow=total.days))
@@ -131,6 +147,9 @@ CASSIA <- function(
     names(export_daily) <- c("date", "year", "day", "bud.tot.growth", "wall.tot.growth", "needle.tot.growth", "root.tot.growth", "height.tot.growth",
                              "Rg.tot", "Rm.tot", "height.tot", "wall.tot", "storage", "sugar", "starch", "storage", "to.mycorrhiza", "mycorrhiza.tot",
                              "P", "to_sugar", "to_starch", "daily.consumption", "ring_width", "GD.tot", "n.E.tot", "n.W.tot", "n.M.tot")
+    if (tests == T) {
+      if (sperling_model == T) {warning("Line 127: This should not print if sperling_model is true!")}
+    }
   } else {
     export_yearly <- data.frame(matrix(ncol=16, nrow=length(years)))
     export_daily <- data.frame(matrix(ncol=24, nrow=total.days))
@@ -139,6 +158,10 @@ CASSIA <- function(
     names(export_daily) <- c("date", "year", "day", "bud.tot.growth", "wall.tot.growth", "needle.tot.growth", "root.tot.growth", "height.tot.growth",
                              "Rg.tot", "Rm.tot", "height.tot", "wall.tot", "storage", "sugar", "starch", "storage_term", "to.mycorrhiza", "mycorrhiza.tot",
                              "P", "to_sugar", "to_starch", "Daily.H.tot", "Daily.N.tot", "GD.tot")
+    if (tests == T) {
+      if (sperling_model == T) {warning("Line 140: This should not print if sperling_model is true!")}
+      if (xylogenesis == T) {warning("Line 140: This should not print if xylogenesis is true!")}
+    }
   }
 
   n.days.export <- 0
@@ -151,11 +174,15 @@ CASSIA <- function(
 
   height_growth_coefficient <- diameter_growth_coefficient <- NULL
   height_growth_coefficient <- cbind(1997 : 2020, rep(ratios[c("height_growth_coefficient"),c(site)], length.out = length(1997 : 2020)))
+  if (sum(is.na(height_growth_coefficient)) != 0) {warning("One height_growth_coefficient value is NA")} # TODO: is this necaisry as I will get a error later anyway
   diameter_growth_coefficient <- cbind(1997 : 2020, rep(ratios[c("diameter_growth_coefficient"),c(site)], length.out = length(1997 : 2020)))
+  if (sum(is.na(diameter_growth_coefficient)) != 0) {warning("One diameter_growth_coefficient value is NA")} # TODO: is this necaisry as I will get a error later anyway
 
   if (growth_decreases == TRUE) {
     height_growth_coefficient <- cbind(1997 : 2020, seq(ratios[c("height_growth_coefficient_max"),c(site)], ratios[c("height_growth_coefficient_min"),c(site)], length.out = length(1997 : 2020)))
     diameter_growth_coefficient <- cbind(1997 : 2020, seq(ratios[c("diameter_growth_coefficient_max"),c(site)], ratios[c("diameter_growth_coefficient_min"),c(site)], length.out = length(1997 : 2020)))
+    if (sum(is.na(height_growth_coefficient)) != 0) {warning("One height_growth_coefficient value is NA")} # TODO: is this necaisry as I will get a error later anyway
+    if (sum(is.na(diameter_growth_coefficient)) != 0) {warning("One diameter_growth_coefficient value is NA")} # TODO: is this necaisry as I will get a error later anyway
   }
 
   if (xylogenesis == TRUE) {
@@ -254,6 +281,20 @@ CASSIA <- function(
     M.soil <- weather[substring(weather$date, 1, 4) == year, c("MB")]		# Soil moisture (m3 /m3) in B-horizon
     Rain <- weather[substring(weather$date, 1, 4) == year, c("Rain")]		    # mm day-1
 
+    if (sum(Temp < -30) + sum(Temp > 30) != 0) {warning(paste("Temp < -30 or Tempp > 30 in year", year,  ". Values not impossible, but unlikely check input."))}
+    if (sum(PF < -10) + sum(PF > 20) != 0) {warning(paste("PF < -10 or PF > 20 in year", year, ". Values not impossible, but unlikely check input."))}
+    if (sum(Tsa < -10) + sum(Tsa > 20) != 0) {warning(paste("Tsa < -10 or Tsa > 20 in year", year, ". Values not impossible, but unlikely check input."))}
+    if (sum(Tsb < -10) + sum(Tsb > 20) != 0) {warning(paste("Tsb < -10 or Tsb > 20 in year", year, ". Values not impossible, but unlikely check input."))}
+    if (sum(M.soil < 0) + sum(M.soil > 1) != 0) {warning(paste("M.soil < 0 or M.soil > 1 in year", year, ". Values not impossible, but unlikely check input."))}
+    if (sum(Rain < 0) + sum(Rain > 30) != 0) {warning(paste("Rain < 0 or Rain > 30 in year", year, ". Values not impossible, but unlikely check input."))}
+
+    if (sum(is.na(Temp))) {warning(paste("Temp has NA values check input."))}
+    if (sum(is.na(PF))) {warning(paste("PF has NA values check input."))}
+    if (sum(is.na(Tsa))) {warning(paste("Tsa has NA values check input."))}
+    if (sum(is.na(Tsb))) {warning(paste("Tasb has NA values check input."))}
+    if (sum(is.na(M.soil))) {warning(paste("M.soil has NA values check input."))}
+    if (sum(is.na(Rain))) {warning(paste("Rain has NA values check input."))}
+
     # CO2, VPD and PAR preles
 
     growth_photo_coef <- 1
@@ -281,6 +322,9 @@ CASSIA <- function(
     tot.P <- cumsum(P)
 
     #################  Growth potential #######################
+
+    # TODO: in terms of adding tests here I am not sure what I could add... I could add guidelines "if sum(temp > 0) > 50 then something could be wrong but I'm not sure that's needed
+
     ## g
     g <- NULL
     g <- ((Temp > 0) * (1 / (1 + exp(-common[[c("a")]] * (Temp - common[[c("b")]])))))
@@ -748,7 +792,6 @@ CASSIA <- function(
 
       As0 <- Te0 <- NULL
 
-
       starch0 <- sperling[c("starch.needles0"),c(site)] + sperling[c("starch.phloem0"),c(site)] + sperling[c("starch.roots0"),c(site)] + sperling[c("starch.xylem.sh0"),c(site)] + sperling[c("starch.xylem.st00"),c(site)]
       sugar0 <- sperling[c("sugar.needles0"),c(site)] + sperling[c("sugar.phloem0"),c(site)] + sperling[c("sugar.roots0"),c(site)] + sperling[c("sugar.xylem.sh0"),c(site)] + sperling[c("sugar.xylem.st00"),c(site)]
       W.crit.needles <- sperling[c("starch.needles0"),c(site)] + sperling[c("sugar.needles0"),c(site)]
@@ -831,6 +874,7 @@ CASSIA <- function(
         storage_term_roots[i] <- max(0 , min(1, a.k.roots * (1 - 1 / exp(sperling[c("alfa.roots"),c(site)] * (starch.roots[i-1] + sugar.roots[i-1] - sperling[c("Wala.roots"),c(site)])))))
         storage_term_xylem.sh[i] <- max(0 , min(1, a.k.xylem.sh * (1 - 1 / exp(sperling[c("alfa.xylem.sh"),c(site)] * (starch.xylem.sh[i-1] + sugar.xylem.sh[i-1] - sperling[c("Wala.xylem.sh"),c(site)])))))
         storage_term_xylem.st[i] <- max(0 , min(1, a.k.xylem.st * (1 - 1 / exp(sperling[c("alfa.xylem.st"),c(site)] * (starch.xylem.st[i-1] + sugar.xylem.st[i-1] - sperling[c("Wala.xylem.st"),c(site)])))))
+        # TODO: wala and alfa are baised of older definitions, should I go back and correct this?
 
         Ks.needles[i]=As.needles[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
         Ks.phloem[i]=As.phloem[i-1]*exp(Bs*Temp[i]) # Compute activity (K) mg g-1 DW day -1 by the previous frequency (A)
@@ -855,7 +899,7 @@ CASSIA <- function(
         DF_pxsh[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - ratio_sugar[3]*max(sugar.xylem.sh[i-1]+starch.xylem.sh[i-1], 0)
         DF_pxst[i] = max(sugar.phloem[i-1]+starch.phloem[i-1], 0) - ratio_sugar[4]*max(sugar.xylem.st[i-1]+starch.xylem.st[i-1], 0)
         # This one works from a threshold as mycrorhiza is not considered as an organ in the model
-        DF_rm[i] = min(max(sugar.roots[i-1]+starch.roots[i-1] - sperling[c("myco.thresh"),c(site)],0), sugar.roots[i-1])
+        DF_rm[i] = min(max(sugar.roots[i-1] - sperling[c("myco.thresh"),c(site)], 0), sugar.roots[i-1])
 
         # Rm.a maintenance respiration separated into organs
 
@@ -915,11 +959,11 @@ CASSIA <- function(
         # This is a proxy for a starch metabolism system, which seems to be present under stress in literature
         # but I can't find a mechanism for scots pine
         # values are below the lowest recorded value
-        to_sugar.needles[i] <- if (sugar.needles[i] < ratio_sugar[5]) (min(starch.needles[i], max((ratio_sugar[5] - sugar.needles[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.phloem[i] <- if (sugar.phloem[i] < ratio_sugar[6]) (min(starch.phloem[i], max((ratio_sugar[6] - sugar.phloem[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.roots[i] <- if (sugar.roots[i] < ratio_sugar[7]) (min(starch.roots[i], max((ratio_sugar[7] - sugar.roots[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.xylem.sh[i] <- if (sugar.xylem.sh[i] < ratio_sugar[8]) (min(starch.xylem.sh[i], max((ratio_sugar[8] - sugar.xylem.sh[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
-        to_sugar.xylem.st[i] <- if (sugar.xylem.st[i] < ratio_sugar[9]) (min(starch.xylem.st[i], max((ratio_sugar[9] - sugar.xylem.st[i]) / sperling[c("tau.t"),c(site)], 0))) else 0
+        to_sugar.needles[i] <- if (sugar.needles[i] < 0.02) (min(starch.needles[i], max((0.02 - sugar.needles[i]) / tau.t.needles, 0))) else 0
+        to_sugar.phloem[i] <- if (sugar.phloem[i] < 0.03) (min(starch.phloem[i], max((0.03 - sugar.phloem[i]) / tau.t.phloem, 0))) else 0
+        to_sugar.roots[i] <- if (sugar.roots[i] < 0.05) (min(starch.roots[i], max((0.05 - sugar.roots[i]) / tau.t.roots, 0))) else 0
+        to_sugar.xylem.sh[i] <- if (sugar.xylem.sh[i] < 0.03) (min(starch.xylem.sh[i], max((0.03 - sugar.xylem.sh[i]) / tau.t.xylem.sh, 0))) else 0
+        to_sugar.xylem.st[i] <- if (sugar.xylem.st[i] < 0.1) (min(starch.xylem.st[i], max((0.1 - sugar.xylem.st[i]) / tau.t.xylem.st, 0))) else 0
 
         # storage update, both bucket and emergency as the level shouldn't be in both
         starch.needles[i] <- starch.needles[i] - to_sugar.needles[i]
@@ -946,16 +990,16 @@ CASSIA <- function(
         # Induce starch synthase if SC is high or degradation if it is low
         # These numbers are from september 2018
         # xylem not changed as no data to support it
-        if  (sugar.needles[i]>ratio_sugar[10]) {As.needles[i]=As.needles[i]+sperling[c("delta.needles"),c(site)]}
-        else if (sugar.needles[i]<ratio_sugar[10] && starch.needles[i]> 0) {Ad.needles[i]=Ad.needles[i]+sperling[c("delta.needles"),c(site)]}
-        if  (sugar.phloem[i]>ratio_sugar[11]) {As.phloem[i]=As.phloem[i]+sperling[c("delta.phloem"),c(site)]}
-        else if (sugar.phloem[i]<ratio_sugar[11] && starch.phloem[i]> 0) {Ad.phloem[i]=Ad.phloem[i]+sperling[c("delta.phloem"),c(site)]}
-        if  (sugar.roots[i]>ratio_sugar[12]) {As.roots[i]=As.roots[i]+sperling[c("delta.roots"),c(site)]}
-        else if (sugar.roots[i]<ratio_sugar[12] && starch.roots[i]> 0) {Ad.roots[i]=Ad.roots[i]+sperling[c("delta.roots"),c(site)]}
-        if  (sugar.xylem.sh[i]>ratio_sugar[13]) {As.xylem.sh[i]=As.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
-        else if (sugar.xylem.sh[i]<ratio_sugar[13] && starch.xylem.sh[i]> 0) {Ad.xylem.sh[i]=Ad.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
-        if  (sugar.xylem.st[i]>ratio_sugar[14]) {As.xylem.st[i]=As.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
-        else if (sugar.xylem.st[i]<ratio_sugar[14] && starch.xylem.st[i]> 0) {Ad.xylem.st[i]=Ad.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
+        if  (sugar.needles[i]>0.12) {As.needles[i]=As.needles[i]+sperling[c("delta.needles"),c(site)]}
+        else if (sugar.needles[i]<0.12 && starch.needles[i]> 0) {Ad.needles[i]=Ad.needles[i]+sperling[c("delta.needles"),c(site)]}
+        if  (sugar.phloem[i]>0.28) {As.phloem[i]=As.phloem[i]+sperling[c("delta.phloem"),c(site)]}
+        else if (sugar.phloem[i]<0.28 && starch.phloem[i]> 0) {Ad.phloem[i]=Ad.phloem[i]+sperling[c("delta.phloem"),c(site)]}
+        if  (sugar.roots[i]>0.09) {As.roots[i]=As.roots[i]+sperling[c("delta.roots"),c(site)]}
+        else if (sugar.roots[i]<0.09 && starch.roots[i]> 0) {Ad.roots[i]=Ad.roots[i]+sperling[c("delta.roots"),c(site)]}
+        if  (sugar.xylem.sh[i]>0.049) {As.xylem.sh[i]=As.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
+        else if (sugar.xylem.sh[i]<0.049 && starch.xylem.sh[i]> 0) {Ad.xylem.sh[i]=Ad.xylem.sh[i]+sperling[c("delta.xylem.sh"),c(site)]}
+        if  (sugar.xylem.st[i]>0.32) {As.xylem.st[i]=As.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
+        else if (sugar.xylem.st[i]<0.32 && starch.xylem.st[i]> 0) {Ad.xylem.st[i]=Ad.xylem.st[i]+sperling[c("delta.xylem.st"),c(site)]}
 
       }
 
@@ -1280,8 +1324,6 @@ CASSIA <- function(
 #SCb <- 0.23
 #abline(h = 0.23, lty = 2, col = "pink")
 #text(25, SCb, "\"bloom\" threshold", col = "pink", cex = 0.75)
-
-
 
 
 
