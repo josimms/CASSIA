@@ -1,4 +1,4 @@
-data.direct <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/Research Assistant/CASSIA/Package/CASSIA/data"
+data.direct <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/CASSIA/Package/CASSIA/data"
 
 ######
 ## ratios_p
@@ -9,7 +9,7 @@ names(ratios_p) <- c("Hyde", "Lettosuo")
 # Lettosuo: The multiplier between a cylinder (with diam=D0, height=h0) and the total biomass of stem, coarse roots and branches
 ratios_p[1,] <- c(0.6,0.6) # form_factor
 # Lettosuo: Helmisaari et al. 2006 Tree physiology -> 2.0 for VT, 3.8 for MT, 5.7 for OMT. Very nice curve for needles / fine roots vs. fine root N %
-# leads now to ~ 100 gC m-2 (roots < 2 mm) but result lower than in Leppälammi-Kujansuu et al. (2013, Plant Soil) where they found ca 225 gC m-2 (roots < 2 mm) in control and 300-350 in fertilized
+# leads now to ~ 100 gC m-2 (roots < 2 mm) but ressult lower than in Leppälammi-Kujansuu et al. (2013, Plant Soil) where they found ca 225 gC m-2 (roots < 2 mm) in control and 300-350 in fertilized
 # ca 225 gC m-2 (roots < 2 mm) in control and 300-350 in fertilized (Leppälammi-Kujansuu et al. 2013, Plant Soil)
 ratios_p[2,] <- c(NA,1/2.9) # needle_fineroot_ratio
 # depends on tree size, specicies and site
@@ -111,7 +111,7 @@ parameters_p[31,] <- c(1.95, 1.8) # Uggla
 
 #### Buds
 # Bud growth begins at 20.6.
-parameters_p[32,] <- c(171, 171) # sB0 TODO: make this work with the sugar addition
+parameters_p[32,] <- c(171, 171) # sB0
 parameters_p[33,] <- c(85, 85) # sBc
 parameters_p[34,] <- c(0.005, 0.005) # LB
 
@@ -141,7 +141,9 @@ parameters_p[41,]<-c(2.61*10^-6,3.1*10^-6) # wall.thickness.ew
 parameters_p[42,]<-c(5.23*10^-6,3.88*10^-6) # wall.thickness.lw
 
 # Comes from cell volume / tauE
-# TODO: this is part of the equations for pine, should check this for spruce as well
+# 
+
+: this is part of the equations for pine, should check this for spruce as well
 parameters_p[43,] <- c(NA, 5.49*10^-13) # cell.volume.growth.per.day.ew
 # Comes from cell volume / tauE
 parameters_p[44,] <- c(NA,4.62*10^-13)  # cell.volume.growth.per.day.lw
@@ -187,7 +189,7 @@ sperling_p[5,] <- c(0.034, NA) # starch.xylem.sh0
 sperling_p[6,] <- c(0.166, NA) # starch.xylem.st0
 sperling_p[7,] <- c(0.057, NA) # starch.roots0
 sperling_p[8,] <- c(0.087, NA) # sugar.needles0
-sperling_p[9,] <- c(0.027, NA) # sugar.phloem0
+sperling_p[9,] <- c(0.27, NA) # sugar.phloem0
 sperling_p[10,] <- c(0.014, NA) # sugar.roots0
 sperling_p[11,] <- c(0.0249, NA) # sugar.xylem.sh0
 sperling_p[12,] <- c(0.021, NA) # sugar.xylem.st0
@@ -251,7 +253,6 @@ common_p[1,3] <- 0 # TR0
 # abs_zero
 common_p[1,4] <- 273.15
 
-# TODO: can't find these in the original script
 # Soil water potential and conductance
 # Duursma et al 2008 Table 2: A-hirzon (Note. wrong units), Right ones: H?ltt? et al. 2009 Table 2
 common_p[1,5]<-4.14	# b.s
@@ -296,6 +297,8 @@ save(common_p, file = paste0(data.direct, "/common_p.RData"))
 ## Repola
 ######
 
+# Equation's from J Repola, 2009
+
 repo_p <- data.frame(matrix(ncol = 5, nrow = 1))
 repo_p[1,1]<--6.303 # b0.repo
 repo_p[1,2]<-14.472 # b1.repo
@@ -312,15 +315,7 @@ leap_years <- c(1952, 1956, 1960, 1964, 1968, 1972, 1976, 1980, 1984, 1988, 1992
 save(leap_years, file = paste0(data.direct, "/leap_years.RData"))
 
 ######
-## Weather data for Hyde data between 2010 and 2019
+## Weather data for Hyde data between 2010 and 2019 - Timeseries data generated from the SPP model
 ######
 
-inputdirectory <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/Research Assistant/CASSIA/Input/"
-files <- list.files(path = inputdirectory, pattern = "Hyde_enfact")
-files <- paste0(inputdirectory, files)
-Hyde_weather.list <- lapply(files, read.table, header=TRUE, sep="\t", col.names=c("T","P","TSA","TSB", "MB", "Rain"))
-Hyde_weather <- do.call("rbind", Hyde_weather.list)
-Hyde_weather$date <- seq(as.POSIXct(as.character("2010-01-01")), as.POSIXct(as.character("2019-12-31")), by = "day")
-Hyde_weather$date <- substring(Hyde_weather$date, 1, 10)
-Hyde_weather <- Hyde_weather[,c("date","T","P","TSA","TSB", "MB", "Rain")]
-save(Hyde_weather, file = paste0(data.direct, "/Hyde_weather.RData"))
+# Included in the data, but RData generation done locally so not included in this file.

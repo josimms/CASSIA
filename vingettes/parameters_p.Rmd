@@ -23,58 +23,116 @@ colnames(parameters_p)
 
 | Parameter Name   | Meaning   | Reference |
 |:----------------:|:---------:|:---------:|
-|Q10.N             |           |           |
-|Rm.NR            |||
-|Q10.S            |||
-|Rm.S             |||
-|Q10.R            |||
-|Rm.R             |||
-|sR0              |||
-|sRc              |||
-|growth.myco      |||
-|root.lifetime    |||
-|HH0              |||
-|sH0              |||
-|LH               |||
-|LH0              |||
-|sHc              |||
-|sN0              |||
-|LN               |||
-|LN0              |||
-|sNc              |||
-|HN0              |||
-|sD0.Trad         |||
-|LD               |||
-|LD0              |||
-|sDc              |||
-|sDc.T.count      |||
-|tau.Ee           |||
-|tau.El           |||
-|tau.We           |||
-|tau.Wl           |||
-|tau.GPP          |||
-|Uggla            |||
-|sB0              |||
-|sBc              |||
-|LB               |||
-|cell.d.ew        |||
-|cell.d.lw        |||
-|cell.l.ew        |||
-|cell.l.lw        |||
-|cell.wall.density.ew  |||
-|cell.wall.density.lw  |||
-|wall.thickness.ew     |||
-|wall.thickness.lw     |||
-|cell.volumn.growth.per.day.ew  |||
-|cell.volumn.growth.per.day.lw  |||
-|density_tree                   |||
-|carbon_share                   |||
-|D0                             |||
-|h0                             |||
-|n_age                          |||
-|n_lenght                       |||
-|h_increment                    |||
-|SLA                            |||
+|Q10.N            | Change in needle respiration at 10'C difference | Schiestl-Aalto 2015 |
+|Rm.N             | Maintanaince respiration needles | Schiestl-Aalto 2015 |
+|Q10.S            | Change in woody respiration at 10'C difference | Schiestl-Aalto 2015 |
+|Rm.S             | Maintainance respiration ... | Schiestl-Aalto 2015 |
+|Q10.R            | Change in root respiration at 10'C difference | Schiestl-Aalto 2015 |
+|Rm.R             | Maintainance respiraton roots | Schiestl-Aalto 2015 |
+|sR0              |The ontogenetic development stage of root biomass fraction initial position|Schiestl-Aalto 2015|
+|sRc              |The ontogenetic development stage of root biomass fraction last position|Schiestl-Aalto 2015|
+|growth.myco      |Percentage of photosynthates go to mycorrhiza|Schiestl-Aalto 2019|
+|root.lifetime    |Lettosuo root lifetime|Lettosuo parameterisation|
+|HH0              |Length growth initial value mm|Schiestl-Aalto 2015|
+|sH0              | The ontogenetic development stage of height biomass fraction initial poisition |Schiestl-Aalto 2015|
+|LH0              |Daily maximum height growth|Schiestl-Aalto 2015|
+|sHc              |The ontogenetic development stage of height biomass fraction last poisition |Schiestl-Aalto 2015|
+|sN0              |The ontogenetic development stage of needle biomass fraction first position |Schiestl-Aalto 2015|
+|LN0              |Daily maximum needle growth|Schiestl-Aalto 2015|
+|sNc              |The ontogenetic development stage of needle biomass fraction last position |Schiestl-Aalto 2015|
+|HN0              |Length growth initial value mm|Schiestl-Aalto 2015|
+|sD0.Trad         |The ontogenetic development stage of diameter biomass fraction initial position (Trad refers to the old method, sD.estim.T.count == F) |Schiestl-Aalto 2015|
+|LD0              |Daily maximum secondary growth|Schiestl-Aalto 2015|
+|sDc              |The ontogenetic development stage of diameter biomass fraction last position|Schiestl-Aalto 2015|
+|tau.Ee           |Duration of tracheid enlargement earlywood|Schiestl-Aalto 2015|
+|tau.El           |Duration of tracheid enlargement latewood|Schiestl-Aalto 2015|
+|tau.We           |Duration of secondary cell wall enlargement early wood|Schiestl-Aalto 2015|
+|tau.Wl           |Duration of secondary cell wall enlargement early wood|Schiestl-Aalto 2015|
+|tau.GPP          |Dapening factor for GPP|Schiestl-Aalto 2015|
+|Uggla            ||Xylogenesis|
+|sB0              |The ontogenetic development stage of bud biomass fraction initial position|Schiestl-Aalto 2015|
+|sBc              |The ontogenetic development stage of bud biomass fraction last position|Schiestl-Aalto 2015|
+|cell.d.ew        |Early wood cell diameter|Schiestl-Aalto 2015|
+|cell.d.lw        |Late wood cell diameter|Schiestl-Aalto 2015|
+|cell.l.ew        |Early wood cell length|Schiestl-Aalto 2015|
+|cell.l.lw        |Late  wood cell length|Schiestl-Aalto 2015|
+|cell.wall.density.ew  ||Xylogenesis|
+|cell.wall.density.lw  ||Xylogenesis|
+|wall.thickness.ew     ||Xylogenesis|
+|wall.thickness.lw     ||Xylogenesis|
+|cell.volumn.growth.per.day.ew  ||Xylogensis|
+|cell.volumn.growth.per.day.lw  ||Xylogensis|
+|density_tree                   |Tree density|Schiestl-Aalto 2015|
+|carbon_share                   |Mean carbon for entire tree|Schiestl-Aalto 2015|
+|D0                             |Mean stem diameter at 1.3 m|Schiestl-Aalto 2015|
+|h0                             |Dominant hieght|Schiestl-Aalto 2015|
+|n_age                          |Mean needle age|Schiestl-Aalto 2015|
+|n_lenght                       |Mean needle length|Schiestl-Aalto 2015|
+|h_increment                    |Height increment|Schiestl-Aalto 2015|
+|SLA                            |Surface Leaf Area|Not currently working|
+
+```{r setup}
+library(CASSIA)
+dim(ratios_p)
+colnames(ratios_p)
+```
+
+| Parameter Name   | Meaning   | Reference |
+|:----------------:|:---------:|:---------:|
+| form_factor      | Controls the cylindrical equation that models secondary wood biomass | 2015 |
+| needle_fineroot_ratio | Difference in biomass between organs used for growth equations | 2015 |
+| spawood.share | The reduction of maintenance respiration due to shortage of stored carbon | 2015 |
+| height_growth_coefficient | Coefficient to represent the mean growth at Hyytiälä | TODO |
+| diameter_growth_coefficient | Coefficient to represent the mean growth at Hyytiälä | TODO |
+| height_growth_coefficient_min | Coefficient to represent the growth at Hyytiälä 1997 | TODO |
+| height_growth_coefficient_max | Coefficient to represent the growth at Hyytiälä 2020 | TODO |
+| diameter_growth_coefficient_min | Coefficient to represent the growth at Hyytiälä 1997 | TODO |
+| diameter_growth_coefficient_max | Coefficient to represent the growth at Hyytiälä 2020| TODO |
+
+
+```{r setup}
+library(CASSIA)
+dim(sperling_p)
+colnames(sperling_p)
+```
+
+| Parameter Name   | Meaning   | Reference |
+|:----------------:|:---------:|:---------:|
+| starch0 | Initial starch value | Schiestl-Aalto 2019|
+| sugar0 | Initial sugar value | Schiestl-Aalto 2019 |
+| starch.needles0 | Initial starch value needles ||
+| starch.phloem0 | Initial starch value phloem ||
+| starch.xylem.sh0 | Initial starch value shoot xylem ||
+| starch.xylem.st0 | Initial starch value stem xylem ||
+| starch.roots0 | Initial starch value roots ||
+| suagr.needles0 | Initial sugar value needles ||
+| suagr.phloem0 | Initial sugar value phloem ||
+| suagr.xylem.sh0 | Initial sugar value shoot xylem ||
+| suagr.xylem.st0 | Initial sugar value stem xylem ||
+| suagr.roots0 | Initial sugar value roots ||
+| Wala | | Schiestl-Aalto 2019 | # TODO: understand this!
+| carbon.sugar | The amount of carbon that is in sugar | Schiestl-Aalto 2019 |
+| carbon.starch | The amount of carbon that is in starch | Schiestl-Aalto 2019 |
+| tau.t | Dampenning parameters for starch transfer if values are too low and emergency starch is needed in sperling for every step in original | Schiestl-Aalto 2019|
+| tau.s | Dampenning parameters for sugar transder for every step in the original model, not in sperling model| Schiestl-Aalto 2019 |
+| starch00 | Initial starch value used when the model doesn't change starch initial condition on a yearly basis | Schiestl-Aalto 2019 |
+| sugar00 | Initial sugar value used when the model doesn't change suagr initial condition on a yearly basis | Schiestl-Aalto 2019 |
+| Q10s | Change in starch synthesis at 10'C difference | Sperling 2019 |
+| Q10d | Change in starch degradation at 10'C difference | Sperling 2019 |
+| SCb | The level of sugar the phloem needs to cross to trigger bud burst | Sperling 2019 |
+| sugar.level | Simple sugar model equilibrium point | Schiestl-Aalto 2019 |
+| Ad0 | Initial starch degradation frequency factor | Sperling, 2019 |
+| lamda | Natural decay rate of proteins | Sperling, 2019 |
+| delta | Additional expression | Sperling, 2019 |
+| k_np | Concentration difference between sugar in needles and phloem |  |
+| k_pr | Concentration difference between sugar in phloem and roots ||
+| p_pxsh | Concentration difference between sugar in phloem and shoot xylem ||
+| p_pxst | Concentration difference between sugar in phloem and stem xylem ||
+| myco.thesh | The percentage of sugar that goes to mycorrhiza | |
+
+
+
+
 
 
 

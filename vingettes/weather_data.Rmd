@@ -1,0 +1,24 @@
+## Weather Data
+
+```{r}
+summary(Hyde_weather)
+```
+
+As can be seen from the sample of the Hyde_weather data set above there are 7 columns.
+There must not be NAs in the input, otherwise the model will output an error.
+
+The columns are
+- Date in Year-Month-Day format
+- Daily mean temperature, degree C
+- Daily photosynthesis from a model such as SPP, kg C
+- Daily mean temperature for the soil at horizon A, degree C
+- Daily mean temperature for the soil at horizon B, degree C
+- Daily soil moisture, m3 m-3
+- Daily sum of precipitation, mm
+
+These values are used for the main structure of the model as well as in the PRELES_GPP file, where photosynthesis is reestimated.
+
+All values can be gathered directly from field data apart from photosynthesis which needs to be calculated. Traditionally it has been calculated with SPP a light-interception and stand-structure driven ecosystem model (1), as in the case of the Hyde_weather dataset, although other models can be used as long as the input matches the above units. 
+
+(1) Original model paper: Mäkelä, Annikki, et al. "Modelling five years of weather-driven variation of GPP in a boreal forest." Agricultural and Forest Meteorology 139.3-4 (2006): 382-398.
+
