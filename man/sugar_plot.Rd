@@ -6,7 +6,7 @@
   This function plots the output of the CASSIA model for sugar values quickly. Bloom value and expected equilibrium are also ploted.
 }
 
-\inputs{
+\arguments{
   \item{CASSIA_out}{
     This is the complete output of CASSIA
   }
@@ -16,10 +16,10 @@
   \item{SCb}{
     The concentration of sugar that should be crossed by the phloem to trigger bud burst.
    }
-    
+
 }
 
-\output{
+\value{
   This function doesn't return any values. It simply draws the graph.
 }
 

@@ -6,7 +6,7 @@
   A function to impliment the repola growth equations.
 }
 
-\input{
+\arguments{
   \item{D0}{
     Initial diameter.
   }
@@ -30,7 +30,7 @@
   }
 }
 
-\output{
+\value{
   repola_p, a list with four components. \cr
   1. "needle_mass" \cr
   2. "m.N.tot" \cr

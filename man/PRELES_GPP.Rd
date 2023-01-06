@@ -3,7 +3,7 @@
 
 \title{PRELES_GPP function. An adaptation of the PRELES function from the Rprebasso package}
 
-\inputs{
+\arguments{
   \item{photoparameters}{
     Options of p values for the PRELES function and the growth_photo_coef. \cr
     1 uses the normal vector, growth_photo_coef = 1 \cr
@@ -31,7 +31,7 @@
   }
 }
 
-\outputs{
+\value{
   The outputs are a list of daily photosynthesis calculated by PRELES with the determined conditions and the growth_photo_coefficient.
 }
 

@@ -141,9 +141,7 @@ parameters_p[41,]<-c(2.61*10^-6,3.1*10^-6) # wall.thickness.ew
 parameters_p[42,]<-c(5.23*10^-6,3.88*10^-6) # wall.thickness.lw
 
 # Comes from cell volume / tauE
-# 
-
-: this is part of the equations for pine, should check this for spruce as well
+# this is part of the equations for pine, should check this for spruce as well
 parameters_p[43,] <- c(NA, 5.49*10^-13) # cell.volume.growth.per.day.ew
 # Comes from cell volume / tauE
 parameters_p[44,] <- c(NA,4.62*10^-13)  # cell.volume.growth.per.day.lw
