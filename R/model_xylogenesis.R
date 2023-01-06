@@ -1,4 +1,6 @@
-model_xylogenesis = function(g.sD.T, LD, fD, storage_reduction) {
+#' @export
+ 
+model_xylogenesis = function(g.sD.T, LD, fD, storage_reduction, environment_effect_xylogenesis, Temp) {
   # TODO: make this function operational with all inputs
 
   GD <- g.sD.T * fD * LD	* storage_reduction					# Daily potential number of new cells per day (in one radial cell row), used to be called division
@@ -138,7 +140,7 @@ model_xylogenesis = function(g.sD.T, LD, fD, storage_reduction) {
     ring_density = cumsum(CW * n.W)[365] / (ew_cells[365] * cell.d.ew^2 * cell.l.ew + lw_cells[365] * cell.d.lw^2 * cell.l.lw)
 
     ew_cells = max(ew_cells)
-    lw_cells = max (lw_cells)
+    lw_cells = max(lw_cells)
   }
 
   list_xylogenesis = list("GD" = GD, "tot.cells" = tot.cells, "n.E" = n.E, "n.W" = n.W, "n.M" = n.M, "ew_cells" = ew_cells, "lw_cells" = lw_cells,
@@ -147,6 +149,7 @@ model_xylogenesis = function(g.sD.T, LD, fD, storage_reduction) {
                           "cell_wall_thickness" = cell_wall_thickness, "cell_density" = cell_density, "ring_density" = ring_density)
 
 
+  # TODO: should this return the list? Should the list be different depending on the enviromental conditions?
 }
 
 

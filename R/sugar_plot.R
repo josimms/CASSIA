@@ -1,3 +1,4 @@
+#' @export
 sugar_plot <- function(CASSIA_out, site, SCb = sperling_p[c("SCb"), c(site)]) {
   CASSIA_sugar <- CASSIA_out[[1]]
   CASSIA_sugar$date <- as.POSIXct(as.character(CASSIA_sugar$date), format = "%Y-%m-%d")
