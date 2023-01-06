@@ -4,9 +4,9 @@
 
 \description{
   Function that contains the xylogenesis effect of the model. \cr
-  
+
   Not yet integrated into the CASSIA model. \cr
-  
+
   TODO: should have a deeper explaination when it is actualy included in the model and when hte function itself is finished.
 }
 \arguments{
@@ -97,7 +97,7 @@ storage_reduction, osmotic.sugar.conc, M.suc, gas.const, abs_zero,
 }
 
 \references{
-  
+
 }
 
 \author{
