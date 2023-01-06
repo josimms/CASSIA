@@ -1,3 +1,4 @@
+#' @export
 repola <- function(D0, h0, n.year, needle_mas = needle_mass, ste = site, params = parameters, reps = repo) {
   if ((ste %in% c("Hyde", "Lettosuo")) == F) {stop("Unknown site: Please pick between Hyde and Lettosuo")}
 

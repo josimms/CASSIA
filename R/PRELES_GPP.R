@@ -1,3 +1,4 @@
+#' @export
 PRELES_GPP <- function(photoparameters, Temp, PF, Tsa, Tsb, M.soil, Rain) {
   # Preles-parameters
   preles_parameters = c(

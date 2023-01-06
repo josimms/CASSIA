@@ -1,9 +1,10 @@
+#' @export
+
 CASSIA <- function(
     #####
     ## Weather Inputs - input in a dataframe with date, temperature, Photosynthesis, soil temperature a and b horizon, soil moisture and precipitation
     #####
-    # TODO: is this a sensible input?
-
+    
     weather,
 
     #####
@@ -83,10 +84,6 @@ CASSIA <- function(
     if (mychorrhiza == T) {
       mychorrhiza = FALSE
       warning("Mycorrhiza has been changed to mycorrhiza = FALSE as mycorrhiza is included explicitly in the Sperling submodel")
-    }
-    if (growth.myco == T) {
-      growht.myco = FALSE
-      warning("growht.myco has been changed to growht.myco = FALSE for your information, it is not included in the sperling_model")
     }
   } else {
     if (phloem.trigger == T) {phloem.trigger == F}
@@ -1042,7 +1039,6 @@ CASSIA <- function(
           sperling[c("Ad0.xylem.st"),c(site)] = Ad.xylem.st[n.days]
         }
       }
-
     }
 
     ########### Total growth and carbon consumption
@@ -1050,17 +1046,23 @@ CASSIA <- function(
     root.tot.growth <- if (sperling_model == FALSE) storage_term * root.pot.growth else {storage_term_roots * root.pot.growth}
     height.tot.growth <- if (sperling_model == FALSE) storage_term * height.pot.growth else height.pot.growth * (0.082179938 * storage_term_phloem + 0.821799379 * storage_term_xylem.st + 0.096020683 * storage_term_xylem.sh)
     needle.tot.growth <- if (sperling_model == FALSE) storage_term * needle.pot.growth else storage_term_needles * needle.pot.growth
-    wall.tot.growth <- if (sperling_model == FALSE & xylogenesis == FALSE) {storage_term * wall.pot.growth}
-    # TODO: This should be done with xylogenesis using starch storage, make xylogenesis a seperate function
-    else if (sperling_model == FALSE & xylogenesis == TRUE) {list_xylogenesis$wall.growth}
-    else {wall.pot.growth * (0.082179938 * storage_term_phloem + 0.821799379 * storage_term_xylem.st + 0.096020683 * storage_term_xylem.sh)}
+    wall.tot.growth <- if (sperling_model == FALSE & xylogenesis == FALSE) {
+      storage_term * wall.pot.growth # TODO: This should be done with xylogenesis using starch storage, make xylogenesis a seperate function
+    } else if (sperling_model == FALSE & xylogenesis == TRUE) {
+      list_xylogenesis$wall.growth
+    } else {
+      wall.pot.growth * (0.082179938 * storage_term_phloem + 0.821799379 * storage_term_xylem.st + 0.096020683 * storage_term_xylem.sh)
+    }
     bud.tot.growth <- if (sperling_model == FALSE) storage_term * bud.pot.growth else storage_term_needles * bud.pot.growth
     # These shouldn't be for intervdal
     average_storage <- (storage_term_needles+storage_term_phloem+storage_term_roots + storage_term_xylem.sh + storage_term_xylem.sh)/5
-    GD.tot <-  if (sperling_model == FALSE & xylogenesis == FALSE) {storage_term * GD}
-    # TODO: This should be done with xylogenesis using starch storage, make xylogenesis a seperate function
-    else if (sperling_model == FALSE & xylogenesis == TRUE) {list_xylogenesis$GD}
-    else if (sperling_model == TRUE & xylogenesis == FALSE) {GD * average_storage} # Average from all of the organs
+    GD.tot <-  if (sperling_model == FALSE & xylogenesis == FALSE) {
+      storage_term * GD # TODO: This should be done with xylogenesis using starch storage, make xylogenesis a seperate function
+    } else if (sperling_model == FALSE & xylogenesis == TRUE) {
+      list_xylogenesis$GD
+    } else if (sperling_model == TRUE & xylogenesis == FALSE) {
+      GD * average_storage
+    } # Average from all of the organs
     Rm.tot <- if (sperling_model == FALSE) storage_term_Rm * Rm.a else storage_term_roots * RmR + storage_term_needles * RmN + 0.082179938 * storage_term_phloem * RmS + 0.821799379 * storage_term_xylem.st * RmS + 0.096020683 * storage_term_xylem.sh * RmS
     RmR.tot <- if (sperling_model == FALSE) storage_term_Rm * Rm.a else storage_term_roots * RmR
 
@@ -1291,16 +1293,15 @@ CASSIA <- function(
   out <- list(export_daily, export_yearly)
   names(out) <- c("Daily", "Yearly")
 
-
   return(out)
 }
 
 
-# sperling_2018 <- sperling_p
-# sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
+#sperling_2018 <- sperling_p
+#sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
 #                           0.034, 0.166, # as no data for 2018, used 2015 data
 #                           0.057, 0.2088, 0.4, 0.1, # 2018
-#                         0.0249, 0.021) # as no data for 2018, used 2015 data
+#                           0.0249, 0.021) # as no data for 2018, used 2015 data
 #sperling_2018_bayes <- sperling_2018
 #CASSIA_cali <- CASSIA(Hyde_weather[2923:3652,], "Hyde", sperling_model = TRUE,
 #                      mychorrhiza = FALSE, storage.reset = FALSE, phloem.trigger = T,
