@@ -4,7 +4,7 @@ CASSIA <- function(
     #####
     ## Weather Inputs - input in a dataframe with date, temperature, Photosynthesis, soil temperature a and b horizon, soil moisture and precipitation
     #####
-    
+
     weather,
 
     #####
@@ -1055,7 +1055,7 @@ CASSIA <- function(
     }
     bud.tot.growth <- if (sperling_model == FALSE) storage_term * bud.pot.growth else storage_term_needles * bud.pot.growth
     # These shouldn't be for intervdal
-    average_storage <- (storage_term_needles+storage_term_phloem+storage_term_roots + storage_term_xylem.sh + storage_term_xylem.sh)/5
+    average_storage <- if (sperling_model == FALSE) storage_term else (storage_term_needles+storage_term_phloem+storage_term_roots + storage_term_xylem.sh + storage_term_xylem.sh)/5
     GD.tot <-  if (sperling_model == FALSE & xylogenesis == FALSE) {
       storage_term * GD # TODO: This should be done with xylogenesis using starch storage, make xylogenesis a seperate function
     } else if (sperling_model == FALSE & xylogenesis == TRUE) {
