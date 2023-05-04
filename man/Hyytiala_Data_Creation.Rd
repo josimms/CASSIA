@@ -25,6 +25,7 @@
   Outputs a dataframe with the format / headers needed for CASSIA. \cr
   fAPAR is set to 0.7, unless a file is submitted to the contrary. \cr
   Data could still have NA values, so make sure you check! Should also alert you! \cr
+  See FMI for the missing data. \cr
   Note! You can also look at the code to see the formatting needed for CASSIA to work.
 }
 
