@@ -17,9 +17,9 @@ TODO: add more I am not aware of any more projects
 ### Downloading Package for Use
 
 ```{r}
-install.packages("githubinstall")  # source: https://github.com/hoxo-m/githubinstall
-library(githubinstall)
-githubinstall("CASSIA")
+install.packages("devtools")  # source: https://github.com/hoxo-m/githubinstall
+library(devtools)
+install_github("josimms/CASSIA")
 ```
 
 ### Example
