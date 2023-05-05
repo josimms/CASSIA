@@ -31,6 +31,8 @@ library(CASSIA)
 CASSIA(weather = Hyde_weather, site = "Hyde")
 ```
 
+Hyde_weather is included in the package, and another function is included Hyde_Data_Creation, which could be used as a reference for building your own weather data.
+
 Here the argument for mychorrhiza has been changed to FALSE (default is TRUE). Now mychorrhiza settings will be taken into account when the model is running. To see all of the possible processes that are considered in the model look to the CASSIA function documentation. This also provides the initial conditions and settings of the model. The formatting and inputs are also listed here and should be considered.
 
 ```{r}
