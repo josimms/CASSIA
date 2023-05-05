@@ -1,8 +1,7 @@
 #' @export
-
-Hyytiala_Data_Creation <- function(raw.directory = "/home/joanna/Asiakirjat/Hyytiälä/",
-                                   year_start = 2010,
-                                   year_end = 2022,
+Hyytiala_Data_Creation <- function(raw.directory,
+                                   year_start,
+                                   year_end,
                                    download = F,
                                    clean_data = F,
                                    save = T) {
@@ -85,6 +84,7 @@ Hyytiala_Data_Creation <- function(raw.directory = "/home/joanna/Asiakirjat/Hyyt
       multi <- (24 - 1) * (x) + 1
       return(multi)
     }
+
     # Unit correction, µmol m⁻² s⁻¹ to sum mmol m⁻² day-1
     all.daily.sum$PAR <- 0.000001 * 24 * second_multiplier(Daily_Missing$Percentage) * all.daily.sum$PAR
     all.daily.sum$Glob <- 0.000001 * 24 * second_multiplier(Daily_Missing_Glob$Percentage) * all.daily.sum$Glob
