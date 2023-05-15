@@ -10,6 +10,11 @@ Hyytiala_Data_Creation <- function(raw.directory,
   # Download the data from the SMEAR database
   ####
 
+  raw.directory = "/home/joanna/Asiakirjat/Hyytiälä/"
+  year_start = 2010
+  year_end = 2022
+
+
   if (download) {
     http.origin = "https://smear-backend.rahtiapp.fi/search/timeseries/csv?tablevariable=HYY_"
     for (variable in c(paste0("META.", c("RH672", "RH1250", "PAR", "CO2168", "T336", "T168", "Precip", "tsoil_5", "tsoil_10", "wsoil_B1", "Glob", "Pamb336")), "EDDY233.GPP")) {
@@ -62,7 +67,9 @@ Hyytiala_Data_Creation <- function(raw.directory,
                          "Precip", "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2")
     all_data$Date <- as.Date(paste(RH672$Year, RH672$Month, RH672$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
     # Make into daily values!
-    all.daily = aggregate(cbind(RH672, RH1250, CO2168, T336, T168, tsoil_5, tsoil_10, wsoil_B1, wsoil_B2) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
+    all.daily = aggregate(RH672 ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
+    all.daily = aggregate(cbind(RH1250, CO2168, T336, T168) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
+    all.daily.2 = aggregate(cbind(tsoil_5, tsoil_10, wsoil_B1, wsoil_B2) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
     # µmol m⁻² s⁻¹
     all.daily$GPP = aggregate(HYY_EDDY233.GPP ~ Date, data = GPP, mean, na.rm = T, na.action = NULL)$HYY_EDDY233.GPP
     all.daily.sum = aggregate(cbind(PAR, Precip) ~ Date, data = all_data, sum, na.action = NULL)
@@ -108,8 +115,8 @@ Hyytiala_Data_Creation <- function(raw.directory,
     # If the gap is smaller than 6 days apply linear interpolation
     all.gapfill[,-1] <- zoo::na.approx(all.gapfill[,-1], na.rm = F, maxgap = 6)
 
-    data_format = all.gapfill[,c("Date", "T168", "tsoil_5", "tsoil_10", "wsoil_B1", "Precip", "PAR", "CO2168")]
-    names(data_format) = c("Date", "T", "TSA", "TSB", "MB", "Rain", "PAR", "CO2")
+    data_format = all.gapfill[,c("Date", "T168", "tsoil_5", "tsoil_10", "wsoil_B1", "Precip", "PAR", "CO2168", "RH672")]
+    names(data_format) = c("Date", "T", "TSA", "TSB", "MB", "Rain", "PAR", "CO2", "RH")
     data_format$VPD <- bigleaf::rH.to.VPD(0.01*all.gapfill$RH672, all.gapfill$T168) # VPD
     data_format$fAPAR <- rep(0.7, nrow(data_format)) # fAPAR
 
