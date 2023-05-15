@@ -54,6 +54,7 @@ CASSIA <- function(
     root_as_Ding = TRUE,
 
     sperling_model = FALSE,       # Dynamic sugar model using Sperling's enzyme dynamics
+    myco_model = FALSE,           # Joanna's mycomodel development!
     xylogenesis = FALSE,
 
     PRELES_GPP = FALSE,
@@ -66,6 +67,8 @@ CASSIA <- function(
 
     s.D0 = 79,					# DOY to start the calculation of temperature sum, 1=Jan 1; 69=March 1; 79=March 20 for diameter growth. Valid for Finland
     s.H0 = 1,					# and for shoot grwoth
+
+    growth_photo_coef = 1,
 
     tests = FALSE ## Means that the development tests are on
 ) {
@@ -294,9 +297,9 @@ CASSIA <- function(
 
     # CO2, VPD and PAR preles
 
-    growth_photo_coef <- 1
+    growth_photo_coef
     if (PRELES_GPP == TRUE) {
-      growth_photo_coef = PRELES_GPP(photoparameters, Temp, PF, Tsa, Tsb, M.soil, Rain)
+      growth_photo_coef = PRELES_GPP(photoparameters, growth_photo_coef, Temp, PF, Tsa, Tsb, M.soil, Rain)
     }
 
     # Initalising the basic values for these variables
