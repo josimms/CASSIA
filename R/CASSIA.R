@@ -83,6 +83,17 @@ CASSIA <- function(
   # Check that the sites are within the sites allowed
   if ((site %in% c("Hyde", "Lettosuo", "Flakaliden_c")) == F) {stop("Unknown site: Please pick between Hyde and Lettosuo")}
 
+  if (myco_model == TRUE) {
+    if (sperling_model == F) {
+      sperling_model = TRUE
+      warning("sperling_model has been changed to sperling_model = TRUE as the Sperling submodel should control the allocation")
+    }
+    if (PRELES_GPP == F) {
+      PRELES_GPP == TRUE
+      warning("PRELES_GPP has been changed to PRELES_GPP = TRUE as PRELES should control the nitrogen effect")
+    }
+  }
+
   if (sperling_model == TRUE) {
     if (mychorrhiza == T) {
       mychorrhiza = FALSE
@@ -273,13 +284,16 @@ CASSIA <- function(
 
     ## Weather inputs for the year are in vector form
 
-    Temp <- PF <- Tsa <- Tsb <- M.soil <- Rain <- NULL
+    Temp <- PF <- Tsa <- Tsb <- M.soil <- Rain <- PAR <- VPD <- CO2 <- NULL
     Temp <- weather[substring(weather$date, 1, 4) == year, c("T")]		    # Temperature, C
-    PF <- weather[substring(weather$date, 1, 4) == year, c("P")]            # g C m-2 day-1
+    PF <- weather[substring(weather$date, 1, 4) == year, c("P")]            # TODO: should be with photosynthesis with PRELES, g C m-2 day-1
     Tsa <- weather[substring(weather$date, 1, 4) == year, c("TSA")]			    # Soil temperature in A-horizon, C
     Tsb <- weather[substring(weather$date, 1, 4) == year, c("TSB")]			    # Soil temperature in B-horizon, C
     M.soil <- weather[substring(weather$date, 1, 4) == year, c("MB")]		# Soil moisture (m3 /m3) in B-horizon
     Rain <- weather[substring(weather$date, 1, 4) == year, c("Rain")]		    # mm day-1
+    PAR <- weather[substring(weather$date, 1, 4) == year, c("PAR")]       # TODO
+    VPD <- weather[substring(weather$date, 1, 4) == year, c("VPD")]       # TODO
+    CO2 <- weather[substring(weather$date, 1, 4) == year, c("CO2")]       # TODO
 
     if (sum(Temp < -30) + sum(Temp > 30) != 0) {warning(paste("Temp < -30 or Tempp > 30 in year", year,  ". Values not impossible, but unlikely check input."))}
     if (sum(PF < -10) + sum(PF > 20) != 0) {warning(paste("PF < -10 or PF > 20 in year", year, ". Values not impossible, but unlikely check input."))}
@@ -296,10 +310,18 @@ CASSIA <- function(
     if (sum(is.na(Rain))) {warning(paste("Rain has NA values check input."))}
 
     # CO2, VPD and PAR preles
-
-    growth_photo_coef
     if (PRELES_GPP == TRUE) {
       growth_photo_coef = PRELES_GPP(photoparameters, growth_photo_coef, Temp, PF, Tsa, Tsb, M.soil, Rain)
+
+      ### growth_photo_coef = PRELES_GPP(photoparameters, growth_photo_coef, Temp, PF, Tsa, Tsb, M.soil, Rain)
+    }
+
+    if (PRELES_GPP == TRUE) {
+      # NOTE! The old PRELES_GPP function still exists, but I have rewritten this section to have just the basic PRELES function as I think it's simplier
+      ## growth_photo_coef = PRELES_GPP(photoparameters, Temp, Rain)
+
+      PF <- Rprebasso::PRELES(PAR = PAR, TAir = Temp, VPD = VPD, Precip = Rain, CO2=CO2, fAPAR=rep(0.85,n.days))$GPP
+
     }
 
     # Initalising the basic values for these variables
