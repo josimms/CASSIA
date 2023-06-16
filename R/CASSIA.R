@@ -16,7 +16,7 @@ CASSIA <- function(
     #####
     ## Parameters
     #####
-    ratio_sugar = c(11, 1/3, 11, 11), # Determins the concentration difference between organs
+    ratio_sugar = c(11, 1/3, 11, 11), # Determines the concentration difference between organs
     tau.myco = 3,
     tau.t.needles = 3,
     tau.t.phloem = 3,
