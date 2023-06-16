@@ -19,3 +19,20 @@ data_format$VPD[is.na(data_format$VPD)] <- bigleaf::rH.to.VPD(0.01*FMI_daily$RH[
 data_format$CO2 <- zoo::na.approx(rep(CO2_average, nrow(data_format)))
 
 save(data_format, file = paste0(raw.directory, "Hyde_weather_CASSIA.RData"))
+
+install.packages("/home/joanna/Asiakirjat/Rprebasso-master/", repos = NULL, type="source")
+
+library(CASSIA)
+
+data_format
+
+hello = Rprebasso::PRELES(PAR = data_format$PAR,
+                          TAir = data_format$T,
+                          VPD = data_format$VPD,
+                          Precip = data_format$Rain,
+                          CO2 = data_format$CO2,
+                          fAPAR = data_format$fAPAR)
+
+plot(hello$GPP)
+
+
