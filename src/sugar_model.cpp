@@ -241,8 +241,8 @@ carbo_balance sugar_model(int day,
       resp.RmN * storage_term.needles -                          // - maintenance respiration (altered by the carbon storage)
       (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) -          // - growth and growth respiration altered by the storage
       // pot_growth.use + pot_growth.release -                                                           // - growth sugar use and + release and to the rest of the organs
-      concentration_gradient.needles_to_phloem; // +                            // - transfer between organs
-      // (Kd.needles - Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass;   // + sperling processes with links to the needles growth process
+      concentration_gradient.needles_to_phloem +                            // - transfer between organs
+      (Kd.needles - Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass;   // + sperling processes with links to the needles growth process
 
     // coefficients are from mass ratio in starch and sugar 2015 xls
     sugar.phloem = sugar.phloem -
@@ -251,27 +251,27 @@ carbo_balance sugar_model(int day,
       concentration_gradient.needles_to_phloem -                             // transfer between organs
       concentration_gradient.phloem_to_roots -                                 // transfer between organs
       concentration_gradient.phloem_to_xylem_sh -
-      concentration_gradient.phloem_to_xylem_st;// +
-      // (Kd.phloem - Ks.phloem) * parameters.carbon_sugar * 0.001 * 7.4;
+      concentration_gradient.phloem_to_xylem_st +
+      (Kd.phloem - Ks.phloem) * parameters.carbon_sugar * 0.001 * 7.4;
 
     sugar.roots = sugar.roots +
       concentration_gradient.phloem_to_roots -        // transfer between organs
       concentration_gradient.roots_to_myco -                                         // transfer between organs, no multiplier as this is for mycorhiza and the model just takes the extra sugar
-      // (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8 -
+      (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8 -
       (1 + common.Rg_R) * storage_term.roots * pot_growth.roots -               // growth
       resp.RmR * storage_term.roots;                                                // maintenance respiration);
 
     sugar.xylem_sh = sugar.xylem_sh -
       0.096020683 * resp.RmS * storage_term.xylem_sh -                                   // maintenance respiration
       0.096020683 * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +    // growth
-      concentration_gradient.phloem_to_xylem_sh; // +
-      // (Kd.xylem_sh - Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * 2.8;
+      concentration_gradient.phloem_to_xylem_sh +
+      (Kd.xylem_sh - Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * 2.8;
 
     sugar.xylem_st = sugar.xylem_st -
       0.821799379 * resp.RmS * storage_term.xylem_st -                                // maintenance respiration
       0.821799379 * (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height) +  // growth
-      concentration_gradient.phloem_to_xylem_st; // +
-      // (Kd.xylem_st - Ks.xylem_st) * parameters.carbon_sugar * 0.001 * 2.8;
+      concentration_gradient.phloem_to_xylem_st +
+      (Kd.xylem_st - Ks.xylem_st) * parameters.carbon_sugar * 0.001 * 2.8;
 
     sugar.mycorrhiza = concentration_gradient.roots_to_myco;
 
@@ -281,11 +281,11 @@ carbo_balance sugar_model(int day,
 
     // SPERLING MODEL
 
-    starch.needles = starch.needles; // + (- Kd.needles + Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass; // Subtract starch degradation and add synthase to ST
-    starch.phloem = starch.phloem; // + (- Kd.phloem + Ks.phloem) * parameters.carbon_sugar * 0.001 * 7.4; // Subtract starch degradation and add synthase to ST
-    starch.roots = starch.roots; // + (- Kd.roots + Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8; // Subtract starch degradation and add synthase to ST
-    starch.xylem_sh = starch.xylem_sh; //+ (- Kd.xylem_sh + Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * 8.65862069; // Subtract starch degradation and add synthase to starch
-    starch.xylem_st = starch.xylem_st; //+ (- Kd.xylem_st + Ks.xylem_st) * parameters.carbon_sugar * 0.001 * 74.10537931; // Subtract starch degradation and add synthase to starch
+    starch.needles = starch.needles + (- Kd.needles + Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass; // Subtract starch degradation and add synthase to ST
+    starch.phloem = starch.phloem + (- Kd.phloem + Ks.phloem) * parameters.carbon_sugar * 0.001 * 7.4; // Subtract starch degradation and add synthase to ST
+    starch.roots = starch.roots + (- Kd.roots + Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8; // Subtract starch degradation and add synthase to ST
+    starch.xylem_sh = starch.xylem_sh + (- Kd.xylem_sh + Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * 8.65862069; // Subtract starch degradation and add synthase to starch
+    starch.xylem_st = starch.xylem_st + (- Kd.xylem_st + Ks.xylem_st) * parameters.carbon_sugar * 0.001 * 74.10537931; // Subtract starch degradation and add synthase to starch
 
     /*
      * STARCH AND SUGAR UPDATED EMERGANCY MODEL
