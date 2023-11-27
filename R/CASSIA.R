@@ -76,35 +76,31 @@ CASSIA <- function(
   #####
   ## Input tests!
   #####
-  # weather
-  if (ncol(weather) != 7) {stop("Incomplete weather data: variable number incorrect")}
-  if (sum(names(weather) == c("date", "T", "P", "TSA", "TSB", "MB", "Rain")) != 7) {stop("Incomplete weather data - incorrect variables, or named incorrectly")}
-
   # Check that the sites are within the sites allowed
-  if ((site %in% c("Hyde", "Lettosuo", "Flakaliden_c")) == F) {stop("Unknown site: Please pick between Hyde and Lettosuo")}
+  if ((site %in% c("Hyde", "Lettosuo", "Flakaliden_c")) == F) {stop("Unknown site: Please pick between Hyde, Lettosuom and Flakaliden_c")}
 
-  if (myco_model == TRUE) {
-    if (sperling_model == F) {
+  if (myco_model) {
+    if (!sperling_model) {
       sperling_model = TRUE
       warning("sperling_model has been changed to sperling_model = TRUE as the Sperling submodel should control the allocation")
     }
-    if (PRELES_GPP == F) {
+    if (PRELES_GPP) {
       PRELES_GPP == TRUE
       warning("PRELES_GPP has been changed to PRELES_GPP = TRUE as PRELES should control the nitrogen effect")
     }
   }
 
-  if (sperling_model == TRUE) {
-    if (mychorrhiza == T) {
+  if (sperling_model) {
+    if (mychorrhiza) {
       mychorrhiza = FALSE
       warning("Mycorrhiza has been changed to mycorrhiza = FALSE as mycorrhiza is included explicitly in the Sperling submodel")
     }
   } else {
-    if (phloem.trigger == T) {phloem.trigger == F}
+    if (phloem.trigger) {phloem.trigger == F}
     warning("phloem.trigger has be set to FALSE as this feature is only possible with the variability given by the sperling_model.")
   }
 
-  if (xylogenesis == TRUE) {
+  if (xylogenesis) {
     # TODO: this is not set in stone, but fits the initial setup of Lettosuo
     warning("As xylogenesis is TRUE, LN.estim, trees_grow, myorrhiza and phloem.trigger set to FALSE, TRUE, FALSE and FALSE respectively")
     LN.estim = FALSE   # LN depends on the GPP during previous july-august
@@ -112,13 +108,6 @@ CASSIA <- function(
     mycorrhiza = FALSE
     phloem.trigger = FALSE
   }
-
-  # Check size!
-  #if (sum(dim(sperling) == dim(sperling_p)) != 2) {stop("Sperling input is the wrong size!")}
-  #if (sum(dim(parameters) == nrow(parameters_p)) != 2) {stop("Parameters input is the wrong size!")}
-  #if (sum(dim(ratios) == dim(ratios_p)) != 2) {stop("Sperling input is the wrong size!")}
-  #if (sum(dim(common) == nrow(common_p)) != 2) {stop("Parameters input is the wrong size!")}
-  #if (sum(dim(repo) == nrow(repo_p)) != 2) {stop("Parameters input is the wrong size!")}
 
   #####
   ## Model conditions derived from model inputs
@@ -146,9 +135,6 @@ CASSIA <- function(
                              "P", "to_sugar", "to_starch", "Daily.H.tot", "Daily.N.tot", "GD.tot",
                              "sugar.needles", "sugar.phloem", "sugar.xylem.sh", "sugar.xylem.st", "sugar.roots",
                              "starch.needles", "starch.phloem", "starch.xylem.sh", "starch.xylem.st", "starch.roots")
-    if (tests == T) {
-      if (xylogenesis == T) {warning("Line 112: This should not print if xylogenesis is true!")}
-    }
   } else if (xylogenesis == T) {
     export_yearly <- data.frame(matrix(ncol=20, nrow=length(years)))
     export_daily <- data.frame(matrix(ncol=27, nrow=total.days))
@@ -158,9 +144,6 @@ CASSIA <- function(
     names(export_daily) <- c("date", "year", "day", "bud.tot.growth", "wall.tot.growth", "needle.tot.growth", "root.tot.growth", "height.tot.growth",
                              "Rg.tot", "Rm.tot", "height.tot", "wall.tot", "storage", "sugar", "starch", "storage", "to.mycorrhiza", "mycorrhiza.tot",
                              "P", "to_sugar", "to_starch", "daily.consumption", "ring_width", "GD.tot", "n.E.tot", "n.W.tot", "n.M.tot")
-    if (tests == T) {
-      if (sperling_model == T) {warning("Line 127: This should not print if sperling_model is true!")}
-    }
   } else {
     export_yearly <- data.frame(matrix(ncol=16, nrow=length(years)))
     export_daily <- data.frame(matrix(ncol=24, nrow=total.days))
@@ -169,10 +152,6 @@ CASSIA <- function(
     names(export_daily) <- c("date", "year", "day", "bud.tot.growth", "wall.tot.growth", "needle.tot.growth", "root.tot.growth", "height.tot.growth",
                              "Rg.tot", "Rm.tot", "height.tot", "wall.tot", "storage", "sugar", "starch", "storage_term", "to.mycorrhiza", "mycorrhiza.tot",
                              "P", "to_sugar", "to_starch", "Daily.H.tot", "Daily.N.tot", "GD.tot")
-    if (tests == T) {
-      if (sperling_model == T) {warning("Line 140: This should not print if sperling_model is true!")}
-      if (xylogenesis == T) {warning("Line 140: This should not print if xylogenesis is true!")}
-    }
   }
 
   n.days.export <- 0
@@ -244,14 +223,18 @@ CASSIA <- function(
   LAI <- needle_mass <- NULL
   count <- 1
 
-  for (year in if (sperling_model == F) {years} else {rep(years, each = 2)}) {
+  for (year in if (!sperling_model) {years} else {rep(years, each = 2)}) {
 
     n.days <- if (year %in% leap_years) 366 else 365
 
+
+    #####
+    # Working out the needle mass
+    #####
     if (n.year == 1) {
       repol = repola(parameters[c("D0"), c(site)], parameters[c("h0"), c(site)], n.year, needle_mas = NULL, ste = site, params = parameters, reps = repo)
       needle_mass[1] <- repol[[c("needle_mass")]]
-    } else {
+    } else { ### When it is the second year, then the parameters are assumed to go directly from last year (or the constant value)
       repol = repola(parameters[c("D0"), c(site)], parameters[c("h0"), c(site)], n.year, needle_mas = needle_mass, ste = site, params = parameters, reps = repo)
       if (needle_mass_grows==FALSE) {
         needle_mass[n.year]=needle_mass[n.year-1] 		# constant needle mass, needlemass determined in sitespecific parameters (e.g. parameters_hyde.r)
@@ -284,17 +267,32 @@ CASSIA <- function(
 
     ## Weather inputs for the year are in vector form
 
+    ### TODO: Why are these vectors rather than being in a dataframe?
     Temp <- PF <- Tsa <- Tsb <- M.soil <- Rain <- PAR <- VPD <- CO2 <- NULL
     Temp <- weather[substring(weather$date, 1, 4) == year, c("T")]		    # Temperature, C
-    PF <- weather[substring(weather$date, 1, 4) == year, c("P")]            # TODO: should be with photosynthesis with PRELES, g C m-2 day-1
+    PF <- weather[substring(weather$date, 1, 4) == year, c("P")]            # Should be with photosynthesis with PRELES, g C m-2 day-1
     Tsa <- weather[substring(weather$date, 1, 4) == year, c("TSA")]			    # Soil temperature in A-horizon, C
     Tsb <- weather[substring(weather$date, 1, 4) == year, c("TSB")]			    # Soil temperature in B-horizon, C
-    M.soil <- weather[substring(weather$date, 1, 4) == year, c("MB")]		# Soil moisture (m3 /m3) in B-horizon
+    M.soil <- weather[substring(weather$date, 1, 4) == year, c("MB")]		    # Soil moisture (m3 /m3) in B-horizon
     Rain <- weather[substring(weather$date, 1, 4) == year, c("Rain")]		    # mm day-1
-    PAR <- weather[substring(weather$date, 1, 4) == year, c("PAR")]       # TODO
-    VPD <- weather[substring(weather$date, 1, 4) == year, c("VPD")]       # TODO
-    CO2 <- weather[substring(weather$date, 1, 4) == year, c("CO2")]       # TODO
+    PAR <- weather[substring(weather$date, 1, 4) == year, c("PAR")]
+    VPD <- weather[substring(weather$date, 1, 4) == year, c("VPD")]
+    CO2 <- weather[substring(weather$date, 1, 4) == year, c("CO2")]
 
+    # CO2, VPD and PAR preles
+    if (PRELES_GPP) {
+
+      # TODO: what exactly does this do?
+      growth_photo_coef = PRELES_GPP(photoparameters, growth_photo_coef, Temp, PF, Tsa, Tsb, M.soil, Rain)
+
+      # Photosynthesis values from PRELES
+      # g C m-2 day-1
+      PF <- Rprebasso::PRELES(PAR = PAR, TAir = Temp, VPD = VPD, Precip = Rain, CO2=CO2, fAPAR=rep(0.85,n.days))$GPP
+    } else {
+      PF <- weather[substring(weather$date, 1, 4) == year, c("P")]            # Should be with photosynthesis with PRELES, g C m-2 day-1
+    }
+
+    ## TODO Take the checks outside of the loop
     if (sum(Temp < -30) + sum(Temp > 30) != 0) {warning(paste("Temp < -30 or Tempp > 30 in year", year,  ". Values not impossible, but unlikely check input."))}
     if (sum(PF < -10) + sum(PF > 20) != 0) {warning(paste("PF < -10 or PF > 20 in year", year, ". Values not impossible, but unlikely check input."))}
     if (sum(Tsa < -10) + sum(Tsa > 20) != 0) {warning(paste("Tsa < -10 or Tsa > 20 in year", year, ". Values not impossible, but unlikely check input."))}
@@ -308,21 +306,6 @@ CASSIA <- function(
     if (sum(is.na(Tsb))) {warning(paste("Tasb has NA values check input."))}
     if (sum(is.na(M.soil))) {warning(paste("M.soil has NA values check input."))}
     if (sum(is.na(Rain))) {warning(paste("Rain has NA values check input."))}
-
-    # CO2, VPD and PAR preles
-    if (PRELES_GPP == TRUE) {
-      growth_photo_coef = PRELES_GPP(photoparameters, growth_photo_coef, Temp, PF, Tsa, Tsb, M.soil, Rain)
-
-      ### growth_photo_coef = PRELES_GPP(photoparameters, growth_photo_coef, Temp, PF, Tsa, Tsb, M.soil, Rain)
-    }
-
-    if (PRELES_GPP == TRUE) {
-      # NOTE! The old PRELES_GPP function still exists, but I have rewritten this section to have just the basic PRELES function as I think it's simplier
-      ## growth_photo_coef = PRELES_GPP(photoparameters, Temp, Rain)
-
-      PF <- Rprebasso::PRELES(PAR = PAR, TAir = Temp, VPD = VPD, Precip = Rain, CO2=CO2, fAPAR=rep(0.85,n.days))$GPP
-
-    }
 
     # Initalising the basic values for these variables
     B0<-pi/4*parameters[c("D0"), c(site)]^2		# basal area in the beginning
@@ -400,7 +383,7 @@ CASSIA <- function(
       LR <- parameters[c("LR0"), c(site)] / parameters[c("root.lifetime"),c(site)] * growth_photo_coef
     }
 
-    if (root_as_Ding == TRUE) {
+    if (root_as_Ding) {
       fib_coef = 0.25    # 0.25, 2.3  # Determines the proportion of fibrous roots (1 leads to 37 % of fibrous roots, 0.25 to 13 % of fibrous roots and 2.3 to 63 % of fibrous roots)
       sR <- cumsum((1 : n.days) >= 150)   # Growth begins earliest in the end of May
       fR <- ifelse(sR == 0, 0, 1/(1+exp(-0.038014*(sR-56.06243))))      # function determines by stage of development [0,1] (parameters from excel file)
@@ -415,7 +398,7 @@ CASSIA <- function(
       # Carbon to root growth per day (if there's no carbon limitation) (kg C / day)
       GR <- fR * LR * gR
     } else { # TODO: check conditions
-      if (xylogenesis == FALSE) {
+      if (!xylogenesis) {
         gR <- (Tsb > common[[c("TR0")]]) * (1 / (1 + exp(-common[[c("a")]] * ((Tsb - common[[c("TR0")]]) - common[[c("b")]])))) * (1 - 1 / exp(M.soil * 10)) # Temp and M driving the phase of the annual cycle of root growth
       } else {
         soil_moisture_effect <- 1 # TODO: Find the original value
@@ -423,7 +406,6 @@ CASSIA <- function(
       }
       sR <- parameters[c("sR0"), c(site)] + cumsum(gR)										# The phase of the annual cycle of root growth
       fR <- (sR < parameters[c("sRc"), c(site)]) * (sR > 0) * (sin(2 * pi / parameters[c("sRc"), c(site)] * (sR - parameters[c("sRc"), c(site)] / 4)) + 1) / 2	# A function driven by the phase of the annual cycle (annual pattern of growth) [0,1]
-
 
       # Carbon to root growth per day (if there's no carbon limitation) (kg C / day)
       GR <- fR * LR * gR
@@ -484,7 +466,6 @@ CASSIA <- function(
       GD <- g.sD.T * fD * LD	* storage_reduction					# Daily potential number of new cells per day (in one radial cell row), used to be called division
       GD[is.na(GD)] <- 0
       tot.cells <- cumsum(GD)
-
 
       if (environment_effect_xylogenesis == TRUE) {        # Constant duration of enlargement and wall formation - end size depends on water availability, final wall thickness depends on temperature
         temperature_effect_on_wall_formation = (g + 1)/1.5
@@ -770,14 +751,14 @@ CASSIA <- function(
       }
       a.k <- 1 / (1 - 1/exp(sperling[c("alfa"),c(site)] * (W.crit - sperling[c("Wala"),c(site)])))
 
-      if(mychorrhiza == FALSE){
+      if (!mychorrhiza) {
         parameters[c("growth.myco"),c(site)] = 0
       }
 
       root.tot.growth <- height.tot.growth <- needle.tot.growth <- wall.tot.growth <- bud.tot.growth <- GD.tot <- NULL
       root.tot <- height.tot <- needle.tot <- wall.tot <- Daily.H.tot <- Daily.N.tot <- cum.Daily.H.tot <- cum.Daily.N.tot <- wall.tot <- tot.cells.tot <- Rm.tot <- RmR.tot <- NULL
 
-      for(i in 2 : n.days) {
+      for (i in 2 : n.days) {
         storage_term[i] <- max(0 , min(1 , a.k * (1 - 1 / exp(sperling[c("alfa"),c(site)] * (storage[i-1] - sperling[c("Wala"),c(site)])))))
         storage_term_Rm[i] <- if (storage[i-1] < 0.1) 0 else 1
         sugar[i] <- sugar[i-1] + P[i] - en.pot.growth[i] + en.pot.release[i] - storage_term_Rm[i] * Rm.a[i]-
@@ -965,8 +946,8 @@ CASSIA <- function(
 
         to.mycorrhiza[i] <- DF_rm[i]
         # As the tree now has the bucket model I have changed photosynthesis derived allocation to just excess in roots as it should get here from the tree
-        # I am assuming that that this is why photosynthesis was driving it before, it was just a measure of the excess photosynthates
-        # (sH[i] > sHc) * ((sugar.roots[i-1] + starch.roots[i-1]) > optimal.level.myco) * P[i] * growth.myco # belowground allocation
+        # I am assuming that that this is why photosynthesis was driving it before, it was just a measure of the excess photosyntheses
+        # (sH[i] > sHc) * ((sugar.roots[i-1] + starch.roots[i-1]) > optimal.level.myco) * P[i] * growth.myco # below ground allocation
 
         # carbon sugar is used here as the model was in terms of sugar and is being transformed to kg C
         starch.needles[i] <- starch.needles[i-1] + (- Kd.needles[i] + Ks.needles[i]) * sperling[c("carbon.sugar"),c(site)] * 0.001 * needle_mass[n.year] # Subtract starch degradation and add synthase to ST

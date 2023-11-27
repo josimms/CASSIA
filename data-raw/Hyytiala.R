@@ -23,15 +23,18 @@ save(data_format, file = paste0(raw.directory, "Hyde_weather_CASSIA.RData"))
 install.packages("/home/joanna/Asiakirjat/Rprebasso-master/", repos = NULL, type="source")
 
 library(CASSIA)
+library(Rprebasso)
 
 data_format
 
-hello = Rprebasso::PRELES(PAR = data_format$PAR,
-                          TAir = data_format$T,
-                          VPD = data_format$VPD,
-                          Precip = data_format$Rain,
-                          CO2 = data_format$CO2,
-                          fAPAR = data_format$fAPAR)
+hello = PRELES(PAR = data_format$PAR,
+                TAir = data_format$T,
+                VPD = data_format$VPD,
+                Precip = data_format$Rain,
+                CO2 = data_format$CO2,
+                Nitrogen = rep(1, length = nrow(data_format)),
+                fAPAR = data_format$fAPAR,
+                p = c(pPREL, 1, 0))
 
 plot(hello$GPP)
 

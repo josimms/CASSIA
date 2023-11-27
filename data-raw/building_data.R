@@ -1,4 +1,4 @@
-data.direct <- "C:/Users/Käyttäjä/OneDrive - University of Helsinki/CASSIA/Package/CASSIA/data"
+data.direct <- "~/Documents/CASSIA/data"
 
 ######
 ## ratios_p
@@ -16,10 +16,10 @@ ratios_p[2,] <- c(NA,1/2.9) # needle_fineroot_ratio
 ratios_p[3,] <- c(0.8, 0.8) # sapwood.share
 ratios_p[4,] <- c(4.3, 1) # height_growth_coefficient repeated value
 ratios_p[5,] <- c(1.6, 1) # diameter_growth_coefficient repeated value
-ratios_p[6,] <- c(5.5, 1.28) # height_growth_coefficient repeated value max if gorwth decreases
-ratios_p[7,] <- c(3.8, 0.88) # height_growth_coefficient repeated value min if gorwth decreases
-ratios_p[8,] <- c(1.9, 1.19) # diameter_growth_coefficient repeated value max if gorwth decreases
-ratios_p[9,] <- c(1.5, 0.94) # diameter_growth_coefficient repeated value min if gorwth decreases
+ratios_p[6,] <- c(5.5, 1.28) # height_growth_coefficient repeated value max if growth decreases
+ratios_p[7,] <- c(3.8, 0.88) # height_growth_coefficient repeated value min if growth decreases
+ratios_p[8,] <- c(1.9, 1.19) # diameter_growth_coefficient repeated value max if growth decreases
+ratios_p[9,] <- c(1.5, 0.94) # diameter_growth_coefficient repeated value min if growth decreases
 row.names(ratios_p) <- c("form_factor", "needle_fineroot_ratio", "sapwood.share",
                        "height_growth_coefficient", "diameter_growth_coefficient",
                        "height_growth_coefficient_max", "height_growth_coefficient_min",
@@ -41,7 +41,7 @@ save(GPP_ref, file = paste0(data.direct, "/GPP_ref.RData"))
 ######
 ## parameters_p
 ######
-parameters_p <- data.frame(matrix(nrow = 30, ncol = 2))
+parameters_p <- data.frame(matrix(nrow = 56, ncol = 2))
 names(parameters_p) <- c("Hyde", "Lettosuo")
 #### Respiration
 # Needles Q10
@@ -89,7 +89,7 @@ parameters_p[20,] <- c(1, 1) # HN0
 #### Diameter
 # Lettosuo: parameters_p from 2007, 2008 and 2009, L not correct!
 parameters_p[21,] <- c(-3.724083738, -3.5) # sD0.Trad
-parmaeters_p[22,] <- parameters_p[23,] <- c(1.293443902, 1.9) # LD, LD0
+parameters_p[22,] <- parameters_p[23,] <- c(1.293443902, 1.9) # LD, LD0
 parameters_p[24,] <- c(5.077004992, 5.2) # sDc
 parameters_p[25,] <- c(NA, 8.8) # sDc.T.count
 
@@ -115,9 +115,7 @@ parameters_p[32,] <- c(171, 171) # sB0
 parameters_p[33,] <- c(85, 85) # sBc
 parameters_p[34,] <- c(0.005, 0.005) # LB
 
-
 #### Xylogenesis
-
 #### Cell diameters
 # early wood cell diameter Havimo, M. et al. 2008, Silva Fennica (32.4 in Saren et al. 2001: Structural variation of tracheid... Journal of structural biology)
 parameters_p[35,]<-c(35.7*10^-6, 32.1*10^-6) # cell.d.ew
@@ -163,15 +161,40 @@ parameters_p[50,] <- c(34.241, 13) # n_lenght
 parameters_p[51,] <- c(309.0938, 309.0938)# h_increment
 # m2 kg-1 ICOS 2018, half of total needle area / needle mass
 parameters_p[52,] <- c(13, 5.5) # SLA
+parameters_p[53,] <- c(0.07446064, NA) # LR0
 
-parameters_p[53,] <- c(NA, NA) # LR0
+# Repola parameters
+parameters_p[54,] <- c(-6.303, NA) # b0_repo
+parameters_p[55,] <- c(14.472, NA) # b1_repo
+parameters_p[56,] <- c(-3.976, NA) # b2_repo
+
+parameters_p[57,] <- c(0.02, NA) # lower_bound_needles
+parameters_p[58,] <- c(0.03, NA) # lower_bound_phloem
+parameters_p[59,] <- c(0.05, NA) # lower_bound_roots
+parameters_p[60,] <- c(0.03, NA) # lower_bound_xylem_sh
+parameters_p[61,] <- c(0.1, NA) # lower_bound_xylem_sh
+parameters_p[62,] <- c(3, NA) # tau_emergancy_needles
+parameters_p[63,] <- c(3, NA) # tau_emergancy_phloem
+parameters_p[64,] <- c(3, NA) # tau_emergancy_roots
+parameters_p[65,] <- c(3, NA) # tau_emergancy_xylem_sh
+parameters_p[66,] <- c(3, NA) # tau_emergancy_xylem_st
+
+parameters_p[67,] <- c(0.01, NA) # lower_bound_W
+parameters_p[68,] <- c(3, NA) # tau_emergancy
+
+parameters_p[69,] <- c(0.109, NA) # uk_repo TODO
+parameters_p[70,] <- c(0.118, NA) # eki_repo TODO
+parameters_p[71,] <- c(3, NA) # stem_no TODO
 
 row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R", "sR0", "sRc", "growth.myco", "root.lifetime",
 "HH0", "sH0", "LH", "LH0", "sHc", "sN0", "LN", "LN0", "sNc", "HN0", "sD0.Trad", "LD", "LD0", "sDc", "sDc.T.count",
 "tau.Ee", "tau.El", "tau.We", "tau.Wl", "tau.GPP", "Uggla", "sB0", "sBc", "LB",
 "cell.d.ew", "cell.d.lw", "cell.l.ew", "cell.l.lw", "cell.wall.density.ew", "cell.wall.density.lw",
 "wall.thickness.ew", "wall.thickness.lw", "cell.volume.growth.per.day.ew", "cell.volumn.growth.per.day.lw",
-"density_tree", "carbon_share", "D0", "h0", "n_age", "n_lenght", "h_increment", "SLA", "LR0")
+"density_tree", "carbon_share", "D0", "h0", "n_age", "n_lenght", "h_increment", "SLA", "LR0", "b0_repo", "b1_repo", "b2_repo",
+"lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st",
+"tau_emergancy_needles", "tau_emergancy_phloem", "tau_emergancy_roots", "tau_emergancy_xylem_sh", "tau_emergancy_xylem_st",
+"lower_bound_W", "tau_emergancy", "uk_repo", "eki_repo", "stem_no")
 save(parameters_p, file = paste0(data.direct, "/parameters_p.RData"))
 
 ######
@@ -285,10 +308,12 @@ common_p[1,18]<-12.01	# M.C g / mol
 common_p[1,19]<-1.008 # M.H
 common_p[1,20]<-16 # M.O
 common_p[1,21]<-2000000 # osmotic.sugar.conc Osmotic sugar concentration 2 MPa H?ltt? et al. 2000
+common_p[1,22]<-0.02174605
+common_p[1,23]<-1.95
 
 names(common_p) <- c("a", "b", "TR0", "abs_zero", "b.s", "theetta.FC", "phi.e", "K.sat", "R.length",
                      "M.H20", "r.cyl", "r.root", "ypsilon", "Rg.N", "Rg.S", "Rg.R", "gas.const", "M.C", "M.H",
-                     "M.O", "osmotic.sugar.conc")
+                     "M.O", "osmotic.sugar.conc", "m_N", "Uggla")
 save(common_p, file = paste0(data.direct, "/common_p.RData"))
 
 ######
