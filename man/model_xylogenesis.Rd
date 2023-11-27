@@ -21,10 +21,9 @@
  }
   \item{storage_reduction}{
    TRUE or FALSE . The reduction applied if there is a storage reduction.
- } 
+ }
  \item{environment_effect_xylogenesis}{
    TRUE or FALSE . Determines growth considering the environmental effect or not.
-   
    If FALSE then...
  }
  \item{Temp}{
@@ -32,13 +31,7 @@
  }
 }
 
-input or parameter?
-g, sDc, Uggla, tau.Ee, tau.We, tau.El, tau.Wl, cell.wall.density.ew, cell.wall.density.lw,
-cell.volume.growth.per.day.ew, cell.volume.growth.per.day.lw, soil_moisture_effect,
-storage_reduction, osmotic.sugar.conc, M.suc, gas.const, abs_zero, 
-
-
-\output{
+\value{
   Output is in the form of a list.
   \item{GD}{
    Daily potential number of new cells per dat (in one radial cell row)
