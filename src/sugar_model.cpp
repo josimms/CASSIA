@@ -1,9 +1,12 @@
+/*
 #include <Rcpp.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include "CASSIA.h"
+#include "CASSIA_types.h"
 
 struct carbo_tracker
 {
@@ -79,6 +82,21 @@ parameter_sperling storage_carbohydrate(parameter_sperling alfa, parameter_sperl
   out.xylem_sh = 1 / (1 - 1/std::exp(alfa.xylem_sh) * (critical_W.xylem_sh - Wala.xylem_sh));
   out.xylem_st = 1 / (1 - 1/std::exp(alfa.xylem_st) * (critical_W.xylem_st - Wala.xylem_st));
   out.roots = 1 / (1 - 1/std::exp(alfa.roots) * (critical_W.roots - Wala.roots));
+
+  return out;
+}
+*/
+
+#include "CASSIA.h"
+
+carbo_tracker storage_carbohydrate(carbo_tracker critical_W, CASSIA_parameters parameters) {
+  carbo_tracker out;
+
+  out.needles = 1 / (1 - 1/std::exp(parameters.alfa_needles) * (critical_W.needles - parameters.Wala_needles));
+  out.phloem = 1 / (1 - 1/std::exp(parameters.alfa_phloem) * (critical_W.phloem - parameters.Wala_phloem));
+  out.xylem_sh = 1 / (1 - 1/std::exp(parameters.alfa_xylem_sh) * (critical_W.xylem_sh - parameters.Wala_xylem_sh));
+  out.xylem_st = 1 / (1 - 1/std::exp(parameters.alfa_xylem_st) * (critical_W.xylem_st - parameters.Wala_xylem_st));
+  out.roots = 1 / (1 - 1/std::exp(parameters.alfa_roots) * (critical_W.roots - parameters.Wala_roots));
 
   return out;
 }

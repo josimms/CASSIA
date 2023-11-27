@@ -3,6 +3,7 @@ bound_checks <- function(CASSIA_sensi) {
   bounds_all <- read.delim(paste0(direct, "bounds_all.csv"), sep = ",", row.names = 1)
   bounds_all$UL[1:20] = rep(10, 20)
 
+  using_spp_photosynthesis = T
 
   CASSIA_sensi = CASSIA_sensitivity(bounds_all[1:27,],
                                     rownames(bounds_all)[1:27],
