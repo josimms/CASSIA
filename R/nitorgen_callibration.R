@@ -38,7 +38,7 @@ nitrogen_uptake_calibration <- function() {
 
   prior = BayesianTools::createUniformPrior(bounds_higher, bounds_lower, best = NULL)
 
-  BayesianSetiup = BayesianTools::createBayesianSetup(likelihood = likelyhood,
+  BayesianSetiup = BayesianTools::createBayesianSetup(likelihood = likelyhood_nitrogen_uptake,
                                                       prior = prior,
                                                       names = c("amino_acid_limit", "amino_acid_k", "NH4_limit", "NH4_k", "MO3_limit", "NO3_k", "variation"),
                                                       parallel = F)
