@@ -2,7 +2,7 @@ Package: CASSIA
 Type: Package
 Title: Ecophysiological Model for Sugar Transfer
 Version: 0.1.0
-Author: Pauliina Schiestl-Aalto
+Author: Pauliina Schiestl-Aalto (CASSIA), Joanna Simms (Mycorrhizal additions)
 Maintainer: Joanna Simms <joanna.x.simms@helsinki.fi>
 Description: See README.Rmd
 License: What license is it under?
