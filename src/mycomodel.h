@@ -1,13 +1,4 @@
 /*
- * HEADERFILES
- */
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <algorithm>
-#include <Rcpp.h>
-
-/*
  * STRUCTURES DEFINED HERE
  */
 
@@ -48,7 +39,7 @@ struct symphony_parameters{
   double Ca;
   double psi_i;
 };
- 
+
 struct soil_balence{
   std::vector<double> C_p;
   std::vector<double> C_f;
@@ -59,9 +50,9 @@ struct soil_balence{
 };
 
 // A collection of parameters that I want as input function - but these should probably be reordered at some point
- 
+
 struct parameters
- 
+
 {
   double microbe_turnover;
   double NC_in_root_opt;
@@ -92,12 +83,12 @@ struct parameters
   double C_value_param_myco;
   double N_value_param_myco;
   double C_value_param_plant;
-  double N_value_param_plant; 
+  double N_value_param_plant;
 };
 
- 
 
- 
+
+
 struct DECISION_output
 {
   double NH4_given_Plant;
@@ -135,7 +126,7 @@ struct CASSIA_output
   double Litter_needles;
   double Litter_woody;
   double Litter_roots;
-  double Litter_mycelium; 
+  double Litter_mycelium;
 };
 
 
@@ -148,7 +139,7 @@ struct MYCOFON_output {
   double Litter_ERM;
 };
 
- 
+
 struct SYMPHONY_output {
   double NH4;
   double NO3;
@@ -172,25 +163,25 @@ struct SYMPHONY_output {
   double SOM_Norg_used;
 };
 
- 
+
 /*
  * FUNCTIONS DEFINED HERE - WHEN THEY ARE NEEDED BETWEEN FILES (reference above them)
  */
- 
+
 // FILE: general_functions.cpp
- 
+
 #ifndef PKG_leap_year_H
 #define PKG_leap_year_H
- 
+
 int leap_year(int year);
- 
+
 #endif
- 
+
 // FILE: Toy_Model.cpp
- 
+
 #ifndef PKG_Toy_Model_H
 #define PKG_Toy_Model_H
- 
+
 parameters parameters_initalise(std::vector<double> parameters_R);
 
 #endif
@@ -200,14 +191,14 @@ parameters parameters_initalise(std::vector<double> parameters_R);
 
 #ifndef PKG_respiration_H
 #define PKG_respiration_H
- 
+
 double respiration(double Tmb, double Rm, double Q10);
- 
+
 #endif
 
 
  // FILE: myco_growth.cpp
- 
+
  Rcpp::List myco_growth(double C_fungal, double N_fungal, double a, double b);
 
 
@@ -215,10 +206,10 @@ double respiration(double Tmb, double Rm, double Q10);
 
 #ifndef PKG_vector_to_N_balence_H
 #define PKG_vector_to_N_balence_H
- 
+
 N_balence vector_to_N_balence(std::vector<double> input);
- 
-#endif 
+
+#endif
 
 
 #ifndef PKG_list_to_N_balence_H
@@ -226,7 +217,7 @@ N_balence vector_to_N_balence(std::vector<double> input);
 
 N_balence list_to_N_balence(Rcpp::List input);
 
-#endif 
+#endif
 
 
 #ifndef PKG_Plant_N_Uptake_H
@@ -234,7 +225,7 @@ N_balence list_to_N_balence(Rcpp::List input);
 
 Rcpp::List Plant_N_Uptake(double T,
                           double SWC,
-                          double m, 
+                          double m,
                           double NH4_in,
                           double NO3_in,
                           double FOM_in,
@@ -243,11 +234,11 @@ Rcpp::List Plant_N_Uptake(double T,
                           std::vector<double> SWC_k_R,
                           std::vector<double> parameters,
                           double demand);
- 
+
 #endif
 
- 
-#ifndef PKG_Fungal_N_Uptake_H 
+
+#ifndef PKG_Fungal_N_Uptake_H
 #define PKG_Fungal_N_Uptake_H
 
 Rcpp::List Fungal_N_Uptake(double T,
@@ -262,10 +253,10 @@ Rcpp::List Fungal_N_Uptake(double T,
 
 #endif
 
- 
+
 #ifndef PKG_Microbe_Uptake_H
 #define PKG_Microbe_Uptake_H
- 
+
 Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           double N_micorbe,                   // UNITS: C kg eq
                           double C_soil_compartment,
@@ -283,23 +274,23 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           std::vector<double> SWC_k_R,
                           bool SOM_decomposers,
                           std::vector<double> respiration_microbes_params);
- 
+
 #endif
 
 
 // FILE: symphony_model_plus.cpp
- 
+
 #ifndef PKG_vector_to_symphony_H
 #define PKG_vector_to_symphony_H
- 
+
 symphony_parameters vector_to_symphony(std::vector<double> input);
- 
+
 #endif
 
- 
+
 #ifndef PKG_symphony_multiple_FOM_daily_H
 #define PKG_symphony_multiple_FOM_daily_H
- 
+
 Rcpp::List symphony_multiple_FOM_daily(double Tmb,
                                         double SWC,
                                         double C_FOM_needles_old,
@@ -342,7 +333,7 @@ Rcpp::List symphony_multiple_FOM_daily(double Tmb,
                                         double microbe_turnover);
 
 #endif
- 
+
 // FILE: mycofon_updated.cpp
 
 #ifndef PKG_mycofon_balence_H
@@ -379,10 +370,10 @@ Rcpp::List mycofon_balence(double C_roots,
                            double max_C_allocation_CASSIA,
                            double allocation_N_to_rest_of_plant,
                            bool mycofon_stratergy);
- 
+
 #endif
 
- 
+
 
 // FILE: decision_functions.cpp
 
@@ -421,5 +412,5 @@ Rcpp::List myco_growth(double C_fungal,
                        double N_fungal,
                        double a,
                        double b);
- 
+
 #endif

@@ -1,5 +1,4 @@
-#include <Rcpp.h>
-#include "mycomodel.h"
+#include "CASSIA.h"
 
 // Initisation from values I have gathered
 
@@ -40,9 +39,9 @@ parameters parameters_initalise_test(std::vector<double> parameters_R) {
 
 // [[Rcpp::export]]
 Rcpp::List Toy_Model(double year,
-                     double C_roots, 
-                     double N_roots, 
-                     double C_fungal, 
+                     double C_roots,
+                     double N_roots,
+                     double C_fungal,
                      double N_fungal,
                      double Litter_mantle,
                      double Litter_ERM,
@@ -52,7 +51,7 @@ Rcpp::List Toy_Model(double year,
   /*
    * Weather data formatted for the code
    */
-  
+
   std::vector<double> PAR = Hyde_weather["PAR"];
   std::vector<double> TAir = Hyde_weather["TAir"];
   std::vector<double> VPD = Hyde_weather["VPD"];
@@ -61,21 +60,21 @@ Rcpp::List Toy_Model(double year,
   std::vector<double> Tma = Hyde_weather["Tma"]; // TODO: what should this be?
   std::vector<double> fAPAR = Hyde_weather["fAPAR"];
   std::vector<double> SWC = Hyde_weather["SWC"];
-  
+
   /*
    * Initialisation
    */
-  
+
   // Should either be from CASSIA or this whole function should be in the CASSIA function
-  
+
   CASSIA_output CASSIA_out;
   CASSIA_out.C_roots = C_roots;
   CASSIA_out.N_roots = N_roots;
-  
+
   MYCOFON_output MYTCOFON_out;
   MYTCOFON_out.C_fungal = C_fungal;
   MYTCOFON_out.N_fungal = N_fungal;
-  
+
   /*
    * Parameteres from R to parameter form
    */
@@ -84,32 +83,32 @@ Rcpp::List Toy_Model(double year,
   parameters_in.mantle_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
   parameters_in.ERM_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
 
-  for (int days = 0; days <= leap_year(year)-1; ++days) { 
+  for (int days = 0; days <= leap_year(year)-1; ++days) {
     // Import the N values form the last iteration
     N_balence N_in_soil_R; // import from symphony somehow
-    
+
     // DECUSION STAGE
     DECISION_output DECISION_out;
-    
-    
+
+
     SYMPHONY_output SYMPHONY_out;
-    
+
     // Photosynthesis from PRELES
     double Photosynthesis = 1;
-    
+
     // CASSIA to do the tree stage'
     // TODO: add the variables here as place holders, should go through the code to make this make sense
     CASSIA_output CASSIA_out;
-    
+
     // MYCOFON
       // TODO: add the model here!
     MYCOFON_output MYTCOFON_out;
-    
+
     // TODO: work out which parameters are available here
     Rcpp::List MYCOFON_out =  mycofon_balence(CASSIA_out.C_roots, CASSIA_out.N_roots,
                                               parameters_in.optimal_root_fungal_biomass_ratio,
                                               MYTCOFON_out.C_fungal, MYTCOFON_out.N_fungal,
-                                              parameters_in.turnover_roots, parameters_in.turnover_roots_mycorrhized, 
+                                              parameters_in.turnover_roots, parameters_in.turnover_roots_mycorrhized,
                                               parameters_in.turnover_mantle, parameters_in.turnover_ERM,
                                               parameters_in.respiration_params,
                                               SYMPHONY_out.NH4, SYMPHONY_out.NO3, SYMPHONY_out.N_FOM,
@@ -121,7 +120,7 @@ Rcpp::List Toy_Model(double year,
                                               parameters_in.N_limits_fungal,
                                               parameters_in.N_k_fungal,
                                               parameters_in.SWC_k_fungal,
-                                              parameters_in.mantle_mass, 
+                                              parameters_in.mantle_mass,
                                               parameters_in.ERM_mass,
                                               parameters_in.NH4_on_NO3,
                                               parameters_in.growth_C,
@@ -129,28 +128,28 @@ Rcpp::List Toy_Model(double year,
                                               0.1,
                                               0.1,
                                               false);
-  
+
     // CASSIA max should be an output from CASSIA at some point
     // Currently just assuming that the Frakelin model is used - need to sort this out as well!
-    
+
     // Soil model symphony
     Rcpp::List Soil_All = symphony_multiple_FOM_daily(Tmb[days], SWC[days],
                                                       SYMPHONY_out.C_FOM_needles, SYMPHONY_out.C_FOM_woody, SYMPHONY_out.C_FOM_roots, SYMPHONY_out.C_FOM_mantle, SYMPHONY_out.C_FOM_ERM,
                                                       SYMPHONY_out.C_SOM, SYMPHONY_out.N_SOM,
                                                       SYMPHONY_out.C_decompose_FOM, SYMPHONY_out.C_decompose_SOM,
                                                       SYMPHONY_out.N_decompose_FOM, SYMPHONY_out.N_decompose_SOM,
-                                                      CASSIA_out.Litter_needles, CASSIA_out.Litter_woody, CASSIA_out.Litter_roots, 0.1, 0.1, 
+                                                      CASSIA_out.Litter_needles, CASSIA_out.Litter_woody, CASSIA_out.Litter_roots, 0.1, 0.1,
                                                       0.1, 0.1, // TODO: this!
                                                       SYMPHONY_out.NH4, SYMPHONY_out.NO3,
                                                       SYMPHONY_out.NC_needles, SYMPHONY_out.NC_woody,
                                                       SYMPHONY_out.NC_roots, SYMPHONY_out.NC_mantle, SYMPHONY_out.NC_ERM,
                                                       DECISION_out.NH4_used_Plant, DECISION_out.NH4_used_Fungal,  // TODO think about this!
                                                       DECISION_out.NO3_used_Plant, DECISION_out.NO3_used_Fungal,
-                                                      DECISION_out.FOM_Norg_used_Plant, DECISION_out.FOM_Norg_used_Fungal, SYMPHONY_out.SOM_Norg_used, 
+                                                      DECISION_out.FOM_Norg_used_Plant, DECISION_out.FOM_Norg_used_Fungal, SYMPHONY_out.SOM_Norg_used,
                                                       parameters_in.respiration_params, parameters_in.N_limits_microbes, parameters_in.N_k_microbes, parameters_in.SWC_k_microbes,
                                                       parameters_in.NC_microbe_opt, parameters_in.microbe_turnover);
-    
+
   }
-  
+
   return(0);
 }
