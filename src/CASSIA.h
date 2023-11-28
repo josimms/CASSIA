@@ -1,6 +1,8 @@
 #include "CASSIA_types.h"
 // CASSIA types includes function_structures.h, Rcpp.h, RcppCommon.h
 // isostrem and vector are also in function_structures
+#include "mycomodel.h"
+// This includes soil and mycorrhizal parameters
 #include <numeric>
 #include <algorithm>
 #include <cmath>
