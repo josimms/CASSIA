@@ -10,9 +10,15 @@ This model has been used in numerous papers (see Literature) - mainly considerin
 
 ### Ongoing Projects
 
-Alexis Lehtonen - parameterisation for the CASSIA Lehtosuo site
-Joanna Simms - addition of a enzyme driven sugar model
-TODO: add more I am not aware of any more projects
+# Alexis Lehtonen
+Parameterisation for the CASSIA Lehtosuo site
+
+# Joanna Simms 
+Addition of a enzyme driven sugar model and mycorrhizal interactions. Thus linking with a soil model (SYMPHONY) and mycorrhizal model (MYCOFON).
+
+![kuva](https://github.com/josimms/MycoModel/assets/102613042/1a465070-6995-4f73-bef7-4e7920bca289)
+
+The full details should be added when the code is finished, but indervidual functions are written in the function help files.
 
 ### Downloading Package for Use
 
