@@ -54,8 +54,6 @@ Error in if GENERIC ARGUMENT missing value where TRUE/FALSE needed
 It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report the error.
 
 ## Literature
-### (please add if any missing!)
-
 Ding, Yiyang, et al. "Temperature and moisture dependence of daily growth of Scots pine (Pinus sylvestris L.) roots in Southern Finland." Tree Physiology 40.2 (2020): 272-283.
 
 Schiestl-Aalto, Pauliina, et al. "Analysis of the NSC storage dynamics in tree organs reveals the allocation to belowground symbionts in the framework of whole tree carbon balance." Frontiers in Forests and Global Change 2 (2019): 17.
@@ -67,8 +65,6 @@ Schiestl‐Aalto, Pauliina, et al. "CASSIA–a dynamic model for predicting intr
 Schiestl-Aalto, Pauliina, et al. "Physiological growth model CASSIA predicts carbon allocation and wood formation of Scots pine." CyberPlantS: a European initiative towards collaborative plant modeling (2013): 159.
 
 ## Used in
-### (please add if any missing!)
-
 Ding, Yiyang, et al. "Distinct patterns of below-and aboveground growth phenology and litter carbon inputs along a boreal site type gradient." Forest Ecology and Management 489 (2021): 119081.
 
 Hellén, Heidi, et al. "Sesquiterpenes and oxygenated sesquiterpenes dominate the VOC (C 5–C 20) emissions of downy birches." Atmospheric Chemistry and Physics 21.10 (2021): 8045-8066.
@@ -80,6 +76,4 @@ Taipale, Ditte, et al. "Emissions of monoterpenes from new Scots pine foliage: d
 Tian, Xianglin, et al. "Disaggregating the effects of nitrogen addition on gross primary production in a boreal Scots pine forest." Agricultural and Forest Meteorology 301 (2021): 108337.
 
 ## Related Literature
-### (please add if any missing!)
-
 Sperling, Or, et al. "Predicting bloom dates by temperature mediated kinetics of carbohydrate metabolism in deciduous trees." Agricultural and Forest Meteorology 276 (2019): 107643.
