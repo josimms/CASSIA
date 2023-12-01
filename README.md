@@ -76,4 +76,9 @@ Taipale, Ditte, et al. "Emissions of monoterpenes from new Scots pine foliage: d
 Tian, Xianglin, et al. "Disaggregating the effects of nitrogen addition on gross primary production in a boreal Scots pine forest." Agricultural and Forest Meteorology 301 (2021): 108337.
 
 ## Related Literature
+Meyer, Astrid, et al. "Simulating mycorrhiza contribution to forest C-and N cycling-the MYCOFON model." Plant and soil 327 (2010): 493-517.
+
+Perveen, Nazia, et al. "Priming effect and microbial diversity in ecosystem functioning and response to global change: a modeling approach using the SYMPHONY model." Global change biology 20.4 (2014): 1174-1190.
+
 Sperling, Or, et al. "Predicting bloom dates by temperature mediated kinetics of carbohydrate metabolism in deciduous trees." Agricultural and Forest Meteorology 276 (2019): 107643.
+
