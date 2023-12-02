@@ -6,7 +6,7 @@ CASSIA model is an intra-annual growth model for an individual tree in boreal co
 
 The main mathematical structure and equations are found in Schiestl‐Aalto 2015 where the science behind this model as well as the basic principle and structure are clearly explained. The variable links in the papers and the model are written in the vingette section of this package. This basic equations have been added to and reported in later publications listed below. This package also has newer developments not yet published in papers such as a sugar internal allocation model and xylogenesis.
 
-Currently a C++ version of the code is under development, which is currently being calibrated. The C++ version of the model changes the running time of the model from 0.397 seconds to 0.006, so is unsul for calibrations, but not all subfunctions have been translated. Currently the basic model and the sugar allocation model are the ones that are working. Xylogenesis and water functions will soon be added (around Christmas / Janurary).
+Currently a C++ version of the code is under development, which is currently being calibrated. The C++ version of the model changes the running time of the model from 0.397 seconds to 0.006, so is unsul for calibrations, but not all subfunctions have been translated. Currently the basic model and the sugar allocation model are the ones that are working. Xylogenesis and water functions will soon be added (around Christmas / Janurary). In 2024 a soil, mycorrhizal growth and photosynthesis model will be integrated.
 
 ### Downloading Package for Use
 
