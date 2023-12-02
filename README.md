@@ -4,21 +4,9 @@
 
 CASSIA model is an intra-annual growth model for an individual tree in boreal conditions. Seasonal organ level cell growth is modelled, as well as sugar and water when the appropriate settings are chosen. Further deatails for the indervidual functions can be found with the functions themselves.
 
-The main structure and equations are found in Schiestl‐Aalto 2015 where the science behind this model as well as the basic principle and structure are clearly explained. The variable links in the papers and the model are written in the vingette section of this package.
+The main mathematical structure and equations are found in Schiestl‐Aalto 2015 where the science behind this model as well as the basic principle and structure are clearly explained. The variable links in the papers and the model are written in the vingette section of this package. This basic equations have been added to and reported in later publications listed below. This package also has newer developments not yet published in papers such as a sugar internal allocation model and xylogenesis.
 
-This model has been used in numerous papers (see Literature) - mainly considering Hyytiälä (SMEAR II Station, University of Helsinki). Most of the code has been written by Schiestl‐Aalto, with only small additions by others. The development of the code can be seen in the papers below, although this package does have newer developments not yet published in papers such as a sugar addition and xylogenesis. Note: future developments of the CASSIA model will seperate these into spereate functions, but at the moment all of the code is together in one file to be able to make the original code into a package.
-
-### Ongoing Projects
-
-#### Parameterisation for the CASSIA Lehtosuo site
-Alexis Lehtonen
-
-#### Addition of a enzyme driven sugar model and mycorrhizal interactions. Thus linking with a soil model (SYMPHONY) and mycorrhizal model (MYCOFON). 
-Joanna Simms
-
-![kuva](https://github.com/josimms/MycoModel/assets/102613042/1a465070-6995-4f73-bef7-4e7920bca289)
-
-The full details should be added when the code is finished, but indervidual functions are included in the package with relevent help files.
+Currently a C++ version of the code is under development, which is currently being calibrated. The C++ version of the model changes the running time of the model from 0.397 seconds to 0.006, so is unsul for calibrations, but not all subfunctions have been translated. Currently the basic model and the sugar allocation model are the ones that are working. Xylogenesis and water functions will soon be added (around Christmas / Janurary).
 
 ### Downloading Package for Use
 
@@ -28,9 +16,9 @@ library(devtools)
 install_github("josimms/CASSIA")
 ```
 
-### Example
+### Example R
 
-As the package includes preprocessed weather data from Hyytiälä (via SPP model further information in vingettes) and amongst others the Hyytiälä configuration it is possible to simply run the model by stipulating these two arguments. This will run the model with its most basic functions, although additional functions can be easily added by toggles as seen in the second example. 
+As the package includes preprocessed weather data from Hyytiälä (via SPP model further information in vingettes) and amongst others the Hyytiälä configuration it is possible to simply run the model by stipulating these two arguments. This will run the model with its most basic functions, although additional functions can be easily added by toggles as seen in the second example. Toggles are found in the documentation.
 
 ```{r}
 library(CASSIA)
@@ -51,7 +39,86 @@ If you have an error along the lines of
 ```{r}
 Error in if GENERIC ARGUMENT missing value where TRUE/FALSE needed
 ```
-It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report the error.
+It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report then send joanna.x.simms@helsinki.fi an email.
+
+### Example C++ model via R interface
+
+The C++ model has less automatic features than the R version of the model. This means that when you call the function you have to be more explicit about all of the arguments as well as including different weather data. There is a working example in the package, however this is not fully documented. A basic example is as follows.
+
+```{r}
+### Toggle setting
+storage_rest = T
+storage_grows = F
+LH_estim = T
+LN_estim = T
+mN_varies = T
+LD_estim = T
+sD_estim_T_count = F
+trees_grow = F
+growth_decreases = F
+needle_mass_grows = F
+mycorrhiza = T
+root_as_Ding = T
+sperling_sugar_model = F
+using_spp_photosynthesis = T
+xylogensis_option = F
+environmental_effect_xylogenesis = F
+temp_rise = F
+drought = F
+Rm_acclimation = F
+etmodel = F
+LOGFLAG = F
+
+### Non automatic parameters
+N_parameters = c(1, 1)
+pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
+            0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
+            0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
+            -999.9, -999.9, -999.9)
+
+### Weather dataset updated with the extra terms needed for the C++ model
+weather_original_2015 = read.csv(file = "./data/weather_original_2015.csv", header = T, sep = ",")
+weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
+weather_original_2017 = read.csv(file = "./data/weather_original_2017.csv", header = T, sep = ",")
+weather_original = rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017)
+
+extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
+                    PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("PAR")],
+                    VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("VPD")],
+                    CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("CO2")],
+                    fAPAR = rep(0.7, length = nrow(weather_original)))
+weather_original <- cbind(weather_original, extras)
+weather_original <- weather_original[-c(365+365),]
+
+### Function call
+CASSIA_yearly(2015, 2016, weather_original, GPP_ref,
+              c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_par),
+              needle_mass_in,
+              Throughfall,
+              storage_rest, storage_grows,
+              LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
+              trees_grow, growth_decreases, needle_mass_grows,
+              mycorrhiza, root_as_Ding, sperling_sugar_model,
+              xylogensis_option, environmental_effect_xylogenesis,
+              temp_rise, drought, Rm_acclimation,
+              using_spp_photosynthesis, TRUE,
+              etmodel, LOGFLAG)
+```
+
+The other parameters are defined in the model automatically, although they have to be called, and can be found in the data folder.
+
+### Ongoing Projects
+
+#### Parameterisation for the CASSIA Lehtosuo site
+Alexis Lehtonen
+
+#### Addition of a enzyme driven sugar model and mycorrhizal interactions. Thus linking with a soil model (SYMPHONY) and mycorrhizal model (MYCOFON). 
+Joanna Simms
+
+![kuva](https://github.com/josimms/MycoModel/assets/102613042/1a465070-6995-4f73-bef7-4e7920bca289)
+
+The full details should be added when the code is finished, but indervidual functions are included in the package with relevent help files.
+
 
 ## Literature
 Ding, Yiyang, et al. "Temperature and moisture dependence of daily growth of Scots pine (Pinus sylvestris L.) roots in Southern Finland." Tree Physiology 40.2 (2020): 272-283.
