@@ -112,7 +112,27 @@ tests <- function(weather) {
 
 ### Test against original data
 
-test_against_original_data <- function(new_parameters, calibration) {
+test_against_original_data <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis) {
+  storage_rest = T
+  storage_grows = F
+  LH_estim = T
+  LN_estim = T
+  mN_varies = T
+  LD_estim = T
+  sD_estim_T_count = F
+  trees_grow = F
+  growth_decreases = F
+  needle_mass_grows = F
+  mycorrhiza = T
+  root_as_Ding = T
+  xylogensis_option = F
+  environmental_effect_xylogenesis = F
+  temp_rise = F
+  drought = F
+  Rm_acclimation = F
+  etmodel = F
+  LOGFLAG = F
+
   weather_original_2015 = read.csv(file = "./data/weather_original_2015.csv", header = T, sep = ",")
   weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
   weather_original_2017 = read.csv(file = "./data/weather_original_2017.csv", header = T, sep = ",")
@@ -126,9 +146,6 @@ test_against_original_data <- function(new_parameters, calibration) {
   weather_original <- cbind(weather_original, extras)
   weather_original <- weather_original[-c(365+365),]
 
-  sperling_sugar_model = T
-  using_spp_photosynthesis = F
-
   parameters_test <- parameters_p
   parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"),1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
   sperling_test <- sperling_p
@@ -139,7 +156,7 @@ test_against_original_data <- function(new_parameters, calibration) {
 
   if (calibration) {
     sperling_test <- sperling_p
-    sperling_test[c(50:54, 35:39, 40:44, 45:49, 25, 26),1] <- new_parameters[1:22]
+    sperling_test[c(50:54, 35:39, 40:44, 45:49, 25, 26),1] <- c(2.103433, 2.568670, 1.123682e+01, 7.150278e+00, 4.258494e-01, new_parameters[1:15], 2.567527, 5.467178)
     parameters_test <- parameters_p
     parameters_test[62:66,1] <- new_parameters[23:27]
   }
