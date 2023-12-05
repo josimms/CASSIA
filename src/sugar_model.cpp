@@ -170,7 +170,7 @@ carbo_balance sugar_model(int day,
       resp.RmN * storage_term.needles -                          // - maintenance respiration (altered by the carbon storage)
       (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) -          // - growth and growth respiration altered by the storage
       // pot_growth.use + pot_growth.release -                                                           // - growth sugar use and + release and to the rest of the organs
-      concentration_gradient.needles_to_phloem +                            // - transfer between organs
+      concentration_gradient.needles_to_phloem  +                            // - transfer between organs
       (Kd.needles - Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass;   // + sperling processes with links to the needles growth process
 
     // coefficients are from mass ratio in starch and sugar 2015 xls
@@ -180,13 +180,13 @@ carbo_balance sugar_model(int day,
       concentration_gradient.needles_to_phloem -                             // transfer between organs
       concentration_gradient.phloem_to_roots -                                 // transfer between organs
       concentration_gradient.phloem_to_xylem_sh -
-      concentration_gradient.phloem_to_xylem_st +
+      concentration_gradient.phloem_to_xylem_st  +
       (Kd.phloem - Ks.phloem) * parameters.carbon_sugar * 0.001 * 7.4;
 
     sugar.roots = sugar.roots +
       concentration_gradient.phloem_to_roots -        // transfer between organs
       concentration_gradient.roots_to_myco -                                         // transfer between organs, no multiplier as this is for mycorhiza and the model just takes the extra sugar
-      (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8 -
+      (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8 +
       (1 + common.Rg_R) * storage_term.roots * pot_growth.roots -               // growth
       resp.RmR * storage_term.roots;                                                // maintenance respiration);
 
