@@ -3,8 +3,6 @@ bound_checks <- function(CASSIA_sensi) {
   bounds_all <- read.delim(paste0(direct, "bounds_all.csv"), sep = ",", row.names = 1)
   bounds_all$UL[1:20] = rep(10, 20)
 
-  using_spp_photosynthesis = T
-
   CASSIA_sensi = CASSIA_sensitivity(bounds_all[1:27,],
                                     rownames(bounds_all)[1:27],
                                     2015, 2017, weather_original, GPP_ref,
@@ -152,6 +150,26 @@ dhtn <- function(x, mean = 0, sd = 1, log = T) {
 }
 
 likelyhood_sugar_model <- function(par, sum = T) {
+  storage_rest = T
+  storage_grows = F
+  LH_estim = T
+  LN_estim = T
+  mN_varies = T
+  LD_estim = T
+  sD_estim_T_count = F
+  trees_grow = F
+  growth_decreases = F
+  needle_mass_grows = F
+  mycorrhiza = T
+  root_as_Ding = T
+  xylogensis_option = F
+  environmental_effect_xylogenesis = F
+  temp_rise = F
+  drought = F
+  Rm_acclimation = F
+  etmodel = F
+  LOGFLAG = F
+  N_parameters = c(1, 1)
 
   ### Import data
   direct <- "~/Documents/CASSIA_Calibration/"
@@ -163,10 +181,10 @@ likelyhood_sugar_model <- function(par, sum = T) {
   ### Initial conditions for the CASSIA state values
   # TODO: initial conditions correct!
   sperling_par <- sperling_p
-  sperling_par[c(50:54, 35:39, 40:44, 45:49, 25:26),1] <- par[1:22]
+  sperling_par[c(50:54, 35:39, 40:44, 45:49, 25:26),1] <- c(2.103433, 2.568670, 1.123682e+01, 7.150278e+00, 4.258494e-01, par[1:15], 2.567527, 5.467178)
   parameters_par <- parameters_p
   parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"),1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
-  parameters_par[62:66,1] <- par[23:27]
+  parameters_par[62:66,1] <- c(4.065058, 3.245260, 2.996988, 5.355711, 7.058142)
 
   sperling_sugar_model = T
   using_spp_photosynthesis = T
@@ -213,21 +231,22 @@ likelyhood_sugar_model <- function(par, sum = T) {
   ### Standard deviation formulas
   # TODO: look at the residuals of the growth data when it is replaced with the biomass data
   par = bounds_all[,2]
-  sdX <- c(par[28]*simVec[1:14]+par[29],
-           par[30]*simVec[14+1:14]+par[31],
-           par[32]*simVec[28+1:14]+par[33],
-           par[34]*simVec[42+1:14]+par[35],
-           par[36]*simVec[56+1:13]+par[37],
-           par[38]*simVec[69+1:14]+par[39],
-           par[40]*simVec[83+1:14]+par[41],
-           par[42]*simVec[97+1:14]+par[43],
-           par[44]*simVec[111+1:14]+par[45], # TODO Some of the values here have just been set to one - need to decide the variation here!
-           par[46]*simVec[125++1:13]+par[47],
-           par[48]*simVec[138+1:730]+par[49],
-           par[50]*simVec[868+1:730]+par[51],
-           par[52]*simVec[1598+1:730]+par[53],
-           par[54]*simVec[2328+1:730]+par[55],
-           par[56]*simVec[3058+1:730]+par[57])
+  index_start = 16
+  sdX <- c(par[index_start]*simVec[1:14]+par[index_start+1],
+           par[index_start+2]*simVec[14+1:14]+par[index_start+3],
+           par[index_start+4]*simVec[28+1:14]+par[index_start+5],
+           par[index_start+6]*simVec[42+1:14]+par[index_start+7],
+           par[index_start+8]*simVec[56+1:13]+par[index_start+9],
+           par[index_start+10]*simVec[69+1:14]+par[index_start+11],
+           par[index_start+12]*simVec[83+1:14]+par[index_start+13],
+           par[index_start+14]*simVec[97+1:14]+par[index_start+15],
+           par[index_start+16]*simVec[111+1:14]+par[index_start+17], # TODO Some of the values here have just been set to one - need to decide the variation here!
+           par[index_start+18]*simVec[125++1:13]+par[index_start+19],
+           par[index_start+20]*simVec[138+1:730]+par[index_start+21],
+           par[index_start+22]*simVec[868+1:730]+par[index_start+23],
+           par[index_start+24]*simVec[1598+1:730]+par[index_start+25],
+           par[index_start+26]*simVec[2328+1:730]+par[index_start+27],
+           par[index_start+28]*simVec[3058+1:730]+par[index_start+29])
 
   res <- c(obs.vec.og[-c(70, 140)],
            Hyde_daily_original_cali$bud,
@@ -249,20 +268,21 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   bounds_all <- read.delim(paste0(direct, "bounds_all.csv"), sep = ",", row.names = 1)
   bounds_all$UL[1:27] = c(4, 14, 12, 10, 2,
                           12, 12, 12, 12, 12,
-                          12, 12, 12, 12, 12,
-                          12, 12, 12, 12, 12,
+                          1, 1, 1, 1, 1,
+                          1, 1, 1, 1, 1,
                           6, 6,
                           6, 6, 6, 6, 10)
+  bounds_all$UL[48:57] <- rep(3, 10)
 
   # create priors
-  prior <- BayesianTools::createUniformPrior(c(bounds_all[,1]),
-                                             c(bounds_all[,2]),
+  prior <- BayesianTools::createUniformPrior(c(bounds_all[,1][c(6:20, 28:57)]),
+                                             c(bounds_all[,2][c(6:20, 28:57)]),
                                              best = NULL)
 
   # Bayesian set up
   CASSIABayesianSetup <- BayesianTools::createBayesianSetup(likelihood = likelyhood_sugar_model,
                                                             prior = prior,
-                                                            names = rownames(bounds_all),
+                                                            names = rownames(bounds_all)[c(6:20, 28:57)],
                                                             parallel = F)
 
   settings = list(iterations = 1e6, thin = 1000, nrChains = 3, message = T)
@@ -270,15 +290,17 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   # Running the MCMC alogorithm
   # Use DEzs as I have read the paper for this one Past samples version
   # If a starting value is given rows are the number of chains and columns are the parameters
-  system.time({CASSIAout_sugar_model <- BayesianTools::runMCMC(bayesianSetup = CASSIABayesianSetup, sampler = "DREAMzs", settings = settings)})
+  CASSIAout_sugar_model <- BayesianTools::runMCMC(bayesianSetup = CASSIABayesianSetup, sampler = "DREAMzs", settings = settings)
 
   save(CASSIAout_sugar_model, file = paste0(direct, gsub(":", "_", Sys.time()), " CASSIAout_sugar_model.RData"))
+
+  load(paste0(direct, "2023-11-29 13_28_21.535856 CASSIAout_sugar_model.RData"))
 
   plot(CASSIAout_sugar_model)
 
   Calibrated_Parameters = BayesianTools::MAP(CASSIAout_sugar_model)$parametersMAP
 
-  test_against_original_data(c(Calibrated_Parameters), T)
+  test_against_original_data(c(Calibrated_Parameters), T, T, T)
 
   return(CASSIAout_sugar_model)
 }
