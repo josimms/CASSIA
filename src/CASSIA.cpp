@@ -128,6 +128,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
+  carbo_balance original_parameters;
 
   /*
    * Vectors for the outputs
@@ -214,7 +215,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     needle_cohorts needles_cohorts;
     if (year > start_year) {
-      // TODO: parameters
+      // TODO: parameters, add the year 5
       needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3;
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
@@ -341,6 +342,20 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       // TODO; need to check the indexes!
       if (day == 0 & year == start_year) {
+        sugar_values_for_next_iteration.sugar.needles = original_parameters.sugar.needles = parameters.sugar_needles0;
+        sugar_values_for_next_iteration.sugar.phloem = original_parameters.sugar.phloem = parameters.sugar_phloem0;
+        sugar_values_for_next_iteration.sugar.roots = original_parameters.sugar.roots = parameters.sugar_roots0;
+        sugar_values_for_next_iteration.sugar.xylem_sh = original_parameters.sugar.xylem_sh = parameters.sugar_xylem_sh0;
+        sugar_values_for_next_iteration.sugar.xylem_st = original_parameters.sugar.xylem_st = parameters.sugar_xylem_st0;
+        sugar_values_for_next_iteration.sugar.mycorrhiza = original_parameters.sugar.mycorrhiza = 0;
+
+        sugar_values_for_next_iteration.starch.needles = original_parameters.starch.needles = parameters.starch_needles0;
+        sugar_values_for_next_iteration.starch.phloem = original_parameters.starch.phloem = parameters.starch_phloem0;
+        sugar_values_for_next_iteration.starch.roots = original_parameters.starch.roots = parameters.starch_roots0;
+        sugar_values_for_next_iteration.starch.xylem_sh = original_parameters.starch.xylem_sh = parameters.starch_xylem_sh0;
+        sugar_values_for_next_iteration.starch.xylem_st = original_parameters.starch.xylem_st = parameters.starch_xylem_st0;
+        sugar_values_for_next_iteration.starch.mycorrhiza = original_parameters.starch.mycorrhiza = 0;
+      } else if (day == 0 & year != start_year) {
         sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
         sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
         sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
@@ -404,8 +419,6 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                    resp,
                                                    sperling_sugar_model);
       // TODO: update the parameters like D0 and h0 that need to be updated
-
-      // std::cout << "\n";
 
       /*
        * Output
@@ -474,6 +487,8 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     last_year_HH = HH;
 
+    std::cout << "End sugar value: " << sugar_values_for_next_iteration.sugar.needles << "\n";
+
     if (final_year%2==0) {
       GPP_mean = 463.8833; // TODO: should change this!
       GPP_previous_sum.push_back(GPP_sum);
@@ -481,6 +496,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       last_cohorts.year_1 = needles_cohorts.year_1; // TODO: currently the growth doesn't really have an effect on this - should it?
       last_cohorts.year_2 = needles_cohorts.year_2;
       last_cohorts.year_3 = needles_cohorts.year_3;
+      // TODO: make it possible to make this for 5 years?
 
       parameters.sugar_needles0 = sugar_values_for_next_iteration.sugar.needles;
       parameters.sugar_phloem0 = sugar_values_for_next_iteration.sugar.phloem;
@@ -495,8 +511,24 @@ Rcpp::List CASSIA_yearly(int start_year,
       parameters.starch_xylem_st0 = sugar_values_for_next_iteration.starch.xylem_st;
     }
 
+    std::cout << "Parameters: " << parameters.sugar_needles0 << "\n";
+
     // TODO: need to add the growth of things here!
     final_year = final_year + 1;
+
+    if (year == final_year + 1) {
+      parameters.sugar_needles0 = original_parameters.sugar.needles;
+      parameters.sugar_phloem0 = original_parameters.sugar.phloem;
+      parameters.sugar_roots0 = original_parameters.sugar.roots;
+      parameters.sugar_xylem_sh0 = original_parameters.sugar.xylem_sh;
+      parameters.sugar_xylem_st0 = original_parameters.sugar.xylem_st;
+
+      parameters.starch_needles0 = original_parameters.starch.needles;
+      parameters.starch_phloem0 = original_parameters.starch.phloem;
+      parameters.starch_roots0 = original_parameters.starch.roots;
+      parameters.starch_xylem_sh0 = original_parameters.starch.xylem_sh;
+      parameters.starch_xylem_st0 = original_parameters.starch.xylem_st;
+    }
   }
 
   ///////////////////////
