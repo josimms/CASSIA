@@ -169,7 +169,17 @@ likelyhood_sugar_model <- function(par, sum = T) {
   Rm_acclimation = F
   etmodel = F
   LOGFLAG = F
-  N_parameters = c(1, 1)
+
+  # CASSIA extra parameters
+  needle_mass_in = 4.467638
+
+  # PRELES PARAMETERS
+  # The values are taken from the Prebasso package!
+  N_parameters = c(1/0.012, 0.0) # TODO: Fit the N parameters
+  pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
+            0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
+            0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
+            -999.9, -999.9, -999.9)
 
   ### Import data
   direct <- "~/Documents/CASSIA_Calibration/"
@@ -181,15 +191,14 @@ likelyhood_sugar_model <- function(par, sum = T) {
   ### Initial conditions for the CASSIA state values
   # TODO: initial conditions correct!
   sperling_par <- sperling_p
-  sperling_par[c(50:54, 35:39, 40:44, 45:49, 25:26),1] <- c(2.103433, 2.568670, 1.123682e+01, 7.150278e+00, 4.258494e-01, par[1:15], 2.567527, 5.467178)
+  sperling_par[c(50:54, 35:39, 40:44, 45:49, 25:26),1] <- par[1:22]
   parameters_par <- parameters_p
-  parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"),1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
-  parameters_par[62:66,1] <- c(4.065058, 3.245260, 2.996988, 5.355711, 7.058142)
+  parameters_par[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"),1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
+  parameters_par[62:66,1] <- par[23:27]
+  Throughfall = 1
 
   sperling_sugar_model = T
   using_spp_photosynthesis = T
-
-  ## TODO: doesn't the function need these values
 
   simTab <- CASSIA_yearly(2015, 2016, weather_original, GPP_ref,
                           c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_par),
@@ -225,13 +234,13 @@ likelyhood_sugar_model <- function(par, sum = T) {
               simTab_growth$height_growth,
               simTab_growth$needle_growth,
               simTab_growth$root_growth)
-  simVec[simVec < 0 | is.na(simVec) | is.infinite(simVec)] <- 1e6
+  simVec[simVec < 0 | is.na(simVec) | is.infinite(simVec)] <- 1e12
 
 
   ### Standard deviation formulas
   # TODO: look at the residuals of the growth data when it is replaced with the biomass data
   par = bounds_all[,2]
-  index_start = 16
+  index_start = 28
   sdX <- c(par[index_start]*simVec[1:14]+par[index_start+1],
            par[index_start+2]*simVec[14+1:14]+par[index_start+3],
            par[index_start+4]*simVec[28+1:14]+par[index_start+5],
@@ -240,7 +249,7 @@ likelyhood_sugar_model <- function(par, sum = T) {
            par[index_start+10]*simVec[69+1:14]+par[index_start+11],
            par[index_start+12]*simVec[83+1:14]+par[index_start+13],
            par[index_start+14]*simVec[97+1:14]+par[index_start+15],
-           par[index_start+16]*simVec[111+1:14]+par[index_start+17], # TODO Some of the values here have just been set to one - need to decide the variation here!
+           par[index_start+16]*simVec[111+1:14]+par[index_start+17],
            par[index_start+18]*simVec[125++1:13]+par[index_start+19],
            par[index_start+20]*simVec[138+1:730]+par[index_start+21],
            par[index_start+22]*simVec[868+1:730]+par[index_start+23],
@@ -266,23 +275,23 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   # Run with different parameters sets and check the likelihood, if changes can then use the Bayesian methods
   direct <- "~/Documents/CASSIA_Calibration/"
   bounds_all <- read.delim(paste0(direct, "bounds_all.csv"), sep = ",", row.names = 1)
-  bounds_all$UL[1:27] = c(4, 14, 12, 10, 2,
+  bounds_all$UL[1:27] = c(4, 10, 8, 8, 5,
                           12, 12, 12, 12, 12,
                           1, 1, 1, 1, 1,
-                          1, 1, 1, 1, 1,
+                          2, 2, 2, 2, 2,
                           6, 6,
                           6, 6, 6, 6, 10)
   bounds_all$UL[48:57] <- rep(3, 10)
 
   # create priors
-  prior <- BayesianTools::createUniformPrior(c(bounds_all[,1][c(6:20, 28:57)]),
-                                             c(bounds_all[,2][c(6:20, 28:57)]),
+  prior <- BayesianTools::createUniformPrior(c(bounds_all[,1]),
+                                             c(bounds_all[,2]),
                                              best = NULL)
 
   # Bayesian set up
   CASSIABayesianSetup <- BayesianTools::createBayesianSetup(likelihood = likelyhood_sugar_model,
                                                             prior = prior,
-                                                            names = rownames(bounds_all)[c(6:20, 28:57)],
+                                                            names = rownames(bounds_all),
                                                             parallel = F)
 
   settings = list(iterations = 1e6, thin = 1000, nrChains = 3, message = T)
@@ -294,15 +303,14 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
 
   save(CASSIAout_sugar_model, file = paste0(direct, gsub(":", "_", Sys.time()), " CASSIAout_sugar_model.RData"))
 
-  load(paste0(direct, "2023-11-29 13_28_21.535856 CASSIAout_sugar_model.RData"))
+  # load(paste0(direct, "2023-12-05 15_00_48.22879 CASSIAout_sugar_model.RData"))
 
   plot(CASSIAout_sugar_model)
 
   Calibrated_Parameters = BayesianTools::MAP(CASSIAout_sugar_model)$parametersMAP
-
   test_against_original_data(c(Calibrated_Parameters), T, T, T)
 
-  return(CASSIAout_sugar_model)
+  # return(CASSIAout_sugar_model)
 }
 
 
