@@ -36,7 +36,7 @@
 }
 
 \references{
-  # TODO: add a reference
+  Minunno, F., et al. "Calibration and validation of a semi-empirical flux ecosystem model for coniferous forests in the Boreal region." Ecological Modelling 341 (2016): 37-52.
 }
 
 \author{

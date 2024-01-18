@@ -3,7 +3,7 @@
 \alias{mycofon_balence}
 \docType{package}
 \title{
-  Mycofon model (todo: reference), with updates to include the uptake properties for three types of nitrogen as well as the decision functionality.
+  Mycofon model (Meyer, 2010), with updates to include the uptake properties for three types of nitrogen as well as the decision functionality.
 }
 \description{
   This function brings together the C or N balance as in the original MYCOFON model, the decision functions for resource transfer, fungal growth and multiple N uptake functions. The equations in this function are below.
