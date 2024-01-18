@@ -39,3 +39,16 @@ hello = PRELES(PAR = data_format$PAR,
 plot(hello$GPP)
 
 
+weather_original_2015 = read.csv(file = "./data/weather_original_2015.csv", header = T, sep = ",")
+weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
+weather_original_2017 = read.csv(file = "./data/weather_original_2017.csv", header = T, sep = ",")
+weather_original = rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017)
+
+extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
+                    PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("PAR")],
+                    VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("VPD")],
+                    CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("CO2")],
+                    fAPAR = rep(0.7, length = nrow(weather_original)))
+weather_original <- cbind(weather_original, extras)
+
+save(weather_original, file = "./data/weather_original.RData")
