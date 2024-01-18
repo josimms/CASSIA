@@ -12,6 +12,7 @@ Rcpp::List CASSIA_soil(int start_year,
                        Rcpp::DataFrame pCASSIA_common,
                        Rcpp::DataFrame pCASSIA_ratios,
                        Rcpp::DataFrame pCASSIA_sperling,
+                       std::vector<double> parameters_R,
 
                        double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
 
@@ -61,6 +62,10 @@ Rcpp::List CASSIA_soil(int start_year,
   CASSIA_common common = make_common(pCASSIA_common);
   CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
+  parameters_soil parameters_in = parameters_initalise_test(parameters_R);
+  // As C_fungal: 50:50 mantle and ERM, Meyer 2010
+  // parameters_in.mantle_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
+  // parameters_in.ERM_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
 
   /*
    * Weather input made into vectors
@@ -118,6 +123,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
+  SYMPHONY_output soil_values_for_next_iteration;
 
   /*
    * Vectors for the outputs
@@ -128,6 +134,7 @@ Rcpp::List CASSIA_soil(int start_year,
   sugar_values_vector sugar_values_output;
   photo_out_vector photosynthesis_output;
   resp_vector respiration_output;
+  SYMPHONY_vector soil_output;
   needle_cohorts last_cohorts;
   double last_year_HH;
   double last_year_maxN;
@@ -238,8 +245,16 @@ Rcpp::List CASSIA_soil(int start_year,
     int count;
     for (int day = 0; day < days_per_year; day++) {
       count = (year - start_year)*days_per_year + day;
-
       // std::cout << " Day: " << day;
+
+      /*
+       * Decision
+       *
+       * Decision is based on the last state, so happens first
+       */
+
+      // DECUSION STAGE
+      DECISION_output DECISION_out;
 
       /*
        * PHOTOSYNTHESIS
@@ -395,7 +410,65 @@ Rcpp::List CASSIA_soil(int start_year,
                                                    sperling_sugar_model);
       // TODO: update the parameters like D0 and h0 that need to be updated
 
+      // TODO: litter!
+      double Litter_needles = needle_mass_in / 3 / 365;
+      double Litter_woody = actual_growth_out.wall / (365*3);
+      double Litter_roots = actual_growth_out.roots / 365;
+
       // std::cout << "\n";
+
+      /*
+       * MYCOFON
+       */
+
+      MYCOFON_output MYTCOFON_out;
+
+      // TODO: work out which parameters are available here
+      // TODO: 0.5 is a filler for the C:N ratio of needles
+      Rcpp::List MYCOFON_out =  mycofon_balence(actual_growth_out.roots, 0.5*actual_growth_out.roots,
+                                                parameters_in.optimal_root_fungal_biomass_ratio,
+                                                MYTCOFON_out.C_fungal, MYTCOFON_out.N_fungal,
+                                                parameters_in.turnover_roots, parameters_in.turnover_roots_mycorrhized,
+                                                parameters_in.turnover_mantle, parameters_in.turnover_ERM,
+                                                parameters_in.respiration_params,
+                                                soil_values_for_next_iteration.NH4, soil_values_for_next_iteration.NO3, soil_values_for_next_iteration.N_FOM,
+                                                parameters_in.NC_fungal_opt,
+                                                TAir[count], TSoil_B[count], Soil_Moisture[count],
+                                                parameters_in.N_limits_plant,
+                                                parameters_in.N_k_plant,
+                                                parameters_in.SWC_k_plant,
+                                                parameters_in.N_limits_fungal,
+                                                parameters_in.N_k_fungal,
+                                                parameters_in.SWC_k_fungal,
+                                                parameters_in.mantle_mass,
+                                                parameters_in.ERM_mass,
+                                                parameters_in.NH4_on_NO3,
+                                                parameters_in.growth_C,
+                                                parameters_in.growth_N,
+                                                0.1,
+                                                0.1,
+                                                false);
+
+      /*
+       * SOIL
+       */
+
+      SYMPHONY_output Soil_All = symphony_multiple_FOM_daily(TSoil_B[count], Soil_Moisture[count],
+                                                            soil_values_for_next_iteration.C_FOM_needles, soil_values_for_next_iteration.C_FOM_woody, soil_values_for_next_iteration.C_FOM_roots, soil_values_for_next_iteration.C_FOM_mantle, soil_values_for_next_iteration.C_FOM_ERM,
+                                                            soil_values_for_next_iteration.C_SOM, soil_values_for_next_iteration.N_SOM,
+                                                            soil_values_for_next_iteration.C_decompose_FOM, soil_values_for_next_iteration.C_decompose_SOM,
+                                                            soil_values_for_next_iteration.N_decompose_FOM, soil_values_for_next_iteration.N_decompose_SOM,
+                                                            Litter_needles, Litter_woody, Litter_roots, 0.1, 0.1,
+                                                            0.1, 0.1, // TODO: this!
+                                                            soil_values_for_next_iteration.NH4, soil_values_for_next_iteration.NO3,
+                                                            soil_values_for_next_iteration.NC_needles, soil_values_for_next_iteration.NC_woody,
+                                                            soil_values_for_next_iteration.NC_roots, soil_values_for_next_iteration.NC_mantle, soil_values_for_next_iteration.NC_ERM,
+                                                            DECISION_out.NH4_used_Plant, DECISION_out.NH4_used_Fungal,  // TODO think about this!
+                                                            DECISION_out.NO3_used_Plant, DECISION_out.NO3_used_Fungal,
+                                                            DECISION_out.FOM_Norg_used_Plant, DECISION_out.FOM_Norg_used_Fungal, soil_values_for_next_iteration.SOM_Norg_used,
+                                                            parameters_in.respiration_params, parameters_in.N_limits_microbes, parameters_in.N_k_microbes, parameters_in.SWC_k_microbes,
+                                                            parameters_in.NC_microbe_opt, parameters_in.microbe_turnover);
+      soil_values_for_next_iteration = Soil_All;
 
       /*
        * Output
@@ -410,6 +483,8 @@ Rcpp::List CASSIA_soil(int start_year,
       GPP_sum_yesterday = GPP_sum;
 
       if (final_year%2==0) {
+        // TODO: Add soil and mycofon here!
+
         years.push_back(year);
         days.push_back(day);
 
@@ -457,6 +532,28 @@ Rcpp::List CASSIA_soil(int start_year,
         photosynthesis_output.ET.push_back(photosynthesis.ET);
         photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
         photosynthesis_output.S.push_back(photosynthesis.S);
+
+        soil_output.C_decompose_FOM.push_back(Soil_All.C_decompose_FOM);
+        soil_output.C_decompose_SOM.push_back(Soil_All.C_decompose_SOM);
+        soil_output.C_FOM_ERM.push_back(Soil_All.C_FOM_ERM);
+        soil_output.C_FOM_mantle.push_back(Soil_All.C_FOM_mantle);
+        soil_output.C_FOM_needles.push_back(Soil_All.C_FOM_needles);
+        soil_output.C_FOM_roots.push_back(Soil_All.C_FOM_roots);
+        soil_output.C_FOM_woody.push_back(Soil_All.C_FOM_woody);
+        soil_output.C_SOM.push_back(Soil_All.C_SOM);
+        soil_output.N_decompose_FOM.push_back(Soil_All.N_decompose_FOM);
+        soil_output.N_decompose_SOM.push_back(Soil_All.N_decompose_SOM);
+        soil_output.N_FOM.push_back(Soil_All.N_FOM);
+        soil_output.N_SOM.push_back(Soil_All.N_SOM);
+        soil_output.NC_ERM.push_back(Soil_All.NC_ERM);
+        soil_output.NC_mantle.push_back(Soil_All.NC_mantle);
+        soil_output.NC_needles.push_back(Soil_All.NC_needles);
+        soil_output.NC_roots.push_back(Soil_All.NC_roots);
+        soil_output.NC_woody.push_back(Soil_All.NC_roots);
+        soil_output.NH4.push_back(Soil_All.NH4);
+        soil_output.NO3.push_back(Soil_All.NO3);
+        soil_output.SOM_Norg_used.push_back(Soil_All.SOM_Norg_used);
+        soil_output.Microbe_respiration.push_back(Soil_All.Microbe_respiration);
       }
     }
 
