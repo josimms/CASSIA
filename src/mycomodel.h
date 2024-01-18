@@ -51,7 +51,7 @@ struct soil_balence{
 
 // A collection of parameters that I want as input function - but these should probably be reordered at some point
 
-struct parameters
+struct parameters_soil
 
 {
   double microbe_turnover;
@@ -161,6 +161,31 @@ struct SYMPHONY_output {
   double N_decompose_FOM;
   double N_decompose_SOM;
   double SOM_Norg_used;
+  double Microbe_respiration;
+};
+
+struct SYMPHONY_vector {
+  std::vector<double> NH4;
+  std::vector<double> NO3;
+  std::vector<double> N_FOM;
+  std::vector<double> C_FOM_needles;
+  std::vector<double> C_FOM_woody;
+  std::vector<double> C_FOM_roots;
+  std::vector<double> C_FOM_mantle;
+  std::vector<double> C_FOM_ERM;
+  std::vector<double> C_SOM;
+  std::vector<double> N_SOM;
+  std::vector<double> NC_needles;
+  std::vector<double> NC_woody;
+  std::vector<double> NC_roots;
+  std::vector<double> NC_mantle;
+  std::vector<double> NC_ERM;
+  std::vector<double> C_decompose_FOM;
+  std::vector<double> C_decompose_SOM;
+  std::vector<double> N_decompose_FOM;
+  std::vector<double> N_decompose_SOM;
+  std::vector<double> SOM_Norg_used;
+  std::vector<double> Microbe_respiration;
 };
 
 
@@ -182,7 +207,8 @@ int leap_year(int year);
 #ifndef PKG_Toy_Model_H
 #define PKG_Toy_Model_H
 
-parameters parameters_initalise(std::vector<double> parameters_R);
+parameters_soil parameters_initalise(std::vector<double> parameters_R);
+parameters_soil parameters_initalise_test(std::vector<double> parameters_R);
 
 #endif
 
@@ -291,46 +317,46 @@ symphony_parameters vector_to_symphony(std::vector<double> input);
 #ifndef PKG_symphony_multiple_FOM_daily_H
 #define PKG_symphony_multiple_FOM_daily_H
 
-Rcpp::List symphony_multiple_FOM_daily(double Tmb,
-                                        double SWC,
-                                        double C_FOM_needles_old,
-                                        double C_FOM_woody_old,
-                                        double C_FOM_roots_old,
-                                        double C_FOM_mantle_old,
-                                        double C_FOM_ERM_old,
-                                        double C_SOM_old,
-                                        double N_SOM_old,
-                                        double C_decompose_FOM,
-                                        double C_decompose_SOM,
-                                        double N_decompose_FOM,
-                                        double N_decompose_SOM,
-                                        double Litter_needles,
-                                        double Litter_woody,
-                                        double Litter_roots,
-                                        double Litter_mantle,
-                                        double Litter_ERM,
-                                        double imobilisation,
-                                        double assimilation,
-                                        double NH4_old,
-                                        double NO3_old,
-                                        double NC_needles,
-                                        double NC_woody,
-                                        double NC_roots,
-                                        double NC_mantle,
-                                        double NC_ERM,
-                                        double NH4_used_Plant,
-                                        double NH4_used_Fungal,
-                                        double NO3_used_Plant,
-                                        double NO3_used_Fungal,
-                                        double FOM_Norg_used_Plant,
-                                        double FOM_Norg_used_Fungal,
-                                        double SOM_Norg_used,
-                                        std::vector<double> respiration_microbes_params,
-                                        std::vector<double> N_limits_R,
-                                        std::vector<double> N_k_R,
-                                        std::vector<double> SWC_k_R,
-                                        double NC_microbe_opt,
-                                        double microbe_turnover);
+SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
+                                            double SWC,
+                                            double C_FOM_needles_old,
+                                            double C_FOM_woody_old,
+                                            double C_FOM_roots_old,
+                                            double C_FOM_mantle_old,
+                                            double C_FOM_ERM_old,
+                                            double C_SOM_old,
+                                            double N_SOM_old,
+                                            double C_decompose_FOM,
+                                            double C_decompose_SOM,
+                                            double N_decompose_FOM,
+                                            double N_decompose_SOM,
+                                            double Litter_needles,
+                                            double Litter_woody,
+                                            double Litter_roots,
+                                            double Litter_mantle,
+                                            double Litter_ERM,
+                                            double imobilisation,
+                                            double assimilation,
+                                            double NH4_old,
+                                            double NO3_old,
+                                            double NC_needles,
+                                            double NC_woody,
+                                            double NC_roots,
+                                            double NC_mantle,
+                                            double NC_ERM,
+                                            double NH4_used_Plant,
+                                            double NH4_used_Fungal,
+                                            double NO3_used_Plant,
+                                            double NO3_used_Fungal,
+                                            double FOM_Norg_used_Plant,
+                                            double FOM_Norg_used_Fungal,
+                                            double SOM_Norg_used,
+                                            std::vector<double> respiration_microbes_params,
+                                            std::vector<double> N_limits_R,
+                                            std::vector<double> N_k_R,
+                                            std::vector<double> SWC_k_R,
+                                            double NC_microbe_opt,
+                                            double microbe_turnover);
 
 #endif
 
