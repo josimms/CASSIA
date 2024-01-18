@@ -13,8 +13,8 @@ CASSIA_sensitivity <- function(bounds, names, start_year, end_year, weather, GPP
     .Call(`_CASSIA_CASSIA_sensitivity`, bounds, names, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG)
 }
 
-Toy_Model <- function(year, C_roots, N_roots, C_fungal, N_fungal, Litter_mantle, Litter_ERM, Hyde_weather, parameters_R) {
-    .Call(`_CASSIA_Toy_Model`, year, C_roots, N_roots, C_fungal, N_fungal, Litter_mantle, Litter_ERM, Hyde_weather, parameters_R)
+CASSIA_soil <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG) {
+    .Call(`_CASSIA_CASSIA_soil`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG)
 }
 
 xylogenesis_wrapper <- function(no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw) {
@@ -71,10 +71,6 @@ repola_test_cpp <- function(pCASSIA_parameters, pCASSIA_sperling) {
 
 respiration_test_cpp <- function(pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0) {
     .Call(`_CASSIA_respiration_test_cpp`, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0)
-}
-
-symphony_multiple_FOM_daily <- function(Tmb, SWC, C_FOM_needles_old, C_FOM_woody_old, C_FOM_roots_old, C_FOM_mantle_old, C_FOM_ERM_old, C_SOM_old, N_SOM_old, C_decompose_FOM, C_decompose_SOM, N_decompose_FOM, N_decompose_SOM, Litter_needles, Litter_woody, Litter_roots, Litter_mantle, Litter_ERM, imobilisation, assimilation, NH4_old, NO3_old, NC_needles, NC_woody, NC_roots, NC_mantle, NC_ERM, NH4_used_Plant, NH4_used_Fungal, NO3_used_Plant, NO3_used_Fungal, FOM_Norg_used_Plant, FOM_Norg_used_Fungal, SOM_Norg_used, respiration_microbes_params, N_limits_R, N_k_R, SWC_k_R, NC_microbe_opt, microbe_turnover) {
-    .Call(`_CASSIA_symphony_multiple_FOM_daily`, Tmb, SWC, C_FOM_needles_old, C_FOM_woody_old, C_FOM_roots_old, C_FOM_mantle_old, C_FOM_ERM_old, C_SOM_old, N_SOM_old, C_decompose_FOM, C_decompose_SOM, N_decompose_FOM, N_decompose_SOM, Litter_needles, Litter_woody, Litter_roots, Litter_mantle, Litter_ERM, imobilisation, assimilation, NH4_old, NO3_old, NC_needles, NC_woody, NC_roots, NC_mantle, NC_ERM, NH4_used_Plant, NH4_used_Fungal, NO3_used_Plant, NO3_used_Fungal, FOM_Norg_used_Plant, FOM_Norg_used_Fungal, SOM_Norg_used, respiration_microbes_params, N_limits_R, N_k_R, SWC_k_R, NC_microbe_opt, microbe_turnover)
 }
 
 symphony <- function(params) {
