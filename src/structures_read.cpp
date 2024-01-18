@@ -392,3 +392,37 @@ p7 make_p7(std::vector<double> input) {
   out.b = input[31];
   return(out);
 }
+
+parameters_soil parameters_initalise_test(std::vector<double> parameters_R) {
+  parameters_soil out;
+  out.microbe_turnover = parameters_R[0];
+  out.NC_in_root_opt = parameters_R[1];
+  out.NC_fungal_opt = parameters_R[2];
+  out.NC_microbe_opt = parameters_R[3];
+  out.percentage_C_biomass = parameters_R[4];
+  out.N_limits_plant = {parameters_R[5], parameters_R[6], parameters_R[7]};
+  out.N_limits_fungal = {parameters_R[8], parameters_R[9], parameters_R[10]};
+  out.N_limits_microbes = {parameters_R[11], parameters_R[12], parameters_R[13]};
+  out.N_k_plant = {parameters_R[14], parameters_R[15], parameters_R[16]};
+  out.N_k_fungal = {parameters_R[17], parameters_R[18], parameters_R[19]};
+  out.N_k_microbes = {parameters_R[20], parameters_R[21], parameters_R[22]};
+  out.SWC_k_plant = {parameters_R[23], parameters_R[24], parameters_R[25]};
+  out.SWC_k_fungal = {parameters_R[26], parameters_R[27], parameters_R[28]};
+  out.SWC_k_microbes = {parameters_R[29], parameters_R[30], parameters_R[31]};
+  out.NH4_on_NO3 = {parameters_R[32], parameters_R[33], parameters_R[34]};
+  out.respiration_params = {parameters_R[35], parameters_R[36], parameters_R[37], parameters_R[38], parameters_R[39], parameters_R[40]};
+  out.optimal_root_fungal_biomass_ratio = parameters_R[41];
+  out.turnover_mantle = parameters_R[42];
+  out.turnover_ERM = parameters_R[43];
+  out.turnover_roots_mycorrhized = parameters_R[44];
+  out.turnover_fungal = parameters_R[45];
+  out.mantle_mass = parameters_R[46];
+  out.ERM_mass = parameters_R[47];
+  out.growth_C = parameters_R[48];
+  out.growth_N = parameters_R[49];
+  out.C_value_param_myco = parameters_R[50];
+  out.N_value_param_myco = parameters_R[51];
+  out.C_value_param_plant = parameters_R[52];
+  out.N_value_param_plant = parameters_R[53];
+  return(out);
+};
