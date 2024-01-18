@@ -1,46 +1,45 @@
 #include "CASSIA.h"
 
-// [[Rcpp::export]]
-Rcpp::List symphony_multiple_FOM_daily(double Tmb,
-                                       double SWC,
-                                       double C_FOM_needles_old,
-                                       double C_FOM_woody_old,
-                                       double C_FOM_roots_old,
-                                       double C_FOM_mantle_old,
-                                       double C_FOM_ERM_old,
-                                       double C_SOM_old,
-                                       double N_SOM_old,
-                                       double C_decompose_FOM,
-                                       double C_decompose_SOM,
-                                       double N_decompose_FOM,
-                                       double N_decompose_SOM,
-                                       double Litter_needles,
-                                       double Litter_woody,
-                                       double Litter_roots,
-                                       double Litter_mantle,
-                                       double Litter_ERM,
-                                       double imobilisation,
-                                       double assimilation,
-                                       double NH4_old,
-                                       double NO3_old,
-                                       double NC_needles,
-                                       double NC_woody,
-                                       double NC_roots,
-                                       double NC_mantle,
-                                       double NC_ERM,
-                                       double NH4_used_Plant,
-                                       double NH4_used_Fungal,
-                                       double NO3_used_Plant,
-                                       double NO3_used_Fungal,
-                                       double FOM_Norg_used_Plant,
-                                       double FOM_Norg_used_Fungal,
-                                       double SOM_Norg_used,
-                                       std::vector<double> respiration_microbes_params,
-                                       std::vector<double> N_limits_R,
-                                       std::vector<double> N_k_R,
-                                       std::vector<double> SWC_k_R,
-                                       double NC_microbe_opt,
-                                       double microbe_turnover)
+SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
+                                            double SWC,
+                                            double C_FOM_needles_old,
+                                            double C_FOM_woody_old,
+                                            double C_FOM_roots_old,
+                                            double C_FOM_mantle_old,
+                                            double C_FOM_ERM_old,
+                                            double C_SOM_old,
+                                            double N_SOM_old,
+                                            double C_decompose_FOM,
+                                            double C_decompose_SOM,
+                                            double N_decompose_FOM,
+                                            double N_decompose_SOM,
+                                            double Litter_needles,
+                                            double Litter_woody,
+                                            double Litter_roots,
+                                            double Litter_mantle,
+                                            double Litter_ERM,
+                                            double imobilisation,
+                                            double assimilation,
+                                            double NH4_old,
+                                            double NO3_old,
+                                            double NC_needles,
+                                            double NC_woody,
+                                            double NC_roots,
+                                            double NC_mantle,
+                                            double NC_ERM,
+                                            double NH4_used_Plant,
+                                            double NH4_used_Fungal,
+                                            double NO3_used_Plant,
+                                            double NO3_used_Fungal,
+                                            double FOM_Norg_used_Plant,
+                                            double FOM_Norg_used_Fungal,
+                                            double SOM_Norg_used,
+                                            std::vector<double> respiration_microbes_params,
+                                            std::vector<double> N_limits_R,
+                                            std::vector<double> N_k_R,
+                                            std::vector<double> SWC_k_R,
+                                            double NC_microbe_opt,
+                                            double microbe_turnover)
 {
 
   /*
@@ -136,21 +135,30 @@ Rcpp::List symphony_multiple_FOM_daily(double Tmb,
   double amino_acids = 1; // TOOD: add the organic S storage into the model
 
 
+  SYMPHONY_output out;
+  out.C_decompose_FOM = C_decompose_FOM;          // C kg
+  out.C_decompose_SOM = C_decompose_SOM;          // C kg
+  out.C_FOM_ERM = C_FOM_ERM;                      // C kg
+  out.C_FOM_mantle = C_FOM_mantle;                // C kg
+  out.C_FOM_needles = C_FOM_needles;              // C kg
+  out.C_FOM_roots = C_FOM_roots;                  // C kg
+  out.C_FOM_woody = C_FOM_woody;                  // C kg
+  out.C_SOM = C_SOM;                              // C kg
+  out.N_decompose_FOM = N_decompose_FOM;          // C kg
+  out.N_decompose_SOM = N_decompose_SOM;          // C kg
+  out.N_FOM = N_FOM;                              // C kg
+  out.N_SOM = N_SOM;                              // C kg
+  out.NC_ERM = NC_ERM;                            // C kg
+  out.NC_mantle = NC_mantle;                      // C kg
+  out.NC_needles = NC_needles;                    // C kg
+  out.NC_roots = NC_roots;                        // C kg
+  out.NC_woody = NC_woody;                        // C kg
+  out.NH4 = NH4;                                  // C kg
+  out.NO3 = NO3;                                  // C kg
+  out.SOM_Norg_used = SOM_Norg_used;              // C kg
+  out.Microbe_respiration = 0.2; // TODO respiration(Tmb, respiration_microbes_params[1], respiration_microbes_params[2]));    // C kg
 
-  // Output
-  return Rcpp::List::create(Rcpp::_["C_decompose_FOM"] = C_decompose_FOM,          // C kg
-                            Rcpp::_["C_decompose_SOM"] = C_decompose_SOM,          // C kg
-                            Rcpp::_["C_FOM_needles"] = C_FOM_needles,              // C kg
-                            Rcpp::_["C_FOM_woody"] = C_FOM_woody,                  // C kg
-                            Rcpp::_["C_FOM_roots"] = C_FOM_roots,                  // C kg
-                            Rcpp::_["C_FOM_mantle"] = C_FOM_mantle,                // C kg
-                            Rcpp::_["C_FOM_ERM"] = C_FOM_ERM,                      // C kg
-                            Rcpp::_["N_FOM"] = N_FOM,                              // C kg
-                            Rcpp::_["C_SOM"] = C_SOM,                              // C kg
-                            Rcpp::_["N_SOM"] = N_SOM,
-                            Rcpp::_["NH4"] = NH4,                                  // C kg
-                            Rcpp::_["NO3"] = NO3,                                  // C kg
-                            Rcpp::_["Microbe_respiration"] = 0.2); // respiration(Tmb, respiration_microbes_params[1], respiration_microbes_params[2]));    // C kg
+  return(out);
 
 }
 
