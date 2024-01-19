@@ -91,9 +91,9 @@ Rcpp::List Plant_N_Uptake(double T,
   // All possible N to root with NH4 modifier for NO3
   double N_to_root = (uptake_N(FOM_in, T, N_limits.Norg, N_k.Norg, SWC, SWC_k.Norg) +
                       uptake_N(NH4_in, T, N_limits.NH4, N_k.NH4, SWC, SWC_k.NH4) +
-                      NH4_effect_on_NO3*uptake_N(NO3_in, T, N_limits.NO3, N_k.NO3, SWC, SWC_k.NO3));
+                      NH4_effect_on_NO3*uptake_N(NO3_in, T, N_limits.NO3, N_k.NO3, SWC, SWC_k.NO3)) * demand;
 
-  return(Rcpp::List::create(Rcpp::_["N_to_plant"] = N_to_root*demand,
+  return(Rcpp::List::create(Rcpp::_["N_to_plant"] = N_to_root,
                             Rcpp::_["NH4_used"] = uptake_N(NH4_in, T, N_limits.NH4, N_k.NH4, SWC, SWC_k.NH4) * demand,
                             Rcpp::_["NO3_used"] = NH4_effect_on_NO3 * uptake_N(NO3_in, T, N_limits.NO3, N_k.NO3, SWC, SWC_k.NO3) * demand,
                             Rcpp::_["Norg_used"] = uptake_N(FOM_in, T, N_limits.Norg, N_k.Norg, SWC, SWC_k.Norg) * demand));
