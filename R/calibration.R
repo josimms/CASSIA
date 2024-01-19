@@ -150,7 +150,7 @@ dhtn <- function(x, mean = 0, sd = 1, log = T) {
 }
 
 likelyhood_sugar_model <- function(par, sum = T) {
-  storage_rest = T
+  storage_rest = F
   storage_grows = F
   LH_estim = T
   LN_estim = T
@@ -180,6 +180,9 @@ likelyhood_sugar_model <- function(par, sum = T) {
             0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
             0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
             -999.9, -999.9, -999.9)
+
+  ## TODO: add the pPREL values properly in this, but the Väriö depth was a guess at 300
+  ## p = c(100, 0.250, 0.07, 2, rep(NA, 26)) from the Väriö code
 
   ### Import data
   direct <- "~/Documents/CASSIA_Calibration/"
@@ -275,7 +278,7 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   # Run with different parameters sets and check the likelihood, if changes can then use the Bayesian methods
   direct <- "~/Documents/CASSIA_Calibration/"
   bounds_all <- read.delim(paste0(direct, "bounds_all.csv"), sep = ",", row.names = 1)
-  bounds_all$UL[1:27] = c(4, 10, 8, 8, 5,
+  bounds_all$UL[1:27] = c(4, 10, 8, 8, 1,
                           12, 12, 12, 12, 12,
                           1, 1, 1, 1, 1,
                           2, 2, 2, 2, 2,
@@ -303,7 +306,7 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
 
   save(CASSIAout_sugar_model, file = paste0(direct, gsub(":", "_", Sys.time()), " CASSIAout_sugar_model.RData"))
 
-  # load(paste0(direct, "2023-12-05 15_00_48.22879 CASSIAout_sugar_model.RData"))
+  # load(paste0(direct, "2024-01-18 15_06_21.942151 CASSIAout_sugar_model.RData"))
 
   plot(CASSIAout_sugar_model)
 
