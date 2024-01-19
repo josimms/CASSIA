@@ -52,12 +52,17 @@ carbo_tracker As_initiliser(carbo_tracker Ad, double equilibrium_temperature, do
 
 double emergancy(double sugar, double starch, double tau_emergancy, double lower_bound) {
   double out;
-  if (sugar < lower_bound) {
-    double comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
-    out = std::min(starch, comaprison);
+  if (starch > 0) {
+    if (sugar < lower_bound) {
+      double comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
+      out = std::min(starch, comaprison);
+    } else {
+      out = 0;
+    }
   } else {
     out = 0;
   }
+
   return out;
 }
 
@@ -93,7 +98,7 @@ carbo_balance sugar_model(int day,
 
 
   carbo_tracker storage_term;
-  // TODO: consider these terms in the callibration
+  // TODO: consider these terms in the calibration
   storage_term.needles = storage_update(parameters.alfa_needles, sugar.needles, starch.needles, parameters.lower_bound_needles, tree_alive);
   storage_term.phloem = storage_update(parameters.alfa_phloem, sugar.phloem, starch.phloem, parameters.lower_bound_phloem, tree_alive);
   storage_term.roots = storage_update(parameters.alfa_roots, sugar.roots, starch.roots, parameters.lower_bound_roots, tree_alive);
@@ -151,7 +156,7 @@ carbo_balance sugar_model(int day,
     concentration_gradient.phloem_to_roots = ((sugar.phloem+starch.phloem)/7.410537931 - (sugar.roots+starch.roots)/2.8)/parameters.resistance_phloem_to_roots;
     concentration_gradient.phloem_to_xylem_sh = ((sugar.phloem+starch.phloem)/7.410537931 - (sugar.xylem_sh+starch.xylem_sh)/74.10537931)/parameters.resistance_phloem_to_xylem_sh;
     concentration_gradient.phloem_to_xylem_st = ((sugar.phloem+starch.phloem)/7.410537931 - (sugar.xylem_st+starch.xylem_st)/8.65862069)/parameters.resistance_phloem_to_xylem_st;
-    concentration_gradient.roots_to_myco = 0.3*PF;
+    concentration_gradient.roots_to_myco = parameters.mycorrhiza_threshold * (sugar.roots + starch.roots);
 
     /*
      * Balance calculations
@@ -266,6 +271,26 @@ carbo_balance sugar_model(int day,
     double difference = carbo_beginning - carbo_ending;
     if (difference > 0.00000000000001) { // 10^13
       std::cout << "On day " << day + 1 << " The carbohydrate balance compared to the beginning of the day " << difference << "\n";
+    }
+
+    /*
+     * Storage check
+     */
+
+    if (sugar.needles <= 0 & starch.needles <= 0) {
+      std::cerr << " Day " << day << " No Storage needles! Plant died" << "\n";
+    }
+    if (sugar.phloem <= 0 & starch.phloem <= 0) {
+      std::cerr << " Day " << day << " No Storage phloem! Plant died" << "\n";
+    }
+    if (sugar.roots <= 0 & starch.roots <= 0) {
+      std::cerr <<  " Day " << day << " No Storage roots! Plant died" << "\n";
+    }
+    if (sugar.xylem_sh <= 0 & starch.xylem_sh <= 0) {
+      std::cerr << " Day " << day << " No Storage xylem shoot! Plant died" << "\n";
+    }
+    if (sugar.xylem_st <= 0 & starch.xylem_st <= 0) {
+      std::cerr << " Day " << day << " No Storage xylem stem! Plant died" << "\n";
     }
 
     /*
