@@ -186,8 +186,8 @@ Rcpp::List CASSIA_yearly(int start_year,
      */
 
     // Temperature equilibrium for the sugar model
-    //	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
-    double equilibrium_temperature = (TAir[273] + TAir[274] + TAir[275] + TAir[276] + TAir[277] + TAir[278] + TAir[279] + TAir[280]) / 7 + 3;
+    //	# Compute initial Te by the mean temperature for the first week of # Semptemver plus 3C (for the exponential nature of the curves), original was October
+    double equilibrium_temperature = (TAir[244] + TAir[245] + TAir[246] + TAir[247] + TAir[248] + TAir[249] + TAir[250] + TAir[251]) / 7 + 3;
 
     // B0, D00 and h00
     double B0 = M_PI/4 * pow(parameters.D0, 2);
@@ -427,7 +427,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       needles_last = potential_growth.needles;
       potenital_growth_use.push_back(potential_growth.use);
       if (!tree_alive) {
-        std::cout << "The tree is dead due to sugar storage";
+        std::cout << "The tree is dead due to sugar storage\n";
       }
 
       GPP_sum_yesterday = GPP_sum;
@@ -487,8 +487,6 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     last_year_HH = HH;
 
-    std::cout << "End sugar value: " << sugar_values_for_next_iteration.sugar.needles << "\n";
-
     if (final_year%2==0) {
       GPP_mean = 463.8833; // TODO: should change this!
       GPP_previous_sum.push_back(GPP_sum);
@@ -510,8 +508,6 @@ Rcpp::List CASSIA_yearly(int start_year,
       parameters.starch_xylem_sh0 = sugar_values_for_next_iteration.starch.xylem_sh;
       parameters.starch_xylem_st0 = sugar_values_for_next_iteration.starch.xylem_st;
     }
-
-    std::cout << "Parameters: " << parameters.sugar_needles0 << "\n";
 
     // TODO: need to add the growth of things here!
     final_year = final_year + 1;
