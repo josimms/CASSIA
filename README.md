@@ -41,9 +41,13 @@ Error in if GENERIC ARGUMENT missing value where TRUE/FALSE needed
 ```
 It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report then send joanna.x.simms@helsinki.fi an email.
 
+(Code working as of 19th Jan 2024 - contact Joanna if not working)
+
 ### Example C++ model via R interface
 
 The C++ model has less automatic features than the R version of the model. This means that when you call the function you have to be more explicit about all of the arguments as well as including different weather data. There is a working example in the package, however this is not fully documented. A basic example is as follows.
+
+(Code currently under revision, so could not be working - this code will be updated by Feburary with a working version)
 
 ```{r}
 ### Toggle setting
