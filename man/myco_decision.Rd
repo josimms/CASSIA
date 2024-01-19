@@ -5,28 +5,28 @@
   Myco Decision
 }
 \description{
-  Currently two stratergies are used. These are derrived from Fraklin et al 2014 and the Mycofon model (Meyer, 2010).
-  
-  The stratergu of Mycofon gives;
-  
+  Currently two strategies are used. These are derived from Fraklin et al 2014 and the Mycofon model (Meyer, 2010).
+
+  The stratergy of Mycofon gives;
+
   a demand of 1
-  
+
   and
-  
-  transfer = \eqn{\max \{N_f(1 - \frac{\frac{N_r}{C_r}}{(N:C)^{*}}), 0.0 \}}
-  
+
+  Transfer = \eqn{\max \{N_f(1 - \frac{\frac{N_r}{C_r}}{(N:C)^{*}}), 0.0 \}}
+
   where \eqn{N_f}, \eqn{N_r} are the N in the fungi and root respectively, \eqn{C_r} is the C in the root and (N:C)^{*} is the optimal N:C ration in the root.
-  
-  The stratergy of Franklin gives;
-  
+
+  The strategy of Franklin gives;
+
   a demand of 1
-  
+
   and
-  
-  tranfer = \eqn{\max \{N_f - G_f, 0.0 \}}
-  
-  Where N and G are the nitorgen and growth of the fungi.
-  
+
+  Transfer = \eqn{\max \{N_f - G_f, 0.0 \}}
+
+  Where N and G are the nitrogen and growth of the fungi.
+
 }
 
 \usage{
@@ -75,6 +75,6 @@ myco_decision(C_fungal,
 }
 \references{
   Meyer, Astrid, et al. "Simulating mycorrhiza contribution to forest C-and N cycling-the MYCOFON model." Plant and soil 327 2010: 493-517.
-  
+
   Franklin, Oskar, et al. "Forests trapped in nitrogen limitation–an ecological market perspective on ectomycorrhizal symbiosis." New Phytologist 203.2 2014: 657-666.
 }
