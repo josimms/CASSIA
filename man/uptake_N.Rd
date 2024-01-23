@@ -40,13 +40,13 @@ uptake_n(N,
 
 \arguments{
   \item{N}{
-    Nitrogen, \eq{\mu} M
+    Nitrogen, \eqn{\mu} M
   }
   \item{T}{
     Temperature (usually the temperature at soil horizon B is used). degrees C
   }
   \item{N_limit}{
-    Factor for the pure N uptake. \eq{\mu} M
+    Factor for the pure N uptake. \eqn{\mu} M
   }
   \item{k}{
     Factor for the pure N uptake.
@@ -60,7 +60,7 @@ uptake_n(N,
 }
 
 \value{
-    \item{N uptake}{The uptake of a form of N, \eq{\mu} M}
+    \item{N uptake}{The uptake of a form of N, \eqn{\mu} M}
 }
 
 \author{
