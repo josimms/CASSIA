@@ -113,8 +113,52 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     parameters_test[62:66,1] <- new_parameters[23:27]
   }
 
-  CASSIA_new_output = CASSIA_yearly(2015, 2018, weather_original, GPP_ref,
-                                    c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test),
+  # TODO: All of the parameters should be checked
+  parameters_R = c(0.2, # microbe_turnover
+                   0.5, # NC_in_root_opt
+                   0.5, # NC_fungal_opt
+                   0.5, # NC_microbe_opt
+                   0.5, # percentage_C_biomass
+                   1, 1, 1, # N_limits_plant
+                   1, 1, 1, # N_limits_plant
+                   1, 1, 1, # N_limits_plant
+                   1, 1, 1, # N_limits_fungal
+                   1, 1, 1, # N_limits_fungal
+                   1, 1, 1, # N_limits_fungal
+                   1, 1, 1, # N_limits_microbes
+                   1, 1, 1, # N_limits_microbes
+                   1, 1, 1, # N_limits_microbes
+                   1, 1, 1, # N_k_plant
+                   1, 1, 1, # N_k_plant
+                   1, 1, 1, # N_k_plant
+                   1, 1, 1, # N_k_fungal
+                   1, 1, 1, # N_k_fungal
+                   1, 1, 1, # N_k_fungal
+                   1, 1, 1, # N_k_microbes
+                   1, 1, 1, # N_k_microbes
+                   1, 1, 1, # N_k_microbes
+                   1, 1, 1, # SWC_k_plant
+                   1, 1, 1, # SWC_k_fungal
+                   1, 1, 1, # SWC_k_microbes
+                   1, 1, 1, # NH4_on_NO3
+                   1, 1, 1, 1, 1, 1, # respiration_params
+                   1, # optimal_root_fungal_biomass_ratio
+                   0.2, # turnover_mantle
+                   0.2, # turnover_ERM
+                   0.2, # turnover_roots_mycorrhized
+                   0.2, # turnover_fungal
+                   1, # mantle_mass
+                   1, # ERM_mass
+                   1, # growth_C
+                   1, # growth_N
+                   1, # C_value_param_myco
+                   1, # N_value_param_myco
+                   1, # C_value_param_plant
+                   1) # N_value_param_plant
+
+  if (soil_processes) {
+    CASSIA_new_output = CASSIA_soil(2015, 2018, weather_original, GPP_ref,
+                                    c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test), parameters_R,
                                     needle_mass_in,
                                     Throughfall,
                                     storage_rest, storage_grows,
@@ -125,6 +169,21 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                     temp_rise, drought, Rm_acclimation,
                                     using_spp_photosynthesis, TRUE,
                                     etmodel, LOGFLAG)
+  } else {
+    CASSIA_new_output = CASSIA_yearly(2015, 2018, weather_original, GPP_ref,
+                                      c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test),
+                                      needle_mass_in,
+                                      Throughfall,
+                                      storage_rest, storage_grows,
+                                      LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
+                                      trees_grow, growth_decreases, needle_mass_grows,
+                                      mycorrhiza, root_as_Ding, sperling_sugar_model,
+                                      xylogensis_option, environmental_effect_xylogenesis,
+                                      temp_rise, drought, Rm_acclimation,
+                                      using_spp_photosynthesis, TRUE,
+                                      etmodel, LOGFLAG)
+  }
+
 
   variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
   variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
@@ -152,11 +211,11 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     } else {
       plot(dates, weather_original$P,
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
-      lines(dates, CASSIA_new_output[[3]][,c(variables_new[var])], col = "blue")
-      plot(weather_original$P, CASSIA_new_output[[3]][,c(variables_new[var])],
+      lines(dates, CASSIA_new_output[[4]][,c(variables_new[var])], col = "blue")
+      plot(weather_original$P, CASSIA_new_output[[4]][,c(variables_new[var])],
            main = "New against old", xlab = "Original data", ylab = "New Data")
       abline(0, 1, col = "red")
-      plot(dates, weather_original$P - CASSIA_new_output[[3]][,c(variables_new[var])],
+      plot(dates, weather_original$P - CASSIA_new_output[[4]][,c(variables_new[var])],
            main = "Residuals", xlab = "Date", ylab = "original - new output")
     }
   }
@@ -246,18 +305,20 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # Soil Processes
   ###
   if (soil_processes) {
-    # Respiration tests
-    respiration_graphs(Rm, Q10) # TODO: make these respiration files
+    par(mfrow = c(3, 3))
 
-    # Repola test
-    repola_plot()
+    # Mycofon
+    for (i in 1:length(names(CASSIA_new_output[[4]]))) {
+      plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
+    }
 
-    # PRELES test
-    PRELES_plot(data_format, N_parameters)
+    # Symphony
+    for (i in 1:length(names(CASSIA_new_output[[3]]))) {
+      plot(dates, CASSIA_new_output[[3]][,i], main = names(CASSIA_new_output[[3]])[i], xlab = "Date", ylab = "")
+    }
 
-    # Growth plot - TODO: do this!
-    # TODO: make this!
-    growth_plot()
+
   }
+
 }
 
