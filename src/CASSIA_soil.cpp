@@ -123,6 +123,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
+  carbo_balance original_parameters;
   SYMPHONY_output soil_values_for_next_iteration;
 
   /*
@@ -183,7 +184,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
     // Temperature equilibrium for the sugar model
     //	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
-    double equilibrium_temperature = (TAir[273] + TAir[274] + TAir[275] + TAir[276] + TAir[277] + TAir[278] + TAir[279] + TAir[280]) / 7 + 3;
+    double equilibrium_temperature = (TAir[244] + TAir[245] + TAir[246] + TAir[247] + TAir[248] + TAir[249] + TAir[250] + TAir[251]) / 7 + 3;
 
     // B0, D00 and h00
     double B0 = M_PI/4 * pow(parameters.D0, 2);
@@ -198,7 +199,7 @@ Rcpp::List CASSIA_soil(int start_year,
     /*
      * NEEDLE MASS CALCULATION
      *
-     * If it is the first year, then there is no needle mass initialised,
+     * If it is the first year, then there is no needle mass initialized,
      * after this if there is growth in the model the needle mass is calculated based on last year
      * if there is no growth then the needle mass stays at the originally calculated value
      */
@@ -211,7 +212,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
     needle_cohorts needles_cohorts;
     if (year > start_year) {
-      // TODO: parameters
+      // TODO: parameters, although it is okay as this is Hyytiälä, it should be updated when the other model is updated
       needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3;
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
@@ -346,6 +347,20 @@ Rcpp::List CASSIA_soil(int start_year,
 
       // TODO; need to check the indexes!
       if (day == 0 & year == start_year) {
+        sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
+        sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
+        sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
+        sugar_values_for_next_iteration.sugar.xylem_sh = parameters.sugar_xylem_sh0;
+        sugar_values_for_next_iteration.sugar.xylem_st = parameters.sugar_xylem_st0;
+        sugar_values_for_next_iteration.sugar.mycorrhiza = 0; // TODO: think about this
+
+        sugar_values_for_next_iteration.starch.needles = parameters.starch_needles0;
+        sugar_values_for_next_iteration.starch.phloem = parameters.starch_phloem0;
+        sugar_values_for_next_iteration.starch.roots = parameters.starch_roots0;
+        sugar_values_for_next_iteration.starch.xylem_sh = parameters.starch_xylem_sh0;
+        sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
+        sugar_values_for_next_iteration.starch.mycorrhiza = 0;
+      } else if (day == 0 & year != start_year) {
         sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
         sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
         sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
@@ -584,6 +599,20 @@ Rcpp::List CASSIA_soil(int start_year,
 
     // TODO: need to add the growth of things here!
     final_year = final_year + 1;
+
+    if (year == final_year + 1) {
+      parameters.sugar_needles0 = original_parameters.sugar.needles;
+      parameters.sugar_phloem0 = original_parameters.sugar.phloem;
+      parameters.sugar_roots0 = original_parameters.sugar.roots;
+      parameters.sugar_xylem_sh0 = original_parameters.sugar.xylem_sh;
+      parameters.sugar_xylem_st0 = original_parameters.sugar.xylem_st;
+
+      parameters.starch_needles0 = original_parameters.starch.needles;
+      parameters.starch_phloem0 = original_parameters.starch.phloem;
+      parameters.starch_roots0 = original_parameters.starch.roots;
+      parameters.starch_xylem_sh0 = original_parameters.starch.xylem_sh;
+      parameters.starch_xylem_st0 = original_parameters.starch.xylem_st;
+    }
   }
 
   ///////////////////////
@@ -625,9 +654,14 @@ Rcpp::List CASSIA_soil(int start_year,
                                                 Rcpp::_["n_E_pot"] = growth_values_for_next_iteration.n_E_pot,
                                                 Rcpp::_["n_W_pot"] = growth_values_for_next_iteration.n_W_pot,
                                                 Rcpp::_["n_M_pot"] = growth_values_for_next_iteration.n_M_pot);
+
+  // TODO: Soil output output vector
+
   Rcpp::DataFrame df3 = Rcpp::DataFrame::create(Rcpp::_["GPP"] = photosynthesis_output.GPP,
                                                 Rcpp::_["ET"] = photosynthesis_output.ET,
                                                 Rcpp::_["SoilWater"] = photosynthesis_output.SoilWater);
+
+
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,
