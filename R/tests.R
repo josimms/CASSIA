@@ -146,13 +146,14 @@ test_against_original_data <- function(new_parameters, calibration, sperling_sug
   weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
   weather_original_2017 = read.csv(file = "./data/weather_original_2017.csv", header = T, sep = ",")
   weather_original_2018 = read.csv(file = "./data/weather_original_2018.csv", header = T, sep = ",")
-  # weather_original_2019 = read.csv(file = "./data/weather_original_2019.csv", header = T, sep = ",")
+  weather_original_2019 = data_format[,names(weather_original_2015)[-c(1, 3)]]
   weather_original = rbind(rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017), weather_original_2018)
 
+
   extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
-                      PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("PAR")],
-                      VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("VPD")],
-                      CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("CO2")],
+                      PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2019,c("PAR")],
+                      VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2019,c("VPD")],
+                      CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2019,c("CO2")],
                       fAPAR = rep(0.7, length = nrow(weather_original)))
   weather_original <- cbind(weather_original, extras)
   weather_original <- weather_original[-c(365+365),]
@@ -194,21 +195,21 @@ test_against_original_data <- function(new_parameters, calibration, sperling_sug
   variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
   variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
-  dates = seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
+  dates = seq(as.Date("2015-01-01"), as.Date("2019-12-31"), by = "day")
   dates = dates[-c(365+366)]
 
-  Hyde_daily_original <- Hyde_daily_original[1:(365+365+365+365),]
+  Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365+365),]
 
   par(mfrow = c(3, 3))
   for (var in 1:length(variables_new)) {
     if (var < length(variables_new)) {
-      plot(dates, Hyde_daily_original[,c(variables_original[var])],
+      plot(dates, Hyde_daily_original_plot[,c(variables_original[var])],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
       lines(dates, CASSIA_new_output[[1]][,c(variables_new[var])], col = "blue")
-      plot(Hyde_daily_original[,c(variables_original[var])], CASSIA_new_output[[1]][,c(variables_new[var])],
+      plot(Hyde_daily_original_plot[,c(variables_original[var])], CASSIA_new_output[[1]][,c(variables_new[var])],
            main = "New against old", xlab = "Original data", ylab = "New Data")
       abline(0, 1, col = "red")
-      plot(dates, Hyde_daily_original[,c(variables_original[var])] - CASSIA_new_output[[1]][,c(variables_new[var])],
+      plot(dates, Hyde_daily_original_plot[,c(variables_original[var])] - CASSIA_new_output[[1]][,c(variables_new[var])],
            main = "Residuals", xlab = "Date", ylab = "original - new output")
     } else {
       plot(dates, weather_original$P,
