@@ -122,12 +122,12 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   double C_SOM = C_SOM_old - C_decompose_SOM*SOM_after_microbe_activity.C + microbe_turnover*(C_decompose_FOM + C_decompose_SOM);   // C kg
 
   // STEP 3: Update the microbes
-  C_decompose_FOM = microbe_turnover + (1 +
+  C_decompose_FOM = (microbe_turnover + 1 +
     FOM_after_microbe_activity.C -
     0.2) * C_decompose_FOM;   // C kg
   // TODO: 0.2 is a placeholder for respiration
 
-  C_decompose_SOM = microbe_turnover + (1 +
+  C_decompose_SOM = (microbe_turnover + 1 +
     SOM_after_microbe_activity.C -
     0.2) * C_decompose_SOM;   // C kg
   // TODO: 0.2 is a placeholder for respiration
