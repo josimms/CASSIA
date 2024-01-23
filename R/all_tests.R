@@ -2,33 +2,7 @@
 # Ultermate test function
 ###
 
-#' @export
 tests <- function() {
-  start_year = 2010
-  end_year = 2019
-
-  # INITIAL SETTINGS OF THE ORIGINAL MODEL
-  storage_rest = T
-  storage_grows = F
-  LH_estim = T
-  LN_estim = T
-  mN_varies = T
-  LD_estim = T
-  sD_estim_T_count = F
-  trees_grow = F
-  growth_decreases = F
-  needle_mass_grows = F
-  mycorrhiza = T
-  root_as_Ding = T
-  sperling_sugar_model = F
-  xylogensis_option = F
-  environmental_effect_xylogenesis = F
-  temp_rise = F
-  drought = F
-  Rm_acclimation = F
-  etmodel = F
-  LOGFLAG = F
-
   # CASSIA extra parameters
   needle_mass_in = 4.467638
 
@@ -39,27 +13,6 @@ tests <- function() {
             0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
             0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
             -999.9, -999.9, -999.9)
-
-  ###
-  # Respiration tests
-  ###
-  respiration_plot()
-
-  ###
-  # Repola test
-  ###
-  repola_plot()
-
-  ###
-  # PRELES test
-  ###
-  PRELES_plot(data_format, N_parameters)
-
-  ###
-  # Growth plot - TODO: do this!
-  ###
-  # TODO: make this!
-  growth_plot()
 
   ###
   # Xylem / cell enlargement plot
@@ -79,40 +32,17 @@ tests <- function() {
              n_rows, max_ew_cells,
              n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector,
              tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw)
-
-  ###
-  # Outputs between R code and the cpp code WITHOUT the sugar model
-  ###
-
-  # TODO: add nitrogen here!
-
-  test_against_original_data()
-
-  ###
-  # Outputs between R code and the cpp code WITH the sugar model
-  # TODO: needs to be calibrated first
-  ###
-
-  sugar_plot(CASSIA_out, site, SCb = sperling_p[c("SCb"), c("Hyde")], cpp = F)
-
 }
 
 ######
 # Code for the functions in the ultimate test function
 ######
 
-### Weather tests
-
-tests <- function(weather) {
+all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes) {
   ###
-  # Test to see if the weather files are okay
+  # Settings and parameters
   ###
-  if (sum(names(weather) %in% c("date", "Date", "T", "P", "TSA", "TSB", "MB", "Rain", "PAR", "VPD", "fAPAR"))) {stop("Incomplete weather data - incorrect variables, or named incorrectly")}
-}
 
-### Test against original data
-
-test_against_original_data <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis) {
   storage_rest = F
   storage_grows = F
   LH_estim = T
@@ -141,6 +71,10 @@ test_against_original_data <- function(new_parameters, calibration, sperling_sug
             0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
             0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
             -999.9, -999.9, -999.9)
+
+  ###
+  # Weather data processing
+  ###
 
   weather_original_2015 = read.csv(file = "./data/weather_original_2015.csv", header = T, sep = ",")
   weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
@@ -200,6 +134,10 @@ test_against_original_data <- function(new_parameters, calibration, sperling_sug
 
   Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365+365),]
 
+  ###
+  # Previous Data
+  ###
+
   par(mfrow = c(3, 3))
   for (var in 1:length(variables_new)) {
     if (var < length(variables_new)) {
@@ -226,6 +164,8 @@ test_against_original_data <- function(new_parameters, calibration, sperling_sug
   ###
   # Sugar
   ###
+
+  # TODO: make this into a graph
 
   par(mfrow = c(2, 1), xpd=TRUE)
   plot(dates, CASSIA_new_output$Sugar$sugar_needles +
@@ -302,5 +242,22 @@ test_against_original_data <- function(new_parameters, calibration, sperling_sug
   legend("right", c("Needles", "Phloem", "Xylem, Shoot", "Xylem, Stem", "Roots"),
          bty = "n", col = c("green", "brown", "red", "orange", "black"), lty = 1, title = "Organs")
 
+  ###
+  # Soil Processes
+  ###
+  if (soil_processes) {
+    # Respiration tests
+    respiration_graphs(Rm, Q10) # TODO: make these respiration files
+
+    # Repola test
+    repola_plot()
+
+    # PRELES test
+    PRELES_plot(data_format, N_parameters)
+
+    # Growth plot - TODO: do this!
+    # TODO: make this!
+    growth_plot()
+  }
 }
 
