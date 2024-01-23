@@ -106,6 +106,7 @@ Rcpp::List mycofon_balence(double C_roots,
     fungal_demand = N_demand_franklin;
   }
 
+  // NOTE! This function takes the maximum nutrient amount and then allocates the amount the plant / fungi wants to give
   double C_given_mycofon = plant_decision(C_roots,
                                           N_roots,
                                           C_fungal,
@@ -152,28 +153,36 @@ Rcpp::List mycofon_balence(double C_roots,
    */
 
   //dN^f/dt
-  double uptake_fungal = Fungal_N_Uptake(T,
-                                         SWC,
-                                         NH4,
-                                         NO3,
-                                         FOM_Norg,
-                                         N_limits_Fungal,
-                                         N_k_Fungal,
-                                         SWC_k_Fungal,
-                                         fungal_demand)[0];
+  Rcpp::List uptake_fungal = Fungal_N_Uptake(T,
+                                             SWC,
+                                             NH4,
+                                             NO3,
+                                             FOM_Norg,
+                                             N_limits_Fungal,
+                                             N_k_Fungal,
+                                             SWC_k_Fungal,
+                                             fungal_demand);
+  double uptake_fungal_all = uptake_fungal[0];
+  double uptake_fungal_NH4 = uptake_fungal[1];
+  double uptake_fungal_NO3 = uptake_fungal[2];
+  double uptake_fungal_Norg = uptake_fungal[3];
 
   //dN^r/dt
-  double uptake_plant = Plant_N_Uptake(T,
-                                       SWC,
-                                       m,
-                                       NH4,
-                                       NO3,
-                                       FOM_Norg,
-                                       N_limits_Plant,
-                                       N_k_Plant,
-                                       SWC_k_Plant,
-                                       parameters_NH4_on_NO3,
-                                       plant_demand)[0];
+  Rcpp::List uptake_plant = Plant_N_Uptake(T,
+                                           SWC,
+                                           m,
+                                           NH4,
+                                           NO3,
+                                           FOM_Norg,
+                                           N_limits_Plant,
+                                           N_k_Plant,
+                                           SWC_k_Plant,
+                                           parameters_NH4_on_NO3,
+                                           plant_demand);
+  double uptake_plant_all = uptake_plant[0];
+  double uptake_plant_NH4 = uptake_plant[1];
+  double uptake_plant_NO3 = uptake_plant[2];
+  double uptake_plant_Norg = uptake_plant[3];
 
   /*
    * BALANCES OF THE STATE VARIABLES
@@ -193,15 +202,15 @@ Rcpp::List mycofon_balence(double C_roots,
 
   N_roots = N_roots +
     N_given +
-    uptake_plant*C_roots - // This should be by the biomass, so decided that it is multiplied by C^r rather than N^r, maybe should actually be a surface area equation
+    uptake_plant_all*C_roots - // This should be by the biomass, so decided that it is multiplied by C^r rather than N^r, maybe should actually be a surface area equation
     (1 - m)*C_roots*turnover_roots*root_NC_ratio -
     m*C_roots*turnover_roots_mycorrhized*root_NC_ratio -
     to_CASSIA;
 
   N_fungal = N_fungal +
-    uptake_fungal*C_fungal -
+    uptake_fungal_all*C_fungal -
     myco_growth_N -
-    (0.5*turnover_mantle + 0.5*turnover_ERM)*C_fungal*fungal_NC_ratio -
+    (0.5*turnover_mantle + 0.5*turnover_ERM)*C_fungal*fungal_NC_ratio - // TODO: although this is correct I need to be consistant with the fact that ERM is 50% of the fungal biomass
     N_given;
 
   // dC^r/dt TODO: this need to be linked with the CASSIA C sections, also link the amount going to CASSIA
@@ -214,7 +223,6 @@ Rcpp::List mycofon_balence(double C_roots,
   // 0.2 is a placeholder for respiration
 
   // dC^f/dt
-  // TODO: what is the percentage_C_biomass doing?
   C_fungal = C_fungal +
     C_given -
     myco_growth_C -
@@ -230,11 +238,20 @@ Rcpp::List mycofon_balence(double C_roots,
                             Rcpp::_["C_fungal"] = C_fungal,
                             Rcpp::_["N_roots"] = N_roots,
                             Rcpp::_["N_fungal"] = N_fungal,
-                            Rcpp::_["uptake_plant"] = uptake_plant*C_roots,
-                            Rcpp::_["uptake_fungal"] = uptake_fungal*N_roots,
+                            Rcpp::_["uptake_plant"] = uptake_plant_all*C_roots,
+                            Rcpp::_["uptake_NH4_plant"] = uptake_plant_NH4*C_roots,
+                            Rcpp::_["uptake_NO3_plant"] = uptake_plant_NO3*C_roots,
+                            Rcpp::_["uptake_Norg_plant"] = uptake_plant_Norg*C_roots,
+                            Rcpp::_["uptake_fungal"] = uptake_fungal_all*C_fungal,
+                            Rcpp::_["uptake_NH4_fungal"] = uptake_fungal_NH4*C_roots,
+                            Rcpp::_["uptake_NO3_fungal"] = uptake_fungal_NO3*C_roots,
+                            Rcpp::_["uptake_Norg_fungal"] = uptake_fungal_Norg*C_roots,
                             Rcpp::_["from_CASSIA"] = from_CASSIA,
-                            Rcpp::_["to_CASSIA"] = to_CASSIA);
+                            Rcpp::_["to_CASSIA"] = to_CASSIA,
+                            Rcpp::_["Plant_demand"] = plant_demand,
+                            Rcpp::_["Fungal_demand"] = fungal_demand,
+                            Rcpp::_["Plant_given"] = C_given,
+                            Rcpp::_["Fungal_given"] = N_given);
 
 }
-
 

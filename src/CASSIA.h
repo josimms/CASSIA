@@ -375,6 +375,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters, Rcpp::DataFrame input_sperling);
 CASSIA_common make_common(Rcpp::DataFrame input);
 CASSIA_ratios make_ratios(Rcpp::DataFrame input);
+MYCOFON_function_out MYCOFON_structure_conversion(Rcpp::List input);
 
 p1 make_p1(std::vector<double> input);
 p2 make_p2(std::vector<double> input);

@@ -426,3 +426,27 @@ parameters_soil parameters_initalise_test(std::vector<double> parameters_R) {
   out.N_value_param_plant = parameters_R[53];
   return(out);
 };
+
+
+MYCOFON_function_out MYCOFON_structure_conversion(Rcpp::List input) {
+  MYCOFON_function_out out;
+  out.C_roots = input[0];
+  out.C_fungal = input[1];
+  out.N_roots = input[2];
+  out.N_fungal = input[3];
+  out.uptake_plant = input[4];
+  out.uptake_NH4_plant = input[5];
+  out.uptake_NO3_plant = input[6];
+  out.uptake_Norg_plant = input[7];
+  out.uptake_fungal = input[8];
+  out.uptake_NH4_fungal = input[9];
+  out.uptake_NO3_fungal = input[10];
+  out.uptake_Norg_fungal = input[11];
+  out.from_CASSIA = input[12];
+  out.to_CASSIA = input[13];
+  out.Plant_demand = input[14];
+  out.Fungal_demand = input[15];
+  out.Plant_given = input[16];
+  out.Fungal_given = input[17];
+  return(out);
+};

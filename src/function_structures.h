@@ -218,4 +218,50 @@ struct needle_cohorts {
   double year_3;
 };
 
+/*
+ * MYCOFON vector
+ */
+
+struct MYCOFON_vector {
+  std::vector<double> C_roots;
+  std::vector<double> C_fungal;
+  std::vector<double> N_roots;
+  std::vector<double> N_fungal;
+  std::vector<double> uptake_plant;
+  std::vector<double> uptake_NH4_plant;
+  std::vector<double> uptake_NO3_plant;
+  std::vector<double> uptake_Norg_plant;
+  std::vector<double> uptake_fungal;
+  std::vector<double> uptake_NH4_fungal;
+  std::vector<double> uptake_NO3_fungal;
+  std::vector<double> uptake_Norg_fungal;
+  std::vector<double> from_CASSIA;
+  std::vector<double> to_CASSIA;
+  std::vector<double> Plant_demand;
+  std::vector<double> Fungal_demand;
+  std::vector<double> Plant_given;
+  std::vector<double> Fungal_given;
+};
+
+struct MYCOFON_function_out {
+  double C_roots;
+  double C_fungal;
+  double N_roots;
+  double N_fungal;
+  double uptake_plant;
+  double uptake_NH4_plant;
+  double uptake_NO3_plant;
+  double uptake_Norg_plant;
+  double uptake_fungal;
+  double uptake_NH4_fungal;
+  double uptake_NO3_fungal;
+  double uptake_Norg_fungal;
+  double from_CASSIA;
+  double to_CASSIA;
+  double Plant_demand;
+  double Fungal_demand;
+  double Plant_given;
+  double Fungal_given;
+};
+
 #endif
