@@ -13,9 +13,9 @@ Rcpp::List myco_growth(double C_fungal, // per biomass
   double out_2 = std::max(out_1, 0.0); // No negative growth
   if (out_2 == a*C_fungal) {
     carbon_used = a*C_fungal;
-    nitrogen_used = b*N_fungal*(a*C_fungal)/(b*N_fungal);
+    nitrogen_used = b*N_fungal + (b*N_fungal - a*C_fungal); // TODO: is this right? Units
   } else if (out_2 == b*N_fungal) {
-    carbon_used = a*C_fungal*(b*N_fungal)/(a*C_fungal);
+    carbon_used = a*C_fungal + (b*N_fungal - a*C_fungal); // TODO: is this right? Units
     nitrogen_used = b*N_fungal;
   }
 
