@@ -51,9 +51,7 @@ struct soil_balence{
 
 // A collection of parameters that I want as input function - but these should probably be reordered at some point
 
-struct parameters_soil
-
-{
+struct parameters_soil {
   double microbe_turnover;
   double NC_in_root_opt;
   double NC_fungal_opt;
@@ -186,6 +184,27 @@ struct SYMPHONY_vector {
   std::vector<double> N_decompose_SOM;
   std::vector<double> SOM_Norg_used;
   std::vector<double> Microbe_respiration;
+};
+
+struct MYCOFON_function_out {
+  double C_roots;
+  double C_fungal;
+  double N_roots;
+  double N_fungal;
+  double uptake_plant;
+  double uptake_NH4_plant;
+  double uptake_NO3_plant;
+  double uptake_Norg_plant;
+  double uptake_fungal;
+  double uptake_NH4_fungal;
+  double uptake_NO3_fungal;
+  double uptake_Norg_fungal;
+  double from_CASSIA;
+  double to_CASSIA;
+  double Plant_demand;
+  double Fungal_demand;
+  double Plant_given;
+  double Fungal_given;
 };
 
 
@@ -365,37 +384,21 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
 #ifndef PKG_mycofon_balence_H
 #define PKG_mycofon_balence_H
 
-Rcpp::List mycofon_balence(double C_roots,
-                           double N_roots,
-                           double optimal_root_fungal_biomass_ratio,
-                           double C_fungal,
-                           double N_fungal,
-                           double turnover_roots,
-                           double turnover_roots_mycorrhized,
-                           double turnover_mantle,
-                           double turnover_ERM,
-                           std::vector<double> respiration_parameters_R,
-                           double NH4,
-                           double NO3,
-                           double FOM_Norg,
-                           double NC_in_fungal_opt,
-                           double T,
-                           double Tsb,
-                           double SWC,
-                           std::vector<double> N_limits_Plant,
-                           std::vector<double> N_k_Plant,
-                           std::vector<double> SWC_k_Plant,
-                           std::vector<double> N_limits_Fungal,
-                           std::vector<double> N_k_Fungal,
-                           std::vector<double> SWC_k_Fungal,
-                           double mantle_mass,
-                           double ERM_mass,
-                           std::vector<double> parameters_NH4_on_NO3,
-                           double growth_C,
-                           double growth_N,
-                           double max_C_allocation_CASSIA,
-                           double allocation_N_to_rest_of_plant,
-                           bool mycofon_stratergy);
+MYCOFON_function_out mycofon_balence(double C_roots,
+                                     double C_growth,
+                                     double N_roots,
+                                     double C_fungal,
+                                     double N_fungal,
+                                     parameters_soil parameters_in,
+                                     double NH4,
+                                     double NO3,
+                                     double FOM_Norg,
+                                     double T,
+                                     double Tsb,
+                                     double SWC,
+                                     double mantle_mass,
+                                     double ERM_mass,
+                                     bool mycofon_stratergy);
 
 #endif
 
