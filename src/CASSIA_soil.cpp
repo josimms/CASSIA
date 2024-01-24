@@ -143,6 +143,8 @@ Rcpp::List CASSIA_soil(int start_year,
   double last_year_maxN;
   double GPP_mean;
   std::vector<double> GPP_previous_sum;
+  SYMPHONY_output soil_reset;
+  MYCOFON_function_out MYCOFON_reset;
   if (start_year == 2015) {
     GPP_previous_sum.push_back(481.3);
   }
@@ -332,7 +334,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                          TAir[count], TSoil_A[count],
                                          temp_rise, Rm_acclimation, mN_varies,
                                          // parameters that I am not sure about
-                                         B0); // TODO: respiration for the fungi
+                                         B0); // TODO: respiration for the fungi and microbes
 
       /*
        * Sugar
@@ -430,36 +432,104 @@ Rcpp::List CASSIA_soil(int start_year,
        */
 
       // TODO: work out which parameters are available here
-      // TODO: 0.5 is a filler for the C:N ratio of needles
-      Rcpp::List MYCOFON_out =  mycofon_balence(actual_growth_out.roots, 0.5*actual_growth_out.roots,
-                                                parameters_in.optimal_root_fungal_biomass_ratio,
-                                                MYCOFON_for_next_iteration.C_fungal, MYCOFON_for_next_iteration.N_fungal,
-                                                parameters_in.turnover_roots, parameters_in.turnover_roots_mycorrhized,
-                                                parameters_in.turnover_mantle, parameters_in.turnover_ERM,
-                                                parameters_in.respiration_params,
-                                                soil_values_for_next_iteration.NH4, soil_values_for_next_iteration.NO3, soil_values_for_next_iteration.N_FOM,
-                                                parameters_in.NC_fungal_opt,
-                                                TAir[count], TSoil_B[count], Soil_Moisture[count],
-                                                parameters_in.N_limits_plant,
-                                                parameters_in.N_k_plant,
-                                                parameters_in.SWC_k_plant,
-                                                parameters_in.N_limits_fungal,
-                                                parameters_in.N_k_fungal,
-                                                parameters_in.SWC_k_fungal,
-                                                parameters_in.mantle_mass,
-                                                parameters_in.ERM_mass,
-                                                parameters_in.NH4_on_NO3,
-                                                parameters_in.growth_C,
-                                                parameters_in.growth_N,
-                                                0.1,
-                                                0.1,
-                                                false);
-      MYCOFON_for_next_iteration = MYCOFON_structure_conversion(MYCOFON_out);
+      // TODO: 0.5 is a filler for the C:N ratio of roots, should this be a ratio of the nitrogen stored in the tree?
+      if (year == start_year & day == 0) {
+        // TODO: NC ratio
+        MYCOFON_for_next_iteration.C_roots = actual_growth_out.roots; // TODO: replace, just for coding sake
+        MYCOFON_for_next_iteration.C_fungal = actual_growth_out.roots; // TODO: replace, just for coding sake
+        MYCOFON_for_next_iteration.N_fungal = MYCOFON_for_next_iteration.C_fungal; // TODO: replace, just for coding sake
+        MYCOFON_for_next_iteration.N_roots = actual_growth_out.roots; // TODO: replace, just for coding sake
+
+        soil_values_for_next_iteration.NH4 = 0.31; // TODO: input and replace somehow
+        soil_values_for_next_iteration.NO3 = 0.002; // TODO: input and replace somehow
+        soil_values_for_next_iteration.N_FOM = 26; // TODO: input and replace somehow
+        soil_values_for_next_iteration.NC_mantle = 0.4; // TODO: input and replace somehow
+        soil_values_for_next_iteration.NC_ERM = 0.4; // TODO: input and replace somehow
+        soil_values_for_next_iteration.NC_needles = 0.5; // TODO: input and replace somehow
+        soil_values_for_next_iteration.NC_woody = 0.5; // TODO: input and replace somehow
+        soil_values_for_next_iteration.NC_roots = 0.5; // TODO: input and replace somehow
+
+        // TODO: this should obviously not all be 10 or 0...
+        soil_values_for_next_iteration.C_FOM_needles = 0;
+        soil_values_for_next_iteration.C_FOM_woody = 0;
+        soil_values_for_next_iteration.C_FOM_roots = 0;
+        soil_values_for_next_iteration.C_FOM_mantle = 0;
+        soil_values_for_next_iteration.C_FOM_ERM = 0;
+        soil_values_for_next_iteration.C_SOM = 0;
+        soil_values_for_next_iteration.N_SOM = 0;
+        soil_values_for_next_iteration.C_decompose_FOM = 10;
+        soil_values_for_next_iteration.C_decompose_SOM = 10;
+        soil_values_for_next_iteration.N_decompose_FOM = 10;
+        soil_values_for_next_iteration.N_decompose_SOM = 10;
+      } else if (day == 0) {
+        MYCOFON_for_next_iteration.C_roots = MYCOFON_reset.C_roots;
+        MYCOFON_for_next_iteration.C_fungal = MYCOFON_reset.C_fungal;
+        MYCOFON_for_next_iteration.N_fungal = MYCOFON_reset.N_fungal;
+        MYCOFON_for_next_iteration.N_roots = MYCOFON_reset.N_roots;
+
+        soil_values_for_next_iteration.NH4 = soil_reset.NH4;
+        soil_values_for_next_iteration.NO3 = soil_reset.NO3;
+        soil_values_for_next_iteration.N_FOM = soil_reset.N_FOM;
+        soil_values_for_next_iteration.NC_mantle = soil_reset.NC_mantle;
+        soil_values_for_next_iteration.NC_ERM = soil_reset.NC_ERM;
+        soil_values_for_next_iteration.NC_needles = soil_reset.NC_needles;
+        soil_values_for_next_iteration.NC_woody = soil_reset.NC_woody;
+        soil_values_for_next_iteration.NC_roots = soil_reset.NC_roots;
+
+        soil_values_for_next_iteration.C_FOM_needles = soil_reset.C_FOM_needles;
+        soil_values_for_next_iteration.C_FOM_woody = soil_reset.C_FOM_woody;
+        soil_values_for_next_iteration.C_FOM_roots = soil_reset.C_FOM_roots;
+        soil_values_for_next_iteration.C_FOM_mantle = soil_reset.C_FOM_mantle;
+        soil_values_for_next_iteration.C_FOM_ERM = soil_reset.C_FOM_ERM;
+        soil_values_for_next_iteration.C_SOM = soil_reset.C_SOM;
+        soil_values_for_next_iteration.N_SOM = soil_reset.N_SOM;
+        soil_values_for_next_iteration.C_decompose_FOM = soil_reset.C_decompose_FOM;
+        soil_values_for_next_iteration.C_decompose_SOM = soil_reset.C_decompose_SOM;
+        soil_values_for_next_iteration.N_decompose_FOM = soil_reset.N_decompose_FOM;
+        soil_values_for_next_iteration.N_decompose_SOM = soil_reset.N_decompose_SOM;
+      } else {
+        MYCOFON_for_next_iteration.C_fungal = MYCOFON_for_next_iteration.C_fungal;
+        MYCOFON_for_next_iteration.N_fungal = MYCOFON_for_next_iteration.N_fungal;
+        MYCOFON_for_next_iteration.C_roots = MYCOFON_for_next_iteration.C_roots;
+        MYCOFON_for_next_iteration.N_roots = MYCOFON_for_next_iteration.N_roots;
+
+        soil_values_for_next_iteration.NH4 = soil_values_for_next_iteration.NH4;
+        soil_values_for_next_iteration.NO3 = soil_values_for_next_iteration.NO3;
+        soil_values_for_next_iteration.N_FOM = soil_values_for_next_iteration.N_FOM;
+        soil_values_for_next_iteration.NC_mantle = soil_values_for_next_iteration.NC_mantle;
+        soil_values_for_next_iteration.NC_ERM = soil_values_for_next_iteration.NC_ERM;
+        soil_values_for_next_iteration.NC_needles = soil_values_for_next_iteration.NC_needles;
+        soil_values_for_next_iteration.NC_woody = soil_values_for_next_iteration.NC_woody;
+        soil_values_for_next_iteration.NC_roots = soil_values_for_next_iteration.NC_roots;
+
+        soil_values_for_next_iteration.C_FOM_needles = soil_values_for_next_iteration.C_FOM_needles;
+        soil_values_for_next_iteration.C_FOM_woody = soil_values_for_next_iteration.C_FOM_woody;
+        soil_values_for_next_iteration.C_FOM_roots = soil_values_for_next_iteration.C_FOM_roots;
+        soil_values_for_next_iteration.C_FOM_mantle = soil_values_for_next_iteration.C_FOM_mantle;
+        soil_values_for_next_iteration.C_FOM_ERM = soil_values_for_next_iteration.C_FOM_ERM;
+        soil_values_for_next_iteration.C_SOM = soil_values_for_next_iteration.C_SOM;
+        soil_values_for_next_iteration.N_SOM = soil_values_for_next_iteration.N_SOM;
+        soil_values_for_next_iteration.C_decompose_FOM = soil_values_for_next_iteration.C_decompose_FOM;
+        soil_values_for_next_iteration.C_decompose_SOM = soil_values_for_next_iteration.C_decompose_SOM;
+        soil_values_for_next_iteration.N_decompose_FOM = soil_values_for_next_iteration.N_decompose_FOM;
+        soil_values_for_next_iteration.N_decompose_SOM = soil_values_for_next_iteration.N_decompose_SOM;
+      }
+
+      MYCOFON_function_out MYCOFON_out =  mycofon_balence(MYCOFON_for_next_iteration.C_roots, actual_growth_out.roots,
+                                                          MYCOFON_for_next_iteration.N_roots,
+                                                          MYCOFON_for_next_iteration.C_fungal,
+                                                          MYCOFON_for_next_iteration.N_fungal,
+                                                          parameters_in,
+                                                          soil_values_for_next_iteration.NH4, soil_values_for_next_iteration.NO3, soil_values_for_next_iteration.N_FOM,
+                                                          TAir[count], TSoil_B[count], Soil_Moisture[count],
+                                                          parameters_in.mantle_mass,
+                                                          parameters_in.ERM_mass,
+                                                          false);
+      MYCOFON_for_next_iteration = MYCOFON_out;
 
       /*
        * SOIL
        */
-
       SYMPHONY_output Soil_All = symphony_multiple_FOM_daily(TSoil_B[count], Soil_Moisture[count],
                                                             soil_values_for_next_iteration.C_FOM_needles, soil_values_for_next_iteration.C_FOM_woody, soil_values_for_next_iteration.C_FOM_roots, soil_values_for_next_iteration.C_FOM_mantle, soil_values_for_next_iteration.C_FOM_ERM,
                                                             soil_values_for_next_iteration.C_SOM, soil_values_for_next_iteration.N_SOM,
@@ -562,6 +632,29 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_output.SOM_Norg_used.push_back(Soil_All.SOM_Norg_used);
         soil_output.Microbe_respiration.push_back(Soil_All.Microbe_respiration);
 
+        if (day == 364) {
+          soil_reset.C_FOM_needles = Soil_All.C_FOM_needles;
+          soil_reset.C_FOM_woody = Soil_All.C_FOM_woody;
+          soil_reset.C_FOM_roots = Soil_All.C_FOM_roots;
+          soil_reset.C_FOM_mantle = Soil_All.C_FOM_mantle;
+          soil_reset.C_FOM_ERM = Soil_All.C_FOM_ERM;
+          soil_reset.C_SOM = Soil_All.C_SOM;
+          soil_reset.N_SOM = Soil_All.N_SOM;
+          soil_reset.N_FOM = Soil_All.N_FOM;
+          soil_reset.C_decompose_FOM = Soil_All.C_decompose_FOM;
+          soil_reset.C_decompose_SOM = Soil_All.C_decompose_SOM;
+          soil_reset.N_decompose_FOM = Soil_All.N_decompose_FOM;
+          soil_reset.N_decompose_SOM = Soil_All.N_decompose_SOM;
+          soil_reset.NC_ERM = Soil_All.NC_ERM;
+          soil_reset.NC_mantle = Soil_All.NC_mantle;
+          soil_reset.NC_needles = Soil_All.NC_needles;
+          soil_reset.NC_roots = Soil_All.NC_roots;
+          soil_reset.NC_woody = Soil_All.NC_roots;
+          soil_reset.NH4 = Soil_All.NH4;
+          soil_reset.NO3 = Soil_All.NO3;
+          soil_reset.SOM_Norg_used = Soil_All.SOM_Norg_used;
+        }
+
         MYCOFON_output.C_roots.push_back(MYCOFON_for_next_iteration.C_roots);
         MYCOFON_output.C_fungal.push_back(MYCOFON_for_next_iteration.C_fungal);
         MYCOFON_output.N_roots.push_back(MYCOFON_for_next_iteration.N_roots);
@@ -580,9 +673,15 @@ Rcpp::List CASSIA_soil(int start_year,
         MYCOFON_output.Fungal_demand.push_back(MYCOFON_for_next_iteration.Fungal_demand);
         MYCOFON_output.Plant_given.push_back(MYCOFON_for_next_iteration.Plant_given);
         MYCOFON_output.Fungal_given.push_back(MYCOFON_for_next_iteration.Fungal_given);
+
+        if (day == 364) {
+          MYCOFON_reset.C_roots = MYCOFON_for_next_iteration.C_roots;
+          MYCOFON_reset.C_fungal = MYCOFON_for_next_iteration.C_fungal;
+          MYCOFON_reset.N_roots = MYCOFON_for_next_iteration.N_roots;
+          MYCOFON_reset.N_fungal = MYCOFON_for_next_iteration.N_fungal;
+        }
       }
     }
-
     // Updating parameters!
 
     last_year_HH = HH;
