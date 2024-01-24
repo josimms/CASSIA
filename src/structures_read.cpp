@@ -414,16 +414,17 @@ parameters_soil parameters_initalise_test(std::vector<double> parameters_R) {
   out.optimal_root_fungal_biomass_ratio = parameters_R[41];
   out.turnover_mantle = parameters_R[42];
   out.turnover_ERM = parameters_R[43];
-  out.turnover_roots_mycorrhized = parameters_R[44];
-  out.turnover_fungal = parameters_R[45];
-  out.mantle_mass = parameters_R[46];
-  out.ERM_mass = parameters_R[47];
-  out.growth_C = parameters_R[48];
-  out.growth_N = parameters_R[49];
-  out.C_value_param_myco = parameters_R[50];
-  out.N_value_param_myco = parameters_R[51];
-  out.C_value_param_plant = parameters_R[52];
-  out.N_value_param_plant = parameters_R[53];
+  out.turnover_roots = parameters_R[44];
+  out.turnover_roots_mycorrhized = parameters_R[45];
+  out.turnover_fungal = parameters_R[46];
+  out.mantle_mass = parameters_R[47];
+  out.ERM_mass = parameters_R[48];
+  out.growth_C = parameters_R[49];
+  out.growth_N = parameters_R[50];
+  out.C_value_param_myco = parameters_R[51];
+  out.N_value_param_myco = parameters_R[52];
+  out.C_value_param_plant = parameters_R[53];
+  out.N_value_param_plant = parameters_R[54];
   return(out);
 };
 
