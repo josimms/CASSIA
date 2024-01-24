@@ -85,9 +85,9 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
 
   extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
-                      PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2019,c("PAR")],
-                      VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2019,c("VPD")],
-                      CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2019,c("CO2")],
+                      PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("PAR")],
+                      VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("VPD")],
+                      CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("CO2")],
                       fAPAR = rep(0.7, length = nrow(weather_original)))
   weather_original <- cbind(weather_original, extras)
   weather_original <- weather_original[-c(365+365),]
@@ -96,6 +96,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   load(paste0(direct, "original.data.RData"))
 
   yu_data <- read.csv(paste0(direct, "yu.data.csv"))
+  # TODO: is this the one with the right units?
 
   parameters_test <- parameters_p
   parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"),1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
@@ -114,47 +115,38 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   }
 
   # TODO: All of the parameters should be checked
-  parameters_R = c(0.2, # microbe_turnover
-                   0.5, # NC_in_root_opt
-                   0.5, # NC_fungal_opt
-                   0.5, # NC_microbe_opt
-                   0.5, # percentage_C_biomass
-                   1, 1, 1, # N_limits_plant
-                   1, 1, 1, # N_limits_plant
-                   1, 1, 1, # N_limits_plant
-                   1, 1, 1, # N_limits_fungal
-                   1, 1, 1, # N_limits_fungal
-                   1, 1, 1, # N_limits_fungal
-                   1, 1, 1, # N_limits_microbes
-                   1, 1, 1, # N_limits_microbes
-                   1, 1, 1, # N_limits_microbes
-                   1, 1, 1, # N_k_plant
-                   1, 1, 1, # N_k_plant
-                   1, 1, 1, # N_k_plant
-                   1, 1, 1, # N_k_fungal
-                   1, 1, 1, # N_k_fungal
-                   1, 1, 1, # N_k_fungal
-                   1, 1, 1, # N_k_microbes
-                   1, 1, 1, # N_k_microbes
-                   1, 1, 1, # N_k_microbes
-                   1, 1, 1, # SWC_k_plant
-                   1, 1, 1, # SWC_k_fungal
-                   1, 1, 1, # SWC_k_microbes
-                   1, 1, 1, # NH4_on_NO3
+  parameters_R = c(0.016906, # microbe_turnover (Preveen, 2013)
+                   (0.001*2875)/1881, # NC_in_root_opt (Heimisaari, 1995)
+                   0.025, # NC_fungal_opt (Meyer, 2010)
+                   1/28.73, # NC_microbe_opt (Heinonsalo, 2015)
+                   0.5, # percentage_C_biomass (CASSIA)
+                   10, 10, 10, # N_limits_plant
+                   10, 10, 10, # N_limits_fungal
+                   10, 10, 10, # N_limits_microbes
+                   0.2, 0.2, 0.2, # N_k_plant
+                   0.2, 0.2, 0.2, # N_k_fungal
+                   0.2, 0.2, 0.2, # N_k_microbes
+                   0.5, 0.5, 0.5, # SWC_k_microbes
+                   10, 0.2, 0.5, # NH4_on_NO3
                    1, 1, 1, 1, 1, 1, # respiration_params
-                   1, # optimal_root_fungal_biomass_ratio
-                   0.2, # turnover_mantle
-                   0.2, # turnover_ERM
-                   0.2, # turnover_roots_mycorrhized
-                   0.2, # turnover_fungal
+                   0.9, # optimal_root_fungal_biomass_ratio (TODO: Heinonsalo?)
+                   1/365, # turnover_roots, Meyer, 2010
+                   1/625, # turnover_mantle, Meyer, 2010
+                   1/50, # turnover_ERM, Meyer 2010
+                   1/625, # turnover_roots_mycorrhized Meyer, 2010
+                   0.2, # turnover_fungal TODO: do I need this if the turnover is in Meyer?
                    1, # mantle_mass
                    1, # ERM_mass
-                   1, # growth_C
-                   1, # growth_N
+                   0.03, # growth_C (Franklin, 2017)
+                   0.03, # growth_N (TODO)
                    1, # C_value_param_myco
                    1, # N_value_param_myco
                    1, # C_value_param_plant
-                   1) # N_value_param_plant
+                   1, # N_value_param_plant
+                   0.31, # NH40 (Korhonen, 2013)
+                   0.002, # NO30 (Korhonen, 2013)
+                   26.5, # Norg0 (Korhonen, 2013)
+                   5.6) # C_SOM0 (Hyytiälä)
 
   if (soil_processes) {
     CASSIA_new_output = CASSIA_soil(2015, 2018, weather_original, GPP_ref,
@@ -188,10 +180,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
   variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
-  dates = seq(as.Date("2015-01-01"), as.Date("2019-12-31"), by = "day")
+  dates = seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
   dates = dates[-c(365+366)]
 
-  Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365+365),]
+  Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365),]
 
   ###
   # Previous Data
@@ -209,13 +201,18 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
       plot(dates, Hyde_daily_original_plot[,c(variables_original[var])] - CASSIA_new_output[[1]][,c(variables_new[var])],
            main = "Residuals", xlab = "Date", ylab = "original - new output")
     } else {
+      if (soil_processes) {
+        photo_index = 5
+      } else {
+        photo_index = 3
+      }
       plot(dates, weather_original$P,
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
-      lines(dates, CASSIA_new_output[[4]][,c(variables_new[var])], col = "blue")
-      plot(weather_original$P, CASSIA_new_output[[4]][,c(variables_new[var])],
+      lines(dates, CASSIA_new_output[[photo_index]][,c(variables_new[var])], col = "blue")
+      plot(weather_original$P, CASSIA_new_output[[photo_index]][,c(variables_new[var])],
            main = "New against old", xlab = "Original data", ylab = "New Data")
       abline(0, 1, col = "red")
-      plot(dates, weather_original$P - CASSIA_new_output[[4]][,c(variables_new[var])],
+      plot(dates, weather_original$P - CASSIA_new_output[[photo_index]][,c(variables_new[var])],
            main = "Residuals", xlab = "Date", ylab = "original - new output")
     }
   }
@@ -224,7 +221,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # Sugar
   ###
 
-  # TODO: make this into a graph
+  # TODO: make this into a function
 
   par(mfrow = c(2, 1), xpd=TRUE)
   plot(dates, CASSIA_new_output$Sugar$sugar_needles +
@@ -305,20 +302,34 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # Soil Processes
   ###
   if (soil_processes) {
-    par(mfrow = c(3, 3))
-
     # Mycofon
-    for (i in 1:length(names(CASSIA_new_output[[4]]))) {
+    par(mfrow = c(2, 2))
+    for (i in 1:4) {
+      plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
+    }
+    par(mfrow = c(3, 4))
+    for (i in 5:14) {
+      plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
+    }
+    par(mfrow = c(2, 2))
+    for (i in 15:length(names(CASSIA_new_output[[4]]))) {
       plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
     }
 
+    par(mfrow = c(3, 3))
     # Symphony
     for (i in 1:length(names(CASSIA_new_output[[3]]))) {
       plot(dates, CASSIA_new_output[[3]][,i], main = names(CASSIA_new_output[[3]])[i], xlab = "Date", ylab = "")
     }
 
+    #par(mfrow = c(3, 3))
+    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "Temperature")
+    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "Temperature")
+    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "Temperature")
+    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "Temperature")
+    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Temperature")
+    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Temperature")
 
   }
-
 }
 
