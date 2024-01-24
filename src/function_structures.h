@@ -243,25 +243,4 @@ struct MYCOFON_vector {
   std::vector<double> Fungal_given;
 };
 
-struct MYCOFON_function_out {
-  double C_roots;
-  double C_fungal;
-  double N_roots;
-  double N_fungal;
-  double uptake_plant;
-  double uptake_NH4_plant;
-  double uptake_NO3_plant;
-  double uptake_Norg_plant;
-  double uptake_fungal;
-  double uptake_NH4_fungal;
-  double uptake_NO3_fungal;
-  double uptake_Norg_fungal;
-  double from_CASSIA;
-  double to_CASSIA;
-  double Plant_demand;
-  double Fungal_demand;
-  double Plant_given;
-  double Fungal_given;
-};
-
 #endif
