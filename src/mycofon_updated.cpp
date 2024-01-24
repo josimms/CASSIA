@@ -11,52 +11,32 @@ respiration_parameters respiration_vector_to_struct(std::vector<double> input) {
   return(out);
 }
 
-// [[Rcpp::export]]
-Rcpp::List mycofon_balence(double C_roots,
-                           double N_roots,
-                           double optimal_root_fungal_biomass_ratio,
-                           double C_fungal,
-                           double N_fungal,
-                           double turnover_roots,
-                           double turnover_roots_mycorrhized,
-                           double turnover_mantle,
-                           double turnover_ERM,
-                           std::vector<double> respiration_parameters_R,
-                           double NH4,
-                           double NO3,
-                           double FOM_Norg,
-                           double NC_in_fungal_opt,
-                           double T,
-                           double Tsb,
-                           double SWC,
-                           std::vector<double> N_limits_Plant,
-                           std::vector<double> N_k_Plant,
-                           std::vector<double> SWC_k_Plant,
-                           std::vector<double> N_limits_Fungal,
-                           std::vector<double> N_k_Fungal,
-                           std::vector<double> SWC_k_Fungal,
-                           double mantle_mass,
-                           double ERM_mass,
-                           std::vector<double> parameters_NH4_on_NO3,
-                           double growth_C,
-                           double growth_N,
-                           double max_C_allocation_CASSIA,
-                           double allocation_N_to_rest_of_plant,
-                           bool mycofon_stratergy) {
 
-  /*
-   * Initialise parameters
-   */
-  respiration_parameters respiration_params = respiration_vector_to_struct(respiration_parameters_R);
+MYCOFON_function_out mycofon_balence(double C_roots,
+                                     double C_growth,
+                                     double N_roots,
+                                     double C_fungal,
+                                     double N_fungal,
+                                     parameters_soil parameters_in,
+                                     double NH4,
+                                     double NO3,
+                                     double FOM_Norg,
+                                     double T,
+                                     double Tsb,
+                                     double SWC,
+                                     double mantle_mass,
+                                     double ERM_mass,
+                                     bool mycofon_stratergy) {
+
 
   // Mycorrhizal rate
-  double m = C_fungal / (C_roots * optimal_root_fungal_biomass_ratio);
+  double m = 0.9; //  C_fungal / (C_roots * parameters_in.optimal_root_fungal_biomass_ratio);
   if (m > 1) {
+    std::cout << "Warning: The mycorhization value (m) is more than 1. m = " << m << " Check the fungal_mass, root_mass and optimal_root_fungal_biomass_ratio values\n";
     m = 1;
-    std::cout << "Warning: The mycorhization value (m) is more than 1. Check the fungal_mass, root_mass and optimal_root_fungal_biomass_ratio values\n";
   } else if (m < 0) {
+    std::cout << "Warning: The mycorhization value (m) is less than 0. m = " << m << " Check the fungal_mass, root_mass and optimal_root_fungal_biomass_ratio values\n";
     m = 0;
-    std::cout << "Warning: The mycorhization value (m) is less than 0. Check the fungal_mass, root_mass and optimal_root_fungal_biomass_ratio values\n";
   }
 
   /*
@@ -69,33 +49,35 @@ Rcpp::List mycofon_balence(double C_roots,
                                          N_fungal,
                                          C_roots,
                                          N_roots,
-                                         NC_in_fungal_opt,
-                                         growth_C,
-                                         growth_N)[1];
+                                         parameters_in.NC_fungal_opt,
+                                         parameters_in.growth_C,
+                                         parameters_in.growth_N)[1];
+  // std::cout << "N_given_mycofon: " << N_given_mycofon;
 
   double N_demand_mycofon = myco_decision(C_fungal,
                                          N_fungal,
                                          C_roots,
                                          N_roots,
-                                         NC_in_fungal_opt,
-                                         growth_C,
-                                         growth_N)[0];
+                                         parameters_in.NC_fungal_opt,
+                                         parameters_in.growth_C,
+                                         parameters_in.growth_N)[0];
+  // std::cout << " N_demand_mycofon: " << N_demand_mycofon << "\n";
 
   double N_given_franklin = myco_decision(C_fungal,
                                           N_fungal,
                                           C_roots,
                                           N_roots,
-                                          NC_in_fungal_opt,
-                                          growth_C,
-                                          growth_N)[3];
+                                          parameters_in.NC_fungal_opt,
+                                          parameters_in.growth_C,
+                                          parameters_in.growth_N)[3];
 
   double N_demand_franklin = myco_decision(C_fungal,
                                           N_fungal,
                                           C_roots,
                                           N_roots,
-                                          NC_in_fungal_opt,
-                                          growth_C,
-                                          growth_N)[2];
+                                          parameters_in.NC_fungal_opt,
+                                          parameters_in.growth_C,
+                                          parameters_in.growth_N)[2];
   double N_given;
   double fungal_demand;
   if (mycofon_stratergy) {
@@ -110,30 +92,30 @@ Rcpp::List mycofon_balence(double C_roots,
   double C_given_mycofon = plant_decision(C_roots,
                                           N_roots,
                                           C_fungal,
-                                          optimal_root_fungal_biomass_ratio,
+                                          parameters_in.optimal_root_fungal_biomass_ratio,
                                           N_given,
-                                          max_C_allocation_CASSIA)[1];
+                                          0.7*C_roots)[1]; // TODO: Think about this more! The last argument is the maximum value that is transfered from CASSIA
 
   double C_demand_mycofon = plant_decision(C_roots,
                                           N_roots,
                                           C_fungal,
-                                          optimal_root_fungal_biomass_ratio,
+                                          parameters_in.optimal_root_fungal_biomass_ratio,
                                           N_given,
-                                          max_C_allocation_CASSIA)[0];
+                                          0.7*C_roots)[0];
 
   double C_given_franklin = plant_decision(C_roots,
                                            N_roots,
                                            C_fungal,
-                                           optimal_root_fungal_biomass_ratio,
+                                           parameters_in.optimal_root_fungal_biomass_ratio,
                                            N_given,
-                                           max_C_allocation_CASSIA)[3];
+                                           0.7*C_roots)[3];
 
   double C_demand_franklin = plant_decision(C_roots,
                                            N_roots,
                                            C_fungal,
-                                           optimal_root_fungal_biomass_ratio,
+                                           parameters_in.optimal_root_fungal_biomass_ratio,
                                            N_given,
-                                           max_C_allocation_CASSIA)[2];
+                                           0.7*C_roots)[2];
 
   double C_given;
   double plant_demand;
@@ -158,9 +140,9 @@ Rcpp::List mycofon_balence(double C_roots,
                                              NH4,
                                              NO3,
                                              FOM_Norg,
-                                             N_limits_Fungal,
-                                             N_k_Fungal,
-                                             SWC_k_Fungal,
+                                             parameters_in.N_limits_fungal,
+                                             parameters_in.N_k_fungal,
+                                             parameters_in.SWC_k_fungal,
                                              fungal_demand);
   double uptake_fungal_all = uptake_fungal[0];
   double uptake_fungal_NH4 = uptake_fungal[1];
@@ -174,10 +156,10 @@ Rcpp::List mycofon_balence(double C_roots,
                                            NH4,
                                            NO3,
                                            FOM_Norg,
-                                           N_limits_Plant,
-                                           N_k_Plant,
-                                           SWC_k_Plant,
-                                           parameters_NH4_on_NO3,
+                                           parameters_in.N_limits_plant,
+                                           parameters_in.N_k_plant,
+                                           parameters_in.SWC_k_plant,
+                                           parameters_in.NH4_on_NO3,
                                            plant_demand);
   double uptake_plant_all = uptake_plant[0];
   double uptake_plant_NH4 = uptake_plant[1];
@@ -194,39 +176,36 @@ Rcpp::List mycofon_balence(double C_roots,
   double root_NC_ratio = N_roots / C_roots;
   double fungal_NC_ratio = N_fungal / C_fungal;
 
-  double from_CASSIA = max_C_allocation_CASSIA; // could change this to be a function that would work with the gradient that is happening in CASSIA
-  double to_CASSIA = allocation_N_to_rest_of_plant; // TODO: sort this!
+  double myco_growth_C = myco_growth(C_fungal, N_fungal, parameters_in.growth_C, parameters_in.growth_N)[1]; // TODO: currently C_roots rather than sugar as the model isn't connected in that way
+  double myco_growth_N = myco_growth(C_fungal, N_fungal, parameters_in.growth_C, parameters_in.growth_N)[2];
 
-  double myco_growth_C = myco_growth(C_fungal, N_fungal, growth_C, growth_N)[1]; // TODO: currently C_roots rather than sugar as the model isn't connected in that way
-  double myco_growth_N = myco_growth(C_fungal, N_fungal, growth_C, growth_N)[2];
-
+  double to_CASSIA = std::max(0.01*N_roots, 0.0);
   N_roots = N_roots +
     N_given +
     uptake_plant_all*C_roots - // This should be by the biomass, so decided that it is multiplied by C^r rather than N^r, maybe should actually be a surface area equation
-    (1 - m)*C_roots*turnover_roots*root_NC_ratio -
-    m*C_roots*turnover_roots_mycorrhized*root_NC_ratio -
-    to_CASSIA;
+    // TODO: Should these be in CASSIA instead?a
+    //(1 - m)*C_roots*parameters_in.turnover_roots*root_NC_ratio -
+    //m*C_roots*parameters_in.turnover_roots_mycorrhized*root_NC_ratio -
+    to_CASSIA; // TODO: rethink: last term is the amount of N that is going from the roots to the rest of the tree
 
   N_fungal = N_fungal +
-    uptake_fungal_all*C_fungal -
+    uptake_fungal_all*C_fungal +
     myco_growth_N -
-    (0.5*turnover_mantle + 0.5*turnover_ERM)*C_fungal*fungal_NC_ratio - // TODO: although this is correct I need to be consistant with the fact that ERM is 50% of the fungal biomass
+    //(0.5*parameters_in.turnover_mantle + 0.5*parameters_in.turnover_ERM)*C_fungal*fungal_NC_ratio - // TODO: although this is correct I need to be consistent with the fact that ERM is 50% of the fungal biomass
     N_given;
 
   // dC^r/dt TODO: this need to be linked with the CASSIA C sections, also link the amount going to CASSIA
-  C_roots = C_roots +
-    from_CASSIA -
-    (1 - m)*C_roots*turnover_roots -
-    m*C_roots*turnover_roots_mycorrhized -
-    0.2*C_roots -
-    C_given;
+  // TODO: this balance is currently biomass rather than sugar based!
+  C_roots = C_roots + C_growth + 0.5*C_roots -
+    C_given; // TODO: the C given should be proportional to the mycorrhized amount
+    // (1 - m)*C_roots*parameters_in.turnover_roots -
+    // m*C_roots*parameters_in.turnover_roots_mycorrhized -
   // 0.2 is a placeholder for respiration
 
   // dC^f/dt
-  C_fungal = C_fungal +
+  C_fungal = C_fungal + myco_growth_C + // TODO: should I put this in the CASSIA section?
     C_given -
-    myco_growth_C -
-    turnover_mantle*mantle_mass - turnover_ERM*ERM_mass -
+    parameters_in.turnover_mantle*C_fungal*0.5 - parameters_in.turnover_ERM*C_fungal*0.5 - // TODO: should I put this in the CASSIA section?
     0.2*C_fungal;
   // 0.2 is a placeholder for respiration
 
@@ -234,24 +213,26 @@ Rcpp::List mycofon_balence(double C_roots,
    * OUTPUT!
    */
 
-  return Rcpp::List::create(Rcpp::_["C_roots"] = C_roots,
-                            Rcpp::_["C_fungal"] = C_fungal,
-                            Rcpp::_["N_roots"] = N_roots,
-                            Rcpp::_["N_fungal"] = N_fungal,
-                            Rcpp::_["uptake_plant"] = uptake_plant_all*C_roots,
-                            Rcpp::_["uptake_NH4_plant"] = uptake_plant_NH4*C_roots,
-                            Rcpp::_["uptake_NO3_plant"] = uptake_plant_NO3*C_roots,
-                            Rcpp::_["uptake_Norg_plant"] = uptake_plant_Norg*C_roots,
-                            Rcpp::_["uptake_fungal"] = uptake_fungal_all*C_fungal,
-                            Rcpp::_["uptake_NH4_fungal"] = uptake_fungal_NH4*C_roots,
-                            Rcpp::_["uptake_NO3_fungal"] = uptake_fungal_NO3*C_roots,
-                            Rcpp::_["uptake_Norg_fungal"] = uptake_fungal_Norg*C_roots,
-                            Rcpp::_["from_CASSIA"] = from_CASSIA,
-                            Rcpp::_["to_CASSIA"] = to_CASSIA,
-                            Rcpp::_["Plant_demand"] = plant_demand,
-                            Rcpp::_["Fungal_demand"] = fungal_demand,
-                            Rcpp::_["Plant_given"] = C_given,
-                            Rcpp::_["Fungal_given"] = N_given);
+  MYCOFON_function_out out;
+  out.C_roots = C_roots;
+  out.C_fungal = C_fungal;
+  out.N_roots = N_roots;
+  out.N_fungal = N_fungal;
+  out.uptake_plant = uptake_plant_all*C_roots;
+  out.uptake_NH4_plant = uptake_plant_NH4*C_roots;
+  out.uptake_NO3_plant = uptake_plant_NO3*C_roots;
+  out.uptake_Norg_plant = uptake_plant_Norg*C_roots;
+  out.uptake_fungal = uptake_fungal_all*C_fungal;
+  out.uptake_NH4_fungal = uptake_fungal_NH4*C_roots;
+  out.uptake_NO3_fungal = uptake_fungal_NO3*C_roots;
+  out.uptake_Norg_fungal = uptake_fungal_Norg*C_roots;
+  out.from_CASSIA = 0.5*C_roots;
+  out.to_CASSIA = to_CASSIA;
+  out.Plant_demand = plant_demand;
+  out.Fungal_demand = fungal_demand;
+  out.Plant_given = C_given;
+  out.Fungal_given = N_given;
+  return(out);
 
 }
 
