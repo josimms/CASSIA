@@ -1,26 +1,26 @@
 \name{Microbe_Uptake}
 \alias{Microbe_Uptake}
 \alias{micorbe_uptake}
-\docType{MycoModel}
+\docType{package}
 \title{
   Micorbe Uptake
 }
 \description{
   This uptake is taken from the Symphony model, considering the N uptake. The original C limitation is changed to a organic nitrogen limitation, assuming that the uptake of organic nitrogen is limiting C decomposition.
-  
+
   The uptake follows the form.
-  
+
   \eqn{ (a r(T), C_{microbe} + b - a)  \min \{\text{organic nitrogen limitation}, \text{nitrogen limitation} \}}
-  
+
   Where a is the microbe N:C and b is the soil compartment N:C ratio.
-  
+
   Organic nitrogen limitation = \eqn{u(Norg)} \cr
   Nitrogen limitation = \eqn{\frac{i(u(NH4) + u(NO3)) + (N:C)^{microbes}_{opt} r(T) C^{microbe}}{b - a}}
 
   Where u() is the uptake function, \eqn{(N:C)^{microbe}_{opt}} is the N:C ratio and r(T) is the microbe respiration.
-  
+
   The outputs are then scaled by the lowest limitation.
-  
+
   uptake * \eqn{\left( \frac{\text{min limitation}}{\text{max limitation}} \right)}
 }
 
