@@ -57,17 +57,17 @@ struct parameters_soil {
   double NC_fungal_opt;
   double NC_microbe_opt;
   double percentage_C_biomass;
+  std::vector<double> N_limits_myco;
+  std::vector<double> N_k_myco;
+  std::vector<double> SWC_limits_myco;
   std::vector<double> N_limits_plant;
-  std::vector<double> N_limits_fungal;
-  std::vector<double> N_limits_microbes;
   std::vector<double> N_k_plant;
-  std::vector<double> N_k_fungal;
+  std::vector<double> SWC_limits_plant;
+  std::vector<double> N_limits_microbes;
   std::vector<double> N_k_microbes;
-  std::vector<double> SWC_k_plant;
-  std::vector<double> SWC_k_fungal;
-  std::vector<double> SWC_k_microbes;
-  std::vector<double> NH4_on_NO3;
-  std::vector<double> respiration_params;
+  std::vector<double> SWC_limits_microbes;
+  std::vector<double> C_limits;
+  double NH4_on_NO3;
   double optimal_root_fungal_biomass_ratio;
   double turnover_roots;
   double turnover_roots_mycorrhized;
@@ -187,10 +187,15 @@ struct SYMPHONY_vector {
 };
 
 struct MYCOFON_function_out {
+  double C_biomass;
   double C_roots;
   double C_fungal;
   double N_roots;
   double N_fungal;
+  double C_roots_NonStruct;
+  double C_fungal_NonStruct;
+  double N_roots_NonStruct;
+  double N_fungal_NonStruct;
   double uptake_plant;
   double uptake_NH4_plant;
   double uptake_NO3_plant;
@@ -276,8 +281,8 @@ Rcpp::List Plant_N_Uptake(double T,
                           double FOM_in,
                           std::vector<double> N_limits_R,
                           std::vector<double> N_k_R,
-                          std::vector<double> SWC_k_R,
-                          std::vector<double> parameters,
+                          std::vector<double> SWC_limits_R,
+                          double NH4_on_NO3,
                           double demand);
 
 #endif
@@ -317,8 +322,7 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           std::vector<double> N_limits_R,
                           std::vector<double> N_k_R,
                           std::vector<double> SWC_k_R,
-                          bool SOM_decomposers,
-                          std::vector<double> respiration_microbes_params);
+                          bool SOM_decomposers);
 
 #endif
 
@@ -370,7 +374,6 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double FOM_Norg_used_Plant,
                                             double FOM_Norg_used_Fungal,
                                             double SOM_Norg_used,
-                                            std::vector<double> respiration_microbes_params,
                                             std::vector<double> N_limits_R,
                                             std::vector<double> N_k_R,
                                             std::vector<double> SWC_k_R,
@@ -384,11 +387,14 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
 #ifndef PKG_mycofon_balence_H
 #define PKG_mycofon_balence_H
 
-MYCOFON_function_out mycofon_balence(double C_roots,
-                                     double C_growth,
-                                     double N_roots,
+MYCOFON_function_out mycofon_balence(double C_biomass,
+                                     double C_roots,
                                      double C_fungal,
-                                     double N_fungal,
+                                     double C_roots_NonStruct,
+                                     double N_roots_NonStruct,
+                                     double C_fungal_NonStruct,
+                                     double N_fungal_NonStruct,
+                                     double max_C_from_CASSIA,
                                      parameters_soil parameters_in,
                                      double NH4,
                                      double NO3,
@@ -396,8 +402,6 @@ MYCOFON_function_out mycofon_balence(double C_roots,
                                      double T,
                                      double Tsb,
                                      double SWC,
-                                     double mantle_mass,
-                                     double ERM_mass,
                                      bool mycofon_stratergy);
 
 #endif
@@ -409,13 +413,10 @@ MYCOFON_function_out mycofon_balence(double C_roots,
 #ifndef PKG_myco_decision_H
 #define PKG_myco_decision_H
 
-Rcpp::List myco_decision(double C_fungal,
-                         double N_fungal,
-                         double C_roots,
-                         double N_roots,
-                         double NC_fungal_opt,
-                         double growth_C,
-                         double growth_N);
+Rcpp::List myco_decision(double N_fungal_NonStruct,
+                         double C_roots_NonStruct,
+                         double N_roots_NonStruct,
+                         double NC_fungal_opt);
 
 #endif
 
@@ -426,12 +427,10 @@ Rcpp::List myco_decision(double C_fungal,
 #ifndef PKG_plant_decision_H
 #define PKG_plant_decision_H
 
-Rcpp::List plant_decision(double C_roots,
-                          double N_roots,
-                          double C_fungal,
-                          double optimal_root_funga_biomass_ratio,
-                          double N_allo,
-                          double max_C_allocation_CASSIA);
+Rcpp::List plant_decision(double C_roots_NonStruct,
+                          double N_roots_NonStruct,
+                          double C_fungal_NonStruct,
+                          double optimal_root_funga_biomass_ratio);
 
 #endif
 
