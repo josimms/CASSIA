@@ -302,16 +302,16 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   # Running the MCMC alogorithm
   # Use DEzs as I have read the paper for this one Past samples version
   # If a starting value is given rows are the number of chains and columns are the parameters
-  CASSIAout_sugar_model <- BayesianTools::runMCMC(bayesianSetup = CASSIABayesianSetup, sampler = "DREAMzs", settings = settings)
+  CASSIAout_sugar_model <- BayesianTools::runMCMC(bayesianSetup = CASSIABayesianSetup, sampler = "DREAMzshttp://127.0.0.1:26757/graphics/1177605b-b3f9-4c49-8fa3-d13b82665e01.png", settings = settings)
 
   save(CASSIAout_sugar_model, file = paste0(direct, gsub(":", "_", Sys.time()), " CASSIAout_sugar_model.RData"))
 
-  # load(paste0(direct, "2024-01-18 15_06_21.942151 CASSIAout_sugar_model.RData"))
+  # load(paste0(direct, "2024-01-19 13_51_32.011465 CASSIAout_sugar_model.RData"))
 
   plot(CASSIAout_sugar_model)
 
   Calibrated_Parameters = BayesianTools::MAP(CASSIAout_sugar_model)$parametersMAP
-  test_against_original_data(c(Calibrated_Parameters), T, T, T)
+  all_tests(c(Calibrated_Parameters), T, F, T, T)
 
   # return(CASSIAout_sugar_model)
 }
