@@ -120,19 +120,24 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    0.025, # NC_fungal_opt (Meyer, 2010)
                    1/28.73, # NC_microbe_opt (Heinonsalo, 2015)
                    0.5, # percentage_C_biomass (CASSIA)
-                   10, 10, 10, # N_limits_plant
-                   10, 10, 10, # N_limits_fungal
-                   10, 10, 10, # N_limits_microbes
-                   0.2, 0.2, 0.2, # N_k_plant
-                   0.2, 0.2, 0.2, # N_k_fungal
-                   0.2, 0.2, 0.2, # N_k_microbes
-                   0.5, 0.5, 0.5, # SWC_k_microbes
-                   10, 0.2, 0.5, # NH4_on_NO3
-                   1, 1, 1, 1, 1, 1, # respiration_params
+                   # fungal
+                   0.3, 0.3, 0.3, # N_limits: NH4, NO3, Norg
+                   50, 50, 50, # N_k: NH4, NO3, Norg
+                   0.2, 0.2, 0.2, # SWC_limits: NH4, NO3, Norg
+                   # plant
+                   0.3, 0.3, 0.3, # N_limits: NH4, NO3, Norg
+                   50, 50, 50, # N_k: NH4, NO3, Norg
+                   0.2, 0.2, 0.2, # SWC_limit: NH4, NO3, Norg
+                   # microbes
+                   0.3, 0.3, 0.3, # N_limits: NH4, NO3, Norg
+                   50, 50, 50, # N_k: NH4, NO3, Norg
+                   0.2, 0.2, 0.2, # SWC_limit: NH4, NO3, Norg
+                   0.3, 50, 0.2, # C limits
+                   10, # NH4_on_NO3
                    0.9, # optimal_root_fungal_biomass_ratio (TODO: Heinonsalo?)
-                   1/365, # turnover_roots, Meyer, 2010
                    1/625, # turnover_mantle, Meyer, 2010
                    1/50, # turnover_ERM, Meyer 2010
+                   1/365, # turnover_roots, Meyer, 2010
                    1/625, # turnover_roots_mycorrhized Meyer, 2010
                    0.2, # turnover_fungal TODO: do I need this if the turnover is in Meyer?
                    1, # mantle_mass
@@ -142,11 +147,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    1, # C_value_param_myco
                    1, # N_value_param_myco
                    1, # C_value_param_plant
-                   1, # N_value_param_plant
-                   0.31, # NH40 (Korhonen, 2013)
-                   0.002, # NO30 (Korhonen, 2013)
-                   26.5, # Norg0 (Korhonen, 2013)
-                   5.6) # C_SOM0 (Hyytiälä)
+                   1) # N_value_param_plant
 
   if (soil_processes) {
     CASSIA_new_output = CASSIA_soil(2015, 2018, weather_original, GPP_ref,
@@ -303,32 +304,50 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   ###
   if (soil_processes) {
     # Mycofon
-    par(mfrow = c(2, 2))
-    for (i in 1:4) {
-      plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
+    par(mfrow = c(3, 2))
+    for (i in 1:6) {
+      plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i], xlab = "Date", ylab = "")
     }
     par(mfrow = c(3, 4))
-    for (i in 5:14) {
-      plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
+    for (i in 7:length(names(CASSIA_new_output$Fungal))) {
+      plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i], xlab = "Date", ylab = "")
     }
-    par(mfrow = c(2, 2))
-    for (i in 15:length(names(CASSIA_new_output[[4]]))) {
-      plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
-    }
+    #par(mfrow = c(2, 2))
+    #for (i in 19:length(names(CASSIA_new_output[[4]]))) {
+    #  plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
+    #}
 
-    par(mfrow = c(3, 3))
     # Symphony
-    for (i in 1:length(names(CASSIA_new_output[[3]]))) {
-      plot(dates, CASSIA_new_output[[3]][,i], main = names(CASSIA_new_output[[3]])[i], xlab = "Date", ylab = "")
+    par(mfrow = c(3, 3))
+    for (i in 1:8) {
+      plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i], xlab = "Date", ylab = "")
+    }
+    par(mfrow = c(3, 3))
+    for (i in 9:length(names(CASSIA_new_output$Soil))) {
+      plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i], xlab = "Date", ylab = "")
     }
 
-    #par(mfrow = c(3, 3))
-    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "Temperature")
-    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "Temperature")
-    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "Temperature")
-    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "Temperature")
-    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Temperature")
-    #plot(weather_original$T, CASSIA_new_output[[4]]$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Temperature")
+    par(mfrow = c(3, 2))
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "Temperature")
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "Temperature")
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "Temperature")
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "Temperature")
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Temperature")
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Temperature")
+
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "Soil Moisture")
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "Soil Moisture")
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "Soil Moisture")
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "Soil Moisture")
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Soil Moisture")
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Soil Moisture")
+
+    plot(CASSIA_new_output$Soil$NH4, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "NH4")
+    plot(CASSIA_new_output$Soil$NH4, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "NH4")
+    plot(CASSIA_new_output$Soil$NO3, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "NO3")
+    plot(CASSIA_new_output$Soil$NO3, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "NO3")
+    plot(CASSIA_new_output$Soil$SOM_Norg_used, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Norg")
+    plot(CASSIA_new_output$Soil$SOM_Norg_used, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Norg")
 
   }
 }
