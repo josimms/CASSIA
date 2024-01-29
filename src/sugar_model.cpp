@@ -393,6 +393,7 @@ carbo_balance sugar_model(int day,
     // Model
     double ak = 1 / (1 - 1/exp(parameters.alfa * (0.7430989 - parameters.Wala)));
     double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch;
+    double myco_allocation;
     if (day == 0) {
       sugar_all = sugar.needles = 0.4184208;
       starch_all = starch.needles = parameters.starch00;
@@ -407,7 +408,6 @@ carbo_balance sugar_model(int day,
         storage_term.respiration = 1;
       }
 
-      double myco_allocation;
       if ((sH > parameters.sHc) & (sugar.needles + starch.needles > 0.07)) {
         myco_allocation = PF * 0.3;
       } else {
@@ -454,6 +454,7 @@ carbo_balance sugar_model(int day,
     sugar.roots = 0.0;
     sugar.xylem_sh = 0.0;
     sugar.xylem_st = 0.0;
+    sugar.mycorrhiza = myco_allocation;
 
     starch.needles = starch_all;
     starch.phloem = 0.0;
