@@ -21,12 +21,12 @@ xylogenesis_wrapper <- function(no_day, day, pCASSIA_parameters, pCASSIA_common,
     .Call(`_CASSIA_xylogenesis_wrapper`, no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw)
 }
 
-plant_decision <- function(C_roots, N_roots, C_fungal, optimal_root_funga_biomass_ratio, N_allo, max_C_allocation_CASSIA) {
-    .Call(`_CASSIA_plant_decision`, C_roots, N_roots, C_fungal, optimal_root_funga_biomass_ratio, N_allo, max_C_allocation_CASSIA)
+plant_decision <- function(C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio) {
+    .Call(`_CASSIA_plant_decision`, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio)
 }
 
-myco_decision <- function(C_fungal, N_fungal, C_roots, N_roots, NC_fungal_opt, growth_C, growth_N) {
-    .Call(`_CASSIA_myco_decision`, C_fungal, N_fungal, C_roots, N_roots, NC_fungal_opt, growth_C, growth_N)
+myco_decision <- function(N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt) {
+    .Call(`_CASSIA_myco_decision`, N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt)
 }
 
 growth_wrapper <- function(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, growth_in, last_year_HH, no_day) {
@@ -37,24 +37,28 @@ myco_growth <- function(C_fungal, N_fungal, a, b) {
     .Call(`_CASSIA_myco_growth`, C_fungal, N_fungal, a, b)
 }
 
-uptake_N <- function(N, T, N_limit, k, SWC, SWC_sat) {
-    .Call(`_CASSIA_uptake_N`, N, T, N_limit, k, SWC, SWC_sat)
+mycofon_balence <- function(C_biomass, C_roots, C_fungal, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tsb, SWC, mycofon_stratergy) {
+    .Call(`_CASSIA_mycofon_balence`, C_biomass, C_roots, C_fungal, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tsb, SWC, mycofon_stratergy)
 }
 
-uptake_C <- function(C, T, C_limit, k, SWC, SWC_k) {
-    .Call(`_CASSIA_uptake_C`, C, T, C_limit, k, SWC, SWC_k)
+uptake_N <- function(N, T, SWC, N_limit, k, SWC_limit) {
+    .Call(`_CASSIA_uptake_N`, N, T, SWC, N_limit, k, SWC_limit)
 }
 
-Plant_N_Uptake <- function(T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_k_R, parameters, demand) {
-    .Call(`_CASSIA_Plant_N_Uptake`, T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_k_R, parameters, demand)
+uptake_C <- function(C, T, SWC, C_limit, k, SWC_limit) {
+    .Call(`_CASSIA_uptake_C`, C, T, SWC, C_limit, k, SWC_limit)
+}
+
+Plant_N_Uptake <- function(T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_limits_R, NH4_on_NO3, demand) {
+    .Call(`_CASSIA_Plant_N_Uptake`, T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_limits_R, NH4_on_NO3, demand)
 }
 
 Fungal_N_Uptake <- function(T, SWC, NH4, NO3, FOM_Norg, N_limits_R, N_k_R, SWC_k_R, demand) {
     .Call(`_CASSIA_Fungal_N_Uptake`, T, SWC, NH4, NO3, FOM_Norg, N_limits_R, N_k_R, SWC_k_R, demand)
 }
 
-Microbe_Uptake <- function(C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, respiration_microbes_params) {
-    .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, respiration_microbes_params)
+Microbe_Uptake <- function(C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers) {
+    .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers)
 }
 
 preles_test_cpp <- function(NofDays, day, weather, pPREL, etmodel) {
