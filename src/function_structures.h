@@ -95,6 +95,27 @@ struct growth_vector {
 };
 
 /*
+ * Biomass
+ */
+
+struct biomass_out {
+  double diameter;
+  double needles;
+  double height;
+  double wall;
+  double roots;
+  double bud;
+};
+
+struct biomass_vector {
+  std::vector<double> height;
+  std::vector<double> needles;
+  std::vector<double> roots;
+  std::vector<double> diameter;
+  std::vector<double> bud;
+};
+
+/*
  * Sugar model
  */
 
@@ -223,10 +244,15 @@ struct needle_cohorts {
  */
 
 struct MYCOFON_vector {
+  std::vector<double> C_biomass;
   std::vector<double> C_roots;
   std::vector<double> C_fungal;
   std::vector<double> N_roots;
   std::vector<double> N_fungal;
+  std::vector<double> C_roots_NonStruct;
+  std::vector<double> C_fungal_NonStruct;
+  std::vector<double> N_roots_NonStruct;
+  std::vector<double> N_fungal_NonStruct;
   std::vector<double> uptake_plant;
   std::vector<double> uptake_NH4_plant;
   std::vector<double> uptake_NO3_plant;
