@@ -202,7 +202,7 @@ Rcpp::List CASSIA_yearly(int start_year,
     /*
      * NEEDLE MASS CALCULATION
      *
-     * If it is the first year, then there is no needle mass initialised,
+     * If it is the first year, then there is no needle mass initialized,
      * after this if there is growth in the model the needle mass is calculated based on last year
      * if there is no growth then the needle mass stays at the originally calculated value
      */
@@ -279,15 +279,19 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.GPP = Photosynthesis_IN[count];
         photosynthesis_per_stem = Photosynthesis_IN[count] / 1010 * 10000/1000;
       } else {
-        photosynthesis = preles(days_per_year, day,
-                                PAR[count], TAir[count], VPD[count], Precip[count],
-                                CO2[count], fAPAR, Nitrogen[count],
-                                parSite, parGPP, parET, parSnowRain,
-                                parWater, parN, etmodel);
+        photosynthesis.GPP = 0;
+        photosynthesis.ET = 0;
+        photosynthesis.fS = 0;
+        photosynthesis.SoilWater = 0;
+                                // call_preles(days_per_year, day,
+                                //           PAR[count], TAir[count], VPD[count], Precip[count],
+                                //           CO2[count], fAPAR, Nitrogen[count],
+                                //           parSite, parGPP, parET, parSnowRain,
+                                //           parWater, parN, etmodel);
         // TODO: 5.6...
         photosynthesis.GPP = 5.6 * photosynthesis.GPP; // g C m-2 per day, so no conversion is needed!
         photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
-        fS = photosynthesis.S;
+        fS = photosynthesis.fS;
       }
       if (day == 0) {
         GPP_sum = 0.0;
@@ -347,7 +351,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_for_next_iteration.sugar.roots = original_parameters.sugar.roots = parameters.sugar_roots0;
         sugar_values_for_next_iteration.sugar.xylem_sh = original_parameters.sugar.xylem_sh = parameters.sugar_xylem_sh0;
         sugar_values_for_next_iteration.sugar.xylem_st = original_parameters.sugar.xylem_st = parameters.sugar_xylem_st0;
-        sugar_values_for_next_iteration.sugar.mycorrhiza = original_parameters.sugar.mycorrhiza = 0;
+        sugar_values_for_next_iteration.sugar.mycorrhiza = original_parameters.sugar.mycorrhiza = 0; // TODO: think about this
 
         sugar_values_for_next_iteration.starch.needles = original_parameters.starch.needles = parameters.starch_needles0;
         sugar_values_for_next_iteration.starch.phloem = original_parameters.starch.phloem = parameters.starch_phloem0;
@@ -479,7 +483,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis_output.GPP.push_back(photosynthesis.GPP);
         photosynthesis_output.ET.push_back(photosynthesis.ET);
         photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
-        photosynthesis_output.S.push_back(photosynthesis.S);
+        photosynthesis_output.fS.push_back(photosynthesis.fS);
       }
     }
 

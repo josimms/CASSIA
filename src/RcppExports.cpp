@@ -390,17 +390,17 @@ BEGIN_RCPP
 END_RCPP
 }
 // preles_test_cpp
-Rcpp::List preles_test_cpp(int NofDays, int day, Rcpp::DataFrame weather, std::vector<double> pPREL, int etmodel);
-RcppExport SEXP _CASSIA_preles_test_cpp(SEXP NofDaysSEXP, SEXP daySEXP, SEXP weatherSEXP, SEXP pPRELSEXP, SEXP etmodelSEXP) {
+Rcpp::List preles_test_cpp(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> pPREL, int etmodel);
+RcppExport SEXP _CASSIA_preles_test_cpp(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP pPRELSEXP, SEXP etmodelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type NofDays(NofDaysSEXP);
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
+    Rcpp::traits::input_parameter< int >::type start_year(start_yearSEXP);
+    Rcpp::traits::input_parameter< int >::type end_year(end_yearSEXP);
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type weather(weatherSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type pPREL(pPRELSEXP);
     Rcpp::traits::input_parameter< int >::type etmodel(etmodelSEXP);
-    rcpp_result_gen = Rcpp::wrap(preles_test_cpp(NofDays, day, weather, pPREL, etmodel));
+    rcpp_result_gen = Rcpp::wrap(preles_test_cpp(start_year, end_year, weather, pPREL, etmodel));
     return rcpp_result_gen;
 END_RCPP
 }

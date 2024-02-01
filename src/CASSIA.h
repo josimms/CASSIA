@@ -238,35 +238,68 @@ struct photosynthesis_out {
   double GPP;
   double ET;
   double SoilWater;
-  double S;
+  double fS;
+  double fW;
+  double fN;
+  double fCO2;
+  double theta_canopy;
+  double Throughfall;
+  double theta;
+  double theta_snow;
+  double S_state;
+  double PhenoS;
+  double Snowmelt;
+  double intercepted;
+  double Drainage;
+  double canw;
+  double fE;
+  double transp;
+  double evap;
+  double fWE;
+  double gpp380;
 };
 
 struct photo_out_vector {
   std::vector<double> GPP;
   std::vector<double> ET;
   std::vector<double> SoilWater;
-  std::vector<double> S;
+  std::vector<double> fS;
+  std::vector<double> fW;
+  std::vector<double> fE;
+  std::vector<double> fN;
 };
 
-struct gpp_out {
-  double gpp;
-};
-
-photosynthesis_out preles(int NofDays, int day,
-                          double PAR,
-                          double TAir,
-                          double VPD,
-                          double Precip,
-                          double CO2,
-                          double fAPAR,
-                          double Nitrogen,
+photosynthesis_out preles(int day,
+                          double PAR, double TAir, double VPD, double Precip,
+                          double CO2, double fAPAR, double Nitrogen,
                           p1 Site_par,
                           p2 GPP_par,
                           p3 ET_par,
                           p4 SnowRain_par,
                           p5 Water_par,
                           p7 N_par,
-                          int etmodel);
+                          int etmodel,
+                          double theta,
+                          double theta_snow,
+                          double theta_canopy,
+                          double Throughfall,
+                          double S_state,
+                          double PhenoS,
+                          double Snowmelt,
+                          double intercepted,
+                          double Drainage,
+                          double canw,
+                          double fE,
+                          double transp,
+                          double evap,
+                          double fWE,
+                          double fW,
+                          double gpp380);
+
+Rcpp::List preles_test_cpp(int start_year, int end_year,
+                           Rcpp::DataFrame weather,
+                           std::vector<double> pPREL,
+                           int etmodel);
 
 /*
  * Respiration
@@ -383,3 +416,4 @@ p3 make_p3(std::vector<double> input);
 p4 make_p4(std::vector<double> input);
 p5 make_p5(std::vector<double> input);
 p7 make_p7(std::vector<double> input);
+

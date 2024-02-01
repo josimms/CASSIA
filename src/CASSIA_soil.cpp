@@ -248,6 +248,7 @@ Rcpp::List CASSIA_soil(int start_year,
     /*
      * DAYS LOOP
      */
+    photosynthesis_out photosynthesis_old;
     int count;
     for (int day = 0; day < days_per_year; day++) {
       count = (year - start_year)*days_per_year + day;
@@ -274,21 +275,61 @@ Rcpp::List CASSIA_soil(int start_year,
       }
       double fAPAR = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
 
-      double photosynthesis_per_stem;
       photosynthesis_out photosynthesis;
+      double photosynthesis_per_stem;
+      double theta, theta_snow, theta_canopy, Throughfall, S, PhenoS,
+      Snowmelt, intercepted, Drainage, canw, fE, transp, evap, fWE, fW, gpp380;
+      if (day == 1 & year == start_year) {
+        theta = parWater.SW; // Correct
+        theta_canopy = parWater.CW; // Correct
+        theta_snow = parWater.SOG; // Correct
+        gpp380 = 0; // Correct
+        S = parWater.S; // Correct
+        PhenoS = 0; // Correct
+        fE = 0;
+        Throughfall = 0;
+        Snowmelt = 0;
+        intercepted = 0;
+        Drainage = 0;
+        canw = 0;
+        transp = 0;
+        evap = 0;
+        fWE = 0;
+        fW = 0;
+      } else {
+        theta = photosynthesis_old.theta;
+        theta_canopy = photosynthesis_old.theta_canopy;
+        theta_snow = photosynthesis_old.theta_snow;
+        gpp380 = photosynthesis_old.gpp380;
+        S = photosynthesis_old.S_state;
+        PhenoS = photosynthesis_old.PhenoS;
+        fE = photosynthesis_old.fE;
+        Throughfall = photosynthesis_old.Throughfall;
+        Snowmelt = photosynthesis_old.Snowmelt;
+        intercepted = photosynthesis_old.intercepted;
+        Drainage = photosynthesis_old.Drainage;
+        canw = photosynthesis_old.canw;
+        transp = photosynthesis_old.transp;
+        evap = photosynthesis_old.evap;
+        fWE = photosynthesis_old.fWE;
+        fW = photosynthesis_old.fW;
+      }
       if (using_spp_photosynthesis) {
         photosynthesis.GPP = Photosynthesis_IN[count];
         photosynthesis_per_stem = Photosynthesis_IN[count] / 1010 * 10000/1000;
       } else {
-        photosynthesis = preles(days_per_year, day,
-                                PAR[count], TAir[count], VPD[count], Precip[count],
-                                CO2[count], fAPAR, Nitrogen[count],
-                                parSite, parGPP, parET, parSnowRain,
-                                parWater, parN, etmodel);
-        // TODO: 5.6...
-        photosynthesis.GPP = 5.6 * photosynthesis.GPP; // g C m-2 per day, so no conversion is needed!
+        double fAPAR = 0.7; // TODO: just for the first checks
+        photosynthesis = preles(day, PAR[day], TAir[day], VPD[day], Precip[day],
+                                CO2[day], fAPAR, Nitrogen[day],
+                                parSite, parGPP, parET, parSnowRain, parWater, parN,
+                                etmodel, theta, theta_snow, theta_canopy, Throughfall,
+                                S, PhenoS, Snowmelt, intercepted, Drainage, canw,
+                                fE, transp, evap, fWE, fW, gpp380);
+
         photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
-        fS = photosynthesis.S;
+        fS = photosynthesis.fS;
+
+        photosynthesis_old = photosynthesis;
       }
       if (day == 0) {
         GPP_sum = 0.0;
@@ -584,7 +625,7 @@ Rcpp::List CASSIA_soil(int start_year,
         photosynthesis_output.GPP.push_back(photosynthesis.GPP);
         photosynthesis_output.ET.push_back(photosynthesis.ET);
         photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
-        photosynthesis_output.S.push_back(photosynthesis.S);
+        photosynthesis_output.fS.push_back(photosynthesis.fS);
 
         soil_output.C_decompose_FOM.push_back(Soil_All.C_decompose_FOM);
         soil_output.C_decompose_SOM.push_back(Soil_All.C_decompose_SOM);

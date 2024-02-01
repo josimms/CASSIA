@@ -1,26 +1,40 @@
 #include "CASSIA.h"
 
-double fS_model(double S, double T, p2 GPP_par) {
+struct fS_out {
+  double fS;
+  double S;
+};
+
+fS_out fS_model(double S, double T, p2 GPP_par) {
   double fS;
 
   S = S + (T-S)/GPP_par.tau;
   if (0 > S-GPP_par.S0) fS=0; else fS= S-GPP_par.S0;
   if (1 < fS/GPP_par.Smax) fS=1; else fS=fS/GPP_par.Smax;
 
-  return(fS);
+  fS_out out;
+  out.fS = fS;
+  out.S = S;
+  return(out);
 };
+
 
 /*
  * Seasonality of foliage
  */
 
-double fPheno_model(p2 GPP_par, double T, double PhenoS,
+struct fPheno_out {
+  double fPheno;
+  double PhenoS;
+};
+
+fPheno_out fPheno_model(p2 GPP_par, double T, double PhenoS,
                     int DOY, double fS) {
   double m;
   double fPheno=0;
 
   if (GPP_par.t0 > -998) { // ie not -999
-    /* Budbreak must occur between specified min. date and end of July */
+    // Budbreak must occur between specified min. date and end of July
     if ( (DOY > (GPP_par.t0 - 0.5)) & (DOY < 213) )  {
       m = (T - GPP_par.tcrit);
       if (m < 0) m = 0;
@@ -46,7 +60,10 @@ double fPheno_model(p2 GPP_par, double T, double PhenoS,
     fPheno = 1;
   }
 
-  return(fPheno);
+  fPheno_out out;
+  out.PhenoS = PhenoS;
+  out.fPheno = fPheno;
+  return(out);
 };
 
 struct snow_out {
@@ -59,7 +76,7 @@ struct snow_out {
  * Snow model
  */
 
-snow_out snow(double TAir, double Precip, double snow, p4 SnowRain_par){
+snow_out snow(double TAir, double Precip, double snow, p4 SnowRain_par, double snow_melt){
 
   double NewSnow;
   if (TAir < SnowRain_par.SnowThreshold) {
@@ -83,11 +100,15 @@ snow_out snow(double TAir, double Precip, double snow, p4 SnowRain_par){
 
   snow_out out;
   out.snow = snow;
-  out.snowmelt = SnowMelt;
   out.precip = Precip;
+  out.snowmelt = SnowMelt;
 
   return(out);
 };
+
+/*
+ * CO2
+ */
 
 double fCO2_model_mean(double CO2, p2 GPP_par ) {
   return(1 + GPP_par.bCO2 * log(CO2/380) );
@@ -96,6 +117,10 @@ double fCO2_model_mean(double CO2, p2 GPP_par ) {
 double fCO2_ET_model_mean(double CO2, p2 GPP_par ) {
   return(1 + GPP_par.xCO2 * log(CO2/380) );
 };
+
+/*
+ * Nitrogen
+ */
 
 double fN_sub(double N, p7 N_par) {
   double out = N_par.a*N+N_par.b;
@@ -106,10 +131,14 @@ double fN_sub(double N, p7 N_par) {
  * Rain interception
  */
 
-double interceptionfun(double Precip, double TAir,
+struct interception_out {
+  double precip;
+  double intercepted;
+};
+
+interception_out interceptionfun(double Precip, double intercepted, double TAir,
                       p4 SnowRain_par, double fAPAR) {
 
-  double intercepted;
   if (TAir > SnowRain_par.SnowThreshold)  {
     intercepted = Precip * (SnowRain_par.I0 * fAPAR / 0.75);
     Precip = Precip - intercepted;
@@ -117,28 +146,40 @@ double interceptionfun(double Precip, double TAir,
     intercepted = 0;
   }
 
-  return(intercepted);
+  interception_out out;
+  out.intercepted = intercepted;
+  out.precip = Precip;
+  return(out);
 }
 
 /*
  * ET function
  */
 
-double ETfun(double D, double theta, double ppfd, double fAPAR, double T,
-             p3 ET_par, p1 Site_par,
-             double canw,
-             double fE, double A,
-             double fWgpp,  p2 GPP_par,  //double fCO2mean,
-             double CO2,
-             int etmodel, double transp,
-             double evap, double fWE) {
+struct ETfun_out {
+  double ET;
+  double canw;
+  double fE;
+  double transp;
+  double evap;
+  double fWE;
+};
+
+ETfun_out ETfun(double D, double theta, double ppfd, double fAPAR, double T,
+                p3 ET_par, p1 Site_par,
+                double canw,
+                double fE, double A,
+                double fWgpp,  p2 GPP_par,  //double fCO2mean,
+                double CO2,
+                int etmodel, double transp,
+                double evap, double fWE) {
 
   double fCO2_ET_model_mean(double CO2, p2 GPP_par);
 
   double thetavol = theta/Site_par.soildepth;
   double REW=(thetavol-Site_par.ThetaPWP)/(Site_par.ThetaFC-Site_par.ThetaPWP);
-  //  double fEsub = -999; /* Minimum of fW and fD returned if ET-model
-  //			* flag indicates similar modifier as for GPP */
+  //  double fEsub = -999; // Minimum of fW and fD returned if ET-model
+  //			* flag indicates similar modifier as for GPP
   double fWsub=1;
   //  double fDsub=1;
   double et;
@@ -147,7 +188,7 @@ double ETfun(double D, double theta, double ppfd, double fAPAR, double T,
   double MWratio = 0.622; // Ratio of molecular weigths of water vapor and dry air;
   // double R = 287.058; // J/(kg K) Specific gas constant for dry air, wiki
   // double zh, zm, d, zom, zoh;
-  /*If pressure is not inputted use default */
+  // If pressure is not inputted use default
   double pressure = 101300; // Pa
 
   double fCO2mean = fCO2_ET_model_mean(CO2, GPP_par);
@@ -160,7 +201,7 @@ double ETfun(double D, double theta, double ppfd, double fAPAR, double T,
     pow(T+237.3, 2);  // Pa/C! (Ice has nearly the same slope)
 
 
-  /* Calculate soil constraint, simple linear following Granier 1987*/
+  // Calculate soil constraint, simple linear following Granier 1987
   if (ET_par.soilthres < -998) { /*-999 omits water control*/
   fWsub = 1;
   } else {
@@ -208,16 +249,27 @@ double ETfun(double D, double theta, double ppfd, double fAPAR, double T,
         ET_par.chi * (1-fAPAR) *  fWsub * ppfd;
   }
 
-  return(et);
+  ETfun_out out;
+  out.canw = canw;
+  out.ET = et;
+  out.evap = evap;
+  out.fE = fE;
+  out.fWE = fWE;
+  out.transp = transp;
+  return(out);
 }
 
 /*
  * Swbalance
  */
 
+
 struct sw_balance_out {
   double theta;
   double drainage;
+  double snow;
+  double canw;
+  double theta_snow;
 };
 
 sw_balance_out swbalance(double theta, double throughfall, double snowmelt, double et,
@@ -226,7 +278,7 @@ sw_balance_out swbalance(double theta, double throughfall, double snowmelt, doub
 
   double st0, etfromvegandsoil=0;
 
-  /* Evaporate first from wet canopy and snow on ground */
+  // Evaporate first from wet canopy and snow on ground
 
   if (SnowRain_par.CWmax > 0.00000001) {
     if ( (canw + snow - et) > 0 ) {
@@ -258,11 +310,11 @@ sw_balance_out swbalance(double theta, double throughfall, double snowmelt, doub
 
   et = etfromvegandsoil;
 
-  /* Water balance without drainage */
+  // Water balance without drainage
   st0 = theta + throughfall + snowmelt  - et;
   if (st0 <= 0) st0 = 0.0001;
 
-  /* Calculate what is left to drainage after partial balance update above: */
+  // Calculate what is left to drainage after partial balance update above:
   if (sitepar.tauDrainage > 0) {
 
 
@@ -279,24 +331,26 @@ sw_balance_out swbalance(double theta, double throughfall, double snowmelt, doub
   sw_balance_out out;
   out.theta = theta;
   out.drainage = drainage;
+  out.snow = snow;
+  out.canw = canw;
 
   return(out);
 }
-
 
 
 /*
  * GPP function
  */
 
-double GPPfun(double PAR, double VPD, double CO2, double theta,
+
+gpp_out GPPfun(double PAR, double VPD, double CO2, double theta,
             double fAPAR, double Nitrogen, double fSsub,
             p2 GPP_par, p1 Site_par, p7 N_par) {
 
   double thetavol = theta/Site_par.soildepth;
   double REW=(thetavol-Site_par.ThetaPWP)/(Site_par.ThetaFC-Site_par.ThetaPWP);
 
-  /* Calculate first the reference condition (ca=380 ppm) effect */
+  // Calculate first the reference condition (ca=380 ppm) effect
   double fDsub = exp(GPP_par.kappa * VPD);
   fDsub = fDsub > 1 ? 1 : fDsub;
 
@@ -315,32 +369,56 @@ double GPPfun(double PAR, double VPD, double CO2, double theta,
 
   if (fDsub > fWsub) fEsub = fWsub; else fEsub = fDsub;
   double fW = fWsub;
-  double fD = fEsub;
+  double fD = fEsub; // TODO: why is fD not used later?
 
   double gpp380 = GPP_par.beta * PAR * fSsub * fLsub * fEsub * fAPAR;
   double fCO2 = fCO2_model_mean(CO2, GPP_par);
   double fN = fN_sub(Nitrogen, N_par);
   double gpp = gpp380 * fCO2 * fN;
 
-  return(gpp);
+  // TODO: output
+  gpp_out out;
+  out.fW = fW;
+  out.fD = fD;
+  out.fE = fEsub; // TODO: is this fE? Or is it in the evapotranspiration?
+  out.fN = fN;
+  out.fCO2 = fCO2;
+  out.gpp = gpp;
+  out.gpp380 = gpp380;
+
+  return(out);
 }
 
 /*
  * Preles
  */
 
-photosynthesis_out preles(int NofDays, int day,
+photosynthesis_out preles(int day,
                           double PAR, double TAir, double VPD, double Precip,
-                          double CO2,
-                          double fAPAR,
-                          double Nitrogen,
+                          double CO2, double fAPAR, double Nitrogen,
                           p1 Site_par,
                           p2 GPP_par,
                           p3 ET_par,
                           p4 SnowRain_par,
                           p5 Water_par,
                           p7 N_par,
-                          int etmodel)
+                          int etmodel,
+                          double theta,
+                          double theta_snow,
+                          double theta_canopy,
+                          double Throughfall,
+                          double S_state,
+                          double PhenoS,
+                          double Snowmelt,
+                          double intercepted,
+                          double Drainage,
+                          double canw,
+                          double fE,
+                          double transp,
+                          double evap,
+                          double fWE,
+                          double fW,
+                          double gpp380)
 {
 
   if (PAR < -900) {std::cout << "PAR is too low\n";}
@@ -350,82 +428,95 @@ photosynthesis_out preles(int NofDays, int day,
   if (CO2 < 0) {std::cout << "CO2 is too low\n";}
   if (Nitrogen < 0) {std::cout << "Nitrogen is too low\n";}
 
-  double theta, theta_snow, theta_canopy, S_state;
-  double PhenoS = 0;
-  double fPheno = 0;
-  double fEgpp = 0;
-  double gpp380 = 0;
-  double fE = 0;
-  double fW = 0;
-  double transp = 0;
-  double evap = 0;
-  double fWE = 0;
-  double Drainage = 0;
 
-  double fS = fS_model(S_state, TAir, GPP_par);
-  fPheno = fPheno_model(GPP_par, TAir, PhenoS, day, fS);
-  fAPAR = fAPAR * fPheno;
+  // TODO: should these all be 0?
 
-  double gpp = GPPfun(PAR, VPD, CO2, theta,
-                      fAPAR, Nitrogen, fS,
+  fS_out fS = fS_model(S_state, TAir, GPP_par);
+  fPheno_out fPheno = fPheno_model(GPP_par, TAir, PhenoS, day, fS.fS);
+  fAPAR = fAPAR * fPheno.fPheno;
+
+  gpp_out gpp = GPPfun(PAR, VPD, CO2, theta,
+                      fAPAR, Nitrogen, fS.fS,
                       GPP_par, Site_par, N_par);
 
-  snow_out snow_values = snow(TAir, Precip, theta_snow, SnowRain_par);
+  snow_out snow_values = snow(TAir, Precip, theta_snow, SnowRain_par, Snowmelt);
 
-  double Throughfall = snow_values.precip;
-  double interception = interceptionfun(Throughfall, TAir, SnowRain_par, fAPAR);
+  Throughfall = snow_values.precip;
+  interception_out interception = interceptionfun(Throughfall, intercepted,
+                                                  TAir, SnowRain_par, fAPAR);
 
   if (SnowRain_par.CWmax <= 0.00000001) {
-    Throughfall = Throughfall + interception; // Where is through fall from?
+    Throughfall = Throughfall + interception.intercepted; // Where is through fall from?
   } else {
-    if (interception + theta_canopy > SnowRain_par.CWmax * fAPAR) {
-      Throughfall = Throughfall + interception +
+    if (interception.intercepted + theta_canopy > SnowRain_par.CWmax * fAPAR) {
+      Throughfall = Throughfall + interception.intercepted +
         theta_canopy - SnowRain_par.CWmax  * fAPAR;
       theta_canopy = SnowRain_par.CWmax  * fAPAR;
     } else {
-      theta_canopy = interception + theta_canopy;
+      theta_canopy = interception.intercepted + theta_canopy;
     }
   }
+  // TOOD: theta canopy should be considered here!
 
-  double ET = ETfun(VPD, theta, PAR, fAPAR, TAir,
-                    ET_par, Site_par,
-                    theta_canopy,
-                    fE, // Soil water constrain on evaporation
-                    gpp380,
-                    fW, // soil water constrain of GPP at 380 ppm
-                    GPP_par, //fCO2_ET_model_mean(CO2[i], GPP_par),
-                    CO2,
-                    etmodel,
-                    transp,
-                    evap,
-                    fWE); // TOOD: make sure that these make sense!
+  ETfun_out ET_out = ETfun(VPD, theta, PAR, fAPAR, TAir,
+                           ET_par, Site_par,
+                           theta_canopy,
+                           fE, // Soil water constrain on evaporation
+                           gpp380,
+                           fW, // soil water constrain of GPP at 380 ppm
+                           GPP_par, //fCO2_ET_model_mean(CO2[i], GPP_par),
+                           CO2,
+                           etmodel,
+                           transp,
+                           evap,
+                           fWE);
 
 
-  sw_balance_out soilwater_balance = swbalance(theta, Throughfall, snow_values.snowmelt, ET,
+  sw_balance_out soilwater_balance = swbalance(theta, Throughfall, snow_values.snowmelt, ET_out.fE,
                                                Site_par, Drainage,
-                                               theta_snow, theta_canopy, SnowRain_par);
+                                               snow_values.snow, ET_out.canw, SnowRain_par);
+  // theta, throughfall, drainage, theta_snow, theta_canopy should be returned here
   double SoilWater; // TODO: work out the output here!
 
   double SOG = theta_snow;
   double SW = soilwater_balance.theta;
-  double Canopywater = theta_canopy;
+  double Canopywater = soilwater_balance.canw;
 
   photosynthesis_out out;
-  out.GPP = gpp;
-  out.ET = ET;
+  out.GPP = gpp.gpp;
+  out.ET = ET_out.ET;
   out.SoilWater = SoilWater;
-  out.S = fS;
+  out.fS = fS.fS;
+  out.fCO2 = gpp.fCO2;
+  out.fE = gpp.fE;
+  out.fW = gpp.fW;
+  out.fN = gpp.fN;
+  out.theta_canopy = theta_canopy;
+  out.Throughfall = Throughfall;
+  out.theta = soilwater_balance.theta;
+  out.theta_snow = soilwater_balance.theta_snow;
+  out.S_state = fS.S;
+  out.PhenoS = fPheno.PhenoS;
+  out.Snowmelt = snow_values.snowmelt;
+  out.intercepted = interception.intercepted;
+  out.Drainage = soilwater_balance.drainage;
+  out.canw = ET_out.canw;
+  out.fE = ET_out.fE;
+  out.transp = ET_out.transp;
+  out.evap = ET_out.evap;
+  out.fWE = ET_out.fWE;
+  out.gpp380 = gpp.gpp380;
 
   return(out);
 }
-
 
 /*
  * PRELES Wrapper
  */
 
-//[[Rcpp::export]]
-Rcpp::List preles_test_cpp(int NofDays, int day,
+
+// [[Rcpp::export]]
+Rcpp::List preles_test_cpp(int start_year, int end_year,
                            Rcpp::DataFrame weather,
                            std::vector<double> pPREL,
                            int etmodel) {
@@ -437,30 +528,112 @@ Rcpp::List preles_test_cpp(int NofDays, int day,
   p5 parWater = make_p5(pPREL);
   p7 parN = make_p7(pPREL);
 
-  double PAR = weather["PAR"];
-  double TAir = weather["T"];
-  double VPD = weather["VPD"];
-  double Precip  = weather["Rain"];
-  double CO2 = weather["CO2"];
-  double fAPAR = weather["fAPAR"];
-  double Nitrogen = weather["Nitrogen"];
+  std::vector<double> PAR = weather["PAR"];
+  std::vector<double> TAir = weather["T"];
+  std::vector<double> VPD = weather["VPD"];
+  std::vector<double> Precip  = weather["Rain"];
+  std::vector<double> CO2 = weather["CO2"];
+  std::vector<double> fAPAR = weather["fAPAR"];
+  std::vector<double> Nitrogen = weather["Nitrogen"];
 
-  photosynthesis_out out = preles(NofDays, day,
-                                  PAR, TAir, VPD, Precip,
-                                  CO2,
-                                  fAPAR,
-                                  Nitrogen,
-                                  parSite,
-                                  parGPP,
-                                  parET,
-                                  parSnowRain,
-                                  parWater,
-                                  parN,
-                                  etmodel);
+  std::vector<int> years;
+  for (int i = start_year; i <= end_year; i++) {
+    years.push_back(i);
+  }
 
-  return Rcpp::List::create(Rcpp::_["GPP"] = out.GPP,
-                            Rcpp::_["ET"] = out.ET,
-                            Rcpp::_["SWC"] = out.SoilWater,
-                            Rcpp::_["S"] = out.S);
+  int no_days;
+  photo_out_vector photosynthesis_output;
+  photosynthesis_out photosynthesis_old;
+  for (int year : years) {
+    if (year == 2012 | year == 2016 | year == 2020) {
+      no_days = 366;
+    } else {
+      no_days = 365;
+    }
 
+    double theta, theta_snow, theta_canopy, Throughfall, S, PhenoS,
+    Snowmelt, intercepted, Drainage, canw, fE, transp, evap, fWE, fW, gpp380;
+
+    for (int day = 0; day < no_days; day++) {
+      if (day == 1 & year == start_year) {
+        theta = parWater.SW; // Correct
+        theta_canopy = parWater.CW; // Correct
+        theta_snow = parWater.SOG; // Correct
+        gpp380 = 0; // Correct
+        S = parWater.S; // Correct
+        PhenoS = 0; // Correct
+        fE = 0;
+        Throughfall = 0;
+        Snowmelt = 0;
+        intercepted = 0;
+        Drainage = 0;
+        canw = 0;
+        transp = 0;
+        evap = 0;
+        fWE = 0;
+        fW = 0;
+      } else {
+        theta = photosynthesis_old.theta;
+        theta_canopy = photosynthesis_old.theta_canopy;
+        theta_snow = photosynthesis_old.theta_snow;
+        Throughfall = photosynthesis_old.Throughfall;
+        S = photosynthesis_old.S_state;
+        PhenoS = photosynthesis_old.PhenoS;
+        Snowmelt = photosynthesis_old.Snowmelt;
+        intercepted = photosynthesis_old.intercepted;
+        Drainage = photosynthesis_old.Drainage;
+        canw = photosynthesis_old.canw;
+        fE = photosynthesis_old.fE;
+        transp = photosynthesis_old.transp;
+        evap = photosynthesis_old.evap;
+        fWE = photosynthesis_old.fWE;
+        fW = photosynthesis_old.fW;
+        gpp380 = photosynthesis_old.gpp380;
+      }
+
+      photosynthesis_out photosynthesis = preles(day,
+                                                 PAR[day], TAir[day], VPD[day], Precip[day],
+                                                 CO2[day], fAPAR[day], Nitrogen[day],
+                                                 parSite,
+                                                 parGPP,
+                                                 parET,
+                                                 parSnowRain,
+                                                 parWater,
+                                                 parN,
+                                                 etmodel,
+                                                 theta,
+                                                 theta_snow,
+                                                 theta_canopy,
+                                                 Throughfall,
+                                                 S,
+                                                 PhenoS,
+                                                 Snowmelt,
+                                                 intercepted,
+                                                 Drainage,
+                                                 canw,
+                                                 fE,
+                                                 transp,
+                                                 evap,
+                                                 fWE,
+                                                 fW,
+                                                 gpp380);
+      photosynthesis_old = photosynthesis;
+
+      photosynthesis_output.GPP.push_back(photosynthesis.GPP);
+      photosynthesis_output.ET.push_back(photosynthesis.ET);
+      photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
+      photosynthesis_output.fW.push_back(photosynthesis.fW);
+      photosynthesis_output.fS.push_back(photosynthesis.fS);
+      photosynthesis_output.fE.push_back(photosynthesis.fE);
+      photosynthesis_output.fN.push_back(photosynthesis.fN);
+    }
+  }
+
+  return Rcpp::List::create(Rcpp::_["GPP"] = photosynthesis_output.GPP,
+                            Rcpp::_["ET"] = photosynthesis_output.ET,
+                            Rcpp::_["SWC"] = photosynthesis_output.SoilWater,
+                            Rcpp::_["fW"] = photosynthesis_output.fW,
+                            Rcpp::_["fS"] = photosynthesis_output.fS,
+                            Rcpp::_["fE"] = photosynthesis_output.fE,
+                            Rcpp::_["fN"] = photosynthesis_output.fN);
 }

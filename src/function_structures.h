@@ -269,4 +269,18 @@ struct MYCOFON_vector {
   std::vector<double> Fungal_given;
 };
 
+/*
+ * Gpp function output
+ */
+
+struct gpp_out {
+  double fW;
+  double fE;
+  double fN;
+  double fD;
+  double fCO2;
+  double gpp;
+  double gpp380;
+};
+
 #endif

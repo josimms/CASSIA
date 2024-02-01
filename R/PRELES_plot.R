@@ -5,56 +5,58 @@ PRELES_plot <- function(data_format, N_parameters) {
   # devtools::install_github("ForModLabUHel/Rprebasso")
   # library(Rprebasso)
 
-  original <- PRELES(TAir = weather_original$T,
-                     Precip = weather_original$Rain,
-                     CO2 = weather_original$CO2,
-                     PAR = weather_original$PAR,
-                     VPD = weather_original$VPD,
-                     Nitrogen = weather_original$Nitrogen,
-                     fAPAR = rep(0.7, length = nrow(weather_original)),
-                     p = c(pPREL, N_parameters))
-
-  plot(original$GPP)
+  original <- Rprebasso::PRELES(TAir = data_format$T,
+                                Precip = data_format$Rain,
+                                CO2 = data_format$CO2,
+                                PAR = data_format$PAR,
+                                VPD = data_format$VPD,
+                                fAPAR = data_format$fAPAR,
+                                p = pPREL, returncols = c("GPP", "ET", "SW", "fS", "fW", "fE"))
 
   data_format_nit_const = cbind(data_format, Nitrogen = rep(0.012, nrow(data_format)))
 
-  # TODO: check the inputs!
-  GPP <- ET <- SWC <- S <- NULL
-  for (day in 1:nrow(data_format_nit_const)) {
-    GPP[day] <- preles_test_cpp(nrow(data_format_nit_const), day, data_format_nit_const[day,], pPREL, N_parameters[1], N_parameters[2])$GPP
-    ET[day] <- preles_test_cpp(nrow(data_format_nit_const), day, data_format_nit_const[day,], pPREL, N_parameters[1], N_parameters[2])$ET
-    SWC[day] <- preles_test_cpp(nrow(data_format_nit_const), day, data_format_nit_const[day,], pPREL, N_parameters[1], N_parameters[2])$SWC
-    S[day] <- preles_test_cpp(nrow(data_format_nit_const), day, data_format_nit_const[day,], pPREL, N_parameters[1], N_parameters[2])$S
-  }
-
-  Nitrgen = 0:1500
-  data_format_nit = data.frame(cbind(T = rep(15, length = length(Nitrgen)),
-                                     Rain = rep(2.6, length = length(Nitrgen)),
-                                     PAR = rep(14, length = length(Nitrgen)),
-                                     CO2 = rep(366, length = length(Nitrgen)),
-                                     VPD = rep(0.2571383, length = length(Nitrgen)),
-                                     fAPAR = rep(0.7, length = length(Nitrgen)),
-                                     Nitrogen = Nitrgen))
-
-  count = 1
-  GPP_N <- ET_N <- SWC_N <- S_N <- NULL
-  for (nit in 1:1501) {
-    GPP_N[count] <- preles_test_cpp(nrow(data_format_nit), count, data_format_nit[count,], pPREL, N_parameters[1], N_parameters[2])$GPP
-    ET_N[count] <- preles_test_cpp(nrow(data_format_nit), count, data_format_nit[count,], pPREL, N_parameters[1], N_parameters[2])$ET
-    SWC_N[count] <- preles_test_cpp(nrow(data_format_nit), count, data_format_nit[count,], pPREL, N_parameters[1], N_parameters[2])$SWC
-    S_N[count] <- preles_test_cpp(nrow(data_format_nit), count, data_format_nit[count,], pPREL, N_parameters[1], N_parameters[2])$S
-    count = count + 1
-  }
+  cpp_model <- NULL
+  cpp_model <- preles_test_cpp(2010, 2022,
+                               data_format_nit_const,
+                               c(pPREL, N_parameters[1], N_parameters[2]),
+                               0)
 
   par(mfrow = c(2, 2))
-  plot(data_format$Date, GPP, xlab = "Date", ylab = "GPP", main = "Normal: GPP", type = "l")
-  plot(data_format$Date, ET, xlab = "Date", ylab = "ET", main = "Normal: ET", type = "l")
-  plot(data_format$Date, SWC, xlab = "Date", ylab = "SWC", main = "Normal: SWC", type = "l")
-  plot(data_format$Date, S, xlab = "Date", ylab = "S", main = "Normal: S", type = "l")
+  plot(data_format$Date, original$GPP, xlab = "Day of the Year", ylab = "GPP", main = "GPP", type = "l")
+  lines(data_format$Date, cpp_model$GPP, col = "blue")
+  plot(data_format$Date, original$ET, xlab = "Day of the Year", ylab = "ET", main = "ET", type = "l")
+  lines(data_format$Date, cpp_model$ET, col = "blue")
+  plot(data_format$Date, original$SW, xlab = "Day of the Year", ylab = "SWC", main = "SWC", type = "l")
+  lines(data_format$Date, cpp_model$SWC, col = "blue")
+  plot(data_format$Date, original$fS, xlab = "Day of the Year", ylab = "fS", main = "S", type = "l")
+  lines(data_format$Date, cpp_model$fS, col = "blue")
+
+  plot(data_format$Date, original$fW, xlab = "Day of the Year", ylab = "fW", main = "fW", type = "l")
+  lines(data_format$Date, cpp_model$fW, col = "blue") # TODO: why doesn't this exist?
+  plot(data_format$Date, original$fE, xlab = "Day of the Year", ylab = "fE", main = "fE", type = "l")
+  lines(data_format$Date, cpp_model$fE, col = "blue")
+  plot(data_format$Date, cpp_model$fN, xlab = "Day of the Year", ylab = "fN", main = "fN (only CPP)",
+       type = "l", col = "blue")
+  plot(data_format$Date, original$fS, xlab = "Day of the Year", ylab = "fS", main = "fS", type = "l")
+  lines(data_format$Date, cpp_model$fS, col = "blue")
+
+  par(mfrow = c(4, 2))
+  plot(cpp_model$GPP, original$GPP, xlab = "GPP Nitrogen", ylab = "GPP", main = "Normal: GPP")
+  abline(0, 1, col = "red")
+  plot(data_format$Date, cpp_model$GPP - original$GPP, xlab = "Dates", ylab = "Difference", main = "Residuals")
+  plot(cpp_model$ET, original$ET, xlab = "ET Nitrogen", ylab = "ET", main = "Normal: ET")
+  abline(0, 1, col = "red")
+  plot(data_format$Date, cpp_model$ET - original$ET, xlab = "Dates", ylab = "Difference", main = "Residuals")
+  plot(cpp_model$SWC, original$SWC, xlab = "SWC Nitrogen", ylab = "SWC", main = "Normal: SWC")
+  abline(0, 1, col = "red")
+  plot(data_format$Date, cpp_model$SWC - original$SW, xlab = "Dates", ylab = "Difference", main = "Residuals")
+  plot(cpp_model$fS, original$S, xlab = "fS Nitrogen", ylab = "fS", main = "Normal: S")
+  abline(0, 1, col = "red")
+  plot(data_format$Date, cpp_model$fS - original$S, xlab = "Dates", ylab = "Difference", main = "Residuals")
 
   par(mfrow = c(2, 2))
-  plot(Nitrgen, GPP_N, xlab = "Date", ylab = "GPP", main = "Nitrogen Effect: GPP", type = "l")
-  plot(Nitrgen, ET_N, xlab = "Date", ylab = "ET", main = "Nitrogen Effect: ET", type = "l")
-  plot(Nitrgen, SWC_N, xlab = "Date", ylab = "SWC", main = "Nitrogen Effect: SWC", type = "l")
-  plot(Nitrgen, S_N, xlab = "Date", ylab = "S", main = "Nitrogen Effect: S", type = "l")
+  plot(data_format_nit_const$Nitrogen, cpp_model$GPP, xlab = "Nitrogen", ylab = "GPP", main = "Nitrogen Effect: GPP")
+  plot(data_format_nit_const$Nitrogen, cpp_model$ET, xlab = "Nitrogen", ylab = "ET", main = "Nitrogen Effect: ET")
+  plot(data_format_nit_const$Nitrogen, cpp_model$SWC, xlab = "Nitrogen", ylab = "SWC", main = "Nitrogen Effect: SWC")
+  plot(data_format_nit_const$Nitrogen, cpp_model$fN, xlab = "Nitrogen", ylab = "fN", main = "Nitrogen Effect: N")
 }
