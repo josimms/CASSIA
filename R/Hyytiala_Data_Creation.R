@@ -6,13 +6,20 @@ Hyytiala_Data_Creation <- function(raw.directory,
                                    clean_data = F,
                                    save = T) {
 
+  raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/"
+  year_start = 2005
+  year_end = 2023
+  download = T
+  clean_data = T
+  save = T
+
   ####
   # Download the data from the SMEAR database
   ####
 
   if (download) {
     http.origin = "https://smear-backend.rahtiapp.fi/search/timeseries/csv?tablevariable=HYY_"
-    for (variable in c(paste0("META.", c("RH672", "RH1250", "PAR", "CO2168", "T336", "T168", "Precip", "tsoil_5", "tsoil_10", "wsoil_B1", "Glob", "Pamb336")), "EDDY233.GPP")) {
+    for (variable in c(paste0("META.", c("RH672", "RH1250", "PAR", "CO2168", "T168", "T336", "Precip", "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2", "Glob", "Glob67", "Pamb336")), "EDDY233.GPP")) {
       from = "&from="
       year1 = seq(year_start, year_end, by = 2)
       to = "-01-01T00%3A00%3A00.000&to="
@@ -50,6 +57,8 @@ Hyytiala_Data_Creation <- function(raw.directory,
     GPP$Date <- as.Date(paste(GPP$Year, GPP$Month, GPP$Day, sep = "-"), "%Y-%m-%e")
     Glob <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "Glob")), read.csv, dec = "."))
     Glob$Date <- as.Date(paste(Glob$Year, Glob$Month, Glob$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
+    Glob67 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "Glob67")), read.csv, dec = "."))
+    Glob67$Date <- as.Date(paste(Glob67$Year, Glob67$Month, Glob67$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
     CO2168$Date <- as.Date(paste(CO2168$Year, CO2168$Month, CO2168$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
 
     all_data <- as.data.frame(cbind(RH672$HYY_META.RH672, RH1250$HYY_META.RH1250, PAR$HYY_META.PAR,
@@ -57,10 +66,10 @@ Hyytiala_Data_Creation <- function(raw.directory,
                                     Precip$HYY_META.Precip,
                                     tsoil_5$HYY_META.tsoil_5, tsoil_10$HYY_META.tsoil_10,
                                     wsoil_B1$HYY_META.wsoil_B1, wsoil_B2$HYY_META.wsoil_B2))
-
     names(all_data) <- c("RH672", "RH1250", "PAR", "CO2168", "T336", "T168",
                          "Precip", "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2")
     all_data$Date <- as.Date(paste(RH672$Year, RH672$Month, RH672$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
+
     # Make into daily values!
     all.daily = aggregate(RH672 ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
     all.daily.1 = aggregate(cbind(RH1250, CO2168, T336, T168) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
@@ -71,7 +80,40 @@ Hyytiala_Data_Creation <- function(raw.directory,
     # Here the data looks strange for 2017-2018 two years, so made into NA values
     all.daily.sum$Precip[lubridate::year(all.daily.sum$Date) %in% 2017:2018] <- NA
     all.daily.sum$Glob = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob~Date, data = Glob, sum, na.rm = T, na.action = NULL)$HYY_META.Glob)
-    all.daily.sum$Glob67 = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob67~Date, data = Glob, sum, na.rm = T, na.action = NULL)$HYY_META.Glob67)
+    all.daily.sum$Glob67 = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob67~Date, data = Glob67, sum, na.rm = T, na.action = NULL)$HYY_META.Glob67)
+
+    par(mfrow = c(3, 4))
+    plot(all.daily.1$T336[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$T, ylab = "From Pauliiina", xlab = "My Data", main = "Temperature")
+    points(all.daily.1$T168[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$T, col = "blue")
+    abline(0, 1, col = "red")
+    plot(all.daily.1$T336[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$T, ylab = "From Pauliiina", xlab = "My Data")
+    points(all.daily.1$T168[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$T, ylab = "From Pauliiina", xlab = "My Data", col = "blue")
+
+    # Doesn't plot as values are NA throughout
+    plot(all.daily.sum$Precip[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$Rain, ylab = "From Pauliiina", xlab = "My Data", main = "Precipitation")
+    abline(0, 1, col = "red")
+    plot(all.daily.sum$Precip[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$Rain, ylab = "From Pauliiina", xlab = "My Data")
+
+    plot(all.daily.sum$Glob67[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$PAR, ylab = "From Pauliiina", xlab = "My Data", main = "PAR")
+    points(all.daily.sum$Glob[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$PAR, col = "blue")
+    abline(0, 1, col = "red")
+    plot(all.daily.sum$Glob67[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$PAR, ylab = "From Pauliiina", xlab = "My Data")
+    points(all.daily.sum$Glob[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$PAR, col = "blue")
+
+    plot(all.daily.2$wsoil_B2[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$MB, ylab = "From Pauliiina", xlab = "My Data", main = "MB")
+    points(all.daily.2$wsoil_B1[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$MB, col = "blue")
+    abline(0, 1, col = "red")
+    plot(all.daily.2$wsoil_B2[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$MB, ylab = "From Pauliiina", xlab = "My Data")
+    points(all.daily.2$wsoil_B1[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$MB, col = "blue")
+
+    plot(all.daily.2$tsoil_5[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$TSA, ylab = "From Pauliiina", xlab = "My Data", main = "TSA")
+    abline(0, 1, col = "red")
+    plot(all.daily.2$tsoil_5[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$TSA, ylab = "From Pauliiina", xlab = "My Data")
+
+    plot(all.daily.2$tsoil_10[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$TSB, ylab = "From Pauliiina", xlab = "My Data", main = "TSB")
+    abline(0, 1, col = "red")
+    plot(all.daily.2$tsoil_10[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$TSB, ylab = "From Pauliiina", xlab = "My Data")
+
 
     # PAR data sorting
     PAR$Missing <-is.nan(PAR$HYY_META.PAR)
@@ -80,8 +122,8 @@ Hyytiala_Data_Creation <- function(raw.directory,
     PAR$YMD <- as.Date(paste(PAR$Year, PAR$Month, PAR$Day, sep = "-"))
     Glob$YMD <- as.Date(paste(Glob$Year, Glob$Month, Glob$Day, sep = "-"))
     Daily_Missing <- aggregate(Missing~YMD, PAR, sum)
-    Daily_Missing_Glob <- aggregate(MissingGlob~YMD, Glob, sum)
-    Daily_Missing_Glob$MissingGlob67 <- aggregate(MissingGlob67~YMD, Glob, sum)$MissingGlob67
+    Daily_Missing_Glob <- aggregate(MissingGlob67~YMD, Glob, sum)
+    Daily_Missing_Glob$MissingGlob <- aggregate(MissingGlob~YMD, Glob, sum)$MissingGlob
     Daily_Missing$Percentage <- Daily_Missing$Missing/(24*60*60)
     Daily_Missing_Glob$Percentage <- Daily_Missing_Glob$MissingGlob/(24*60*60)
     Daily_Missing_Glob$Percentage67 <- Daily_Missing_Glob$MissingGlob67/(24*60*60)
@@ -112,8 +154,8 @@ Hyytiala_Data_Creation <- function(raw.directory,
     all.gapfill$wsoil_B1[is.na(all.gapfill$wsoil_B1)] <- all.gapfill$wsoil_B2[is.na(all.gapfill$wsoil_B1)] - mean(all.gapfill$wsoil_B2, na.rm = T) + mean(all.gapfill$wsoil_B1, na.rm = T)
     all.gapfill$wsoil_B2[is.na(all.gapfill$wsoil_B2)] <- all.gapfill$wsoil_B1[is.na(all.gapfill$wsoil_B2)] - mean(all.gapfill$wsoil_B1, na.rm = T) + mean(all.gapfill$wsoil_B2, na.rm = T)
     # Units for the Glob value already changed earlier in the code so not changed again here!
-    all.gapfill$PAR[is.na(all.gapfill$PAR)] <- all.gapfill$Glob[is.na(all.gapfill$PAR)] - mean(all.gapfill$Glob, na.rm = T) + mean(all.gapfill$PAR, na.rm = T)
     all.gapfill$PAR[is.na(all.gapfill$PAR)] <- all.gapfill$Glob67[is.na(all.gapfill$PAR)] - mean(all.gapfill$Glob67, na.rm = T) + mean(all.gapfill$PAR, na.rm = T)
+    all.gapfill$PAR[is.na(all.gapfill$PAR)] <- all.gapfill$Glob[is.na(all.gapfill$PAR)] - mean(all.gapfill$Glob, na.rm = T) + mean(all.gapfill$PAR, na.rm = T)
 
     # If the gap is smaller than 6 days apply linear interpolation
     all.gapfill[,-1] <- zoo::na.approx(all.gapfill[,-1], na.rm = F, maxgap = 6)
@@ -129,6 +171,9 @@ Hyytiala_Data_Creation <- function(raw.directory,
       # Saves the data in the same place as the download files
       save(data_format, file = paste0(raw.directory, "Hyde_weather_CASSIA.RData"))
     }
+
+    ## TODO: gapfill the hyytiälä data still
+
     return(data_format)
   }
 }

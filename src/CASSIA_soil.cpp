@@ -146,9 +146,7 @@ Rcpp::List CASSIA_soil(int start_year,
   std::vector<double> GPP_previous_sum;
   SYMPHONY_output soil_reset;
   MYCOFON_function_out MYCOFON_reset;
-  if (start_year == 2015) {
-    GPP_previous_sum.push_back(481.3);
-  }
+  GPP_previous_sum.push_back(481.3); // TODO; make this a variable input, rather than this 2015 value
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
 
