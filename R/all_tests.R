@@ -38,7 +38,7 @@ tests <- function() {
 # Code for the functions in the ultimate test function
 ######
 
-all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes) {
+all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes, new_data) {
   ###
   # Settings and parameters
   ###
@@ -83,14 +83,19 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   weather_original_2019 = data_format[,names(weather_original_2015)[-c(1, 3)]]
   weather_original = rbind(rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017), weather_original_2018)
 
-
   extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
                       PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("PAR")],
                       VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("VPD")],
                       CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("CO2")],
                       fAPAR = rep(0.7, length = nrow(weather_original)))
   weather_original <- cbind(weather_original, extras)
-  weather_original <- weather_original[-c(365+365),]
+
+  if (new_data) {
+    weather_original <- data_format
+    weather_original$Nitrogen <- rep(0.012, rep = nrow(weather_original))
+    weather_original$P <- rep(0.0, rep = nrow(weather_original))
+    weather_original <- weather_original[seq(from = 4, to = 19, by = 4)*-366]
+  }
 
   direct <- "~/Documents/CASSIA_Calibration/"
   load(paste0(direct, "original.data.RData"))
@@ -150,7 +155,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    1) # N_value_param_plant
 
   if (soil_processes) {
-    CASSIA_new_output = CASSIA_soil(2015, 2018, weather_original, GPP_ref,
+    CASSIA_new_output = CASSIA_soil(2005, 2023, weather_original, GPP_ref,
                                     c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test), parameters_R,
                                     needle_mass_in,
                                     Throughfall,
@@ -163,7 +168,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                     using_spp_photosynthesis, TRUE,
                                     etmodel, LOGFLAG)
   } else {
-    CASSIA_new_output = CASSIA_yearly(2015, 2018, weather_original, GPP_ref,
+    CASSIA_new_output = CASSIA_yearly(2005, 2023, weather_original, GPP_ref,
                                       c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test),
                                       needle_mass_in,
                                       Throughfall,
@@ -181,8 +186,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
   variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
-  dates = seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
-  dates = dates[-c(365+366)]
+  dates = seq(as.Date("2005-01-01"), as.Date("2023-12-31"), by = "day")
+  dates <- dates[-365+seq(from = 3, to = 18, by = 4)*-366]
+  dates_original = seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
+  dates_original <- dates_original[-(365+366)]
 
   Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365),]
 
@@ -193,28 +200,30 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   par(mfrow = c(3, 3))
   for (var in 1:length(variables_new)) {
     if (var < length(variables_new)) {
-      plot(dates, Hyde_daily_original_plot[,c(variables_original[var])],
+      plot(dates, CASSIA_new_output[[1]][,c(variables_new[var])],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
-      lines(dates, CASSIA_new_output[[1]][,c(variables_new[var])], col = "blue")
-      plot(Hyde_daily_original_plot[,c(variables_original[var])], CASSIA_new_output[[1]][,c(variables_new[var])],
-           main = "New against old", xlab = "Original data", ylab = "New Data")
+      lines(dates_original, Hyde_daily_original_plot[,c(variables_original[var])], col = "blue")
+      plot(Hyde_daily_original_plot[,c(variables_original[var])][-366], CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
+           main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
-      plot(dates, Hyde_daily_original_plot[,c(variables_original[var])] - CASSIA_new_output[[1]][,c(variables_new[var])],
-           main = "Residuals", xlab = "Date", ylab = "original - new output")
+      plot(dates_original, Hyde_daily_original_plot[,c(variables_original[var])] - CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original],
+           main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
     } else {
       if (soil_processes) {
         photo_index = 5
       } else {
         photo_index = 3
       }
-      plot(dates, weather_original$P,
+      plot(dates, CASSIA_new_output[[photo_index]][,c(variables_new[var])],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
-      lines(dates, CASSIA_new_output[[photo_index]][,c(variables_new[var])], col = "blue")
-      plot(weather_original$P, CASSIA_new_output[[photo_index]][,c(variables_new[var])],
-           main = "New against old", xlab = "Original data", ylab = "New Data")
-      abline(0, 1, col = "red")
-      plot(dates, weather_original$P - CASSIA_new_output[[photo_index]][,c(variables_new[var])],
-           main = "Residuals", xlab = "Date", ylab = "original - new output")
+      if (using_spp_photosynthesis) {
+        lines(dates_original, weather_original$P, col = "blue")
+        plot(weather_original$P, CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
+             main = "New against old", xlab = "Original data", ylab = "New Data")
+        abline(0, 1, col = "red")
+        plot(dates_original, weather_original$P - CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original],
+             main = "Residuals", xlab = "Date", ylab = "original - new output")
+      }
     }
   }
 
@@ -234,7 +243,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                                                                       CASSIA_new_output$Sugar$sugar_phloem +
                                                                                       CASSIA_new_output$Sugar$sugar_roots +
                                                                                       CASSIA_new_output$Sugar$sugar_xylem_sh +
-                                                                                      CASSIA_new_output$Sugar$sugar_xylem_st)))
+                                                                                      CASSIA_new_output$Sugar$sugar_xylem_st, na.rm = T)))
   abline(h = 0, lty = 2, col = "grey")
   lines(dates, CASSIA_new_output$Sugar$sugar_needles +
           CASSIA_new_output$Sugar$sugar_phloem +
@@ -270,7 +279,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                                                                 CASSIA_new_output$Sugar$starch_phloem +
                                                                                 CASSIA_new_output$Sugar$starch_roots +
                                                                                 CASSIA_new_output$Sugar$starch_xylem_sh +
-                                                                                CASSIA_new_output$Sugar$starch_xylem_st)))
+                                                                                CASSIA_new_output$Sugar$starch_xylem_st, na.rm = T)))
   abline(h = 0, lty = 2, col = "grey")
   lines(dates, CASSIA_new_output$Sugar$starch_needles +
           CASSIA_new_output$Sugar$starch_phloem +
