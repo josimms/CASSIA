@@ -7,7 +7,7 @@ Hyytiala_Data_Creation <- function(raw.directory,
                                    save = T) {
 
   raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/"
-  year_start = 2005
+  year_start = 1995
   year_end = 2023
   download = T
   clean_data = T
@@ -75,44 +75,50 @@ Hyytiala_Data_Creation <- function(raw.directory,
     all.daily.1 = aggregate(cbind(RH1250, CO2168, T336, T168) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
     all.daily.2 = aggregate(cbind(tsoil_5, tsoil_10, wsoil_B1, wsoil_B2) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
     # µmol m⁻² s⁻¹
-    all.daily$GPP = aggregate(HYY_EDDY233.GPP ~ Date, data = GPP, mean, na.rm = T, na.action = NULL)$HYY_EDDY233.GPP
+    all.daily.3 = aggregate(HYY_EDDY233.GPP ~ Date, data = GPP, mean, na.rm = T, na.action = NULL)
     all.daily.sum = aggregate(cbind(PAR, Precip) ~ Date, data = all_data, sum, na.action = NULL)
     # Here the data looks strange for 2017-2018 two years, so made into NA values
     all.daily.sum$Precip[lubridate::year(all.daily.sum$Date) %in% 2017:2018] <- NA
     all.daily.sum$Glob = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob~Date, data = Glob, sum, na.rm = T, na.action = NULL)$HYY_META.Glob)
     all.daily.sum$Glob67 = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob67~Date, data = Glob67, sum, na.rm = T, na.action = NULL)$HYY_META.Glob67)
 
+    weather_original_2015 = read.csv(file = "./data/weather_original_2015.csv", header = T, sep = ",")
+    weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
+    weather_original_2017 = read.csv(file = "./data/weather_original_2017.csv", header = T, sep = ",")
+    weather_original_2018 = read.csv(file = "./data/weather_original_2018.csv", header = T, sep = ",")
+    weather_original = rbind(rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017), weather_original_2018)
+
     par(mfrow = c(3, 4))
-    plot(all.daily.1$T336[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$T, ylab = "From Pauliiina", xlab = "My Data", main = "Temperature")
-    points(all.daily.1$T168[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$T, col = "blue")
+    plot(all.daily.1$T336[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$T, ylab = "From Pauliiina", xlab = "My Data", main = "Temperature")
+    points(all.daily.1$T168[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$T, col = "blue")
     abline(0, 1, col = "red")
-    plot(all.daily.1$T336[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$T, ylab = "From Pauliiina", xlab = "My Data")
-    points(all.daily.1$T168[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$T, ylab = "From Pauliiina", xlab = "My Data", col = "blue")
+    plot(all.daily.1$T336[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$T, ylab = "From Pauliiina", xlab = "My Data")
+    points(all.daily.1$T168[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$T, ylab = "From Pauliiina", xlab = "My Data", col = "blue")
 
     # Doesn't plot as values are NA throughout
-    plot(all.daily.sum$Precip[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$Rain, ylab = "From Pauliiina", xlab = "My Data", main = "Precipitation")
+    plot(all.daily.sum$Precip[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$Rain, ylab = "From Pauliiina", xlab = "My Data", main = "Precipitation")
     abline(0, 1, col = "red")
-    plot(all.daily.sum$Precip[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$Rain, ylab = "From Pauliiina", xlab = "My Data")
+    plot(all.daily.sum$Precip[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$Rain, ylab = "From Pauliiina", xlab = "My Data")
 
-    plot(all.daily.sum$Glob67[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$PAR, ylab = "From Pauliiina", xlab = "My Data", main = "PAR")
-    points(all.daily.sum$Glob[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$PAR, col = "blue")
+    plot(all.daily.sum$Glob67[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$PAR, ylab = "From Pauliiina", xlab = "My Data", main = "PAR")
+    points(all.daily.sum$Glob[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$PAR, col = "blue")
     abline(0, 1, col = "red")
-    plot(all.daily.sum$Glob67[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$PAR, ylab = "From Pauliiina", xlab = "My Data")
-    points(all.daily.sum$Glob[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$PAR, col = "blue")
+    plot(all.daily.sum$Glob67[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$PAR, ylab = "From Pauliiina", xlab = "My Data")
+    points(all.daily.sum$Glob[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$PAR, col = "blue")
 
-    plot(all.daily.2$wsoil_B2[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$MB, ylab = "From Pauliiina", xlab = "My Data", main = "MB")
-    points(all.daily.2$wsoil_B1[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$MB, col = "blue")
+    plot(all.daily.2$wsoil_B2[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$MB, ylab = "From Pauliiina", xlab = "My Data", main = "MB")
+    points(all.daily.2$wsoil_B1[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$MB, col = "blue")
     abline(0, 1, col = "red")
-    plot(all.daily.2$wsoil_B2[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$MB, ylab = "From Pauliiina", xlab = "My Data")
-    points(all.daily.2$wsoil_B1[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$MB, col = "blue")
+    plot(all.daily.2$wsoil_B2[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$MB, ylab = "From Pauliiina", xlab = "My Data")
+    points(all.daily.2$wsoil_B1[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$MB, col = "blue")
 
-    plot(all.daily.2$tsoil_5[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$TSA, ylab = "From Pauliiina", xlab = "My Data", main = "TSA")
+    plot(all.daily.2$tsoil_5[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$TSA, ylab = "From Pauliiina", xlab = "My Data", main = "TSA")
     abline(0, 1, col = "red")
-    plot(all.daily.2$tsoil_5[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$TSA, ylab = "From Pauliiina", xlab = "My Data")
+    plot(all.daily.2$tsoil_5[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$TSA, ylab = "From Pauliiina", xlab = "My Data")
 
-    plot(all.daily.2$tsoil_10[substring(data_format$Date, 1, 4) %in% c(2015:2017)], weather_original$TSB, ylab = "From Pauliiina", xlab = "My Data", main = "TSB")
+    plot(all.daily.2$tsoil_10[substring(data_format$Date, 1, 4) %in% c(2015:2018)], weather_original$TSB, ylab = "From Pauliiina", xlab = "My Data", main = "TSB")
     abline(0, 1, col = "red")
-    plot(all.daily.2$tsoil_10[substring(data_format$Date, 1, 4) %in% c(2015:2017)] - weather_original$TSB, ylab = "From Pauliiina", xlab = "My Data")
+    plot(all.daily.2$tsoil_10[substring(data_format$Date, 1, 4) %in% c(2015:2018)] - weather_original$TSB, ylab = "From Pauliiina", xlab = "My Data")
 
 
     # PAR data sorting
@@ -142,7 +148,8 @@ Hyytiala_Data_Creation <- function(raw.directory,
 
     all.gapfill.1 <- merge(all.daily, all.daily.sum, all = T)
     all.gapfill.2 <- merge(all.daily.1, all.daily.2, all = T)
-    all.gapfill <- merge(all.gapfill.1, all.gapfill.2, all = T)
+    all.gapfill.1.2 <- merge(all.gapfill.1, all.gapfill.2, all = T)
+    all.gapfill <- merge(all.gapfill.1.2, all.daily.3)
 
     # Gap fill with the other level if possible
     all.gapfill$RH672[is.na(all.gapfill$RH672)] <- all.gapfill$RH1250[is.na(all.gapfill$RH672)] - mean(all.gapfill$RH1250, na.rm = T) + mean(all.gapfill$RH672, na.rm = T)
