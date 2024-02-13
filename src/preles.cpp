@@ -424,7 +424,7 @@ photosynthesis_out preles(int day,
   if (PAR < -900) {std::cout << "PAR is too low\n";}
   if (TAir < -900) {std::cout << "TAir is too low\n";}
   if (VPD < 0 || VPD > 6) {std::cout << "VPD is out of bounds\n";}
-  if (Precip <    0) {std::cout << "Precipitation is too low\n";}
+  // if (Precip <    0) {std::cout << "Precipitation is too low\n";}
   if (CO2 < 0) {std::cout << "CO2 is too low\n";}
   if (Nitrogen < 0) {std::cout << "Nitrogen is too low\n";}
 
@@ -475,8 +475,7 @@ photosynthesis_out preles(int day,
   sw_balance_out soilwater_balance = swbalance(theta, Throughfall, snow_values.snowmelt, ET_out.fE,
                                                Site_par, Drainage,
                                                snow_values.snow, ET_out.canw, SnowRain_par);
-  // theta, throughfall, drainage, theta_snow, theta_canopy should be returned here
-  double SoilWater; // TODO: work out the output here!
+  // TODO: throughfall should come out of the soil water balence
 
   double SOG = theta_snow;
   double SW = soilwater_balance.theta;
@@ -485,7 +484,7 @@ photosynthesis_out preles(int day,
   photosynthesis_out out;
   out.GPP = gpp.gpp;
   out.ET = ET_out.ET;
-  out.SoilWater = SoilWater;
+  out.SoilWater = SW;
   out.fS = fS.fS;
   out.fCO2 = gpp.fCO2;
   out.fE = gpp.fE;
@@ -545,7 +544,7 @@ Rcpp::List preles_test_cpp(int start_year, int end_year,
   photo_out_vector photosynthesis_output;
   photosynthesis_out photosynthesis_old;
   for (int year : years) {
-    if (year == 2012 | year == 2016 | year == 2020) {
+    if (year == 2008 | year == 2012 | year == 2016 | year == 2020) {
       no_days = 366;
     } else {
       no_days = 365;
