@@ -45,7 +45,8 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
    * Biomass accumulation
    */
 
-  C_biomass = C_biomass + C_roots; // TODO: this doesn't have turnover!
+  C_biomass = C_biomass + C_roots - m * C_biomass * 1/(365*2) - (1-m) * C_biomass * 1/365; // TODO: need to un hard code the turnover
+  // Respiration is in CASSIA
 
   /*
    * DECISION VALUES CHOSEN FROM THE LAST INTERATION DATA!
@@ -57,6 +58,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
                                                C_roots_NonStruct,
                                                N_roots_NonStruct,
                                                parameters_in.NC_fungal_opt);
+
   double N_demand_mycofon = myco_decision_out[0];
   double N_given_mycofon = myco_decision_out[1];
   double N_demand_franklin = myco_decision_out[2];
@@ -135,6 +137,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
                                            parameters_in.SWC_limits_plant,
                                            parameters_in.NH4_on_NO3,
                                            plant_demand);
+
   double uptake_plant_all = uptake_plant[0];
   uptake_plant_all = uptake_plant_all * C_biomass;
   double uptake_plant_NH4 = uptake_plant[1];
@@ -172,7 +175,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
 
   N_fungal_NonStruct = N_fungal_NonStruct + uptake_fungal_all - myco_growth_N - N_given;
 
-  N_roots_NonStruct = N_roots_NonStruct + N_given + uptake_plant_all - to_CASSIA;
+  N_roots_NonStruct = N_roots_NonStruct + N_given + uptake_plant_all - to_CASSIA; // TODO: should any go to CASSIA if I am only considering one pool in the plant?
 
    // the to_CASSIA term should be thought to include both the nitrogen that goes into growth
    // as well as the non structural nitrogen that goes to the rest of the plant
@@ -185,7 +188,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   out.C_biomass = C_biomass;
   out.C_roots = C_roots;
   out.C_fungal = C_fungal;
-  out.C_roots_NonStruct = C_roots_NonStruct;
+  out.C_roots_NonStruct = C_roots_NonStruct; // TODO: change this output I think it results in the constant values!
   out.C_fungal_NonStruct = C_fungal_NonStruct;
   out.N_roots_NonStruct = N_roots_NonStruct;
   out.N_fungal_NonStruct = N_fungal_NonStruct;
