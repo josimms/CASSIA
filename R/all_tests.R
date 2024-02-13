@@ -38,7 +38,7 @@ tests <- function() {
 # Code for the functions in the ultimate test function
 ######
 
-all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes, new_data) {
+all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes) {
   ###
   # Settings and parameters
   ###
@@ -80,7 +80,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
   weather_original_2017 = read.csv(file = "./data/weather_original_2017.csv", header = T, sep = ",")
   weather_original_2018 = read.csv(file = "./data/weather_original_2018.csv", header = T, sep = ",")
-  weather_original_2019 = data_format[,names(weather_original_2015)[-c(1, 3)]]
+  # weather_original_2019 = data_format[,names(weather_original_2015)[-c(1, 3)]]
   weather_original = rbind(rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017), weather_original_2018)
 
   extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
@@ -90,18 +90,30 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                       fAPAR = rep(0.7, length = nrow(weather_original)))
   weather_original <- cbind(weather_original, extras)
 
-  if (new_data) {
+  start_year = 2015
+  end_year = 2018
+  dates_original = seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
+  dates_original <- dates_original[-(365+366)]
+
+  if (!using_spp_photosynthesis) {
+    Photosynthesis_Reference <- weather_original$P
     weather_original <- data_format
     weather_original$Nitrogen <- rep(0.012, rep = nrow(weather_original))
     weather_original$P <- rep(0.0, rep = nrow(weather_original))
-    weather_original <- weather_original[seq(from = 4, to = 19, by = 4)*-366]
+    weather_original <- weather_original[seq(from = 4, to = 19, by = 4)*-366,]
+    start_year = 2005
+    end_year = 2023
+    dates = seq(as.Date("2005-01-01"), as.Date("2023-12-31"), by = "day")
+    dates <- dates[-365+seq(from = 3, to = 18, by = 4)*-366]
   }
 
   direct <- "~/Documents/CASSIA_Calibration/"
   load(paste0(direct, "original.data.RData"))
-
   yu_data <- read.csv(paste0(direct, "yu.data.csv"))
   # TODO: is this the one with the right units?
+
+  direct_raw_data <- "~/Documents/CASSIA_Calibration/Raw_Data/nitrogen_data/"
+  nitorgen_balance <- read.csv(paste0(direct_raw_data, "ecosystem_balence_N.csv"))
 
   parameters_test <- parameters_p
   parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"),1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
@@ -120,7 +132,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   }
 
   # TODO: All of the parameters should be checked
-  parameters_R = c(0.016906, # microbe_turnover (Preveen, 2013)
+  parameters_R = c(0.0, # 0.016906, # microbe_turnover (Preveen, 2013)
                    (0.001*2875)/1881, # NC_in_root_opt (Heimisaari, 1995)
                    0.025, # NC_fungal_opt (Meyer, 2010)
                    1/28.73, # NC_microbe_opt (Heinonsalo, 2015)
@@ -134,9 +146,9 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    50, 50, 50, # N_k: NH4, NO3, Norg
                    0.2, 0.2, 0.2, # SWC_limit: NH4, NO3, Norg
                    # microbes
-                   0.3, 0.3, 0.3, # N_limits: NH4, NO3, Norg
+                   0.03, 0.03, 0.03, # N_limits: NH4, NO3, Norg
                    50, 50, 50, # N_k: NH4, NO3, Norg
-                   0.2, 0.2, 0.2, # SWC_limit: NH4, NO3, Norg
+                   0.02, 0.02, 0.02, # SWC_limit: NH4, NO3, Norg
                    0.3, 50, 0.2, # C limits
                    10, # NH4_on_NO3
                    0.9, # optimal_root_fungal_biomass_ratio (TODO: Heinonsalo?)
@@ -155,7 +167,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    1) # N_value_param_plant
 
   if (soil_processes) {
-    CASSIA_new_output = CASSIA_soil(2005, 2023, weather_original, GPP_ref,
+    CASSIA_new_output = CASSIA_soil(start_year, end_year, weather_original, GPP_ref,
                                     c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test), parameters_R,
                                     needle_mass_in,
                                     Throughfall,
@@ -168,7 +180,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                     using_spp_photosynthesis, TRUE,
                                     etmodel, LOGFLAG)
   } else {
-    CASSIA_new_output = CASSIA_yearly(2005, 2023, weather_original, GPP_ref,
+    CASSIA_new_output = CASSIA_yearly(start_year, end_year, weather_original, GPP_ref,
                                       c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test),
                                       needle_mass_in,
                                       Throughfall,
@@ -186,11 +198,6 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
   variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
-  dates = seq(as.Date("2005-01-01"), as.Date("2023-12-31"), by = "day")
-  dates <- dates[-365+seq(from = 3, to = 18, by = 4)*-366]
-  dates_original = seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
-  dates_original <- dates_original[-(365+366)]
-
   Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365),]
 
   ###
@@ -200,10 +207,11 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   par(mfrow = c(3, 3))
   for (var in 1:length(variables_new)) {
     if (var < length(variables_new)) {
+      # TODO: Pauliina for the data that was originally used to calibrate CASSIA - root biomass in particular
       plot(dates, CASSIA_new_output[[1]][,c(variables_new[var])],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
       lines(dates_original, Hyde_daily_original_plot[,c(variables_original[var])], col = "blue")
-      plot(Hyde_daily_original_plot[,c(variables_original[var])][-366], CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
+      plot(Hyde_daily_original_plot[,c(variables_original[var])][-731], CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
       plot(dates_original, Hyde_daily_original_plot[,c(variables_original[var])] - CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original],
@@ -216,14 +224,12 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
       }
       plot(dates, CASSIA_new_output[[photo_index]][,c(variables_new[var])],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
-      if (using_spp_photosynthesis) {
-        lines(dates_original, weather_original$P, col = "blue")
-        plot(weather_original$P, CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
-             main = "New against old", xlab = "Original data", ylab = "New Data")
-        abline(0, 1, col = "red")
-        plot(dates_original, weather_original$P - CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original],
-             main = "Residuals", xlab = "Date", ylab = "original - new output")
-      }
+      lines(dates_original, Photosynthesis_Reference[-731], col = "blue")
+      plot(Photosynthesis_Reference[-731][-length(Photosynthesis_Reference)+1], CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
+           main = "New against old", xlab = "Original data", ylab = "New Data")
+      abline(0, 1, col = "red")
+      plot(dates_original, Photosynthesis_Reference[-731] - CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original],
+           main = "Residuals", xlab = "Date", ylab = "original - new output")
     }
   }
 
@@ -233,7 +239,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   # TODO: make this into a function
 
-  par(mfrow = c(2, 1), xpd=TRUE)
+  par(mfrow = c(2, 1))
   plot(dates, CASSIA_new_output$Sugar$sugar_needles +
          CASSIA_new_output$Sugar$sugar_phloem +
          CASSIA_new_output$Sugar$sugar_roots +
@@ -315,49 +321,215 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     # Mycofon
     par(mfrow = c(3, 2))
     for (i in 1:6) {
-      plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i], xlab = "Date", ylab = "")
+      if (sum(is.na(CASSIA_new_output$Fungal[,i])) < nrow(CASSIA_new_output$Fungal)) {
+        ylim = c(min(CASSIA_new_output$Fungal[,i], na.rm = T), max(CASSIA_new_output$Fungal[,i], na.rm = T))
+      } else {
+        ylim = c(0, 1)
+      }
+        # Plot
+      plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i],
+           xlab = "Date", ylab = "", ylim = ylim, type = "l")
+
+      # Reference Data
+      if (names(CASSIA_new_output$Fungal)[i] == "C_roots_NonStruct") {
+        points(as.Date(yu_data$Date), yu_data$sugar.root, pch = "o", col = "blue")
+        points(as.Date(rownames(original.data)), original.data$roots_sugar, pch = "x", col = "blue")
+      } else if (names(CASSIA_new_output$Fungal)[i] == "C_biomass") {
+        # TODO: check Ryhti data if not
+        # TODO: Pauliina for the data that was originally used to calibrate CASSIA - root biomass
+      }
+
+      if (sum(is.na(CASSIA_new_output$Fungal[,i])) == nrow(CASSIA_new_output$Fungal)) {
+        title(sub = paste0(names(CASSIA_new_output$Fungal)[i], " is all NAs!"))
+        warning(paste0(names(CASSIA_new_output$Fungal)[i], " is all NAs!"))
+      }
+      # TODO: rest of the data should come from the Italian study
     }
+
     par(mfrow = c(3, 4))
     for (i in 7:length(names(CASSIA_new_output$Fungal))) {
-      plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i], xlab = "Date", ylab = "")
+      if (sum(is.na(CASSIA_new_output$Fungal[,i])) < nrow(CASSIA_new_output$Fungal)) {
+        ylim = c(min(CASSIA_new_output$Fungal[,i], na.rm = T), max(CASSIA_new_output$Fungal[,i], na.rm = T))
+      } else {
+        ylim = c(0, 1)
+      }
+
+      # Plot
+      plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i],
+           xlab = "Date", ylab = "", ylim = ylim, type = "l")
+
+      # Test data
+      if (names(CASSIA_new_output$Fungal)[i] == "uptake_plant") {
+        abline(h = nitorgen_balance$Value_kg[nitorgen_balance$Item == "Uptake (aboveground)"], col = "blue", lty = 2)
+        # TODO: why are the values different from the other file?
+      } else if (names(CASSIA_new_output$Fungal)[i] == "uptake_fungal") {
+        abline(h = nitorgen_balance$Value_kg[nitorgen_balance$Item == "Uptake"], col = "blue", lty = 2)
+        # TODO: why are the values different from the other file?
+        # TODO: what is aboveground? What does this inlcude?
+        # TODO: what would be one tree?
+      }
+
+      if (sum(is.na(CASSIA_new_output$Fungal[,i])) == nrow(CASSIA_new_output$Fungal)) {
+        title(sub = paste0(names(CASSIA_new_output$Fungal)[i], " is all NAs!"))
+        warning(paste0(names(CASSIA_new_output$Fungal)[i], " is all NAs!"))
+      }
     }
-    #par(mfrow = c(2, 2))
-    #for (i in 19:length(names(CASSIA_new_output[[4]]))) {
-    #  plot(dates, CASSIA_new_output[[4]][,i], main = names(CASSIA_new_output[[4]])[i], xlab = "Date", ylab = "")
-    #}
 
     # Symphony
     par(mfrow = c(3, 3))
     for (i in 1:8) {
-      plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i], xlab = "Date", ylab = "")
+      if (sum(is.na(CASSIA_new_output$Soil[,i])) < nrow(CASSIA_new_output$Soil)) {
+        ylim = c(min(CASSIA_new_output$Soil[,i], na.rm = T), max(CASSIA_new_output$Soil[,i], na.rm = T))
+      } else {
+        ylim = c(0, 1)
+      }
+
+      # TOO: units
+      plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i],
+           xlab = "Date", ylab = "", ylim = ylim, type = "l")
+
+      if (names(CASSIA_new_output$Soil)[i] == "C_decompose_FOM") {
+        # TODO: is this in the respiration paper?
+      } else if (names(CASSIA_new_output$Soil)[i] == "C_decompose_SOM") {
+        # TODO: is this in the respiration paper?
+        abline(h = nitorgen_balance$Value_kg[nitorgen_balance$Item == "humus" & nitorgen_balance$Catagory == "Carbon"], col = "blue", lty = 2)
+      } else if (names(CASSIA_new_output$Soil)[i] == "C_FOM_needles") {
+        points(karike_df_all$pvm, cumsum(replace(karike_df_all$neulanen, is.na(karike_df_all$neulanen), 0)), col = "blue", pch = "+")
+        title(sub = "Data: Needles in traps each year")
+      } else if (names(CASSIA_new_output$Soil)[i] == "C_FOM_roots") {
+        # TODO:
+      } else if (names(CASSIA_new_output$Soil)[i] == "C_FOM_woody") {
+        # TODO: this doesn't really make sense...?
+        points(karike_df_all$pvm, cumsum(replace(karike_df_all$oksa + karike_df_all$kuori + karike_df_all$käpy + karike_df_all$tikku,
+                                                 is.na(karike_df_all$oksa + karike_df_all$kuori + karike_df_all$käpy + karike_df_all$tikku),
+                                                 0)),
+               col = "blue", pch = "+")
+        title(sub = "Data: Branch + Bark + Cones + Sticks in traps each year")
+      } else if (names(CASSIA_new_output$Soil)[i] == "C_SOM") {
+        # TODO:
+      }
+
+      if (sum(is.na(CASSIA_new_output$Soil[,i])) == nrow(CASSIA_new_output$Soil)) {
+        title(sub = paste0(names(CASSIA_new_output$Soil)[i], " is all NAs!"))
+        warning(paste0(names(CASSIA_new_output$Soil)[i], " is all NAs!"))
+      }
     }
+
     par(mfrow = c(3, 3))
     for (i in 9:length(names(CASSIA_new_output$Soil))) {
-      plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i], xlab = "Date", ylab = "")
+      if (sum(is.na(CASSIA_new_output$Soil[,i])) < nrow(CASSIA_new_output$Soil)) {
+        ylim = c(min(CASSIA_new_output$Soil[,i], na.rm = T), max(CASSIA_new_output$Soil[,i], na.rm = T))
+      } else {
+        ylim = c(0, 1)
+      }
+
+      plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i],
+           xlab = "Date", ylab = "", ylim = ylim, type = "l")
+
+      if (names(CASSIA_new_output$Soil)[i] == "NH4") {
+        points(nitrogen$date, nitrogen$nh4, col = "blue") # TODO: units?
+      } else if (names(CASSIA_new_output$Soil)[i] == "NO3") {
+        points(nitrogen$date, nitrogen$no3, col = "blue") # TODO: units?
+      }
+
+      if (sum(is.na(CASSIA_new_output$Soil[,i])) == nrow(CASSIA_new_output$Soil)) {
+        title(sub = paste0(names(CASSIA_new_output$Soil)[i], " is all NAs!"))
+        warning(paste0(names(CASSIA_new_output$Soil)[i], " is all NAs!"))
+      }
     }
 
+
     par(mfrow = c(3, 2))
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "Temperature")
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "Temperature")
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "Temperature")
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "Temperature")
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Temperature")
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Temperature")
+    if (sum(is.na(CASSIA_new_output$Fungal$uptake_NH4_fungal)) < nrow(CASSIA_new_output$Fungal)) {
+      ylim_Fungal = c(min(CASSIA_new_output$Fungal$uptake_NH4_fungal, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NH4_fungal, na.rm = T))
+      ylim_Plant = c(min(CASSIA_new_output$Fungal$uptake_NH4_plant, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NH4_plant, na.rm = T))
+    } else {
+      ylim_Fungal = c(0, 1)
+      ylim_Plant = c(0, 1)
+    }
 
-    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "Soil Moisture")
-    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "Soil Moisture")
-    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "Soil Moisture")
-    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "Soil Moisture")
-    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Soil Moisture")
-    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Soil Moisture")
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal",
+         ylab = "", xlab = "Temperature", ylim = ylim_Fungal)
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Fungal)
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    if (sum(is.na(CASSIA_new_output$Soil$NH4)) < nrow(CASSIA_new_output$Soil)) {
+      NH4_range = CASSIA_new_output$Soil$NH4
+    } else {
+      NH4_range = seq(0, 1, length.out = nrow(CASSIA_new_output$Soil))
+    }
 
-    plot(CASSIA_new_output$Soil$NH4, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal", ylab = "", xlab = "NH4")
-    plot(CASSIA_new_output$Soil$NH4, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant", ylab = "", xlab = "NH4")
-    plot(CASSIA_new_output$Soil$NO3, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal", ylab = "", xlab = "NO3")
-    plot(CASSIA_new_output$Soil$NO3, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant", ylab = "", xlab = "NO3")
-    plot(CASSIA_new_output$Soil$SOM_Norg_used, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal", ylab = "", xlab = "Norg")
-    plot(CASSIA_new_output$Soil$SOM_Norg_used, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant", ylab = "", xlab = "Norg")
+    plot(NH4_range, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal",
+         ylab = "", xlab = "NH4", ylim = ylim_Fungal)
+    plot(NH4_range, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant",
+         ylab = "", xlab = "NH4", ylim = ylim_Plant)
+    points(oyewole_2015_calibration_data$concentration[oyewole_2015_calibration_data$n_comp == "nh4"],
+           oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "nh4"], pch = 17, col = "blue")
+
+    # TODO: check this paper, was it tree or fungal uptake?
+    if (sum(is.na(CASSIA_new_output$Fungal$uptake_NO3_fungal)) < nrow(CASSIA_new_output$Fungal)) {
+      ylim_Fungal = c(min(CASSIA_new_output$Fungal$uptake_NO3_fungal, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NO3_fungal, na.rm = T))
+      ylim_Plant = c(min(CASSIA_new_output$Fungal$uptake_NO3_plant, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NO3_plant, na.rm = T))
+    } else {
+      ylim_Fungal = c(0, 1)
+      ylim_Plant = c(0, 1)
+    }
+
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal",
+         ylab = "", xlab = "Temperature", ylim = ylim_Fungal)
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Fungal)
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    if (sum(is.na(CASSIA_new_output$Soil$NO3)) < nrow(CASSIA_new_output$Soil)) {
+      NO3_range = CASSIA_new_output$Soil$NO3
+    } else {
+      NO3_range = seq(0, 1, length.out =  nrow(CASSIA_new_output$Soil))
+    }
+    plot(NO3_range, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal",
+         ylab = "", xlab = "NO3", ylim = ylim_Fungal)
+    plot(NO3_range, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant",
+         ylab = "", xlab = "NO3", ylim = ylim_Plant)
+    points(oyewole_2015_calibration_data$concentration[oyewole_2015_calibration_data$n_comp == "no3"],
+           oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "no3"], pch = 17, col = "blue")
+
+    if (sum(is.na(CASSIA_new_output$Fungal$uptake_Norg_fungal)) < nrow(CASSIA_new_output$Fungal)) {
+      ylim_Fungal = c(min(CASSIA_new_output$Fungal$uptake_Norg_fungal, na.rm = T), max(CASSIA_new_output$Fungal$uptake_Norg_fungal, na.rm = T))
+      ylim_Plant = c(min(CASSIA_new_output$Fungal$uptake_Norg_plant, na.rm = T), max(CASSIA_new_output$Fungal$uptake_Norg_plant, na.rm = T))
+    } else {
+      ylim_Fungal = c(0, 1)
+      ylim_Plant = c(0, 1)
+    }
+
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal",
+         ylab = "", xlab = "Temperature", ylim = ylim_Fungal)
+    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Fungal)
+    plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    if (sum(is.na(CASSIA_new_output$Soil$SOM_Norg_used)) < nrow(CASSIA_new_output$Soil)) {
+      Norg_range = CASSIA_new_output$Soil$SOM_Norg_used
+    } else {
+      Norg_range = seq(0, 1, length.out =  nrow(CASSIA_new_output$Soil))
+    }
+    plot(Norg_range, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal",
+         ylab = "", xlab = "Norg", ylim = ylim_Fungal)
+    plot(Norg_range, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant",
+         ylab = "", xlab = "Norg", ylim = ylim_Plant)
+    points(oyewole_2015_calibration_data$concentration[oyewole_2015_calibration_data$n_comp == "arginine"],
+           oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "arginine"], pch = 17, col = "blue")
+    points(oyewole_2015_calibration_data$concentration[oyewole_2015_calibration_data$n_comp == "glycine"],
+           oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "glycine"], pch = 17, col = "blue")
 
   }
+
+  return(CASSIA_new_output)
 }
 
