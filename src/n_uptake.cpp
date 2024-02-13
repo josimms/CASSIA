@@ -37,7 +37,7 @@ double uptake_N(double N,   // UNITS: C kg
 
   double u, u_t, u_w, all;
   if (N < 0) {
-    u = 0;
+    all = 0;
   } else {
     // Concentration
     u = std::max(k * pow(N/N_limit, 8.0) / (1 + pow(N/N_limit, 8)), 0.0);
@@ -53,6 +53,9 @@ double uptake_N(double N,   // UNITS: C kg
       std::cout << "Warning! u_t out of bounds. u_w = " << u_w << "\n";
     }
   }
+  if (all != all) {
+    all = 0;
+  }
   return(all);
 }
 
@@ -67,7 +70,7 @@ double uptake_C(double C,     // UNITS: C kg
 
   double u, u_t, u_w, all;
   if (C < 0) {
-    u = 0;
+    all = 0;
   } else {
     // Concentration
     u = std::max(k * pow(C/C_limit, 8.0) / (1 + pow(C/C_limit, 8.0)), 0.0);
@@ -82,6 +85,9 @@ double uptake_C(double C,     // UNITS: C kg
     if (u_w < 0 | u_w > 1) {
       std::cout << "Warning! u_t out of bounds. u_w = " << u_w << "\n";
     }
+  }
+  if (all != all) {
+    all = 0;
   }
   return(all);
 }
