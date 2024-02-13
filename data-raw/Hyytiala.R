@@ -1,7 +1,7 @@
 raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/"
 # load(paste0(raw.directory, "Hyde_weather_CASSIA.RData")) or just build the package
 
-FMI_Data <- lapply(paste0(raw.directory, list.files(path = raw.directory, pattern = "CASSIA-csv-"))[c(11, 9, 13, 14, 10, 5, 6, 1, 12, 15, 3, 7, 8, 2, 4, 16)], read.csv, na.string  = "-")
+FMI_Data <- lapply(paste0(raw.directory, list.files(path = raw.directory, pattern = "CASSIA-csv-"))[c(17, 18, 11, 9, 13, 14, 10, 5, 6, 1, 12, 15, 3, 7, 8, 2, 4, 16)], read.csv, na.string  = "-")
 # 1 = 2014 RH, 2 = 2020 Precip, 3 = 2018 Precip, 4 = 2022 Precip, 5 = 2012 Precip, 6 = 2014 Precip, 7 = 2018 RH, 8 = 2020 RH,
 # 9 = 2005 Precip, 10 = 2012 RH, 11 = 2005 RH, 12 = 2016 Precip, 13 = 1010 Precip, 14 = 2010 RH, 15 = 2016 RH, 16 = 2022 RH
 

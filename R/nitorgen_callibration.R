@@ -1,7 +1,8 @@
 likelyhood_nitrogen_uptake <- function(par, sum = T) {
   ### Import data
-  data_path = "~/Downloads/"
-  data = read.delim(paste0(data_path, "oyewole_2015_calibration_data.csv"), sep = ",", dec = ",")
+  data_path = "~/Documents/CASSIA_Calibration/Processed_Data/"
+  oyewole_2015_calibration_data = read.delim(paste0(data_path, "oyewole_2015_calibration_data.csv"), sep = ",", dec = ",")
+  save(oyewole_2015_calibration_data, file = "./data/oyewole_2015_calibration_data.RData")
 
   ### Simulations
   concentrations = rep(c(50, 500), length.out = 16)

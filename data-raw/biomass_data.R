@@ -23,3 +23,13 @@ karike_df_raw_5 = karike_df_raw_5[order(karike_df_raw_5$pvm),]
 karike_df_list = list(karike_df_raw_1, karike_df_raw_2, karike_df_raw_3, karike_df_raw_4, karike_df_raw_5)
 
 karike_df_all = dplyr::bind_rows(dplyr::bind_rows(dplyr::bind_rows(dplyr::bind_rows(karike_df_raw_1, karike_df_raw_2), karike_df_raw_3), karike_df_raw_4), karike_df_raw_5)
+
+plot(karike_df_all$pvm, karike_df_all$oksa)
+plot(karike_df_all$pvm, karike_df_all$karike)
+plot(karike_df_all$pvm, karike_df_all$neulanen)
+plot(karike_df_all$pvm, karike_df_all$kuori)
+plot(karike_df_all$pvm, karike_df_all$tikku)
+plot(karike_df_all$pvm, karike_df_all$käpy)
+plot(karike_df_all$pvm, karike_df_all$lehti)
+
+save(karike_df_all, file = "./data/karike_df_all.RData")

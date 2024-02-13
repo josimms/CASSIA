@@ -5,6 +5,7 @@ direct = "~/Documents/CASSIA_Calibration/Processed_Data/"
 ###
 nitrogen = read.csv(paste0(direct, "korhonen_mineral_N.csv"), dec = ",")
 nitrogen$date = as.Date(nitrogen$date, format = "%d.%m.%Y")
+save(nitrogen, file = paste0(direct, "nitrogen.RData"))
 
 ###
 # Unit conversions. g N m-2 will be the input
@@ -14,12 +15,4 @@ nitrogen$date = as.Date(nitrogen$date, format = "%d.%m.%Y")
 # For the m3 to m2 conversion assume that there is a constant a
 
 # mg/kg = 0.001 g / kg = 0.001 g / (m3 / 1200) = 1200 * 0.001 g / m3 = 1200 * 0.001 * 0.01 g / m2
-
-###
-# Plots
-###
-plot(nitrogen$date[nitrogen$pool != "mineral_soil"], nitrogen$nh4[nitrogen$pool != "mineral_soil"])
-
-
-plot(nitrogen$date[nitrogen$pool != "mineral_soil"], nitrogen$no3[nitrogen$pool != "mineral_soil"])
 
