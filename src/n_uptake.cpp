@@ -37,14 +37,15 @@ double uptake_N(double N,   // UNITS: C kg
 
   double u, u_t, u_w, all;
   if (N < 0) {
+    std::cerr << "Warning! Pool is less than 0.";
     all = 0;
   } else {
     // Concentration
-    u = std::max(k * pow(N/N_limit, 8.0) / (1 + pow(N/N_limit, 8)), 0.0);
+    u = std::max(k * pow(N/N_limit, 8.0) / (1 + pow(N/N_limit, 8.0)), 0.0);
     // Temperature
     u_t = std::max(T/30.0, 0.0); // TODO: these parameters shouldn't be hard coded
     // Water
-    u_w = std::max(pow(SWC, 8) / (pow(SWC_limit, 8) + pow(SWC, 8)), 0.0);
+    u_w = std::max(pow(SWC, 8.0) / (pow(SWC_limit, 8.0) + pow(SWC, 8.0)), 0.0);
     all = u * u_t * u_w;
     if (u_t < 0 | u_t > 1) {
       std::cout << "Warning! u_t out of bounds. u_t = " << u_t << "\n";
@@ -53,8 +54,18 @@ double uptake_N(double N,   // UNITS: C kg
       std::cout << "Warning! u_t out of bounds. u_w = " << u_w << "\n";
     }
   }
+
+  if (N < all) {
+    std::cerr << "Warning! Uptake is larger than the N pool: set to the N pool ";
+    all = N;
+  }
   if (all != all) {
-    all = 0;
+    // std::cerr << " Uptake gives NA: set to 0. ";
+    all = 0.0;
+  }
+  if (all < 0.0) {
+    std::cerr << "Warning! Uptake is less than 0! \n";
+    all = 0.0;
   }
   return(all);
 }
@@ -70,6 +81,7 @@ double uptake_C(double C,     // UNITS: C kg
 
   double u, u_t, u_w, all;
   if (C < 0) {
+    std::cerr << "Warning! Pool is less than 0.";
     all = 0;
   } else {
     // Concentration
@@ -77,7 +89,7 @@ double uptake_C(double C,     // UNITS: C kg
     // Temperature
     u_t = std::max(T/30.0, 0.0);
     // Water
-    u_w = pow(SWC, 8) / (pow(SWC_limit, 8) + pow(SWC, 8));
+    u_w = pow(SWC, 8.0) / (pow(SWC_limit, 8.0) + pow(SWC, 8.0));
     all = u * u_t * u_w;
     if (u_t < 0 | u_t > 1) {
       std::cout << "Warning! u_t out of bounds. u_t = " << u_t << "\n";
@@ -86,8 +98,18 @@ double uptake_C(double C,     // UNITS: C kg
       std::cout << "Warning! u_t out of bounds. u_w = " << u_w << "\n";
     }
   }
+
+  if (C < all) {
+    std::cerr << "Warning! Uptake is larger than the N pool: set to the N pool ";
+    all = C;
+  }
   if (all != all) {
-    all = 0;
+    // std::cerr << " Uptake gives NA: set to 0. Check the weather input!\n";
+    all = 0.0;
+  }
+  if (all < 0.0) {
+    std::cerr << "Warning! Uptake is less than 0! \n";
+    all = 0.0;
   }
   return(all);
 }
@@ -169,7 +191,8 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           std::vector<double> N_limits_R,
                           std::vector<double> N_k_R,
                           std::vector<double> SWC_k_R,
-                          bool SOM_decomposers) {
+                          bool SOM_decomposers,
+                          double FOM_Norg) {
 
 
   /*
@@ -186,7 +209,7 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
   double NO3_uptake = uptake_N(NO3_avaliable, T, SWC, N_limits.NO3, N_k.NO3, SWC_k.NO3);        // UNITS: C kg
   double Norg_uptake = uptake_N(Norg_avaliable, T, SWC, N_limits.Norg, N_k.Norg, SWC_k.Norg);   // UNITS: C kg
 
-  double carbon_limitation = Norg_uptake;
+  double carbon_limitation = Norg_uptake; // TODO: check this - does this have a units problem?
   // TODO: add respiration when I have the parameters after Christmas
   // 0.2 = respiration(T, respiration_microbes_params[1], respiration_microbes_params[2]), which is the old respiration function
   // Update the parameters in the CASSIA respiration function!
@@ -224,7 +247,7 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
   if (SOM_decomposers) {
     total_N_uptaken =  total_N_uptaken + assimilation * C_microbe;
     // TODO from condition?
-    Extra_FOM_uptaken = 1;
+    Extra_FOM_uptaken = uptake_N(Norg_uptake, T, SWC, N_limits.Norg, N_k.Norg, SWC_k.Norg);
   }
 
   return(Rcpp::List::create(Rcpp::_["NH4_uptaken"] = NH4_uptaken,               // UNITS: C kg

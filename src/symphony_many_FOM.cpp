@@ -40,7 +40,6 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double NC_microbe_opt,
                                             double microbe_turnover)
 {
-
   /*
    * Initialisation or declaration
    */
@@ -68,16 +67,14 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
     C_FOM_mantle * NC_mantle +
     C_FOM_ERM * NC_ERM; // C kg
 
-
   /*
    * Nitrogen processes
    */
 
-
   // STEP 1: Set the values, considering the other models
   double NH4 = NH4_old - NH4_used_Plant - NH4_used_Fungal;             // C kg
   double NO3 = NO3_old - NO3_used_Plant - NO3_used_Fungal;             // C kg
-  N_FOM = N_FOM - FOM_Norg_used_Plant - FOM_Norg_used_Fungal;    // C kg
+  N_FOM = N_FOM - FOM_Norg_used_Plant - FOM_Norg_used_Fungal;          // C kg TODO: there is a chance that this will go negative!
   double N_SOM = N_SOM_old;                                            // C kg
 
   double NC_Litter = N_FOM/C_FOM;
@@ -90,26 +87,32 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
 
 
   // FOM
-  Rcpp::List FOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_FOM, N_decompose_FOM, C_FOM, NC_microbe_opt, NH4, NO3, N_FOM, Tmb, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, false);
+  Rcpp::List FOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_FOM, N_decompose_FOM, C_FOM, NC_microbe_opt, NH4, NO3, N_FOM, Tmb, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, false, 0);
   N_balence FOM_after_microbe_activity = list_to_N_balence(FOM_after_microbe_activity_list);    // C kg
+
+  NO3 = NO3 - C_decompose_FOM*FOM_after_microbe_activity.NO3; // C kg eq
+  NH4 = NH4 - C_decompose_FOM*FOM_after_microbe_activity.NH4;  // C kg eq
+
+  N_FOM = N_FOM - C_decompose_FOM*FOM_after_microbe_activity.Norg;   // C kg eq
+  N_SOM = N_SOM + microbe_turnover*(N_decompose_FOM);    // C kg eq
+
   // SOM
-  Rcpp::List SOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_SOM, N_decompose_SOM, C_SOM_old, NC_microbe_opt, NH4, NO3, N_FOM, Tmb, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, true);
+  Rcpp::List SOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_SOM, N_decompose_SOM, C_SOM_old, NC_microbe_opt, NH4, NO3, N_SOM, Tmb, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, true, N_FOM);
   N_balence SOM_after_microbe_activity = list_to_N_balence(SOM_after_microbe_activity_list);    // C kg
 
   // Update pure inorganic pools
-  NO3 = NO3 - C_decompose_FOM*FOM_after_microbe_activity.NO3 - C_decompose_SOM*SOM_after_microbe_activity.NO3;    // C kg eq
-  NH4 = NH4 - C_decompose_FOM*FOM_after_microbe_activity.NH4 - C_decompose_SOM*SOM_after_microbe_activity.NH4;    // C kg eq
+  NO3 = NO3 - C_decompose_SOM*SOM_after_microbe_activity.NO3;    // C kg eq
+  NH4 = NH4 - C_decompose_SOM*SOM_after_microbe_activity.NH4;    // C kg eq
 
-  N_FOM = N_FOM - C_decompose_FOM*FOM_after_microbe_activity.Norg - C_decompose_SOM*SOM_after_microbe_activity.Norg_FOM;    // C kg eq
-  N_SOM = N_SOM - C_decompose_SOM*SOM_after_microbe_activity.Norg;    // C kg eq
-
+  N_SOM = N_SOM - C_decompose_SOM*SOM_after_microbe_activity.Norg + microbe_turnover*(N_decompose_SOM + N_decompose_FOM);    // C kg eq
+  N_FOM = N_FOM - C_decompose_SOM*SOM_after_microbe_activity.Norg_FOM;    // C kg eq
 
   /*
    * Carbon processes
    */
 
   // STEP 1: Update the FOM mass
-  double total_decomposition = C_decompose_FOM*FOM_after_microbe_activity.C + C_decompose_SOM*SOM_after_microbe_activity.Norg_FOM;   // C kg
+  double total_decomposition = C_decompose_FOM*FOM_after_microbe_activity.C + C_decompose_SOM*SOM_after_microbe_activity.C;   // C kg
   // TODO: the nitrogen transfer should be by N and litter type rather than size of pool!
   C_FOM_needles = C_FOM_needles - (C_FOM_needles/C_FOM)*total_decomposition;            // C kg
   C_FOM_woody = C_FOM_woody - (C_FOM_woody/C_FOM)*total_decomposition;                  // C kg
@@ -121,14 +124,11 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   double C_SOM = C_SOM_old - C_decompose_SOM*SOM_after_microbe_activity.C + microbe_turnover*(C_decompose_FOM + C_decompose_SOM);   // C kg
 
   // STEP 3: Update the microbes
-  C_decompose_FOM = (microbe_turnover + 1 +
-    FOM_after_microbe_activity.C -
-    0.2) * C_decompose_FOM;   // C kg
-  // TODO: 0.2 is a placeholder for respiration
+  C_decompose_FOM = (1 - microbe_turnover + FOM_after_microbe_activity.C - 0.002) * C_decompose_FOM;   // C kg
+  N_decompose_FOM = (1 - microbe_turnover) * N_decompose_FOM + (FOM_after_microbe_activity.NH4 + FOM_after_microbe_activity.NO3 + FOM_after_microbe_activity.Norg) * C_decompose_FOM;   // C kg
 
-  C_decompose_SOM = (microbe_turnover + 1 +
-    SOM_after_microbe_activity.C -
-    0.2) * C_decompose_SOM;   // C kg
+  C_decompose_SOM = (1 - microbe_turnover + SOM_after_microbe_activity.C  - 0.002) * C_decompose_SOM;   // C kg
+  N_decompose_SOM = (1 - microbe_turnover) * N_decompose_SOM + (SOM_after_microbe_activity.NH4 + SOM_after_microbe_activity.NO3 + SOM_after_microbe_activity.Norg) * C_decompose_SOM;   // C kg
   // TODO: 0.2 is a placeholder for respiration
 
   double amino_acids = 1; // TOOD: add the organic S storage into the model
@@ -156,6 +156,14 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   out.NO3 = NO3;                                  // C kg
   out.SOM_Norg_used = SOM_Norg_used;              // C kg
   out.Microbe_respiration = 0.2; // TODO respiration(Tmb, respiration_microbes_params[1], respiration_microbes_params[2]));    // C kg
+  out.NH4_Uptake_Microbe_FOM = FOM_after_microbe_activity.NH4;
+  out.NO3_Uptake_Microbe_FOM = FOM_after_microbe_activity.NO3;
+  out.Norg_Uptake_Microbe_FOM = FOM_after_microbe_activity.Norg;
+  out.C_Uptake_Microbe_FOM = FOM_after_microbe_activity.C;
+  out.NH4_Uptake_Microbe_SOM = SOM_after_microbe_activity.NH4;
+  out.NO3_Uptake_Microbe_SOM = SOM_after_microbe_activity.NO3;
+  out.Norg_Uptake_Microbe_SOM = SOM_after_microbe_activity.Norg;
+  out.C_Uptake_Microbe_SOM = SOM_after_microbe_activity.C;
 
   return(out);
 
