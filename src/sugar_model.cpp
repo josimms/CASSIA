@@ -409,7 +409,7 @@ carbo_balance sugar_model(int day,
       }
 
       if ((sH > parameters.sHc) & (sugar.needles + starch.needles > 0.07)) {
-        myco_allocation = PF * 0.3;
+        myco_allocation = std::min(PF * 0.3, 0.07);
       } else {
         myco_allocation = 0.0;
       }
@@ -451,7 +451,7 @@ carbo_balance sugar_model(int day,
     // so the average sugar is reported as sugar needles
     sugar.needles = sugar_all;
     sugar.phloem = 0.0;
-    sugar.roots = 0.0;
+    sugar.roots = sugar_all;
     sugar.xylem_sh = 0.0;
     sugar.xylem_st = 0.0;
     sugar.mycorrhiza = myco_allocation;
