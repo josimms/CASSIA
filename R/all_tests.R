@@ -100,6 +100,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     weather_original <- data_format
     weather_original$Nitrogen <- rep(0.012, rep = nrow(weather_original))
     weather_original$P <- rep(0.0, rep = nrow(weather_original))
+    weather_original$TSA[is.na(weather_original$TSA)] <- weather_original$T[is.na(weather_original$TSA)] - 5
+    weather_original$TSA[weather_original$TSA < 0] <- 0
+    weather_original$TSB[is.na(weather_original$TSB)] <- weather_original$T[is.na(weather_original$TSB)] - 5
+    weather_original$TSB[weather_original$TSB < 0] <- 0
     weather_original <- weather_original[seq(from = 4, to = 19, by = 4)*-366,]
     start_year = 2005
     end_year = 2023
@@ -132,35 +136,36 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   }
 
   # TODO: All of the parameters should be checked
-  parameters_R = c(0.0, # 0.016906, # microbe_turnover (Preveen, 2013)
+  parameters_R = c(0.016906, # microbe_turnover (Preveen, 2013)
                    (0.001*2875)/1881, # NC_in_root_opt (Heimisaari, 1995)
                    0.025, # NC_fungal_opt (Meyer, 2010)
                    1/28.73, # NC_microbe_opt (Heinonsalo, 2015)
                    0.5, # percentage_C_biomass (CASSIA)
                    # fungal
-                   0.3, 0.3, 0.3, # N_limits: NH4, NO3, Norg
-                   50, 50, 50, # N_k: NH4, NO3, Norg
-                   0.2, 0.2, 0.2, # SWC_limits: NH4, NO3, Norg
+                   60, 40, 0.3, # N_limits: NH4, NO3, Norg
+                   5, 5, 5, # N_k: NH4, NO3, Norg
+                   0.3, 0.3, 0.3, # SWC_limits: NH4, NO3, Norg
                    # plant
-                   0.3, 0.3, 0.3, # N_limits: NH4, NO3, Norg
-                   50, 50, 50, # N_k: NH4, NO3, Norg
-                   0.2, 0.2, 0.2, # SWC_limit: NH4, NO3, Norg
+                   60, 40, 0.3, # N_limits: NH4, NO3, Norg
+                   5, 5, 5, # N_k: NH4, NO3, Norg
+                   0.3, 0.3, 0.3, # SWC_limit: NH4, NO3, Norg
                    # microbes
-                   0.03, 0.03, 0.03, # N_limits: NH4, NO3, Norg
-                   50, 50, 50, # N_k: NH4, NO3, Norg
-                   0.02, 0.02, 0.02, # SWC_limit: NH4, NO3, Norg
-                   0.3, 50, 0.2, # C limits
+                   60, 40, 0.3, # N_limits: NH4, NO3, Norg
+                   5, 5, 5, # N_k: NH4, NO3, Norg
+                   0.3, 0.3, 0.3, # SWC_limit: NH4, NO3, Norg
+                   60, 40, 0.3, # C limits
                    10, # NH4_on_NO3
                    0.9, # optimal_root_fungal_biomass_ratio (TODO: Heinonsalo?)
-                   1/625, # turnover_mantle, Meyer, 2010
-                   1/50, # turnover_ERM, Meyer 2010
-                   1/365, # turnover_roots, Meyer, 2010
-                   1/625, # turnover_roots_mycorrhized Meyer, 2010
+                   # TODO: 0.5 times just so I can get some good graphs for the presentation! Should be parametised
+                   0, # 1/625, # turnover_mantle, Meyer, 2010
+                   0, # 1/50, # turnover_ERM, Meyer 2010
+                   0, # 1/365, # turnover_roots, Meyer, 2010
+                   0, # 1/625, # turnover_roots_mycorrhized Meyer, 2010
                    0.2, # turnover_fungal TODO: do I need this if the turnover is in Meyer?
                    1, # mantle_mass
                    1, # ERM_mass
-                   0.03, # growth_C (Franklin, 2017)
-                   0.03, # growth_N (TODO)
+                   0.2, # growth_C (Franklin, 2017) TODO: was os 0.3 or 0.03?
+                   0.9, # growth_N (TODO)
                    1, # C_value_param_myco
                    1, # N_value_param_myco
                    1, # C_value_param_plant
@@ -416,7 +421,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     }
 
     par(mfrow = c(3, 3))
-    for (i in 9:length(names(CASSIA_new_output$Soil))) {
+    for (i in c(9:12, 18:20)) {
       if (sum(is.na(CASSIA_new_output$Soil[,i])) < nrow(CASSIA_new_output$Soil)) {
         ylim = c(min(CASSIA_new_output$Soil[,i], na.rm = T), max(CASSIA_new_output$Soil[,i], na.rm = T))
       } else {
@@ -439,22 +444,32 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     }
 
 
-    par(mfrow = c(3, 2))
+    par(mfrow = c(3, 4))
     if (sum(is.na(CASSIA_new_output$Fungal$uptake_NH4_fungal)) < nrow(CASSIA_new_output$Fungal)) {
       ylim_Fungal = c(min(CASSIA_new_output$Fungal$uptake_NH4_fungal, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NH4_fungal, na.rm = T))
       ylim_Plant = c(min(CASSIA_new_output$Fungal$uptake_NH4_plant, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NH4_plant, na.rm = T))
+      ylim_Microbes = c(min(CASSIA_new_output$Preles$uptake_NH4_microbial, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NH4_microbial, na.rm = T))
     } else {
       ylim_Fungal = c(0, 1)
       ylim_Plant = c(0, 1)
+      ylim_Microbes = c(0, 1)
     }
 
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal",
+    plot(weather_original$TSB, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal",
          ylab = "", xlab = "Temperature", ylim = ylim_Fungal)
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant",
+    plot(weather_original$TSB, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$TSB, CASSIA_new_output$Preles$uptake_NH4_microbial_FOM, main = "uptake_NH4_microbes_FOM",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$TSB, CASSIA_new_output$Preles$uptake_NH4_microbial_SOM, main = "uptake_NH4_microbes_SOM",
          ylab = "", xlab = "Temperature", ylim = ylim_Plant)
     plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_fungal, main = "uptake_NH4_fungal",
          ylab = "", xlab = "Soil Moisture", ylim = ylim_Fungal)
     plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NH4_plant, main = "uptake_NH4_plant",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Preles$uptake_NH4_microbial_FOM, main = "uptake_NH4_microbes_FOM",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Preles$uptake_NH4_microbial_SOM, main = "uptake_NH4_microbes_SOM",
          ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
     if (sum(is.na(CASSIA_new_output$Soil$NH4)) < nrow(CASSIA_new_output$Soil)) {
       NH4_range = CASSIA_new_output$Soil$NH4
@@ -468,23 +483,39 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
          ylab = "", xlab = "NH4", ylim = ylim_Plant)
     points(oyewole_2015_calibration_data$concentration[oyewole_2015_calibration_data$n_comp == "nh4"],
            oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "nh4"], pch = 17, col = "blue")
+    plot(NH4_range, CASSIA_new_output$Preles$uptake_NH4_microbial_FOM, main = "uptake_NH4_microbes_FOM",
+         ylab = "", xlab = "NH4", ylim = ylim_Plant)
+    plot(NH4_range, CASSIA_new_output$Preles$uptake_NH4_microbial_SOM, main = "uptake_NH4_microbes_SOM",
+         ylab = "", xlab = "NH4", ylim = ylim_Plant)
 
     # TODO: check this paper, was it tree or fungal uptake?
     if (sum(is.na(CASSIA_new_output$Fungal$uptake_NO3_fungal)) < nrow(CASSIA_new_output$Fungal)) {
       ylim_Fungal = c(min(CASSIA_new_output$Fungal$uptake_NO3_fungal, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NO3_fungal, na.rm = T))
       ylim_Plant = c(min(CASSIA_new_output$Fungal$uptake_NO3_plant, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NO3_plant, na.rm = T))
+      ylim_Microbes = c(min(CASSIA_new_output$Preles$uptake_NO3_microbial, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NO3_microbial, na.rm = T))
     } else {
       ylim_Fungal = c(0, 1)
       ylim_Plant = c(0, 1)
+      ylim_Microbes = c(0, 1)
     }
 
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal",
+    # TODO: plots
+
+    plot(weather_original$TSB, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal",
          ylab = "", xlab = "Temperature", ylim = ylim_Fungal)
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant",
+    plot(weather_original$TSB, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$TSB, CASSIA_new_output$Preles$uptake_NO3_microbial_FOM, main = "uptake_NO3_microbes_FOM",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$TSB, CASSIA_new_output$Preles$uptake_NO3_microbial_SOM, main = "uptake_NO3_microbes_SOM",
          ylab = "", xlab = "Temperature", ylim = ylim_Plant)
     plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal",
          ylab = "", xlab = "Soil Moisture", ylim = ylim_Fungal)
     plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_NO3_plant, main = "uptake_NO3_plant",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Preles$uptake_NO3_microbial_FOM, main = "uptake_NO3_microbes_FOM",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Preles$uptake_NO3_microbial_SOM, main = "uptake_NO3_microbes_SOM",
          ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
     if (sum(is.na(CASSIA_new_output$Soil$NO3)) < nrow(CASSIA_new_output$Soil)) {
       NO3_range = CASSIA_new_output$Soil$NO3
@@ -497,25 +528,39 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
          ylab = "", xlab = "NO3", ylim = ylim_Plant)
     points(oyewole_2015_calibration_data$concentration[oyewole_2015_calibration_data$n_comp == "no3"],
            oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "no3"], pch = 17, col = "blue")
+    plot(NO3_range, CASSIA_new_output$Preles$uptake_NO3_microbial_FOM, main = "uptake_NO3_microbes_FOM",
+         ylab = "", xlab = "NO3", ylim = ylim_Plant)
+    plot(NO3_range, CASSIA_new_output$Preles$uptake_NO3_microbial_SOM, main = "uptake_NO3_microbes_SOM",
+         ylab = "", xlab = "NO3", ylim = ylim_Plant)
 
     if (sum(is.na(CASSIA_new_output$Fungal$uptake_Norg_fungal)) < nrow(CASSIA_new_output$Fungal)) {
       ylim_Fungal = c(min(CASSIA_new_output$Fungal$uptake_Norg_fungal, na.rm = T), max(CASSIA_new_output$Fungal$uptake_Norg_fungal, na.rm = T))
       ylim_Plant = c(min(CASSIA_new_output$Fungal$uptake_Norg_plant, na.rm = T), max(CASSIA_new_output$Fungal$uptake_Norg_plant, na.rm = T))
+      ylim_Microbes = c(min(CASSIA_new_output$Preles$uptake_Norg_microbial, na.rm = T), max(CASSIA_new_output$Fungal$uptake_Norg_microbial, na.rm = T))
     } else {
       ylim_Fungal = c(0, 1)
       ylim_Plant = c(0, 1)
+      ylim_Microbes = c(0, 1)
     }
 
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal",
+    plot(weather_original$TSB, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal",
          ylab = "", xlab = "Temperature", ylim = ylim_Fungal)
-    plot(weather_original$T, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant",
+    plot(weather_original$TSB, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$TSB, CASSIA_new_output$Preles$uptake_Norg_microbial_FOM, main = "uptake_Norg_microbes_FOM",
+         ylab = "", xlab = "Temperature", ylim = ylim_Plant)
+    plot(weather_original$TSB, CASSIA_new_output$Preles$uptake_Norg_microbial_SOM, main = "uptake_Norg_microbes_SOM",
          ylab = "", xlab = "Temperature", ylim = ylim_Plant)
     plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_fungal, main = "uptake_Norg_fungal",
          ylab = "", xlab = "Soil Moisture", ylim = ylim_Fungal)
     plot(weather_original$MB, CASSIA_new_output$Fungal$uptake_Norg_plant, main = "uptake_Norg_plant",
          ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
-    if (sum(is.na(CASSIA_new_output$Soil$SOM_Norg_used)) < nrow(CASSIA_new_output$Soil)) {
-      Norg_range = CASSIA_new_output$Soil$SOM_Norg_used
+    plot(weather_original$MB, CASSIA_new_output$Preles$uptake_Norg_microbial_FOM, main = "uptake_Norg_microbes_FOM",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    plot(weather_original$MB, CASSIA_new_output$Preles$uptake_Norg_microbial_SOM, main = "uptake_Norg_microbes_SOM",
+         ylab = "", xlab = "Soil Moisture", ylim = ylim_Plant)
+    if (sum(is.na(CASSIA_new_output$Soil$N_FOM)) < nrow(CASSIA_new_output$Soil)) {
+      Norg_range = CASSIA_new_output$Soil$N_FOM
     } else {
       Norg_range = seq(0, 1, length.out =  nrow(CASSIA_new_output$Soil))
     }
@@ -527,9 +572,11 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
            oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "arginine"], pch = 17, col = "blue")
     points(oyewole_2015_calibration_data$concentration[oyewole_2015_calibration_data$n_comp == "glycine"],
            oyewole_2015_calibration_data$control[oyewole_2015_calibration_data$n_comp == "glycine"], pch = 17, col = "blue")
-
+    plot(NO3_range, CASSIA_new_output$Preles$uptake_Norg_microbial_FOM, main = "uptake_Norg_microbes_FOM",
+         ylab = "", xlab = "Norg", ylim = ylim_Plant)
+    plot(NO3_range, CASSIA_new_output$Preles$uptake_Norg_microbial_SOM, main = "uptake_Norg_microbes_SOM",
+         ylab = "", xlab = "Norg", ylim = ylim_Plant)
   }
 
   return(CASSIA_new_output)
 }
-
