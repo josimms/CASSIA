@@ -160,6 +160,14 @@ struct SYMPHONY_output {
   double N_decompose_SOM;
   double SOM_Norg_used;
   double Microbe_respiration;
+  double NH4_Uptake_Microbe_FOM;
+  double NO3_Uptake_Microbe_FOM;
+  double Norg_Uptake_Microbe_FOM;
+  double C_Uptake_Microbe_FOM;
+  double NH4_Uptake_Microbe_SOM;
+  double NO3_Uptake_Microbe_SOM;
+  double Norg_Uptake_Microbe_SOM;
+  double C_Uptake_Microbe_SOM;
 };
 
 struct SYMPHONY_vector {
@@ -184,6 +192,14 @@ struct SYMPHONY_vector {
   std::vector<double> N_decompose_SOM;
   std::vector<double> SOM_Norg_used;
   std::vector<double> Microbe_respiration;
+  std::vector<double> NH4_Uptake_Microbe_FOM;
+  std::vector<double> NO3_Uptake_Microbe_FOM;
+  std::vector<double> Norg_Uptake_Microbe_FOM;
+  std::vector<double> C_Uptake_Microbe_FOM;
+  std::vector<double> NH4_Uptake_Microbe_SOM;
+  std::vector<double> NO3_Uptake_Microbe_SOM;
+  std::vector<double> Norg_Uptake_Microbe_SOM;
+  std::vector<double> C_Uptake_Microbe_SOM;
 };
 
 struct MYCOFON_function_out {
@@ -322,7 +338,8 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           std::vector<double> N_limits_R,
                           std::vector<double> N_k_R,
                           std::vector<double> SWC_k_R,
-                          bool SOM_decomposers);
+                          bool SOM_decomposers,
+                          double FOM_Norg);
 
 #endif
 
@@ -390,6 +407,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
 MYCOFON_function_out mycofon_balence(double C_biomass,
                                      double C_roots,
                                      double C_fungal,
+                                     double C_ecto,
                                      double C_roots_NonStruct,
                                      double N_roots_NonStruct,
                                      double C_fungal_NonStruct,
@@ -438,7 +456,10 @@ Rcpp::List plant_decision(double C_roots_NonStruct,
 
 Rcpp::List myco_growth(double C_fungal,
                        double N_fungal,
+                       double C_fungal_biomass,
+                       double C_ecto,
                        double a,
-                       double b);
+                       double b,
+                       double CN_ratio);
 
 #endif

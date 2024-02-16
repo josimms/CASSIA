@@ -15,6 +15,7 @@ respiration_parameters respiration_vector_to_struct(std::vector<double> input) {
 MYCOFON_function_out mycofon_balence(double C_biomass,
                                      double C_roots,
                                      double C_fungal,
+                                     double C_ecto,
                                      double C_roots_NonStruct,
                                      double N_roots_NonStruct,
                                      double C_fungal_NonStruct,
@@ -25,7 +26,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
                                      double NO3,
                                      double FOM_Norg,
                                      double T,
-                                     double Tsb,
+                                     double Tmb,
                                      double SWC,
                                      bool mycofon_stratergy) {
 
@@ -105,7 +106,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
 
   //dN^f/dt
 
-  Rcpp::List uptake_fungal = Fungal_N_Uptake(T, // TODO: which temperature should this be?
+  Rcpp::List uptake_fungal = Fungal_N_Uptake(Tmb,
                                              SWC,
                                              NH4,
                                              NO3,
@@ -126,7 +127,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   // TODO: now the NH4, NO3 and FOM_Norg has changed, surely the pools need to be updated
 
   //dN^r/dt
-  Rcpp::List uptake_plant = Plant_N_Uptake(T, // TODO: which temperature should this be?
+  Rcpp::List uptake_plant = Plant_N_Uptake(Tmb,
                                            SWC,
                                            m,
                                            NH4,
@@ -151,7 +152,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
    * BALANCES OF THE STATE VARIABLES
    */
 
-  double to_CASSIA = std::max(0.7*N_roots_NonStruct, 0.0);
+  double to_CASSIA = 0.02*N_roots_NonStruct; // TODO: this should link to the litter model!
 
   /*
    * Biomass mycorrhiza
@@ -160,22 +161,22 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   // CALCULATE THE PARAMETERS
   // Nitrogen!
 
-  double myco_growth_C = myco_growth(C_fungal_NonStruct, N_fungal_NonStruct, parameters_in.growth_C, parameters_in.growth_N)[1];
-  double myco_growth_N = myco_growth(C_fungal_NonStruct, N_fungal_NonStruct, parameters_in.growth_C, parameters_in.growth_N)[2];
+  double myco_growth_C = myco_growth(C_fungal_NonStruct, N_fungal_NonStruct, C_fungal, C_ecto, parameters_in.growth_C, parameters_in.growth_N, parameters_in.NC_fungal_opt)[1];
+  double myco_growth_N = myco_growth(C_fungal_NonStruct, N_fungal_NonStruct, C_fungal, C_ecto, parameters_in.growth_C, parameters_in.growth_N, parameters_in.NC_fungal_opt)[2];
 
   C_fungal = C_fungal +
     myco_growth_C -
     parameters_in.turnover_mantle*C_fungal*0.5 - parameters_in.turnover_ERM*C_fungal*0.5 -
-    0.2*C_fungal; // TODO: should have a better logic for respiration
+    0.00958*C_fungal; // TODO: should have a better logic for respiration
 
   /*
    * Non structural elements!
    */
-  C_fungal_NonStruct = C_fungal_NonStruct + C_given - myco_growth_C;
+  C_fungal_NonStruct = C_fungal_NonStruct - myco_growth_C + C_given;
 
   N_fungal_NonStruct = N_fungal_NonStruct + uptake_fungal_all - myco_growth_N - N_given;
 
-  N_roots_NonStruct = N_roots_NonStruct + N_given + uptake_plant_all - to_CASSIA; // TODO: should any go to CASSIA if I am only considering one pool in the plant?
+  N_roots_NonStruct = N_roots_NonStruct + N_given + uptake_plant_all - to_CASSIA;
 
    // the to_CASSIA term should be thought to include both the nitrogen that goes into growth
    // as well as the non structural nitrogen that goes to the rest of the plant
@@ -216,27 +217,29 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
 
 // [[Rcpp::export]]
 Rcpp::List mycofon_balence(double C_biomass,
-                                     double C_roots,
-                                     double C_fungal,
-                                     double C_roots_NonStruct,
-                                     double N_roots_NonStruct,
-                                     double C_fungal_NonStruct,
-                                     double N_fungal_NonStruct,
-                                     double max_C_from_CASSIA,
-                                     std::vector<double> parameters_R,
-                                     double NH4,
-                                     double NO3,
-                                     double FOM_Norg,
-                                     double T,
-                                     double Tsb,
-                                     double SWC,
-                                     bool mycofon_stratergy) {
+                           double C_roots,
+                           double C_fungal,
+                           double C_ecto,
+                           double C_roots_NonStruct,
+                           double N_roots_NonStruct,
+                           double C_fungal_NonStruct,
+                           double N_fungal_NonStruct,
+                           double max_C_from_CASSIA,
+                           std::vector<double> parameters_R,
+                           double NH4,
+                           double NO3,
+                           double FOM_Norg,
+                           double T,
+                           double Tmb,
+                           double SWC,
+                           bool mycofon_stratergy) {
 
   parameters_soil parameters_in = parameters_initalise_test(parameters_R);
 
   MYCOFON_function_out MYCOFON_output = mycofon_balence(C_biomass,
                                                         C_roots,
                                                         C_fungal,
+                                                        C_ecto,
                                                         C_roots_NonStruct,
                                                         N_roots_NonStruct,
                                                         C_fungal_NonStruct,
@@ -247,7 +250,7 @@ Rcpp::List mycofon_balence(double C_biomass,
                                                         NO3,
                                                         FOM_Norg,
                                                         T,
-                                                        Tsb,
+                                                        Tmb,
                                                         SWC,
                                                         mycofon_stratergy);
 
