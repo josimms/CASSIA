@@ -73,6 +73,7 @@ struct growth_out {
   double height;
   double wall;
   double roots;
+  double ecto;
   double bud;
   double use;
   double release;

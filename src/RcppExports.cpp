@@ -252,28 +252,32 @@ BEGIN_RCPP
 END_RCPP
 }
 // myco_growth
-Rcpp::List myco_growth(double C_fungal, double N_fungal, double a, double b);
-RcppExport SEXP _CASSIA_myco_growth(SEXP C_fungalSEXP, SEXP N_fungalSEXP, SEXP aSEXP, SEXP bSEXP) {
+Rcpp::List myco_growth(double C_fungal, double N_fungal, double C_fungal_biomass, double C_ecto, double a, double b, double CN_ratio);
+RcppExport SEXP _CASSIA_myco_growth(SEXP C_fungalSEXP, SEXP N_fungalSEXP, SEXP C_fungal_biomassSEXP, SEXP C_ectoSEXP, SEXP aSEXP, SEXP bSEXP, SEXP CN_ratioSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type C_fungal(C_fungalSEXP);
     Rcpp::traits::input_parameter< double >::type N_fungal(N_fungalSEXP);
+    Rcpp::traits::input_parameter< double >::type C_fungal_biomass(C_fungal_biomassSEXP);
+    Rcpp::traits::input_parameter< double >::type C_ecto(C_ectoSEXP);
     Rcpp::traits::input_parameter< double >::type a(aSEXP);
     Rcpp::traits::input_parameter< double >::type b(bSEXP);
-    rcpp_result_gen = Rcpp::wrap(myco_growth(C_fungal, N_fungal, a, b));
+    Rcpp::traits::input_parameter< double >::type CN_ratio(CN_ratioSEXP);
+    rcpp_result_gen = Rcpp::wrap(myco_growth(C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio));
     return rcpp_result_gen;
 END_RCPP
 }
 // mycofon_balence
-Rcpp::List mycofon_balence(double C_biomass, double C_roots, double C_fungal, double C_roots_NonStruct, double N_roots_NonStruct, double C_fungal_NonStruct, double N_fungal_NonStruct, double max_C_from_CASSIA, std::vector<double> parameters_R, double NH4, double NO3, double FOM_Norg, double T, double Tsb, double SWC, bool mycofon_stratergy);
-RcppExport SEXP _CASSIA_mycofon_balence(SEXP C_biomassSEXP, SEXP C_rootsSEXP, SEXP C_fungalSEXP, SEXP C_roots_NonStructSEXP, SEXP N_roots_NonStructSEXP, SEXP C_fungal_NonStructSEXP, SEXP N_fungal_NonStructSEXP, SEXP max_C_from_CASSIASEXP, SEXP parameters_RSEXP, SEXP NH4SEXP, SEXP NO3SEXP, SEXP FOM_NorgSEXP, SEXP TSEXP, SEXP TsbSEXP, SEXP SWCSEXP, SEXP mycofon_stratergySEXP) {
+Rcpp::List mycofon_balence(double C_biomass, double C_roots, double C_fungal, double C_ecto, double C_roots_NonStruct, double N_roots_NonStruct, double C_fungal_NonStruct, double N_fungal_NonStruct, double max_C_from_CASSIA, std::vector<double> parameters_R, double NH4, double NO3, double FOM_Norg, double T, double Tmb, double SWC, bool mycofon_stratergy);
+RcppExport SEXP _CASSIA_mycofon_balence(SEXP C_biomassSEXP, SEXP C_rootsSEXP, SEXP C_fungalSEXP, SEXP C_ectoSEXP, SEXP C_roots_NonStructSEXP, SEXP N_roots_NonStructSEXP, SEXP C_fungal_NonStructSEXP, SEXP N_fungal_NonStructSEXP, SEXP max_C_from_CASSIASEXP, SEXP parameters_RSEXP, SEXP NH4SEXP, SEXP NO3SEXP, SEXP FOM_NorgSEXP, SEXP TSEXP, SEXP TmbSEXP, SEXP SWCSEXP, SEXP mycofon_stratergySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type C_biomass(C_biomassSEXP);
     Rcpp::traits::input_parameter< double >::type C_roots(C_rootsSEXP);
     Rcpp::traits::input_parameter< double >::type C_fungal(C_fungalSEXP);
+    Rcpp::traits::input_parameter< double >::type C_ecto(C_ectoSEXP);
     Rcpp::traits::input_parameter< double >::type C_roots_NonStruct(C_roots_NonStructSEXP);
     Rcpp::traits::input_parameter< double >::type N_roots_NonStruct(N_roots_NonStructSEXP);
     Rcpp::traits::input_parameter< double >::type C_fungal_NonStruct(C_fungal_NonStructSEXP);
@@ -284,10 +288,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type NO3(NO3SEXP);
     Rcpp::traits::input_parameter< double >::type FOM_Norg(FOM_NorgSEXP);
     Rcpp::traits::input_parameter< double >::type T(TSEXP);
-    Rcpp::traits::input_parameter< double >::type Tsb(TsbSEXP);
+    Rcpp::traits::input_parameter< double >::type Tmb(TmbSEXP);
     Rcpp::traits::input_parameter< double >::type SWC(SWCSEXP);
     Rcpp::traits::input_parameter< bool >::type mycofon_stratergy(mycofon_stratergySEXP);
-    rcpp_result_gen = Rcpp::wrap(mycofon_balence(C_biomass, C_roots, C_fungal, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tsb, SWC, mycofon_stratergy));
+    rcpp_result_gen = Rcpp::wrap(mycofon_balence(C_biomass, C_roots, C_fungal, C_ecto, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tmb, SWC, mycofon_stratergy));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -364,8 +368,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // Microbe_Uptake
-Rcpp::List Microbe_Uptake(double C_microbe, double N_micorbe, double C_soil_compartment, double NC_microbe_opt, double NH4_avaliable, double NO3_avaliable, double Norg_avaliable, double T, double SWC, double NC_Litter, double imobilisation, double assimilation, std::vector<double> N_limits_R, std::vector<double> N_k_R, std::vector<double> SWC_k_R, bool SOM_decomposers);
-RcppExport SEXP _CASSIA_Microbe_Uptake(SEXP C_microbeSEXP, SEXP N_micorbeSEXP, SEXP C_soil_compartmentSEXP, SEXP NC_microbe_optSEXP, SEXP NH4_avaliableSEXP, SEXP NO3_avaliableSEXP, SEXP Norg_avaliableSEXP, SEXP TSEXP, SEXP SWCSEXP, SEXP NC_LitterSEXP, SEXP imobilisationSEXP, SEXP assimilationSEXP, SEXP N_limits_RSEXP, SEXP N_k_RSEXP, SEXP SWC_k_RSEXP, SEXP SOM_decomposersSEXP) {
+Rcpp::List Microbe_Uptake(double C_microbe, double N_micorbe, double C_soil_compartment, double NC_microbe_opt, double NH4_avaliable, double NO3_avaliable, double Norg_avaliable, double T, double SWC, double NC_Litter, double imobilisation, double assimilation, std::vector<double> N_limits_R, std::vector<double> N_k_R, std::vector<double> SWC_k_R, bool SOM_decomposers, double FOM_Norg);
+RcppExport SEXP _CASSIA_Microbe_Uptake(SEXP C_microbeSEXP, SEXP N_micorbeSEXP, SEXP C_soil_compartmentSEXP, SEXP NC_microbe_optSEXP, SEXP NH4_avaliableSEXP, SEXP NO3_avaliableSEXP, SEXP Norg_avaliableSEXP, SEXP TSEXP, SEXP SWCSEXP, SEXP NC_LitterSEXP, SEXP imobilisationSEXP, SEXP assimilationSEXP, SEXP N_limits_RSEXP, SEXP N_k_RSEXP, SEXP SWC_k_RSEXP, SEXP SOM_decomposersSEXP, SEXP FOM_NorgSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -385,7 +389,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::vector<double> >::type N_k_R(N_k_RSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type SWC_k_R(SWC_k_RSEXP);
     Rcpp::traits::input_parameter< bool >::type SOM_decomposers(SOM_decomposersSEXP);
-    rcpp_result_gen = Rcpp::wrap(Microbe_Uptake(C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers));
+    Rcpp::traits::input_parameter< double >::type FOM_Norg(FOM_NorgSEXP);
+    rcpp_result_gen = Rcpp::wrap(Microbe_Uptake(C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -486,13 +491,13 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_plant_decision", (DL_FUNC) &_CASSIA_plant_decision, 4},
     {"_CASSIA_myco_decision", (DL_FUNC) &_CASSIA_myco_decision, 4},
     {"_CASSIA_growth_wrapper", (DL_FUNC) &_CASSIA_growth_wrapper, 28},
-    {"_CASSIA_myco_growth", (DL_FUNC) &_CASSIA_myco_growth, 4},
-    {"_CASSIA_mycofon_balence", (DL_FUNC) &_CASSIA_mycofon_balence, 16},
+    {"_CASSIA_myco_growth", (DL_FUNC) &_CASSIA_myco_growth, 7},
+    {"_CASSIA_mycofon_balence", (DL_FUNC) &_CASSIA_mycofon_balence, 17},
     {"_CASSIA_uptake_N", (DL_FUNC) &_CASSIA_uptake_N, 6},
     {"_CASSIA_uptake_C", (DL_FUNC) &_CASSIA_uptake_C, 6},
     {"_CASSIA_Plant_N_Uptake", (DL_FUNC) &_CASSIA_Plant_N_Uptake, 11},
     {"_CASSIA_Fungal_N_Uptake", (DL_FUNC) &_CASSIA_Fungal_N_Uptake, 9},
-    {"_CASSIA_Microbe_Uptake", (DL_FUNC) &_CASSIA_Microbe_Uptake, 16},
+    {"_CASSIA_Microbe_Uptake", (DL_FUNC) &_CASSIA_Microbe_Uptake, 17},
     {"_CASSIA_preles_test_cpp", (DL_FUNC) &_CASSIA_preles_test_cpp, 5},
     {"_CASSIA_repola_test_cpp", (DL_FUNC) &_CASSIA_repola_test_cpp, 2},
     {"_CASSIA_respiration_test_cpp", (DL_FUNC) &_CASSIA_respiration_test_cpp, 12},
