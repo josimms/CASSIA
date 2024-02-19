@@ -7,6 +7,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double C_FOM_roots_old,
                                             double C_FOM_mantle_old,
                                             double C_FOM_ERM_old,
+                                            double C_Exudes,
                                             double C_SOM_old,
                                             double N_SOM_old,
                                             double C_decompose_FOM,
@@ -18,6 +19,8 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double Litter_roots,
                                             double Litter_mantle,
                                             double Litter_ERM,
+                                            double exudes_plant,
+                                            double exudes_fungal,
                                             double imobilisation,
                                             double assimilation,
                                             double NH4_old,
@@ -119,6 +122,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   C_FOM_roots = C_FOM_roots - (C_FOM_roots/C_FOM)*total_decomposition;                  // C kg
   C_FOM_mantle = C_FOM_mantle - (C_FOM_mantle/C_FOM)*total_decomposition;               // C kg
   C_FOM_ERM = C_FOM_ERM - (C_FOM_ERM/C_FOM)*total_decomposition;                        // C kg
+  C_Exudes = C_Exudes + exudes_plant + exudes_fungal;
 
   // STEP 2: Update the SOM mass
   double C_SOM = C_SOM_old - C_decompose_SOM*SOM_after_microbe_activity.C + microbe_turnover*(C_decompose_FOM + C_decompose_SOM);   // C kg
@@ -142,6 +146,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   out.C_FOM_needles = C_FOM_needles;              // C kg
   out.C_FOM_roots = C_FOM_roots;                  // C kg
   out.C_FOM_woody = C_FOM_woody;                  // C kg
+  out.C_exudes = C_Exudes;                        // C kg
   out.C_SOM = C_SOM;                              // C kg
   out.N_decompose_FOM = N_decompose_FOM;          // C kg
   out.N_decompose_SOM = N_decompose_SOM;          // C kg

@@ -147,6 +147,7 @@ struct SYMPHONY_output {
   double C_FOM_roots;
   double C_FOM_mantle;
   double C_FOM_ERM;
+  double C_exudes;
   double C_SOM;
   double N_SOM;
   double NC_needles;
@@ -179,6 +180,7 @@ struct SYMPHONY_vector {
   std::vector<double> C_FOM_roots;
   std::vector<double> C_FOM_mantle;
   std::vector<double> C_FOM_ERM;
+  std::vector<double> C_exudes;
   std::vector<double> C_SOM;
   std::vector<double> N_SOM;
   std::vector<double> NC_needles;
@@ -366,6 +368,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double C_FOM_roots_old,
                                             double C_FOM_mantle_old,
                                             double C_FOM_ERM_old,
+                                            double C_Exudes,
                                             double C_SOM_old,
                                             double N_SOM_old,
                                             double C_decompose_FOM,
@@ -377,6 +380,8 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double Litter_roots,
                                             double Litter_mantle,
                                             double Litter_ERM,
+                                            double exudes_plant,
+                                            double exudes_fungal,
                                             double imobilisation,
                                             double assimilation,
                                             double NH4_old,

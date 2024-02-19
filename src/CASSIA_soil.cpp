@@ -484,6 +484,7 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_values_for_next_iteration.C_FOM_roots = 10.0;
         soil_values_for_next_iteration.C_FOM_mantle = 10.0;
         soil_values_for_next_iteration.C_FOM_ERM = 10.0;
+        soil_values_for_next_iteration.C_exudes = 0;
         soil_values_for_next_iteration.C_SOM = 5.6;
         soil_values_for_next_iteration.N_SOM = 10.0;
         soil_values_for_next_iteration.C_decompose_FOM = 0.4;
@@ -512,6 +513,7 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_values_for_next_iteration.C_FOM_roots = soil_reset.C_FOM_roots;
         soil_values_for_next_iteration.C_FOM_mantle = soil_reset.C_FOM_mantle;
         soil_values_for_next_iteration.C_FOM_ERM = soil_reset.C_FOM_ERM;
+        soil_values_for_next_iteration.C_exudes = soil_reset.C_exudes;
         soil_values_for_next_iteration.C_SOM = soil_reset.C_SOM;
         soil_values_for_next_iteration.N_SOM = soil_reset.N_SOM;
         soil_values_for_next_iteration.C_decompose_FOM = soil_reset.C_decompose_FOM;
@@ -551,11 +553,18 @@ Rcpp::List CASSIA_soil(int start_year,
        * SOIL
        */
       SYMPHONY_output Soil_All = symphony_multiple_FOM_daily(TSoil_B[count], Soil_Moisture[count],
-                                                            soil_values_for_next_iteration.C_FOM_needles, soil_values_for_next_iteration.C_FOM_woody, soil_values_for_next_iteration.C_FOM_roots, soil_values_for_next_iteration.C_FOM_mantle, soil_values_for_next_iteration.C_FOM_ERM,
+                                                            soil_values_for_next_iteration.C_FOM_needles,
+                                                            soil_values_for_next_iteration.C_FOM_woody,
+                                                            soil_values_for_next_iteration.C_FOM_roots,
+                                                            soil_values_for_next_iteration.C_FOM_mantle,
+                                                            soil_values_for_next_iteration.C_FOM_ERM,
+                                                            soil_values_for_next_iteration.C_exudes,
                                                             soil_values_for_next_iteration.C_SOM, soil_values_for_next_iteration.N_SOM,
                                                             soil_values_for_next_iteration.C_decompose_FOM, soil_values_for_next_iteration.C_decompose_SOM,
                                                             soil_values_for_next_iteration.N_decompose_FOM, soil_values_for_next_iteration.N_decompose_SOM,
                                                             Litter_needles, Litter_woody, Litter_roots, Little_mantle, Litter_ERM,
+                                                            MYCOFON_for_next_iteration.exudes_fungal,
+                                                            MYCOFON_for_next_iteration.exudes_plant,
                                                             0.1, 0.1, // TODO: this!
                                                             soil_values_for_next_iteration.NH4, soil_values_for_next_iteration.NO3,
                                                             soil_values_for_next_iteration.NC_needles, soil_values_for_next_iteration.NC_woody,
@@ -637,6 +646,7 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_output.C_FOM_needles.push_back(Soil_All.C_FOM_needles);
         soil_output.C_FOM_roots.push_back(Soil_All.C_FOM_roots);
         soil_output.C_FOM_woody.push_back(Soil_All.C_FOM_woody);
+        soil_output.C_exudes.push_back(Soil_All.C_exudes);
         soil_output.C_SOM.push_back(Soil_All.C_SOM);
         soil_output.N_decompose_FOM.push_back(Soil_All.N_decompose_FOM);
         soil_output.N_decompose_SOM.push_back(Soil_All.N_decompose_SOM);
@@ -804,6 +814,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                 Rcpp::_["C_FOM_needles"] = soil_output.C_FOM_needles,
                                                 Rcpp::_["C_FOM_roots"] = soil_output.C_FOM_roots,
                                                 Rcpp::_["C_FOM_woody"] = soil_output.C_FOM_woody,
+                                                Rcpp::_["C_exudes"] = soil_output.C_exudes,
                                                 Rcpp::_["C_SOM"] = soil_output.C_SOM,
                                                 Rcpp::_["N_decompose_FOM"] = soil_output.N_decompose_FOM,
                                                 Rcpp::_["N_decompose_SOM"] = soil_output.N_decompose_SOM,
@@ -815,8 +826,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                 Rcpp::_["NC_roots"] = soil_output.NC_roots,
                                                 Rcpp::_["NC_woody"] = soil_output.NC_woody,
                                                 Rcpp::_["NH4"] = soil_output.NH4,
-                                                Rcpp::_["NO3"] = soil_output.NO3,
-                                                Rcpp::_["SOM_Norg_used"] = soil_output.SOM_Norg_used);
+                                                Rcpp::_["NO3"] = soil_output.NO3);
   Rcpp::DataFrame df4 = Rcpp::DataFrame::create(Rcpp::_["C_biomass"] = MYCOFON_output.C_biomass,
                                                 Rcpp::_["C_fungal"] = MYCOFON_output.C_fungal,
                                                 Rcpp::_["C_roots_NonStruct"] = MYCOFON_output.C_roots_NonStruct,
