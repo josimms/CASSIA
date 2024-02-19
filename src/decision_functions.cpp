@@ -4,7 +4,8 @@
 Rcpp::List plant_decision(double C_roots_NonStruct,
                           double N_roots_NonStruct,
                           double C_fungal_NonStruct,
-                          double optimal_root_funga_biomass_ratio) {
+                          double optimal_root_funga_biomass_ratio,
+                          double m) {
 
     /*
      * Carbon Allocation as in Mycofon!
@@ -38,7 +39,8 @@ Rcpp::List plant_decision(double C_roots_NonStruct,
     }
 
     double temp = std::min(allomax * C_roots_NonStruct, allo * (C_roots_NonStruct * optimal_root_funga_biomass_ratio) - C_fungal_NonStruct);
-    double C_allo = std::max(temp, 0.0);
+    double C_allo = std::max(m*temp, 0.0);
+    double C_e = std::max((1-m)*temp, 0.0);
 
     /*
      *  Carbon Allocation in Franklin 2014
@@ -48,12 +50,15 @@ Rcpp::List plant_decision(double C_roots_NonStruct,
      *  C_f = Photosynthesis - G_p / y_p - turnover
      */
 
-    double C_f = std::max(C_roots_NonStruct, 0.0); // Value from CASSIA
+    double C_f = std::max(m*C_roots_NonStruct, 0.0); // Value from CASSIA
+    double C_e_f = std::max((1-m)*C_roots_NonStruct, 0.0); // Value from CASSIA
 
     return(Rcpp::List::create(Rcpp::_["Mycofon_demand"] = 1,
                               Rcpp::_["Mycofon_allocation"] = C_allo,
                               Rcpp::_["Franklin_demand"] = 1,
-                              Rcpp::_["Franklin_allocation"] = C_f));
+                              Rcpp::_["Franklin_allocation"] = C_f,
+                              Rcpp::_["Mycofon_exudes"] = C_e,
+                              Rcpp::_["Franklin_exudes"] = C_e_f));
 }
 
 

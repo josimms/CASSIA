@@ -186,8 +186,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // plant_decision
-Rcpp::List plant_decision(double C_roots_NonStruct, double N_roots_NonStruct, double C_fungal_NonStruct, double optimal_root_funga_biomass_ratio);
-RcppExport SEXP _CASSIA_plant_decision(SEXP C_roots_NonStructSEXP, SEXP N_roots_NonStructSEXP, SEXP C_fungal_NonStructSEXP, SEXP optimal_root_funga_biomass_ratioSEXP) {
+Rcpp::List plant_decision(double C_roots_NonStruct, double N_roots_NonStruct, double C_fungal_NonStruct, double optimal_root_funga_biomass_ratio, double m);
+RcppExport SEXP _CASSIA_plant_decision(SEXP C_roots_NonStructSEXP, SEXP N_roots_NonStructSEXP, SEXP C_fungal_NonStructSEXP, SEXP optimal_root_funga_biomass_ratioSEXP, SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -195,7 +195,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type N_roots_NonStruct(N_roots_NonStructSEXP);
     Rcpp::traits::input_parameter< double >::type C_fungal_NonStruct(C_fungal_NonStructSEXP);
     Rcpp::traits::input_parameter< double >::type optimal_root_funga_biomass_ratio(optimal_root_funga_biomass_ratioSEXP);
-    rcpp_result_gen = Rcpp::wrap(plant_decision(C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio));
+    Rcpp::traits::input_parameter< double >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(plant_decision(C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio, m));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -488,7 +489,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_CASSIA_sensitivity", (DL_FUNC) &_CASSIA_CASSIA_sensitivity, 35},
     {"_CASSIA_CASSIA_soil", (DL_FUNC) &_CASSIA_CASSIA_soil, 34},
     {"_CASSIA_xylogenesis_wrapper", (DL_FUNC) &_CASSIA_xylogenesis_wrapper, 19},
-    {"_CASSIA_plant_decision", (DL_FUNC) &_CASSIA_plant_decision, 4},
+    {"_CASSIA_plant_decision", (DL_FUNC) &_CASSIA_plant_decision, 5},
     {"_CASSIA_myco_decision", (DL_FUNC) &_CASSIA_myco_decision, 4},
     {"_CASSIA_growth_wrapper", (DL_FUNC) &_CASSIA_growth_wrapper, 28},
     {"_CASSIA_myco_growth", (DL_FUNC) &_CASSIA_myco_growth, 7},

@@ -226,6 +226,8 @@ struct MYCOFON_function_out {
   double Fungal_demand;
   double Plant_given;
   double Fungal_given;
+  double exudes_plant;
+  double exudes_fungal;
 };
 
 
@@ -448,7 +450,8 @@ Rcpp::List myco_decision(double N_fungal_NonStruct,
 Rcpp::List plant_decision(double C_roots_NonStruct,
                           double N_roots_NonStruct,
                           double C_fungal_NonStruct,
-                          double optimal_root_funga_biomass_ratio);
+                          double optimal_root_funga_biomass_ratio,
+                          double m);
 
 #endif
 

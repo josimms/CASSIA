@@ -21,8 +21,8 @@ xylogenesis_wrapper <- function(no_day, day, pCASSIA_parameters, pCASSIA_common,
     .Call(`_CASSIA_xylogenesis_wrapper`, no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw)
 }
 
-plant_decision <- function(C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio) {
-    .Call(`_CASSIA_plant_decision`, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio)
+plant_decision <- function(C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio, m) {
+    .Call(`_CASSIA_plant_decision`, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio, m)
 }
 
 myco_decision <- function(N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt) {

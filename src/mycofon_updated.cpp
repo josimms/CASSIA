@@ -79,23 +79,27 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   Rcpp::List plant_decision_out = plant_decision(C_roots_NonStruct,
                                                  N_roots_NonStruct,
                                                  C_fungal_NonStruct,
-                                                 parameters_in.optimal_root_fungal_biomass_ratio);
+                                                 parameters_in.optimal_root_fungal_biomass_ratio,
+                                                 m);
   // TODO: Think about this more! The last argument is the maximum value that is transferred from CASSIA
   // TODO: should this have biomass?
   double C_demand_mycofon = plant_decision_out[0];
   double C_given_mycofon = plant_decision_out[1];
   double C_demand_franklin = plant_decision_out[2];
   double C_given_franklin = plant_decision_out[3];
+  double C_exudes_mycofon = plant_decision_out[4];
+  double C_exudes_franklin = plant_decision_out[5];
 
 
-  double C_given;
-  double plant_demand;
+  double C_given, plant_demand, C_exudes_plant;
   if (mycofon_stratergy) {
     C_given = C_given_mycofon;
     plant_demand = C_demand_mycofon;
+    C_exudes_plant = C_exudes_mycofon;
   } else {
     C_given = C_given_franklin;
     plant_demand = C_demand_franklin;
+    C_exudes_plant = C_exudes_franklin;
   }
 
   /*
@@ -172,11 +176,15 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   /*
    * Non structural elements!
    */
-  C_fungal_NonStruct = C_fungal_NonStruct - myco_growth_C + C_given;
+  // TODO: need an exude percentage!
+  double exudes_fungal = 0.2*C_fungal_NonStruct;
+  C_fungal_NonStruct = C_fungal_NonStruct + C_given - myco_growth_C - exudes_fungal;
 
   N_fungal_NonStruct = N_fungal_NonStruct + uptake_fungal_all - myco_growth_N - N_given;
 
   N_roots_NonStruct = N_roots_NonStruct + N_given + uptake_plant_all - to_CASSIA;
+
+  C_roots_NonStruct = C_roots_NonStruct - C_exudes_plant;
 
    // the to_CASSIA term should be thought to include both the nitrogen that goes into growth
    // as well as the non structural nitrogen that goes to the rest of the plant
@@ -207,6 +215,8 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   out.Fungal_demand = fungal_demand;
   out.Plant_given = C_given;
   out.Fungal_given = N_given;
+  out.exudes_plant = C_exudes_plant;
+  out.exudes_fungal = exudes_fungal;
   return(out);
 
 }
