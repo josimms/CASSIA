@@ -1,13 +1,19 @@
 \name{uptake_N}
 \alias{Uptake_N}
 \alias{uptake_n}
+\alias{uptake_C}
+\alias{uptake_c}
+\alias{Uptake_c}
+\alias{Uptake_C}
 \docType{package}
 
 \title{
-  Uptake Organic
+  Uptake of Elements
 }
 \description{
-  The organic uptake of N is currently controlled by considering the maximum possible uptake and then this is downsclaed with functions, taking a value between 0 and 1. These functions take the same logic, but not the same form as the PRELES equations.
+  The uptake of N is currently controlled by considering the maximum possible uptake and then this is downsclaed with functions, taking a value between 0 and 1. These functions take the same logic, but not the same form as the PRELES equations.
+
+  Although this is concentred on the nitorgen uptake, the carbon uptake is exactly the same.
 
   Basic uptake
 
@@ -66,7 +72,7 @@ uptake_n(N,
 \author{
   Joanna Simms, joanna.x.simms@ad.helsinki.fi
 
-  Last updated 19.01.2024
+  Last updated 16.02.2024
 }
 \references{
   Näsholm, Torgny, Knut Kielland, and Ulrika Ganeteg. "Uptake of organic nitrogen by plants." New phytologist 182.1 (2009): 31-48.
