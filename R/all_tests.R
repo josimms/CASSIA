@@ -157,10 +157,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    10, # NH4_on_NO3
                    0.9, # optimal_root_fungal_biomass_ratio (TODO: Heinonsalo?)
                    # TODO: 0.5 times just so I can get some good graphs for the presentation! Should be parametised
-                   0, # 1/625, # turnover_mantle, Meyer, 2010
-                   0, # 1/50, # turnover_ERM, Meyer 2010
-                   0, # 1/365, # turnover_roots, Meyer, 2010
-                   0, # 1/625, # turnover_roots_mycorrhized Meyer, 2010
+                   1/625, # turnover_mantle, Meyer, 2010
+                   1/50, # turnover_ERM, Meyer 2010
+                   1/365, # turnover_roots, Meyer, 2010
+                   1/625, # turnover_roots_mycorrhized Meyer, 2010
                    0.2, # turnover_fungal TODO: do I need this if the turnover is in Meyer?
                    1, # mantle_mass
                    1, # ERM_mass
@@ -382,7 +382,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
     # Symphony
     par(mfrow = c(3, 3))
-    for (i in 1:8) {
+    for (i in 1:9) {
       if (sum(is.na(CASSIA_new_output$Soil[,i])) < nrow(CASSIA_new_output$Soil)) {
         ylim = c(min(CASSIA_new_output$Soil[,i], na.rm = T), max(CASSIA_new_output$Soil[,i], na.rm = T))
       } else {
@@ -421,7 +421,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     }
 
     par(mfrow = c(3, 3))
-    for (i in c(9:12, 18:20)) {
+    for (i in c(10:13, 19:20)) {
       if (sum(is.na(CASSIA_new_output$Soil[,i])) < nrow(CASSIA_new_output$Soil)) {
         ylim = c(min(CASSIA_new_output$Soil[,i], na.rm = T), max(CASSIA_new_output$Soil[,i], na.rm = T))
       } else {

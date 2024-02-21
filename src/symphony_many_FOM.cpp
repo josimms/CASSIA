@@ -23,6 +23,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double exudes_fungal,
                                             double imobilisation,
                                             double assimilation,
+                                            double retranslocation,
                                             double NH4_old,
                                             double NO3_old,
                                             double NC_needles,
@@ -67,8 +68,8 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   double N_FOM = C_FOM_needles * NC_needles +
     C_FOM_woody * NC_woody +
     C_FOM_roots * NC_roots +
-    C_FOM_mantle * NC_mantle +
-    C_FOM_ERM * NC_ERM; // C kg
+    C_FOM_mantle * NC_mantle * retranslocation +
+    C_FOM_ERM * NC_ERM * retranslocation; // C kg
 
   /*
    * Nitrogen processes
@@ -107,7 +108,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   NO3 = NO3 - C_decompose_SOM*SOM_after_microbe_activity.NO3;    // C kg eq
   NH4 = NH4 - C_decompose_SOM*SOM_after_microbe_activity.NH4;    // C kg eq
 
-  N_SOM = N_SOM - C_decompose_SOM*SOM_after_microbe_activity.Norg + microbe_turnover*(N_decompose_SOM + N_decompose_FOM);    // C kg eq
+  N_SOM = N_SOM - C_decompose_SOM*SOM_after_microbe_activity.Norg + microbe_turnover*retranslocation*(N_decompose_SOM + N_decompose_FOM);    // C kg eq
   N_FOM = N_FOM - C_decompose_SOM*SOM_after_microbe_activity.Norg_FOM;    // C kg eq
 
   /*
