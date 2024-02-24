@@ -3,29 +3,29 @@
 \alias{mycofon_balence}
 \docType{package}
 \title{
-  Mycofon model (todo: reference), with updates to include the uptake properties for three types of nitrogen as well as the decision functionality.
+  Modified Mycofon model
 }
 \description{
-  This function brings together the C or N balance as in the original MYCOFON model, the decision functions for resource transfer, fungal growth and multiple N uptake functions. The equations in this function are below.
-  
+  The Mycofon model (Meyer, 2010), with updates to include the uptake properties for three types of nitrogen as well as the decision functionality. This function brings together the C or N balance as in the original MYCOFON model, the decision functions for resource transfer, fungal growth and multiple N uptake functions. The equations in this function are below.
+
   \eqn{m = \frac{C_f}{B^{rf}_{opt}C^r}}
-  
+
   Where N is nitrogen, C is carbon, r roots, f fungai, B biomass, opt is optimum.
-  
+
   The uptake and decision functions are then calulated from the balance of the last iteration. Note that the plant decision requires the N alllocated, so the mycorrhizal decision is calculated first.
-  
+
   Then the balance is updated again.
-  
+
   \eqn{C^r = C^r + C^{CASSIA}_{Allocated} - (1 - m)t^rC^r - mt^mC^r - r(Tmb)C^r - d^r(C^{CASSIA})}
 
-  Where, C^{CASSIA}_{Allocated} is the carbon allocated from the CASSIA model, t is turnover, which is different for micorhized (m) and non-mycorrhized roots (r), Tmb is temperature of the soil, d() is decision and r() is respiration. Growth is currently handled in CASSIA, and therefore has not been added here!
-  
-  \eqn{C^f = C^f + d^r(C^{CASSIA}) - 0.5 t^{mantle} C^{mantle} - 0.5 t^{ERM} C^{ERM} - r(Tmb)  C^{f}}
-  
+  Where, C^{CASSIA}_{Allocated} is the carbon allocated from the CASSIA model, t is turnover, which is different for micorhized (m) and non-mycorrhized roots (r), Tmb is temperature of the soil, d() is decision and r() is respiration. Growth is currently handled in CASSIA, and therefore has not been added here! Growth for fungi is represented by g().
+
+  \eqn{C^f = C^f + d^r(C^{CASSIA}) - g^f - t^{mantle} C^{mantle} - t^{ERM} C^{ERM} - r(Tmb)  C^{f}}
+
   \eqn{N^r = N^r + d^f(N^{f}) + u^r(T, SWC, NH4, NO3, FOM_Norg)C^r - (1 - m) t^r R^r_{C:N} N^r - mt^m R^r_{C:N} N^r - R^r_{C:N} N^{CASSIA}_{Allocated}}
-  
+
   R^r_{C:N} fungal NC ratio
-  
+
   \eqn{N^f = N^f + u^f(T, SWC, NH4, NO3, FOM_Norg)C^f R^f_{C:N} - t^{ERM} C^{ERM} R^{ERM}_{C:N} - t^{mantle} C^{mantle} R^{mantle}_{C:N} - d^f(N^f)}
 }
 \usage{
@@ -53,7 +53,6 @@ mycofon_balence(C_roots,
                 N_limits_Fungal,
                 N_k_Fungal,
                 SWC_k_Fungal,
-                NC_fungal_opt,
                 mantle_mass,
                 ERM_mass,
                 parameters_NH4_on_NO3,
@@ -138,7 +137,7 @@ mycofon_balence(C_roots,
     The mass of the mantle section of the fungal mass
   }
   \item{ERM_mass}{
-    The mass of the ERM section of the fungal mass 
+    The mass of the ERM section of the fungal mass
   }
   \item{parameters_NH4_on_NH3}{
     The additional parameters to control the uptake of the NO3 from NH4 in the plant uptake.
@@ -173,9 +172,11 @@ mycofon_balence(C_roots,
 
 \author{
   Joanna Simms, joanna.x.simms@ad.helsinki.fi
+
+  Last updated 19.01.2024
 }
 \references{
   Meyer, Astrid, et al. "Simulating mycorrhiza contribution to forest C-and N cycling-the MYCOFON model." Plant and soil 327 2010: 493-517.
-  
+
   Franklin, Oskar, et al. "Forests trapped in nitrogen limitation–an ecological market perspective on ectomycorrhizal symbiosis." New Phytologist 203.2 2014: 657-666.
 }

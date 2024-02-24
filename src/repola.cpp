@@ -23,6 +23,7 @@ repola_out repola(CASSIA_parameters parameters) {
   double m_N = m_N_tot/(parameters.n_age*parameters.n_length);				// youngest needles (kg C / mm needle)
 
   double m_R_tot = m_N_tot*0.5;				// kg C / tree
+  // VARIO changes from original code *0.7 # kg C / tree, keksitty!
 
   repola_out out;
   out.needle_mass = needle_mass;

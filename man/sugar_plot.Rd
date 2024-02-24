@@ -23,10 +23,6 @@
   This function doesn't return any values. It simply draws the graph.
 }
 
-\references{
-  # TODO: add a reference
-}
-
 \author{
   Documentation: Joanna Simms
   Content: Joanna Simms

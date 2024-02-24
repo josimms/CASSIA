@@ -52,19 +52,24 @@ carbo_tracker As_initiliser(carbo_tracker Ad, double equilibrium_temperature, do
 
 double emergancy(double sugar, double starch, double tau_emergancy, double lower_bound) {
   double out;
-  if (sugar < lower_bound) {
-    double comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
-    out = std::min(starch, comaprison);
+  if (starch > 0) {
+    if (sugar < lower_bound) {
+      double comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
+      out = std::min(starch, comaprison);
+    } else {
+      out = 0;
+    }
   } else {
     out = 0;
   }
+
   return out;
 }
 
 /*
  * Some of the parameters are site dependent, could define the site side in the main function code so I just import the right variables into this code
  *
- * needles mass per year, should deinfe the year before this function!
+ * needles mass per year, should define the year before this function!
  */
 
 carbo_balance sugar_model(int day,
@@ -93,7 +98,7 @@ carbo_balance sugar_model(int day,
 
 
   carbo_tracker storage_term;
-  // TODO: consider these terms in the callibration
+  // TODO: consider these terms in the calibration
   storage_term.needles = storage_update(parameters.alfa_needles, sugar.needles, starch.needles, parameters.lower_bound_needles, tree_alive);
   storage_term.phloem = storage_update(parameters.alfa_phloem, sugar.phloem, starch.phloem, parameters.lower_bound_phloem, tree_alive);
   storage_term.roots = storage_update(parameters.alfa_roots, sugar.roots, starch.roots, parameters.lower_bound_roots, tree_alive);
@@ -146,19 +151,19 @@ carbo_balance sugar_model(int day,
      */
 
     conc_gradient concentration_gradient;
+    // TODO: think of the units here!
     concentration_gradient.needles_to_phloem = ((sugar.needles+starch.needles)/needles_mass - (sugar.phloem+starch.phloem)/7.410537931)/parameters.resistance_needles_to_phloem;
     concentration_gradient.phloem_to_roots = ((sugar.phloem+starch.phloem)/7.410537931 - (sugar.roots+starch.roots)/2.8)/parameters.resistance_phloem_to_roots;
     concentration_gradient.phloem_to_xylem_sh = ((sugar.phloem+starch.phloem)/7.410537931 - (sugar.xylem_sh+starch.xylem_sh)/74.10537931)/parameters.resistance_phloem_to_xylem_sh;
     concentration_gradient.phloem_to_xylem_st = ((sugar.phloem+starch.phloem)/7.410537931 - (sugar.xylem_st+starch.xylem_st)/8.65862069)/parameters.resistance_phloem_to_xylem_st;
-    concentration_gradient.roots_to_myco = sugar.roots+starch.roots - parameters.mycorrhiza_threshold;
+    concentration_gradient.roots_to_myco = parameters.mycorrhiza_threshold * (sugar.roots + starch.roots);
 
     /*
      * Balance calculations
      */
 
     double carbo_beginning = sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots +
-      starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots +
-      PF;
+      starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots + PF;
     double sugar_out_of_system = 0;
 
     /*
@@ -166,43 +171,49 @@ carbo_balance sugar_model(int day,
      */
 
     // # Rm.a maintenance respiration separated into organs
-    sugar.needles = sugar.needles -          // Last day sugar + daily photosynthesis
-      resp.RmN * storage_term.needles -                          // - maintenance respiration (altered by the carbon storage)
-      (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) -          // - growth and growth respiration altered by the storage
-      // pot_growth.use + pot_growth.release -                                                           // - growth sugar use and + release and to the rest of the organs
-      concentration_gradient.needles_to_phloem +                            // - transfer between organs
+    sugar.needles = sugar.needles + PF -          // Last day sugar + daily photosynthesis
+      resp.RmN * storage_term.needles -                          // maintenance respiration (altered by the carbon storage)
+      (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) -          // growth and growth respiration altered by the storage
+      pot_growth.use + pot_growth.release -                                                           // growth sugar use and + release and to the rest of the organs
+      concentration_gradient.needles_to_phloem*needles_mass +                            // transfer between organs
       (Kd.needles - Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass;   // + sperling processes with links to the needles growth process
 
     // coefficients are from mass ratio in starch and sugar 2015 xls
     sugar.phloem = sugar.phloem -
       0.082179938 * resp.RmS * storage_term.phloem -
       0.082179938 * (1 + common.Rg_S) * storage_term.phloem * (pot_growth.wall + pot_growth.height) +  // growth
-      concentration_gradient.needles_to_phloem -                             // transfer between organs
-      concentration_gradient.phloem_to_roots -                                 // transfer between organs
-      concentration_gradient.phloem_to_xylem_sh -
-      concentration_gradient.phloem_to_xylem_st +
+      concentration_gradient.needles_to_phloem*needles_mass -                             // transfer between organs
+      concentration_gradient.phloem_to_roots*7.410537931 -                                 // transfer between organs
+      concentration_gradient.phloem_to_xylem_sh*7.410537931 -
+      concentration_gradient.phloem_to_xylem_st*7.410537931 +
       (Kd.phloem - Ks.phloem) * parameters.carbon_sugar * 0.001 * 7.4;
 
-    sugar.roots = sugar.roots +
-      concentration_gradient.phloem_to_roots -        // transfer between organs
-      concentration_gradient.roots_to_myco -                                         // transfer between organs, no multiplier as this is for mycorhiza and the model just takes the extra sugar
-      (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8 -
-      (1 + common.Rg_R) * storage_term.roots * pot_growth.roots -               // growth
-      resp.RmR * storage_term.roots;                                                // maintenance respiration);
+    sugar.roots = sugar.roots -
+      resp.RmR * storage_term.roots -                                              // maintenance respiration);
+      (1 + common.Rg_R) * storage_term.roots * pot_growth.roots +             // growth
+      concentration_gradient.phloem_to_roots*7.410537931 -        // transfer between organs
+      concentration_gradient.roots_to_myco +                                         // transfer between organs, no multiplier as this is for mycorhiza and the model just takes the extra sugar
+      (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * 2.8;
 
     sugar.xylem_sh = sugar.xylem_sh -
       0.096020683 * resp.RmS * storage_term.xylem_sh -                                   // maintenance respiration
-      0.096020683 * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +    // growth
-      concentration_gradient.phloem_to_xylem_sh +
-      (Kd.xylem_sh - Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * 2.8;
+      0.096020683 * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +  // growth
+      concentration_gradient.phloem_to_xylem_sh*7.410537931 +
+      (Kd.xylem_sh - Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * 8.65862069;
 
     sugar.xylem_st = sugar.xylem_st -
       0.821799379 * resp.RmS * storage_term.xylem_st -                                // maintenance respiration
       0.821799379 * (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height) +  // growth
-      concentration_gradient.phloem_to_xylem_st +
-      (Kd.xylem_st - Ks.xylem_st) * parameters.carbon_sugar * 0.001 * 2.8;
+      concentration_gradient.phloem_to_xylem_st*7.410537931 +
+      (Kd.xylem_st - Ks.xylem_st) * parameters.carbon_sugar * 0.001 * 74.10537931;
 
     sugar.mycorrhiza = concentration_gradient.roots_to_myco;
+
+    double respiration_growth = resp.RmN * storage_term.needles + (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) +
+      0.082179938 * resp.RmS * storage_term.phloem + 0.082179938 * (1 + common.Rg_S) * storage_term.phloem * (pot_growth.wall + pot_growth.height) +
+      0.821799379 * resp.RmS * storage_term.xylem_st + 0.821799379 * (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height) +
+      0.096020683 * resp.RmS * storage_term.xylem_sh + 0.096020683 * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +
+      resp.RmR * storage_term.roots + (1 + common.Rg_R) * storage_term.roots * pot_growth.roots;
 
     /*
      * STARCH UPDATED SPERLING
@@ -234,13 +245,6 @@ carbo_balance sugar_model(int day,
     emergancy_transfer.xylem_st = emergancy(sugar.xylem_st, starch.xylem_st, parameters.tau_emergancy_xylem_st, parameters.lower_bound_xylem_st);
     emergancy_transfer.roots = emergancy(sugar.roots, starch.roots, parameters.tau_emergancy_roots, parameters.lower_bound_roots);
 
-    // std::cout << "Day: " << day <<
-    //   " needles " << emergancy_transfer.needles <<
-    //     " phloem " << emergancy_transfer.phloem <<
-    //       " xylem_sh " << emergancy_transfer.xylem_sh <<
-    //         " xylem_st " << emergancy_transfer.xylem_st <<
-    //           " roots " << emergancy_transfer.roots << "\n";
-
     // sugar update
 
     sugar.needles = sugar.needles + emergancy_transfer.needles;
@@ -261,11 +265,32 @@ carbo_balance sugar_model(int day,
      * Mass check
      */
 
+    sugar_out_of_system = respiration_growth + sugar.mycorrhiza + pot_growth.use - pot_growth.release;
     double carbo_ending = sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots +
-      starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots +
-      sugar_out_of_system;
-    if (carbo_beginning != carbo_ending) {
-      // std::cout << "On day " << day + 1 << " The carbohydrate balance is not closed by " << carbo_ending << "\n";
+      starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots + sugar_out_of_system;
+    double difference = carbo_beginning - carbo_ending;
+    if (difference > 0.00000000000001) { // 10^13
+      std::cout << "On day " << day + 1 << " The carbohydrate balance compared to the beginning of the day " << difference << "\n";
+    }
+
+    /*
+     * Storage check
+     */
+
+    if (sugar.needles <= 0 & starch.needles <= 0) {
+      std::cerr << " Day " << day << " No Storage needles! Plant died" << "\n";
+    }
+    if (sugar.phloem <= 0 & starch.phloem <= 0) {
+      std::cerr << " Day " << day << " No Storage phloem! Plant died" << "\n";
+    }
+    if (sugar.roots <= 0 & starch.roots <= 0) {
+      std::cerr <<  " Day " << day << " No Storage roots! Plant died" << "\n";
+    }
+    if (sugar.xylem_sh <= 0 & starch.xylem_sh <= 0) {
+      std::cerr << " Day " << day << " No Storage xylem shoot! Plant died" << "\n";
+    }
+    if (sugar.xylem_st <= 0 & starch.xylem_st <= 0) {
+      std::cerr << " Day " << day << " No Storage xylem stem! Plant died" << "\n";
     }
 
     /*
@@ -344,8 +369,8 @@ carbo_balance sugar_model(int day,
      */
     // If it hasn't been bud burst yet then possible bud burst is calculated
     if (day < parameters.sB0-1) {
-      if (sugar.phloem < parameters.SCb) {
-        // std::cout << "New Bud Burst set: " << day << "\n";
+      if (sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots < parameters.SCb) {
+        std::cout << "New Bud Burst set: " << day << "\n";
         sB0 = day;
       } else {
         sB0 = parameters.sB0;
@@ -368,6 +393,7 @@ carbo_balance sugar_model(int day,
     // Model
     double ak = 1 / (1 - 1/exp(parameters.alfa * (0.7430989 - parameters.Wala)));
     double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch;
+    double myco_allocation;
     if (day == 0) {
       sugar_all = sugar.needles = 0.4184208;
       starch_all = starch.needles = parameters.starch00;
@@ -382,9 +408,8 @@ carbo_balance sugar_model(int day,
         storage_term.respiration = 1;
       }
 
-      double myco_allocation;
       if ((sH > parameters.sHc) & (sugar.needles + starch.needles > 0.07)) {
-        myco_allocation = PF * 0.3;
+        myco_allocation = std::min(PF * 0.3, 0.07);
       } else {
         myco_allocation = 0.0;
       }
@@ -426,9 +451,10 @@ carbo_balance sugar_model(int day,
     // so the average sugar is reported as sugar needles
     sugar.needles = sugar_all;
     sugar.phloem = 0.0;
-    sugar.roots = 0.0;
+    sugar.roots = sugar_all;
     sugar.xylem_sh = 0.0;
     sugar.xylem_st = 0.0;
+    sugar.mycorrhiza = myco_allocation;
 
     starch.needles = starch_all;
     starch.phloem = 0.0;

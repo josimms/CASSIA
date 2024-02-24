@@ -9,20 +9,20 @@
   This function is for the soil to root uptake only.
 
   This function uses the nitrogen uptake functions for each of the indervidual types of N compiled for the plant.
-  
+
   The demand is calculated by the decision function, then used to sclae the maximum uptake. Although demand is currently 1 for all decision functions included. (Meyer, 2010, Franklin, 2014)
-  
-  \eqn{N_to_root = (u_{organic}(FOM, T, SWC) + u_{NH4}(NH4, T, SWC) + f(NH4)u_{NO3}(NO3, T, SWC))*demnad}
-  
+
+  \eqn{N_to_root = (u_{organic}(FOM, T, SWC) + u_{NH4}(NH4, T, SWC) + f(NH4)u_{NO3}(NO3, T, SWC))*demand}
+
   The nitrogen to the root is a combination of all of the uptake functions, with the NO3 nitrogen uptake updated with a NH4 modifier. NH4, NO3 and FOM are the amounts in the soil. T is temperature in the soil B horizon and then SWC is the soil water content.
-  
+
   \eqn{f(NH4) = \frac{a NH4^8}{NH4^8 + b^8}}
-  
+
   Where a and b are fitted parameters and the function gives a value between 0 and 1.
 }
 \usage{
 
-Plant_N_Uptake(NC_in_root_opt, 
+Plant_N_Uptake(NC_in_root_opt,
                T,
                SWC,
                m,
@@ -32,10 +32,8 @@ Plant_N_Uptake(NC_in_root_opt,
                N_limits_R,
                N_k_R,
                SWC_k_R,
-               C_roots,
-               N_roots,
-               percentage_C_biomass,
-               parameters)
+               parameters,
+               demand)
 
 }
 
@@ -70,26 +68,11 @@ Plant_N_Uptake(NC_in_root_opt,
   \item{SWC_k_R}{
     Parameters to control the N uptake
   }
-  \item{C_roots}{
-    Carbon in the roots
-  }
-  \item{N_roots}{
-    Nitrogen in the roots
-  }
-  \item{C_fungal}{
-    Carbon in the roots
-  }
-  \item{percentage_C_biomass}{
-    The percentage of C in the biomass
-  }
   \item{parameters}{
     The parameters that control the NH4 effect on NO3 uptake
   }
-  \item{C_value_param}{
-    Carbon value for the plant
-  }
-  \item{N_value_param}{
-    Nitrogen value for the plant
+  \item{demand}{
+    The demand is calculated from other functions and just added here as a factor.
   }
 }
 
@@ -102,9 +85,10 @@ Plant_N_Uptake(NC_in_root_opt,
 
 \author{
   Joanna Simms, joanna.x.simms@ad.helsinki.fi
+  Last updated 19.01.2024
 }
 \references{
   Meyer, Astrid, et al. "Simulating mycorrhiza contribution to forest C-and N cycling-the MYCOFON model." Plant and soil 327 2010: 493-517.
-  
+
   Franklin, Oskar, et al. "Forests trapped in nitrogen limitation–an ecological market perspective on ectomycorrhizal symbiosis." New Phytologist 203.2 2014: 657-666.
 }

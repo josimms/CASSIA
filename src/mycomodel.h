@@ -51,25 +51,23 @@ struct soil_balence{
 
 // A collection of parameters that I want as input function - but these should probably be reordered at some point
 
-struct parameters
-
-{
+struct parameters_soil {
   double microbe_turnover;
   double NC_in_root_opt;
   double NC_fungal_opt;
   double NC_microbe_opt;
   double percentage_C_biomass;
+  std::vector<double> N_limits_myco;
+  std::vector<double> N_k_myco;
+  std::vector<double> SWC_limits_myco;
   std::vector<double> N_limits_plant;
-  std::vector<double> N_limits_fungal;
-  std::vector<double> N_limits_microbes;
   std::vector<double> N_k_plant;
-  std::vector<double> N_k_fungal;
+  std::vector<double> SWC_limits_plant;
+  std::vector<double> N_limits_microbes;
   std::vector<double> N_k_microbes;
-  std::vector<double> SWC_k_plant;
-  std::vector<double> SWC_k_fungal;
-  std::vector<double> SWC_k_microbes;
-  std::vector<double> NH4_on_NO3;
-  std::vector<double> respiration_params;
+  std::vector<double> SWC_limits_microbes;
+  std::vector<double> C_limits;
+  double NH4_on_NO3;
   double optimal_root_fungal_biomass_ratio;
   double turnover_roots;
   double turnover_roots_mycorrhized;
@@ -149,6 +147,7 @@ struct SYMPHONY_output {
   double C_FOM_roots;
   double C_FOM_mantle;
   double C_FOM_ERM;
+  double C_exudes;
   double C_SOM;
   double N_SOM;
   double NC_needles;
@@ -161,6 +160,76 @@ struct SYMPHONY_output {
   double N_decompose_FOM;
   double N_decompose_SOM;
   double SOM_Norg_used;
+  double Microbe_respiration;
+  double NH4_Uptake_Microbe_FOM;
+  double NO3_Uptake_Microbe_FOM;
+  double Norg_Uptake_Microbe_FOM;
+  double C_Uptake_Microbe_FOM;
+  double NH4_Uptake_Microbe_SOM;
+  double NO3_Uptake_Microbe_SOM;
+  double Norg_Uptake_Microbe_SOM;
+  double C_Uptake_Microbe_SOM;
+};
+
+struct SYMPHONY_vector {
+  std::vector<double> NH4;
+  std::vector<double> NO3;
+  std::vector<double> N_FOM;
+  std::vector<double> C_FOM_needles;
+  std::vector<double> C_FOM_woody;
+  std::vector<double> C_FOM_roots;
+  std::vector<double> C_FOM_mantle;
+  std::vector<double> C_FOM_ERM;
+  std::vector<double> C_exudes;
+  std::vector<double> C_SOM;
+  std::vector<double> N_SOM;
+  std::vector<double> NC_needles;
+  std::vector<double> NC_woody;
+  std::vector<double> NC_roots;
+  std::vector<double> NC_mantle;
+  std::vector<double> NC_ERM;
+  std::vector<double> C_decompose_FOM;
+  std::vector<double> C_decompose_SOM;
+  std::vector<double> N_decompose_FOM;
+  std::vector<double> N_decompose_SOM;
+  std::vector<double> SOM_Norg_used;
+  std::vector<double> Microbe_respiration;
+  std::vector<double> NH4_Uptake_Microbe_FOM;
+  std::vector<double> NO3_Uptake_Microbe_FOM;
+  std::vector<double> Norg_Uptake_Microbe_FOM;
+  std::vector<double> C_Uptake_Microbe_FOM;
+  std::vector<double> NH4_Uptake_Microbe_SOM;
+  std::vector<double> NO3_Uptake_Microbe_SOM;
+  std::vector<double> Norg_Uptake_Microbe_SOM;
+  std::vector<double> C_Uptake_Microbe_SOM;
+};
+
+struct MYCOFON_function_out {
+  double C_biomass;
+  double C_roots;
+  double C_fungal;
+  double N_roots;
+  double N_fungal;
+  double C_roots_NonStruct;
+  double C_fungal_NonStruct;
+  double N_roots_NonStruct;
+  double N_fungal_NonStruct;
+  double uptake_plant;
+  double uptake_NH4_plant;
+  double uptake_NO3_plant;
+  double uptake_Norg_plant;
+  double uptake_fungal;
+  double uptake_NH4_fungal;
+  double uptake_NO3_fungal;
+  double uptake_Norg_fungal;
+  double from_CASSIA;
+  double to_CASSIA;
+  double Plant_demand;
+  double Fungal_demand;
+  double Plant_given;
+  double Fungal_given;
+  double exudes_plant;
+  double exudes_fungal;
 };
 
 
@@ -182,7 +251,8 @@ int leap_year(int year);
 #ifndef PKG_Toy_Model_H
 #define PKG_Toy_Model_H
 
-parameters parameters_initalise(std::vector<double> parameters_R);
+parameters_soil parameters_initalise(std::vector<double> parameters_R);
+parameters_soil parameters_initalise_test(std::vector<double> parameters_R);
 
 #endif
 
@@ -231,8 +301,8 @@ Rcpp::List Plant_N_Uptake(double T,
                           double FOM_in,
                           std::vector<double> N_limits_R,
                           std::vector<double> N_k_R,
-                          std::vector<double> SWC_k_R,
-                          std::vector<double> parameters,
+                          std::vector<double> SWC_limits_R,
+                          double NH4_on_NO3,
                           double demand);
 
 #endif
@@ -273,7 +343,7 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           std::vector<double> N_k_R,
                           std::vector<double> SWC_k_R,
                           bool SOM_decomposers,
-                          std::vector<double> respiration_microbes_params);
+                          double FOM_Norg);
 
 #endif
 
@@ -291,46 +361,50 @@ symphony_parameters vector_to_symphony(std::vector<double> input);
 #ifndef PKG_symphony_multiple_FOM_daily_H
 #define PKG_symphony_multiple_FOM_daily_H
 
-Rcpp::List symphony_multiple_FOM_daily(double Tmb,
-                                        double SWC,
-                                        double C_FOM_needles_old,
-                                        double C_FOM_woody_old,
-                                        double C_FOM_roots_old,
-                                        double C_FOM_mantle_old,
-                                        double C_FOM_ERM_old,
-                                        double C_SOM_old,
-                                        double N_SOM_old,
-                                        double C_decompose_FOM,
-                                        double C_decompose_SOM,
-                                        double N_decompose_FOM,
-                                        double N_decompose_SOM,
-                                        double Litter_needles,
-                                        double Litter_woody,
-                                        double Litter_roots,
-                                        double Litter_mantle,
-                                        double Litter_ERM,
-                                        double imobilisation,
-                                        double assimilation,
-                                        double NH4_old,
-                                        double NO3_old,
-                                        double NC_needles,
-                                        double NC_woody,
-                                        double NC_roots,
-                                        double NC_mantle,
-                                        double NC_ERM,
-                                        double NH4_used_Plant,
-                                        double NH4_used_Fungal,
-                                        double NO3_used_Plant,
-                                        double NO3_used_Fungal,
-                                        double FOM_Norg_used_Plant,
-                                        double FOM_Norg_used_Fungal,
-                                        double SOM_Norg_used,
-                                        std::vector<double> respiration_microbes_params,
-                                        std::vector<double> N_limits_R,
-                                        std::vector<double> N_k_R,
-                                        std::vector<double> SWC_k_R,
-                                        double NC_microbe_opt,
-                                        double microbe_turnover);
+
+SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
+                                            double SWC,
+                                            double C_FOM_needles_old,
+                                            double C_FOM_woody_old,
+                                            double C_FOM_roots_old,
+                                            double C_FOM_mantle_old,
+                                            double C_FOM_ERM_old,
+                                            double C_Exudes,
+                                            double C_SOM_old,
+                                            double N_SOM_old,
+                                            double C_decompose_FOM,
+                                            double C_decompose_SOM,
+                                            double N_decompose_FOM,
+                                            double N_decompose_SOM,
+                                            double Litter_needles,
+                                            double Litter_woody,
+                                            double Litter_roots,
+                                            double Litter_mantle,
+                                            double Litter_ERM,
+                                            double exudes_plant,
+                                            double exudes_fungal,
+                                            double imobilisation,
+                                            double assimilation,
+                                            double retranslocation,
+                                            double NH4_old,
+                                            double NO3_old,
+                                            double NC_needles,
+                                            double NC_woody,
+                                            double NC_roots,
+                                            double NC_mantle,
+                                            double NC_ERM,
+                                            double NH4_used_Plant,
+                                            double NH4_used_Fungal,
+                                            double NO3_used_Plant,
+                                            double NO3_used_Fungal,
+                                            double FOM_Norg_used_Plant,
+                                            double FOM_Norg_used_Fungal,
+                                            double SOM_Norg_used,
+                                            std::vector<double> N_limits_R,
+                                            std::vector<double> N_k_R,
+                                            std::vector<double> SWC_k_R,
+                                            double NC_microbe_opt,
+                                            double microbe_turnover);
 
 #endif
 
@@ -339,37 +413,23 @@ Rcpp::List symphony_multiple_FOM_daily(double Tmb,
 #ifndef PKG_mycofon_balence_H
 #define PKG_mycofon_balence_H
 
-Rcpp::List mycofon_balence(double C_roots,
-                           double N_roots,
-                           double optimal_root_fungal_biomass_ratio,
-                           double C_fungal,
-                           double N_fungal,
-                           double turnover_roots,
-                           double turnover_roots_mycorrhized,
-                           double turnover_mantle,
-                           double turnover_ERM,
-                           std::vector<double> respiration_parameters_R,
-                           double NH4,
-                           double NO3,
-                           double FOM_Norg,
-                           double NC_in_fungal_opt,
-                           double T,
-                           double Tsb,
-                           double SWC,
-                           std::vector<double> N_limits_Plant,
-                           std::vector<double> N_k_Plant,
-                           std::vector<double> SWC_k_Plant,
-                           std::vector<double> N_limits_Fungal,
-                           std::vector<double> N_k_Fungal,
-                           std::vector<double> SWC_k_Fungal,
-                           double mantle_mass,
-                           double ERM_mass,
-                           std::vector<double> parameters_NH4_on_NO3,
-                           double growth_C,
-                           double growth_N,
-                           double max_C_allocation_CASSIA,
-                           double allocation_N_to_rest_of_plant,
-                           bool mycofon_stratergy);
+MYCOFON_function_out mycofon_balence(double C_biomass,
+                                     double C_roots,
+                                     double C_fungal,
+                                     double C_ecto,
+                                     double C_roots_NonStruct,
+                                     double N_roots_NonStruct,
+                                     double C_fungal_NonStruct,
+                                     double N_fungal_NonStruct,
+                                     double max_C_from_CASSIA,
+                                     parameters_soil parameters_in,
+                                     double NH4,
+                                     double NO3,
+                                     double FOM_Norg,
+                                     double T,
+                                     double Tsb,
+                                     double SWC,
+                                     bool mycofon_stratergy);
 
 #endif
 
@@ -380,13 +440,10 @@ Rcpp::List mycofon_balence(double C_roots,
 #ifndef PKG_myco_decision_H
 #define PKG_myco_decision_H
 
-Rcpp::List myco_decision(double C_fungal,
-                         double N_fungal,
-                         double C_roots,
-                         double N_roots,
-                         double NC_fungal_opt,
-                         double growth_C,
-                         double growth_N);
+Rcpp::List myco_decision(double N_fungal_NonStruct,
+                         double C_roots_NonStruct,
+                         double N_roots_NonStruct,
+                         double NC_fungal_opt);
 
 #endif
 
@@ -397,12 +454,11 @@ Rcpp::List myco_decision(double C_fungal,
 #ifndef PKG_plant_decision_H
 #define PKG_plant_decision_H
 
-Rcpp::List plant_decision(double C_roots,
-                          double N_roots,
-                          double C_fungal,
+Rcpp::List plant_decision(double C_roots_NonStruct,
+                          double N_roots_NonStruct,
+                          double C_fungal_NonStruct,
                           double optimal_root_funga_biomass_ratio,
-                          double N_allo,
-                          double max_C_allocation_CASSIA);
+                          double m);
 
 #endif
 
@@ -410,7 +466,10 @@ Rcpp::List plant_decision(double C_roots,
 
 Rcpp::List myco_growth(double C_fungal,
                        double N_fungal,
+                       double C_fungal_biomass,
+                       double C_ecto,
                        double a,
-                       double b);
+                       double b,
+                       double CN_ratio);
 
 #endif

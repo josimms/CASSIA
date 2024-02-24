@@ -392,3 +392,63 @@ p7 make_p7(std::vector<double> input) {
   out.b = input[31];
   return(out);
 }
+
+parameters_soil parameters_initalise_test(std::vector<double> parameters_R) {
+  parameters_soil out;
+  out.microbe_turnover = parameters_R[0];
+  out.NC_in_root_opt = parameters_R[1];
+  out.NC_fungal_opt = parameters_R[2];
+  out.NC_microbe_opt = parameters_R[3];
+  out.percentage_C_biomass = parameters_R[4];
+  out.N_limits_myco = {parameters_R[5], parameters_R[6], parameters_R[7]};
+  out.N_k_myco = {parameters_R[8], parameters_R[9], parameters_R[10]};
+  out.SWC_limits_myco = {parameters_R[11], parameters_R[12], parameters_R[13]};
+  out.N_limits_plant = {parameters_R[14], parameters_R[15], parameters_R[16]};
+  out.N_k_plant = {parameters_R[17], parameters_R[18], parameters_R[19]};
+  out.SWC_limits_plant = {parameters_R[20], parameters_R[21], parameters_R[22]};
+  out.N_limits_microbes = {parameters_R[23], parameters_R[24], parameters_R[25]};
+  out.N_k_microbes = {parameters_R[26], parameters_R[27], parameters_R[28]};
+  out.SWC_limits_microbes = {parameters_R[29], parameters_R[30], parameters_R[31]};
+  out.C_limits = {parameters_R[32], parameters_R[33], parameters_R[34]};
+  out.NH4_on_NO3 = parameters_R[35];
+  out.optimal_root_fungal_biomass_ratio = parameters_R[36];
+  out.turnover_mantle = parameters_R[37];
+  out.turnover_ERM = parameters_R[38];
+  out.turnover_roots = parameters_R[39];
+  out.turnover_roots_mycorrhized = parameters_R[40];
+  out.turnover_fungal = parameters_R[41];
+  out.mantle_mass = parameters_R[42];
+  out.ERM_mass = parameters_R[43];
+  out.growth_C = parameters_R[44];
+  out.growth_N = parameters_R[45];
+  out.C_value_param_myco = parameters_R[46];
+  out.N_value_param_myco = parameters_R[47];
+  out.C_value_param_plant = parameters_R[48];
+  out.N_value_param_plant = parameters_R[49];
+  return(out);
+};
+
+
+MYCOFON_function_out MYCOFON_structure_conversion(Rcpp::List input) {
+  MYCOFON_function_out out;
+  out.C_biomass = input[0];
+  out.C_roots = input[1];
+  out.C_fungal = input[2];
+  out.N_roots = input[3];
+  out.N_fungal = input[4];
+  out.uptake_plant = input[5];
+  out.uptake_NH4_plant = input[6];
+  out.uptake_NO3_plant = input[7];
+  out.uptake_Norg_plant = input[8];
+  out.uptake_fungal = input[9];
+  out.uptake_NH4_fungal = input[10];
+  out.uptake_NO3_fungal = input[11];
+  out.uptake_Norg_fungal = input[12];
+  out.from_CASSIA = input[13];
+  out.to_CASSIA = input[14];
+  out.Plant_demand = input[15];
+  out.Fungal_demand = input[16];
+  out.Plant_given = input[17];
+  out.Fungal_given = input[18];
+  return(out);
+};

@@ -39,7 +39,7 @@
 }
 
 \references{
-  # TODO: add a reference
+  Repola J. 2009. Biomass equations for Scots pine and Norway spruce in Finland. Silva Fennica 43: 625–647. 
 }
 
 \author{

@@ -13,56 +13,56 @@ CASSIA_sensitivity <- function(bounds, names, start_year, end_year, weather, GPP
     .Call(`_CASSIA_CASSIA_sensitivity`, bounds, names, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG)
 }
 
-Toy_Model <- function(year, C_roots, N_roots, C_fungal, N_fungal, Litter_mantle, Litter_ERM, Hyde_weather, parameters_R) {
-    .Call(`_CASSIA_Toy_Model`, year, C_roots, N_roots, C_fungal, N_fungal, Litter_mantle, Litter_ERM, Hyde_weather, parameters_R)
+CASSIA_soil <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG) {
+    .Call(`_CASSIA_CASSIA_soil`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG)
 }
 
 xylogenesis_wrapper <- function(no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw) {
     .Call(`_CASSIA_xylogenesis_wrapper`, no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw)
 }
 
-plant_decision <- function(C_roots, N_roots, C_fungal, optimal_root_funga_biomass_ratio, N_allo, max_C_allocation_CASSIA) {
-    .Call(`_CASSIA_plant_decision`, C_roots, N_roots, C_fungal, optimal_root_funga_biomass_ratio, N_allo, max_C_allocation_CASSIA)
+plant_decision <- function(C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio, m) {
+    .Call(`_CASSIA_plant_decision`, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, optimal_root_funga_biomass_ratio, m)
 }
 
-myco_decision <- function(C_fungal, N_fungal, C_roots, N_roots, NC_fungal_opt, growth_C, growth_N) {
-    .Call(`_CASSIA_myco_decision`, C_fungal, N_fungal, C_roots, N_roots, NC_fungal_opt, growth_C, growth_N)
+myco_decision <- function(N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt) {
+    .Call(`_CASSIA_myco_decision`, N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt)
 }
 
 growth_wrapper <- function(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, growth_in, last_year_HH, no_day) {
     .Call(`_CASSIA_growth_wrapper`, day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, growth_in, last_year_HH, no_day)
 }
 
-myco_growth <- function(C_fungal, N_fungal, a, b) {
-    .Call(`_CASSIA_myco_growth`, C_fungal, N_fungal, a, b)
+myco_growth <- function(C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio) {
+    .Call(`_CASSIA_myco_growth`, C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio)
 }
 
-mycofon_balence <- function(C_roots, N_roots, optimal_root_fungal_biomass_ratio, C_fungal, N_fungal, turnover_roots, turnover_roots_mycorrhized, turnover_mantle, turnover_ERM, respiration_parameters_R, NH4, NO3, FOM_Norg, NC_in_fungal_opt, T, Tsb, SWC, N_limits_Plant, N_k_Plant, SWC_k_Plant, N_limits_Fungal, N_k_Fungal, SWC_k_Fungal, mantle_mass, ERM_mass, parameters_NH4_on_NO3, growth_C, growth_N, max_C_allocation_CASSIA, allocation_N_to_rest_of_plant, mycofon_stratergy) {
-    .Call(`_CASSIA_mycofon_balence`, C_roots, N_roots, optimal_root_fungal_biomass_ratio, C_fungal, N_fungal, turnover_roots, turnover_roots_mycorrhized, turnover_mantle, turnover_ERM, respiration_parameters_R, NH4, NO3, FOM_Norg, NC_in_fungal_opt, T, Tsb, SWC, N_limits_Plant, N_k_Plant, SWC_k_Plant, N_limits_Fungal, N_k_Fungal, SWC_k_Fungal, mantle_mass, ERM_mass, parameters_NH4_on_NO3, growth_C, growth_N, max_C_allocation_CASSIA, allocation_N_to_rest_of_plant, mycofon_stratergy)
+mycofon_balence <- function(C_biomass, C_roots, C_fungal, C_ecto, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tmb, SWC, mycofon_stratergy) {
+    .Call(`_CASSIA_mycofon_balence`, C_biomass, C_roots, C_fungal, C_ecto, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tmb, SWC, mycofon_stratergy)
 }
 
-uptake_N <- function(N, T, N_limit, k, SWC, SWC_sat) {
-    .Call(`_CASSIA_uptake_N`, N, T, N_limit, k, SWC, SWC_sat)
+uptake_N <- function(N, T, SWC, N_limit, k, SWC_limit) {
+    .Call(`_CASSIA_uptake_N`, N, T, SWC, N_limit, k, SWC_limit)
 }
 
-uptake_C <- function(C, T, C_limit, k, SWC, SWC_k) {
-    .Call(`_CASSIA_uptake_C`, C, T, C_limit, k, SWC, SWC_k)
+uptake_C <- function(C, T, SWC, C_limit, k, SWC_limit) {
+    .Call(`_CASSIA_uptake_C`, C, T, SWC, C_limit, k, SWC_limit)
 }
 
-Plant_N_Uptake <- function(T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_k_R, parameters, demand) {
-    .Call(`_CASSIA_Plant_N_Uptake`, T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_k_R, parameters, demand)
+Plant_N_Uptake <- function(T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_limits_R, NH4_on_NO3, demand) {
+    .Call(`_CASSIA_Plant_N_Uptake`, T, SWC, m, NH4_in, NO3_in, FOM_in, N_limits_R, N_k_R, SWC_limits_R, NH4_on_NO3, demand)
 }
 
 Fungal_N_Uptake <- function(T, SWC, NH4, NO3, FOM_Norg, N_limits_R, N_k_R, SWC_k_R, demand) {
     .Call(`_CASSIA_Fungal_N_Uptake`, T, SWC, NH4, NO3, FOM_Norg, N_limits_R, N_k_R, SWC_k_R, demand)
 }
 
-Microbe_Uptake <- function(C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, respiration_microbes_params) {
-    .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, respiration_microbes_params)
+Microbe_Uptake <- function(C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg) {
+    .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg)
 }
 
-preles_test_cpp <- function(NofDays, day, weather, pPREL, etmodel) {
-    .Call(`_CASSIA_preles_test_cpp`, NofDays, day, weather, pPREL, etmodel)
+preles_test_cpp <- function(start_year, end_year, weather, pPREL, etmodel) {
+    .Call(`_CASSIA_preles_test_cpp`, start_year, end_year, weather, pPREL, etmodel)
 }
 
 repola_test_cpp <- function(pCASSIA_parameters, pCASSIA_sperling) {
@@ -71,10 +71,6 @@ repola_test_cpp <- function(pCASSIA_parameters, pCASSIA_sperling) {
 
 respiration_test_cpp <- function(pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0) {
     .Call(`_CASSIA_respiration_test_cpp`, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0)
-}
-
-symphony_multiple_FOM_daily <- function(Tmb, SWC, C_FOM_needles_old, C_FOM_woody_old, C_FOM_roots_old, C_FOM_mantle_old, C_FOM_ERM_old, C_SOM_old, N_SOM_old, C_decompose_FOM, C_decompose_SOM, N_decompose_FOM, N_decompose_SOM, Litter_needles, Litter_woody, Litter_roots, Litter_mantle, Litter_ERM, imobilisation, assimilation, NH4_old, NO3_old, NC_needles, NC_woody, NC_roots, NC_mantle, NC_ERM, NH4_used_Plant, NH4_used_Fungal, NO3_used_Plant, NO3_used_Fungal, FOM_Norg_used_Plant, FOM_Norg_used_Fungal, SOM_Norg_used, respiration_microbes_params, N_limits_R, N_k_R, SWC_k_R, NC_microbe_opt, microbe_turnover) {
-    .Call(`_CASSIA_symphony_multiple_FOM_daily`, Tmb, SWC, C_FOM_needles_old, C_FOM_woody_old, C_FOM_roots_old, C_FOM_mantle_old, C_FOM_ERM_old, C_SOM_old, N_SOM_old, C_decompose_FOM, C_decompose_SOM, N_decompose_FOM, N_decompose_SOM, Litter_needles, Litter_woody, Litter_roots, Litter_mantle, Litter_ERM, imobilisation, assimilation, NH4_old, NO3_old, NC_needles, NC_woody, NC_roots, NC_mantle, NC_ERM, NH4_used_Plant, NH4_used_Fungal, NO3_used_Plant, NO3_used_Fungal, FOM_Norg_used_Plant, FOM_Norg_used_Fungal, SOM_Norg_used, respiration_microbes_params, N_limits_R, N_k_R, SWC_k_R, NC_microbe_opt, microbe_turnover)
 }
 
 symphony <- function(params) {

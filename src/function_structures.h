@@ -73,6 +73,7 @@ struct growth_out {
   double height;
   double wall;
   double roots;
+  double ecto;
   double bud;
   double use;
   double release;
@@ -92,6 +93,27 @@ struct growth_vector {
   std::vector<double> wall_tot;
   std::vector<double> g;
   std::vector<double> en_pot_growth;
+};
+
+/*
+ * Biomass
+ */
+
+struct biomass_out {
+  double diameter;
+  double needles;
+  double height;
+  double wall;
+  double roots;
+  double bud;
+};
+
+struct biomass_vector {
+  std::vector<double> height;
+  std::vector<double> needles;
+  std::vector<double> roots;
+  std::vector<double> diameter;
+  std::vector<double> bud;
 };
 
 /*
@@ -216,6 +238,50 @@ struct needle_cohorts {
   double year_1;
   double year_2;
   double year_3;
+};
+
+/*
+ * MYCOFON vector
+ */
+
+struct MYCOFON_vector {
+  std::vector<double> C_biomass;
+  std::vector<double> C_roots;
+  std::vector<double> C_fungal;
+  std::vector<double> N_roots;
+  std::vector<double> N_fungal;
+  std::vector<double> C_roots_NonStruct;
+  std::vector<double> C_fungal_NonStruct;
+  std::vector<double> N_roots_NonStruct;
+  std::vector<double> N_fungal_NonStruct;
+  std::vector<double> uptake_plant;
+  std::vector<double> uptake_NH4_plant;
+  std::vector<double> uptake_NO3_plant;
+  std::vector<double> uptake_Norg_plant;
+  std::vector<double> uptake_fungal;
+  std::vector<double> uptake_NH4_fungal;
+  std::vector<double> uptake_NO3_fungal;
+  std::vector<double> uptake_Norg_fungal;
+  std::vector<double> from_CASSIA;
+  std::vector<double> to_CASSIA;
+  std::vector<double> Plant_demand;
+  std::vector<double> Fungal_demand;
+  std::vector<double> Plant_given;
+  std::vector<double> Fungal_given;
+};
+
+/*
+ * Gpp function output
+ */
+
+struct gpp_out {
+  double fW;
+  double fE;
+  double fN;
+  double fD;
+  double fCO2;
+  double gpp;
+  double gpp380;
 };
 
 #endif

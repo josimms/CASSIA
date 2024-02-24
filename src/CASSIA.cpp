@@ -128,6 +128,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
+  carbo_balance original_parameters;
 
   /*
    * Vectors for the outputs
@@ -143,9 +144,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   double last_year_maxN;
   double GPP_mean;
   std::vector<double> GPP_previous_sum;
-  if (start_year == 2015) {
-    GPP_previous_sum.push_back(481.3);
-  }
+  GPP_previous_sum.push_back(481.3); // TODO; make this a variable input, rather than this 2015 value
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
 
@@ -185,8 +184,8 @@ Rcpp::List CASSIA_yearly(int start_year,
      */
 
     // Temperature equilibrium for the sugar model
-    //	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
-    double equilibrium_temperature = (TAir[273] + TAir[274] + TAir[275] + TAir[276] + TAir[277] + TAir[278] + TAir[279] + TAir[280]) / 7 + 3;
+    //	# Compute initial Te by the mean temperature for the first week of # Semptemver plus 3C (for the exponential nature of the curves), original was October
+    double equilibrium_temperature = (TAir[244] + TAir[245] + TAir[246] + TAir[247] + TAir[248] + TAir[249] + TAir[250] + TAir[251]) / 7 + 3;
 
     // B0, D00 and h00
     double B0 = M_PI/4 * pow(parameters.D0, 2);
@@ -201,7 +200,7 @@ Rcpp::List CASSIA_yearly(int start_year,
     /*
      * NEEDLE MASS CALCULATION
      *
-     * If it is the first year, then there is no needle mass initialised,
+     * If it is the first year, then there is no needle mass initialized,
      * after this if there is growth in the model the needle mass is calculated based on last year
      * if there is no growth then the needle mass stays at the originally calculated value
      */
@@ -214,7 +213,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     needle_cohorts needles_cohorts;
     if (year > start_year) {
-      // TODO: parameters
+      // TODO: parameters, add the year 5
       needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3;
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
@@ -278,15 +277,19 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.GPP = Photosynthesis_IN[count];
         photosynthesis_per_stem = Photosynthesis_IN[count] / 1010 * 10000/1000;
       } else {
-        photosynthesis = preles(days_per_year, day,
-                                PAR[count], TAir[count], VPD[count], Precip[count],
-                                CO2[count], fAPAR, Nitrogen[count],
-                                parSite, parGPP, parET, parSnowRain,
-                                parWater, parN, etmodel);
+        photosynthesis.GPP = 0;
+        photosynthesis.ET = 0;
+        photosynthesis.fS = 0;
+        photosynthesis.SoilWater = 0;
+                                // call_preles(days_per_year, day,
+                                //           PAR[count], TAir[count], VPD[count], Precip[count],
+                                //           CO2[count], fAPAR, Nitrogen[count],
+                                //           parSite, parGPP, parET, parSnowRain,
+                                //           parWater, parN, etmodel);
         // TODO: 5.6...
         photosynthesis.GPP = 5.6 * photosynthesis.GPP; // g C m-2 per day, so no conversion is needed!
         photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
-        fS = photosynthesis.S;
+        fS = photosynthesis.fS;
       }
       if (day == 0) {
         GPP_sum = 0.0;
@@ -341,6 +344,20 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       // TODO; need to check the indexes!
       if (day == 0 & year == start_year) {
+        sugar_values_for_next_iteration.sugar.needles = original_parameters.sugar.needles = parameters.sugar_needles0;
+        sugar_values_for_next_iteration.sugar.phloem = original_parameters.sugar.phloem = parameters.sugar_phloem0;
+        sugar_values_for_next_iteration.sugar.roots = original_parameters.sugar.roots = parameters.sugar_roots0;
+        sugar_values_for_next_iteration.sugar.xylem_sh = original_parameters.sugar.xylem_sh = parameters.sugar_xylem_sh0;
+        sugar_values_for_next_iteration.sugar.xylem_st = original_parameters.sugar.xylem_st = parameters.sugar_xylem_st0;
+        sugar_values_for_next_iteration.sugar.mycorrhiza = original_parameters.sugar.mycorrhiza = 0; // TODO: think about this
+
+        sugar_values_for_next_iteration.starch.needles = original_parameters.starch.needles = parameters.starch_needles0;
+        sugar_values_for_next_iteration.starch.phloem = original_parameters.starch.phloem = parameters.starch_phloem0;
+        sugar_values_for_next_iteration.starch.roots = original_parameters.starch.roots = parameters.starch_roots0;
+        sugar_values_for_next_iteration.starch.xylem_sh = original_parameters.starch.xylem_sh = parameters.starch_xylem_sh0;
+        sugar_values_for_next_iteration.starch.xylem_st = original_parameters.starch.xylem_st = parameters.starch_xylem_st0;
+        sugar_values_for_next_iteration.starch.mycorrhiza = original_parameters.starch.mycorrhiza = 0;
+      } else if (day == 0 & year != start_year) {
         sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
         sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
         sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
@@ -405,8 +422,6 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                    sperling_sugar_model);
       // TODO: update the parameters like D0 and h0 that need to be updated
 
-      // std::cout << "\n";
-
       /*
        * Output
        */
@@ -414,7 +429,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       needles_last = potential_growth.needles;
       potenital_growth_use.push_back(potential_growth.use);
       if (!tree_alive) {
-        std::cout << "The tree is dead due to sugar storage";
+        std::cout << "The tree is dead due to sugar storage\n";
       }
 
       GPP_sum_yesterday = GPP_sum;
@@ -466,7 +481,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis_output.GPP.push_back(photosynthesis.GPP);
         photosynthesis_output.ET.push_back(photosynthesis.ET);
         photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
-        photosynthesis_output.S.push_back(photosynthesis.S);
+        photosynthesis_output.fS.push_back(photosynthesis.fS);
       }
     }
 
@@ -481,6 +496,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       last_cohorts.year_1 = needles_cohorts.year_1; // TODO: currently the growth doesn't really have an effect on this - should it?
       last_cohorts.year_2 = needles_cohorts.year_2;
       last_cohorts.year_3 = needles_cohorts.year_3;
+      // TODO: make it possible to make this for 5 years?
 
       parameters.sugar_needles0 = sugar_values_for_next_iteration.sugar.needles;
       parameters.sugar_phloem0 = sugar_values_for_next_iteration.sugar.phloem;
@@ -497,6 +513,20 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     // TODO: need to add the growth of things here!
     final_year = final_year + 1;
+
+    if (year == final_year + 1) {
+      parameters.sugar_needles0 = original_parameters.sugar.needles;
+      parameters.sugar_phloem0 = original_parameters.sugar.phloem;
+      parameters.sugar_roots0 = original_parameters.sugar.roots;
+      parameters.sugar_xylem_sh0 = original_parameters.sugar.xylem_sh;
+      parameters.sugar_xylem_st0 = original_parameters.sugar.xylem_st;
+
+      parameters.starch_needles0 = original_parameters.starch.needles;
+      parameters.starch_phloem0 = original_parameters.starch.phloem;
+      parameters.starch_roots0 = original_parameters.starch.roots;
+      parameters.starch_xylem_sh0 = original_parameters.starch.xylem_sh;
+      parameters.starch_xylem_st0 = original_parameters.starch.xylem_st;
+    }
   }
 
   ///////////////////////

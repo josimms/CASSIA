@@ -7,7 +7,7 @@
 
   Not yet integrated into the CASSIA model. \cr
 
-  TODO: should have a deeper explaination when it is actualy included in the model and when hte function itself is finished.
+  TODO: should have a deeper explaination when it is actualy included in the model and when the function itself is finished.
 }
 \arguments{
  \item{g.sD.T}{

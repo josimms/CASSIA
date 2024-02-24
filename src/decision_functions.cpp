@@ -1,12 +1,11 @@
 #include "CASSIA.h"
 
 // [[Rcpp::export]]
-Rcpp::List plant_decision(double C_roots,
-                          double N_roots,
-                          double C_fungal,
+Rcpp::List plant_decision(double C_roots_NonStruct,
+                          double N_roots_NonStruct,
+                          double C_fungal_NonStruct,
                           double optimal_root_funga_biomass_ratio,
-                          double N_allo,
-                          double max_C_allocation_CASSIA) {
+                          double m) {
 
     /*
      * Carbon Allocation as in Mycofon!
@@ -20,21 +19,28 @@ Rcpp::List plant_decision(double C_roots,
      * allomax * photosynthesis
      */
 
+    /*
+     * TODO: I am considering the non structural rather than actual values of C and N,
+     * so the equations should be changed accordingly!
+     */
+
     double allomax;
-    if (N_roots < 0.01) { // TODO: consider this again
-      allomax = 1 - (1 - pow(exp(-50*N_roots), 3));
+    if (N_roots_NonStruct < 0.01) { // TODO: consider this again
+      allomax = 1 - (1 - pow(exp(-50*N_roots_NonStruct), 3));
     } else {
       allomax = 0.2;
     }
 
     double allo; // Allocates all if it can meet it's own demand
-    if (N_allo < 0.5*N_roots) { // TODO: consider this again
-      allo = N_allo / (N_roots + N_allo);
+    if (N_roots_NonStruct < 0.5) { // TODO: consider this again
+      allo = N_roots_NonStruct / (N_roots_NonStruct + 0.5);
     } else {
       allo = 1;
     }
 
-    double C_allo = std::max(std::min(allomax * C_roots, allo * (C_roots * optimal_root_funga_biomass_ratio) - C_fungal), 0.0);
+    double temp = std::min(allomax * C_roots_NonStruct, allo * (C_roots_NonStruct * optimal_root_funga_biomass_ratio) - C_fungal_NonStruct);
+    double C_allo = std::max(m*temp, 0.0);
+    double C_e = std::max((1-m)*temp, 0.0);
 
     /*
      *  Carbon Allocation in Franklin 2014
@@ -44,22 +50,25 @@ Rcpp::List plant_decision(double C_roots,
      *  C_f = Photosynthesis - G_p / y_p - turnover
      */
 
-    double C_f = std::max(max_C_allocation_CASSIA, 0.0); // Value from CASSIA
+    double C_f = std::max(m*C_roots_NonStruct, 0.0); // Value from CASSIA
+    double C_e_f = std::max((1-m)*C_roots_NonStruct, 0.0); // Value from CASSIA
 
     return(Rcpp::List::create(Rcpp::_["Mycofon_demand"] = 1,
                               Rcpp::_["Mycofon_allocation"] = C_allo,
                               Rcpp::_["Franklin_demand"] = 1,
-                              Rcpp::_["Franklin_allocation"] = C_f));
+                              Rcpp::_["Franklin_allocation"] = C_f,
+                              Rcpp::_["Mycofon_exudes"] = C_e,
+                              Rcpp::_["Franklin_exudes"] = C_e_f));
 }
 
+
+
+
 // [[Rcpp::export]]
-Rcpp::List myco_decision(double C_fungal,
-                         double N_fungal,
-                         double C_roots,
-                         double N_roots,
-                         double NC_fungal_opt,
-                         double growth_C,
-                         double growth_N) {
+Rcpp::List myco_decision(double N_fungal_NonStruct,
+                         double C_roots_NonStruct,
+                         double N_roots_NonStruct,
+                         double NC_fungal_opt) {
 
   /*
    * Nitrogen allocation from Mycofon!
@@ -69,7 +78,7 @@ Rcpp::List myco_decision(double C_fungal,
    * N_max should be uptake rather than biomass!
    */
 
-  double N_allo = std::max(N_fungal*(1 - (N_roots / C_roots) / NC_fungal_opt), 0.0);
+  double N_allo = std::max(N_fungal_NonStruct*(1 - (N_roots_NonStruct / C_roots_NonStruct) / NC_fungal_opt), 0.0);
 
   /*
    * Nitrogen allocation from Franklin 2014
@@ -81,8 +90,7 @@ Rcpp::List myco_decision(double C_fungal,
    *    TODO: Needs to be uptake rather than biomass though!
    */
 
-  double growth = myco_growth(C_fungal, N_fungal, growth_C, growth_N)[2]; // Nitrogen used output
-  double N_p = std::max(N_fungal - growth, 0.0);
+  double N_p = std::max(N_fungal_NonStruct, 0.0);
 
   return(Rcpp::List::create(Rcpp::_["Mycofon_demand"] = 1,
                             Rcpp::_["Mycofon_allocation"] = N_allo,

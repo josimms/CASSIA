@@ -16,7 +16,11 @@ Hyde_daily_original$date <- as.Date(as.Date(Hyde_daily_original$day,
                                             origin = as.Date(paste0(Hyde_daily_original$year,
                                                                     "-01-01"))))
 
-
 save(Hyde_daily_original, file = "./data/Hyde_daily_original.RData")
 save(Hyde_yearly_original, file = "./data/Hyde_yearly_original.RData")
+
+####
+# Reading the CASSIA preles data
+####
+
 

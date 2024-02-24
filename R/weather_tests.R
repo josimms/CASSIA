@@ -21,4 +21,9 @@ function(weather) {
   if (sum(is.na(M.soil))) {warning(paste("M.soil has NA values check input."))}
   if (sum(is.na(Rain))) {warning(paste("Rain has NA values check input."))}
 
+  ###
+  # Test to see if the weather files are okay
+  ###
+  if (sum(names(weather) %in% c("date", "Date", "T", "P", "TSA", "TSB", "MB", "Rain", "PAR", "VPD", "fAPAR"))) {stop("Incomplete weather data - incorrect variables, or named incorrectly")}
+
 }
