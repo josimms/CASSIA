@@ -331,6 +331,7 @@ symphony_multiple_FOM_daily(Tmb,
 
   Last updated 23.02.2024
 }
+
 \references{
   Perveen, Nazia, et al. "Priming effect and microbial diversity in ecosystem functioning and response to global change: a modeling approach using the SYMPHONY model." Global change biology 20.4 (2014): 1174-1190.
 }
