@@ -176,7 +176,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   /*
    * Non structural elements!
    */
-  // TODO: need an exude percentage!
+  // TODO: need an exude parameter!
   double exudes_fungal = 0.2*C_fungal_NonStruct;
   C_fungal_NonStruct = C_fungal_NonStruct + C_given - myco_growth_C - exudes_fungal;
 

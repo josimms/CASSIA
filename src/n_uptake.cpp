@@ -209,11 +209,14 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
   double NO3_uptake = uptake_N(NO3_avaliable, T, SWC, N_limits.NO3, N_k.NO3, SWC_k.NO3);        // UNITS: C kg
   double Norg_uptake = uptake_N(Norg_avaliable, T, SWC, N_limits.Norg, N_k.Norg, SWC_k.Norg);   // UNITS: C kg
 
-  double carbon_limitation = Norg_uptake; // TODO: check this - does this have a units problem?
+  double carbon_limitation = C_microbe * Norg_uptake;
+  // TODO: write the equations in the other document
+  // TODO: the decomposition is assumed to release exactly the same amount of nitrogen and carbon currently!
+
   // TODO: add respiration when I have the parameters after Christmas
   // 0.2 = respiration(T, respiration_microbes_params[1], respiration_microbes_params[2]), which is the old respiration function
   // Update the parameters in the CASSIA respiration function!
-  double nitrogen_limitation = (imobilisation*(NH4_uptake + NO3_uptake) + NC_microbe_opt*0.2*C_microbe)/
+  double nitrogen_limitation = (imobilisation * (NH4_uptake + NO3_uptake) + NC_microbe_opt * 0.2 * C_microbe)/
     (NC_Litter - NC_microbe_opt);
 
   double NH4_uptaken;     // UNITS: C kg
