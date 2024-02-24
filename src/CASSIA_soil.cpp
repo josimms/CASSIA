@@ -487,8 +487,8 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_values_for_next_iteration.C_exudes = 0;
         soil_values_for_next_iteration.C_SOM = 5.6;
         soil_values_for_next_iteration.N_SOM = 10.0;
-        soil_values_for_next_iteration.C_decompose_FOM = 0.4;
-        soil_values_for_next_iteration.C_decompose_SOM = 0.4;
+        soil_values_for_next_iteration.C_decompose_FOM = 0.2;
+        soil_values_for_next_iteration.C_decompose_SOM = 0.2;
         soil_values_for_next_iteration.N_decompose_FOM = 0.4;
         soil_values_for_next_iteration.N_decompose_SOM = 0.4;
       } else if (year != start_year && day == 0) {
@@ -538,12 +538,12 @@ Rcpp::List CASSIA_soil(int start_year,
                                                          TAir[count],
                                                          TSoil_B[count],
                                                          Soil_Moisture[count],
-                                                         false);
+                                                         true);
         // TODO: does the sugar balance for this need to be added to the CASSIA model?
       MYCOFON_for_next_iteration = MYCOFON_out;
 
       // TODO: litter!
-      double Litter_needles = needle_mass_in / 3 / 365;
+      double Litter_needles = 0.1 * (needle_mass_in / 3) / 365;
       double Litter_woody = actual_growth_out.wall / (365*3);
       double Litter_roots = actual_growth_out.roots / 365;
       double Litter_ERM = actual_growth_out.roots / 365;
@@ -565,7 +565,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                             Litter_needles, Litter_woody, Litter_roots, Little_mantle, Litter_ERM,
                                                             MYCOFON_for_next_iteration.exudes_fungal,
                                                             MYCOFON_for_next_iteration.exudes_plant,
-                                                            0.1, 0.1, 0.1, // TODO: this!
+                                                            0.5, 0.5, 0.6, // TODO: this!
                                                             soil_values_for_next_iteration.NH4, soil_values_for_next_iteration.NO3,
                                                             soil_values_for_next_iteration.NC_needles, soil_values_for_next_iteration.NC_woody,
                                                             soil_values_for_next_iteration.NC_roots, soil_values_for_next_iteration.NC_mantle, soil_values_for_next_iteration.NC_ERM,
