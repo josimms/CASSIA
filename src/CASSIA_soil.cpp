@@ -538,7 +538,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                          TAir[count],
                                                          TSoil_B[count],
                                                          Soil_Moisture[count],
-                                                         true);
+                                                         false);
         // TODO: does the sugar balance for this need to be added to the CASSIA model?
       MYCOFON_for_next_iteration = MYCOFON_out;
 

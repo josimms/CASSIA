@@ -2,8 +2,9 @@
 
 // Initisation from values I have gathered
 
-parameters parameters_initalise_test(std::vector<double> parameters_R) {
-  parameters out;
+/*
+parameters_in parameters_initalise_test(std::vector<double> parameters_R) {
+  parameters_in out;
   out.microbe_turnover = parameters_R[0];
   out.NC_in_root_opt = parameters_R[1];
   out.NC_fungal_opt = parameters_R[2];
@@ -48,10 +49,12 @@ Rcpp::List Toy_Model(double year,
                      Rcpp::DataFrame Hyde_weather,
                      std::vector<double> parameters_R)
 {
+  */
   /*
    * Weather data formatted for the code
    */
 
+  /*
   std::vector<double> PAR = Hyde_weather["PAR"];
   std::vector<double> TAir = Hyde_weather["TAir"];
   std::vector<double> VPD = Hyde_weather["VPD"];
@@ -60,13 +63,14 @@ Rcpp::List Toy_Model(double year,
   std::vector<double> Tma = Hyde_weather["Tma"]; // TODO: what should this be?
   std::vector<double> fAPAR = Hyde_weather["fAPAR"];
   std::vector<double> SWC = Hyde_weather["SWC"];
-
+*/
   /*
    * Initialisation
    */
 
   // Should either be from CASSIA or this whole function should be in the CASSIA function
 
+  /*
   CASSIA_output CASSIA_out;
   CASSIA_out.C_roots = C_roots;
   CASSIA_out.N_roots = N_roots;
@@ -74,12 +78,15 @@ Rcpp::List Toy_Model(double year,
   MYCOFON_output MYTCOFON_out;
   MYTCOFON_out.C_fungal = C_fungal;
   MYTCOFON_out.N_fungal = N_fungal;
+   */
 
   /*
    * Parameteres from R to parameter form
    */
-  parameters parameters_in = parameters_initalise_test(parameters_R);
+
+  //parameters parameters_in = parameters_initalise_test(parameters_R);
   // As C_fungal: 50:50 mantle and ERM, Meyer 2010
+  /*
   parameters_in.mantle_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
   parameters_in.ERM_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
 
@@ -153,3 +160,5 @@ Rcpp::List Toy_Model(double year,
 
   return(0);
 }
+
+   */
