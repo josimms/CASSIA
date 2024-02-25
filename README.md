@@ -8,18 +8,6 @@ The main mathematical structure and equations are found in Schiestl‐Aalto 2015
 
 This model has been used in numerous papers (see Literature) - mainly considering Hyytiälä (SMEAR II Station, University of Helsinki). Most of the code has been written by Schiestl‐Aalto, with only small additions by others. The development of the code can be seen in the papers below, although this package does have newer developments not yet published in papers such as a sugar addition and xylogenesis. Note: future developments of the CASSIA model will seperate these into spereate functions, but at the moment all of the code is together in one file to be able to make the original code into a package.
 
-### Ongoing Projects
-
-#### Alexis Lehtonen
-Parameterisation for the CASSIA Lehtosuo site
-
-#### Joanna Simms 
-Addition of a enzyme driven sugar model and mycorrhizal interactions. Thus linking with a soil model (SYMPHONY) and mycorrhizal model (MYCOFON).
-
-![kuva](https://github.com/josimms/MycoModel/assets/102613042/1a465070-6995-4f73-bef7-4e7920bca289)
-
-The full details should be added when the code is finished, but indervidual functions are written in the function help files.
-
 ### Downloading Package for Use
 
 ```{r}
