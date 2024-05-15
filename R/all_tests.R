@@ -1,5 +1,5 @@
 ###
-# Ultermate test function
+# Ultimate test function
 ###
 
 tests <- function() {
@@ -38,11 +38,10 @@ tests <- function() {
 # Code for the functions in the ultimate test function
 ######
 
-all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes) {
+all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes, jussi_data) {
   ###
   # Settings and parameters
   ###
-
   storage_rest = F
   storage_grows = F
   LH_estim = T
@@ -63,15 +62,6 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   etmodel = F
   LOGFLAG = F
 
-  # CASSIA extra parameters
-  needle_mass_in = 4.467638
-
-  N_parameters = c(1/0.012, 0.0) # TODO: Fit the N parameters
-  pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
-            0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
-            0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
-            -999.9, -999.9, -999.9)
-
   ###
   # Weather data processing
   ###
@@ -89,20 +79,22 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                       CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("CO2")],
                       fAPAR = rep(0.7, length = nrow(weather_original)))
   weather_original <- cbind(weather_original, extras)
+  weather_original <- weather_original[-(365+366),]
 
   start_year = 2015
   end_year = 2018
   dates_original = seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
   dates_original <- dates_original[-(365+366)]
+  dates = dates_original
 
   if (!using_spp_photosynthesis) {
     Photosynthesis_Reference <- weather_original$P
     weather_original <- data_format
     weather_original$Nitrogen <- rep(0.012, rep = nrow(weather_original))
     weather_original$P <- rep(0.0, rep = nrow(weather_original))
-    weather_original$TSA[is.na(weather_original$TSA)] <- weather_original$T[is.na(weather_original$TSA)] - 5
+    weather_original$TSA[is.na(weather_original$TSA)] <- weather_original$T[is.na(weather_original$TSA)] - 7
     weather_original$TSA[weather_original$TSA < 0] <- 0
-    weather_original$TSB[is.na(weather_original$TSB)] <- weather_original$T[is.na(weather_original$TSB)] - 5
+    weather_original$TSB[is.na(weather_original$TSB)] <- weather_original$T[is.na(weather_original$TSB)] - 7
     weather_original$TSB[weather_original$TSB < 0] <- 0
     weather_original <- weather_original[seq(from = 4, to = 19, by = 4)*-366,]
     start_year = 2005
@@ -111,13 +103,40 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     dates <- dates[-365+seq(from = 3, to = 18, by = 4)*-366]
   }
 
-  direct <- "~/Documents/CASSIA_Calibration/"
-  load(paste0(direct, "original.data.RData"))
-  yu_data <- read.csv(paste0(direct, "yu.data.csv"))
-  # TODO: is this the one with the right units?
+  ###
+  # Importing validation data
+  ###
 
-  direct_raw_data <- "~/Documents/CASSIA_Calibration/Raw_Data/nitrogen_data/"
-  nitorgen_balance <- read.csv(paste0(direct_raw_data, "ecosystem_balence_N.csv"))
+  direct <- "~/Documents/CASSIA_Calibration/Processed_Data/"
+  yu_data <- read.csv(paste0(direct, "yu.data.csv")) # TODO: is this the one with the right units?
+  trenching_co2_fluxes <- read.delim(paste0(direct, "Trenching-CO2-fluxes-2013-2015.txt"), sep = "\t", header = F)
+  names(trenching_co2_fluxes) # TODO: the names of the
+  smearII_soil <- readxl::read_excel(paste0(direct, "smearII_soil.xlsx"))
+  smearII_data <- readxl::read_excel(paste0(direct, "smearII_data.xlsx"))
+  smearII <- read.csv(paste0(direct, "smearII.csv"))
+  oyewole_2015_calibration_data <- read.csv(paste0(direct, "oyewole_2015_calibration_data.csv"))
+  load(paste0(direct, "original.data.RData"))
+  load(paste0(direct, "obs.vec.og.RData"))
+  korhonen_mineral_N <- read.csv(paste0(direct, "korhonen_mineral_N.csv"))
+  keskiarvot_kaittelyttain_vuot <- read.delim(paste0(direct, "keskiarvot_kasittelyttain_vuot_2013_2015.txt"))
+  # TODO: read in the data correctly
+  # jussi_data_calibration <- readxl::read_excel(paste0(direct, "Jussi_data.xlsx"))
+  nitorgen_balance <- read.csv(paste0(direct, "ecosystem_balence_N.csv"))
+  # TODO: read in the core drilling data
+  core_drilling_list <- lapply(paste0(direct, list.files(direct, pattern = "Core Drilling")), read.delim)
+
+  ###
+  # Parameters
+  ###
+
+  # CASSIA extra parameters
+  needle_mass_in = 4.467638
+
+  N_parameters = c(1/0.012, 0.0) # TODO: Fit the N parameters
+  pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
+            0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
+            0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
+            -999.9, -999.9, -999.9)
 
   parameters_test <- parameters_p
   parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"),1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
@@ -171,6 +190,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    1, # C_value_param_plant
                    1) # N_value_param_plant
 
+  ###
+  # Running the functions
+  ###
+
   if (soil_processes) {
     CASSIA_new_output = CASSIA_soil(start_year, end_year, weather_original, GPP_ref,
                                     c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test), parameters_R,
@@ -199,24 +222,33 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                       etmodel, LOGFLAG)
   }
 
-
   variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
   variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
   Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365),]
 
   ###
-  # Previous Data
+  # Weather Data Plots
+  ###
+
+  par(mfrow = c(3, 3))
+  for (clim in 2:ncol(weather_original)) {
+    plot(dates, weather_original[,clim], main = names(weather_original)[clim],
+         ylab = names(weather_original)[clim], xlab = "Dates")
+  }
+
+  ###
+  # Previous CASSIA Outpoints against new outputs
   ###
 
   par(mfrow = c(3, 3))
   for (var in 1:length(variables_new)) {
     if (var < length(variables_new)) {
-      # TODO: Pauliina for the data that was originally used to calibrate CASSIA - root biomass in particular
       plot(dates, CASSIA_new_output[[1]][,c(variables_new[var])],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
       lines(dates_original, Hyde_daily_original_plot[,c(variables_original[var])], col = "blue")
-      plot(Hyde_daily_original_plot[,c(variables_original[var])][-731], CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
+      plot(Hyde_daily_original_plot[,c(variables_original[var])][-731],
+           CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original][-731],
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
       plot(dates_original, Hyde_daily_original_plot[,c(variables_original[var])] - CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original],
@@ -230,7 +262,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
       plot(dates, CASSIA_new_output[[photo_index]][,c(variables_new[var])],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
       lines(dates_original, Photosynthesis_Reference[-731], col = "blue")
-      plot(Photosynthesis_Reference[-731][-length(Photosynthesis_Reference)+1], CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original], # TODO: the dates don't work here! Hence the errors
+      plot(Photosynthesis_Reference[-731][-length(Photosynthesis_Reference)+1], CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original][-731],
            main = "New against old", xlab = "Original data", ylab = "New Data")
       abline(0, 1, col = "red")
       plot(dates_original, Photosynthesis_Reference[-731] - CASSIA_new_output[[photo_index]][,c(variables_new[var])][dates %in% dates_original],
@@ -322,6 +354,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   ###
   # Soil Processes
   ###
+
   if (soil_processes) {
     # Mycofon
     par(mfrow = c(3, 2))
@@ -443,7 +476,6 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
       }
     }
 
-
     par(mfrow = c(3, 4))
     if (sum(is.na(CASSIA_new_output$Fungal$uptake_NH4_fungal)) < nrow(CASSIA_new_output$Fungal)) {
       ylim_Fungal = c(min(CASSIA_new_output$Fungal$uptake_NH4_fungal, na.rm = T), max(CASSIA_new_output$Fungal$uptake_NH4_fungal, na.rm = T))
@@ -499,7 +531,9 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
       ylim_Microbes = c(0, 1)
     }
 
-    # TODO: plots
+    ###
+    # Uptake outputs from the model
+    ###
 
     plot(weather_original$TSB, CASSIA_new_output$Fungal$uptake_NO3_fungal, main = "uptake_NO3_fungal",
          ylab = "", xlab = "Temperature", ylim = ylim_Fungal)
@@ -576,6 +610,22 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
          ylab = "", xlab = "Norg", ylim = ylim_Plant)
     plot(NO3_range, CASSIA_new_output$Preles$uptake_Norg_microbial_SOM, main = "uptake_Norg_microbes_SOM",
          ylab = "", xlab = "Norg", ylim = ylim_Plant)
+
+
+    ###
+    # Respiration graphs
+    ###
+
+    par(mfrow = c(1, 1))
+    plot(NULL, main = "Total Respiration", xlab = "Dates", ylab = "Respiration ()",
+         ylim = c(min(unlist(lapply(CASSIA_new_output$Respiration, min, na.rm = T))),
+                  max(unlist(lapply(CASSIA_new_output$Respiration, max, na.rm = T)))),
+         xlim = c(dates[1], dates[length(dates)])) # TODO: add units
+    for (i in 1:ncol(CASSIA_new_output$Respiration)) {
+      lines(dates, CASSIA_new_output$Respiration[,c(i)], col = i)
+    }
+    legend("topleft", gsub("\\b([a-z])", "\\U\\1", gsub("_", " ", gsub("respiration_", "", names(out$Respiration))), perl = TRUE),
+           col = 1:5, lty = rep(1, 5), bty = "n", cex = 0.75)
   }
 
   return(CASSIA_new_output)
