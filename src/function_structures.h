@@ -18,6 +18,9 @@ struct respiration_out {
 struct resp_vector {
   std::vector<double> growth;
   std::vector<double> maintenance;
+  std::vector<double> mycorrhiza;
+  std::vector<double> microbes_FOM;
+  std::vector<double> microbes_SOM;
 };
 
 /*
@@ -250,6 +253,7 @@ struct MYCOFON_vector {
   std::vector<double> C_fungal;
   std::vector<double> N_roots;
   std::vector<double> N_fungal;
+  std::vector<double> Respiration;
   std::vector<double> C_roots_NonStruct;
   std::vector<double> C_fungal_NonStruct;
   std::vector<double> N_roots_NonStruct;

@@ -160,7 +160,7 @@ struct SYMPHONY_output {
   double N_decompose_FOM;
   double N_decompose_SOM;
   double SOM_Norg_used;
-  double Microbe_respiration;
+  double Microbe_respiration_per_mass;
   double NH4_Uptake_Microbe_FOM;
   double NO3_Uptake_Microbe_FOM;
   double Norg_Uptake_Microbe_FOM;
@@ -230,6 +230,7 @@ struct MYCOFON_function_out {
   double Fungal_given;
   double exudes_plant;
   double exudes_fungal;
+  double respiration;
 };
 
 

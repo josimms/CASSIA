@@ -108,7 +108,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   NO3 = NO3 - SOM_after_microbe_activity.NO3;    // C kg eq
   NH4 = NH4 - SOM_after_microbe_activity.NH4;    // C kg eq
 
-  N_SOM = N_SOM - SOM_after_microbe_activity.Norg + microbe_turnover*(N_decompose_SOM + N_decompose_FOM);    // C kg eq
+  N_SOM = N_SOM - SOM_after_microbe_activity.Norg + microbe_turnover * (N_decompose_SOM + N_decompose_FOM);    // C kg eq
   N_FOM = N_FOM - SOM_after_microbe_activity.Norg_FOM;    // C kg eq
 
   /*
@@ -130,10 +130,11 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   double C_SOM = C_SOM_old - SOM_after_microbe_activity.C + microbe_turnover*(C_decompose_FOM + C_decompose_SOM);   // C kg
 
   // STEP 3: Update the microbes
-  C_decompose_FOM = (1 - microbe_turnover - 0.002) * C_decompose_FOM + FOM_after_microbe_activity.C;   // C kg
+  double resp = 0.002; // TODO: add respiration function here!
+  C_decompose_FOM = (1 - microbe_turnover - resp) * C_decompose_FOM + FOM_after_microbe_activity.C;   // C kg
   N_decompose_FOM = (1 - microbe_turnover) * N_decompose_FOM + FOM_after_microbe_activity.NH4 + FOM_after_microbe_activity.NO3 + FOM_after_microbe_activity.Norg;   // C kg
 
-  C_decompose_SOM = (1 - microbe_turnover - 0.002) * C_decompose_SOM + SOM_after_microbe_activity.C;   // C kg
+  C_decompose_SOM = (1 - microbe_turnover - resp) * C_decompose_SOM + SOM_after_microbe_activity.C;   // C kg
   N_decompose_SOM = (1 - microbe_turnover) * N_decompose_SOM + SOM_after_microbe_activity.NH4 + SOM_after_microbe_activity.NO3 + SOM_after_microbe_activity.Norg;   // C kg
   // TODO: 0.2 is a placeholder for respiration
 
@@ -162,7 +163,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   out.NH4 = NH4;                                  // C kg
   out.NO3 = NO3;                                  // C kg
   out.SOM_Norg_used = SOM_Norg_used;              // C kg
-  out.Microbe_respiration = 0.002; // TODO respiration(Tmb, respiration_microbes_params[1], respiration_microbes_params[2]));    // C kg
+  out.Microbe_respiration_per_mass = resp;
   out.NH4_Uptake_Microbe_FOM = FOM_after_microbe_activity.NH4;
   out.NO3_Uptake_Microbe_FOM = FOM_after_microbe_activity.NO3;
   out.Norg_Uptake_Microbe_FOM = FOM_after_microbe_activity.Norg;

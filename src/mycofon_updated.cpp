@@ -164,10 +164,12 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   double myco_growth_C = myco_growth(C_fungal_NonStruct, N_fungal_NonStruct, C_fungal, C_ecto, parameters_in.growth_C, parameters_in.growth_N, parameters_in.NC_fungal_opt)[1];
   double myco_growth_N = myco_growth(C_fungal_NonStruct, N_fungal_NonStruct, C_fungal, C_ecto, parameters_in.growth_C, parameters_in.growth_N, parameters_in.NC_fungal_opt)[2];
 
+  double resp = 0.00958; // TODO: make a respiration function
+
   C_fungal = C_fungal +
     myco_growth_C -
-    parameters_in.turnover_mantle*C_fungal*0.5 - parameters_in.turnover_ERM*C_fungal*0.5 -
-    0.00958*C_fungal; // TODO: should have a better logic for respiration
+    parameters_in.turnover_mantle*C_fungal * 0.5 - parameters_in.turnover_ERM*C_fungal * 0.5 -
+    resp * C_fungal;
 
   /*
    * Non structural elements!
@@ -213,6 +215,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   out.Fungal_given = N_given;
   out.exudes_plant = C_exudes_plant;
   out.exudes_fungal = exudes_fungal;
+  out.respiration = resp;
   return(out);
 
 }
@@ -276,7 +279,8 @@ Rcpp::List mycofon_balence(double C_biomass,
                                                Rcpp::_["uptake_NO3_fungal"] = MYCOFON_output.uptake_NO3_fungal,
                                                Rcpp::_["uptake_Norg_fungal"] = MYCOFON_output.uptake_Norg_fungal,
                                                Rcpp::_["from_CASSIA"] = MYCOFON_output.from_CASSIA,
-                                               Rcpp::_["to_CASSIA"] = MYCOFON_output.to_CASSIA);
+                                               Rcpp::_["to_CASSIA"] = MYCOFON_output.to_CASSIA,
+                                               Rcpp::_["Respiration"] = MYCOFON_output.respiration);
   return(df);
 }
 
