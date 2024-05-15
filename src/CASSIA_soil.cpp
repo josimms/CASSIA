@@ -43,6 +43,7 @@ Rcpp::List CASSIA_soil(int start_year,
                        bool Rm_acclimation,
 
                        bool using_spp_photosynthesis,
+                       bool trenching,
                        bool CASSIA_graphs,
 
                        int etmodel,
@@ -542,12 +543,26 @@ Rcpp::List CASSIA_soil(int start_year,
         // TODO: does the sugar balance for this need to be added to the CASSIA model?
       MYCOFON_for_next_iteration = MYCOFON_out;
 
-      // TODO: litter!
-      double Litter_needles = 0.1 * (needle_mass_in / 3) / 365;
-      double Litter_woody = actual_growth_out.wall / (365*3);
-      double Litter_roots = actual_growth_out.roots / 365;
-      double Litter_ERM = actual_growth_out.roots / 365;
-      double Little_mantle = actual_growth_out.roots / 365;
+      /*
+       *  Litter
+       */
+
+      // Currently a time series - should add litter in the model more explicitly
+      // There is a trenched version for Jussi's data
+
+      double Litter_needles, Litter_woody, Litter_roots, Litter_ERM, Little_mantle;
+      Litter_needles = 0.1 * (needle_mass_in / 3) / 365;
+      Litter_woody = actual_growth_out.wall / (365*3);
+      Litter_roots = actual_growth_out.roots / 365;
+      Litter_ERM = actual_growth_out.roots / 365;
+      Little_mantle = actual_growth_out.roots / 365;
+      if (trenching) {
+        if (year > 2018) {
+          Litter_needles = 0;
+          Litter_woody = 0;
+          Litter_roots = 0;
+        }
+      }
 
       /*
        * SOIL
@@ -596,6 +611,9 @@ Rcpp::List CASSIA_soil(int start_year,
 
         respiration_output.maintenance.push_back(actual_growth_out.respiration_maintenance);
         respiration_output.growth.push_back(actual_growth_out.respiration_growth);
+        respiration_output.microbes_FOM.push_back(Soil_All.Microbe_respiration_per_mass * Soil_All.C_decompose_FOM);
+        respiration_output.microbes_SOM.push_back(Soil_All.Microbe_respiration_per_mass * Soil_All.C_decompose_SOM);
+        respiration_output.mycorrhiza.push_back(MYCOFON_for_next_iteration.respiration * MYCOFON_for_next_iteration.C_biomass);
 
         potential_growth_output.height.push_back(potential_growth.height);
         potential_growth_output.needles.push_back(potential_growth.needles);
@@ -660,7 +678,7 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_output.NH4.push_back(Soil_All.NH4);
         soil_output.NO3.push_back(Soil_All.NO3);
         soil_output.SOM_Norg_used.push_back(Soil_All.SOM_Norg_used);
-        soil_output.Microbe_respiration.push_back(Soil_All.Microbe_respiration);
+        soil_output.Microbe_respiration.push_back(Soil_All.Microbe_respiration_per_mass);
         soil_output.NH4_Uptake_Microbe_FOM.push_back(Soil_All.NH4_Uptake_Microbe_FOM);
         soil_output.NO3_Uptake_Microbe_FOM.push_back(Soil_All.NO3_Uptake_Microbe_FOM);
         soil_output.Norg_Uptake_Microbe_FOM.push_back(Soil_All.Norg_Uptake_Microbe_FOM);
@@ -858,12 +876,18 @@ Rcpp::List CASSIA_soil(int start_year,
                                                 Rcpp::_["uptake_NH4_microbial_SOM"] = soil_output.NH4_Uptake_Microbe_SOM,
                                                 Rcpp::_["uptake_NO3_microbial_SOM"] = soil_output.NO3_Uptake_Microbe_SOM,
                                                 Rcpp::_["uptake_Norg_microbial_SOM"] = soil_output.Norg_Uptake_Microbe_SOM);
+  Rcpp::DataFrame df6 = Rcpp::DataFrame::create(Rcpp::_["respiration_root_growth"] = respiration_output.growth, // TODO: not soil!
+                                                Rcpp::_["respiration_root_maintenance"] = respiration_output.maintenance, // TODO: not soil!
+                                                Rcpp::_["respiration_microbes_FOM"] = respiration_output.microbes_FOM,
+                                                Rcpp::_["respiration_microbes_SOM"] = respiration_output.microbes_SOM,
+                                                Rcpp::_["respiration_mycorrhiza"] = respiration_output.mycorrhiza);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,
                             Rcpp::_["Soil"] = df3,
                             Rcpp::_["Fungal"] = df4,
-                            Rcpp::_["Preles"] = df5);
+                            Rcpp::_["Preles"] = df5,
+                            Rcpp::_["Respiration"] = df6);
 
 }
 
