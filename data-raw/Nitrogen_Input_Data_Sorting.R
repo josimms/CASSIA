@@ -7,6 +7,8 @@ nitrogen = read.csv(paste0(direct, "korhonen_mineral_N.csv"), dec = ",")
 nitrogen$date = as.Date(nitrogen$date, format = "%d.%m.%Y")
 save(nitrogen, file = paste0(direct, "nitrogen.RData"))
 
+plot(as.Date(nitrogen$date[nitrogen$date != "Average"], format = "%d.%m.%Y"), nitrogen$nh4[nitrogen$date != "Average"])
+
 ###
 # Unit conversions. g N m-2 will be the input
 ###
