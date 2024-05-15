@@ -209,10 +209,10 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
   double Norg_uptake = uptake_N(Norg_avaliable, T, SWC, N_limits.Norg, N_k.Norg, SWC_k.Norg);   // UNITS: C kg
 
   double carbon_limitation = C_microbe * Norg_uptake;
-  // TODO: add respiration when I have the parameters after Christmas
-  // 0.2 = respiration(T, respiration_microbes_params[1], respiration_microbes_params[2]), which is the old respiration function
-  // Update the parameters in the CASSIA respiration function!
-  double nitrogen_limitation = (imobilisation * (NH4_uptake + NO3_uptake) + NC_microbe_opt * 0.2 * C_microbe)/
+
+  // TODO: add respiration with Kira's formula!
+  double Resp = 0.2;
+  double nitrogen_limitation = (imobilisation * (NH4_uptake + NO3_uptake) + NC_microbe_opt * Resp * C_microbe)/
     (NC_Litter - NC_microbe_opt);
 
   double NH4_uptaken;     // UNITS: C kg
@@ -240,7 +240,8 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
     NO3_uptaken = 0;
   }
 
-  double total_N_uptaken = (NC_microbe_opt*0.2*C_microbe + NC_Litter - NC_microbe_opt) * total_N_uptake;
+  // TODO: check this formula
+  double total_N_uptaken = (NC_microbe_opt * Resp * C_microbe + NC_Litter - NC_microbe_opt) * total_N_uptake;
 
   double Extra_FOM_uptaken = 0;
   if (SOM_decomposers) {
@@ -252,11 +253,7 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
   return(Rcpp::List::create(Rcpp::_["NH4_uptaken"] = NH4_uptaken,               // UNITS: C kg
                             Rcpp::_["NO3_uptaken"] = NO3_uptaken,               // UNITS: C kg
                             Rcpp::_["Norg_uptaken"] = Norg_uptaken,             // UNITS: C kg
-                            Rcpp::_["C_uptaken"] = C_uptaken,                   // C_uptaken
-                            Rcpp::_["Extra_FOM_uptaken"] = Extra_FOM_uptaken)); // Extra_FOM_uptaken                                   // UNITS: C kg
+                            Rcpp::_["C_uptaken"] = C_uptaken,                   // C_uptaken, UNITS: C kg
+                            Rcpp::_["Extra_FOM_uptaken"] = Extra_FOM_uptaken,   // Extra_FOM_uptaken, UNITS: C kg
+                            Rcpp::_["Respiration"] = Resp));                    // Respiration
 }
-
-
-
-
-
