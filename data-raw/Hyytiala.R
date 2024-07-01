@@ -23,6 +23,8 @@ data_format$RH[is.na(data_format$RH)] <- FMI_daily$RH[is.na(data_format$RH)] - m
 data_format$VPD[is.na(data_format$VPD)] <- bigleaf::rH.to.VPD(0.01*FMI_daily$RH[is.na(data_format$VPD)], data_format$T[is.na(data_format$VPD)])
 data_format$CO2[is.na(data_format$CO2)] <- rep(CO2_average, length.out = nrow(data_format))[is.na(data_format$CO2)]
 
+data_IIASA_smear$VPD[is.na(data_IIASA_smear$VPD)] <- bigleaf::rH.to.VPD(0.01*FMI_daily$RH[is.na(data_IIASA_smear$VPD)], data_IIASA_smear$T168[is.na(data_IIASA_smear$VPD)])
+
 ## Plot
 par(mfrow = c(2, 2))
 plot(data_format$Date, data_format$T, main = "Temperature", xlab = "Date", ylab = "Temperature")
