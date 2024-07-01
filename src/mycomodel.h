@@ -8,6 +8,7 @@ struct N_balence
   double NO3;
   double Norg;
   double C;
+  double C_exudes;
   double Norg_FOM;
 };
 
@@ -165,10 +166,12 @@ struct SYMPHONY_output {
   double NO3_Uptake_Microbe_FOM;
   double Norg_Uptake_Microbe_FOM;
   double C_Uptake_Microbe_FOM;
+  double C_exudes_Uptake_Microbe_FOM;
   double NH4_Uptake_Microbe_SOM;
   double NO3_Uptake_Microbe_SOM;
   double Norg_Uptake_Microbe_SOM;
   double C_Uptake_Microbe_SOM;
+  double C_exudes_Uptake_Microbe_SOM;
 };
 
 struct SYMPHONY_vector {
@@ -330,6 +333,7 @@ Rcpp::List Fungal_N_Uptake(double T,
 
 Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           double N_micorbe,                   // UNITS: C kg eq
+                          double C_exudates,
                           double C_soil_compartment,
                           double NC_microbe_opt,              // UNITS: %
                           double NH4_avaliable,               // UNITS: C kg eq
@@ -337,14 +341,14 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           double Norg_avaliable,              // UNITS: C kg eq
                           double T,                           // UNITS: 'C
                           double SWC,                         // UNITS: %
-                          double NC_Litter,
                           double imobilisation,
                           double assimilation,
                           std::vector<double> N_limits_R,
                           std::vector<double> N_k_R,
                           std::vector<double> SWC_k_R,
                           bool SOM_decomposers,
-                          double FOM_Norg);
+                          double FOM_Norg,
+                          bool tests);
 
 #endif
 
@@ -386,7 +390,6 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double exudes_fungal,
                                             double imobilisation,
                                             double assimilation,
-                                            double retranslocation,
                                             double NH4_old,
                                             double NO3_old,
                                             double NC_needles,
@@ -405,7 +408,8 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             std::vector<double> N_k_R,
                                             std::vector<double> SWC_k_R,
                                             double NC_microbe_opt,
-                                            double microbe_turnover);
+                                            double microbe_turnover,
+                                            bool tests);
 
 #endif
 
@@ -430,7 +434,8 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
                                      double T,
                                      double Tsb,
                                      double SWC,
-                                     bool mycofon_stratergy);
+                                     bool mycofon_stratergy,
+                                     bool trenching);
 
 #endif
 
