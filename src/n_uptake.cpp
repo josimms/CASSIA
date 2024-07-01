@@ -8,6 +8,8 @@ N_balence vector_to_N_balence(std::vector<double> input) {
   params.NH4 = input[0];
   params.NO3 = input[1];
   params.Norg = input[2];
+  params.C_exudes = input[3];
+  params.C = input[4];
   return(params);
 }
 
@@ -20,7 +22,8 @@ N_balence list_to_N_balence(Rcpp::List input) {
   params.NO3 = input[1];
   params.Norg = input[2];
   params.C = input[3];
-  params.Norg_FOM = input[4];
+  params.C_exudes = input[4];
+  params.Norg_FOM = input[5];
 
   return(params);
 }
@@ -36,7 +39,7 @@ double uptake_N(double N,   // UNITS: C kg
 
   double u, u_t, u_w, all;
   if (N < 0) {
-    std::cerr << "Warning! Pool is less than 0.";
+    // std::cerr << "Warning! Pool is less than 0.";
     all = 0;
   } else {
     // Concentration
@@ -55,7 +58,7 @@ double uptake_N(double N,   // UNITS: C kg
   }
 
   if (N < all) {
-    std::cerr << "Warning! Uptake is larger than the N pool: set to the N pool ";
+    // std::cerr << "Warning! Uptake is larger than the N pool: set to the N pool ";
     all = N;
   }
   if (all != all) {
@@ -63,7 +66,7 @@ double uptake_N(double N,   // UNITS: C kg
     all = 0.0;
   }
   if (all < 0.0) {
-    std::cerr << "Warning! Uptake is less than 0! \n";
+    // std::cerr << "Warning! Uptake is less than 0! \n";
     all = 0.0;
   }
   return(all);
@@ -80,7 +83,7 @@ double uptake_C(double C,     // UNITS: C kg
 
   double u, u_t, u_w, all;
   if (C < 0) {
-    std::cerr << "Warning! Pool is less than 0.";
+    // std::cerr << "Warning! Pool is less than 0.";
     all = 0;
   } else {
     // Concentration
@@ -99,7 +102,7 @@ double uptake_C(double C,     // UNITS: C kg
   }
 
   if (C < all) {
-    std::cerr << "Warning! Uptake is larger than the N pool: set to the N pool ";
+    // std::cerr << "Warning! Uptake is larger than the C pool: set to the C pool ";
     all = C;
   }
   if (all != all) {
@@ -107,7 +110,7 @@ double uptake_C(double C,     // UNITS: C kg
     all = 0.0;
   }
   if (all < 0.0) {
-    std::cerr << "Warning! Uptake is less than 0! \n";
+    // std::cerr << "Warning! Uptake is less than 0! \n";
     all = 0.0;
   }
   return(all);
@@ -177,6 +180,7 @@ Rcpp::List Fungal_N_Uptake(double T,
 // [[Rcpp::export]]
 Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           double N_micorbe,                   // UNITS: C kg eq
+                          double C_exudates,
                           double C_soil_compartment,
                           double NC_microbe_opt,              // UNITS: %
                           double NH4_avaliable,               // UNITS: C kg eq
@@ -184,76 +188,108 @@ Rcpp::List Microbe_Uptake(double C_microbe,                   // UNITS: C kg
                           double Norg_avaliable,              // UNITS: C kg eq
                           double T,                           // UNITS: 'C
                           double SWC,                         // UNITS: %
-                          double NC_Litter,
                           double imobilisation,
                           double assimilation,
                           std::vector<double> N_limits_R,
                           std::vector<double> N_k_R,
                           std::vector<double> SWC_k_R,
                           bool SOM_decomposers,
-                          double FOM_Norg) {
+                          double FOM_Norg,
+                          bool tests) {
 
 
   /*
-   * Nitrogen limitation
-   *
-   * Mass limitation is in the soil model!
+   * Potential Uptake!
    */
 
   N_balence N_limits = vector_to_N_balence(N_limits_R);
   N_balence N_k = vector_to_N_balence(N_k_R);
   N_balence SWC_k = vector_to_N_balence(SWC_k_R);
 
-  double NH4_uptake = uptake_N(NH4_avaliable, T, SWC, N_limits.NH4, N_k.NH4, SWC_k.NH4);        // UNITS: C kg
-  double NO3_uptake = uptake_N(NO3_avaliable, T, SWC, N_limits.NO3, N_k.NO3, SWC_k.NO3);        // UNITS: C kg
-  double Norg_uptake = uptake_N(Norg_avaliable, T, SWC, N_limits.Norg, N_k.Norg, SWC_k.Norg);   // UNITS: C kg
+  // Nitrogen
+  double NH4_uptake = C_microbe * uptake_N(NH4_avaliable, T, SWC, N_limits.NH4, N_k.NH4, SWC_k.NH4);        // UNITS: C kg
+  double NO3_uptake = C_microbe * uptake_N(NO3_avaliable, T, SWC, N_limits.NO3, N_k.NO3, SWC_k.NO3);        // UNITS: C kg
+  double Norg_uptake = C_microbe * uptake_N(Norg_avaliable, T, SWC, N_limits.Norg, N_k.Norg, SWC_k.Norg);   // UNITS: C kg
 
-  double carbon_limitation = C_microbe * Norg_uptake;
+  double nitrogen_uptake_total = NH4_uptake + NO3_uptake + Norg_uptake;
 
-  // TODO: add respiration with Kira's formula!
+  // Carbon
+  double C_exudes_uptake = C_microbe * uptake_C(C_exudates, T, SWC, N_limits.C_exudes, N_k.C_exudes, SWC_k.C_exudes);
+
+  double soil_compartment_uptake = C_microbe * uptake_C(C_soil_compartment, T, SWC, N_limits.C, N_k.C, SWC_k.C);
+
+  double carbon_uptake = C_exudes_uptake + soil_compartment_uptake;
+
+  /*
+   * Test that the uptake is not less than zero
+   */
+  if (tests) {
+    if (NH4_avaliable < NH4_uptake) {
+      std::cout << "Warning: NH4_uptake is greater than the pool! ";
+    } else if (NO3_avaliable < NO3_uptake) {
+      std::cout << "Warning: NO3_uptake is greater than the pool! ";
+    } else if (Norg_avaliable < Norg_uptake) {
+      std::cout << "Warning: Norg_uptake is greater than the pool! ";
+    } else if (C_exudates < C_exudes_uptake) {
+      std::cout << "Warning: C_exudes_uptake is greater than the pool! ";
+    } else if (C_soil_compartment < soil_compartment_uptake) {
+      std::cout << "Warning: soil_compartment_uptake is greater than the pool! ";
+    } else if (soil_compartment_uptake < 0) {
+      std::cout << "soil_compartment_uptake is negatvie! ";
+    } else if (C_exudes_uptake < 0) {
+      std::cout << "C_exudes_uptake is negative! ";
+    }
+  }
+
+  /*
+   * Respiration
+   */
   double Resp = 0.2;
-  double nitrogen_limitation = (imobilisation * (NH4_uptake + NO3_uptake) + NC_microbe_opt * Resp * C_microbe)/
-    (NC_Litter - NC_microbe_opt);
 
-  double NH4_uptaken;     // UNITS: C kg
-  double NO3_uptaken;     // UNITS: C kg
-  double Norg_uptaken;    // UNITS: C kg
-  double C_uptaken;       // UNITS: C kg
+  /*
+   * Demand on uptake
+   */
+  double NH4_uptaken, NO3_uptaken, Norg_uptaken, C_uptaken, C_exudates_used, C_soil_compartemnt_uptaken;
 
-  double total_N_uptake = std::max(0.0, std::min(carbon_limitation, nitrogen_limitation));
+  double carbon_limitation = NC_microbe_opt * C_microbe + Resp * C_microbe;
+  double nitrogen_limitation = NC_microbe_opt * C_microbe;
+  double total_nitrogen = NH4_avaliable + NO3_avaliable + Norg_avaliable;
   // NOTE: this only works because the carbon and nitrogen have the same units
 
-  if (total_N_uptake == carbon_limitation) {
-    C_uptaken = Norg_uptake * NC_Litter;
-    Norg_uptaken = Norg_uptake;
-    NH4_uptaken = NH4_uptake * (carbon_limitation / nitrogen_limitation);
-    NO3_uptaken = NO3_uptake * (carbon_limitation / nitrogen_limitation);
-  } else if (total_N_uptake == nitrogen_limitation) {
-    C_uptaken = Norg_uptake * NC_Litter * (nitrogen_limitation / carbon_limitation);
-    Norg_uptaken = Norg_uptake * (nitrogen_limitation / carbon_limitation);
-    NH4_uptaken = NH4_uptake;
-    NO3_uptaken = NO3_uptake;
+  if (nitrogen_uptake_total > nitrogen_limitation) {
+    Norg_uptaken = Norg_uptake - nitrogen_limitation * (Norg_avaliable / total_nitrogen);
+    NH4_uptaken = NH4_uptake - nitrogen_limitation * (NH4_avaliable / total_nitrogen);
+    NO3_uptaken = NO3_uptake - nitrogen_limitation * (NO3_avaliable / total_nitrogen);
   } else {
-    C_uptaken = 0;
     Norg_uptaken = 0;
     NH4_uptaken = 0;
     NO3_uptaken = 0;
   }
 
-  // TODO: check this formula
-  double total_N_uptaken = (NC_microbe_opt * Resp * C_microbe + NC_Litter - NC_microbe_opt) * total_N_uptake;
+  if (carbon_uptake > carbon_limitation) {
+    if (C_exudes_uptake >= carbon_limitation) {
+      C_exudates_used = C_exudes_uptake - carbon_limitation;
+    } else {
+      C_exudates_used = C_exudes_uptake;
+    }
+    C_soil_compartemnt_uptaken = soil_compartment_uptake - (carbon_limitation - C_exudates_used);
+  } else {
+    C_exudates_used = 0;
+    C_soil_compartemnt_uptaken = 0;
+  }
 
   double Extra_FOM_uptaken = 0;
   if (SOM_decomposers) {
-    total_N_uptaken =  total_N_uptaken + assimilation * C_microbe;
+    // total_N_uptaken =  total_N_uptaken + assimilation * C_microbe;
     // TODO from condition?
     Extra_FOM_uptaken = uptake_N(Norg_uptake, T, SWC, N_limits.Norg, N_k.Norg, SWC_k.Norg);
   }
 
-  return(Rcpp::List::create(Rcpp::_["NH4_uptaken"] = NH4_uptaken,               // UNITS: C kg
-                            Rcpp::_["NO3_uptaken"] = NO3_uptaken,               // UNITS: C kg
-                            Rcpp::_["Norg_uptaken"] = Norg_uptaken,             // UNITS: C kg
-                            Rcpp::_["C_uptaken"] = C_uptaken,                   // C_uptaken, UNITS: C kg
+  return(Rcpp::List::create(Rcpp::_["NH4_uptaken"] = NH4_uptake,               // UNITS: C kg
+                            Rcpp::_["NO3_uptaken"] = NO3_uptake,               // UNITS: C kg
+                            Rcpp::_["Norg_uptaken"] = Norg_uptake,             // UNITS: C kg
+                            Rcpp::_["C_uptaken"] = C_soil_compartemnt_uptaken,  // C_uptaken, UNITS: C kg
+                            Rcpp::_["C_exudes"] = C_exudates_used,              // C_uptaken, UNITS: C kg
                             Rcpp::_["Extra_FOM_uptaken"] = Extra_FOM_uptaken,   // Extra_FOM_uptaken, UNITS: C kg
                             Rcpp::_["Respiration"] = Resp));                    // Respiration
 }

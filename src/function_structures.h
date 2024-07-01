@@ -268,6 +268,8 @@ struct MYCOFON_vector {
   std::vector<double> uptake_Norg_fungal;
   std::vector<double> from_CASSIA;
   std::vector<double> to_CASSIA;
+  std::vector<double> exudes_fungal;
+  std::vector<double> exudes_plant;
   std::vector<double> Plant_demand;
   std::vector<double> Fungal_demand;
   std::vector<double> Plant_given;
