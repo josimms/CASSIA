@@ -38,13 +38,13 @@ Q10 = 2.5575
 
 N_limits_plant = c(10, 10, 10) # Arbitrarty - Bayesian Callibration
 N_limits_fungal = c(10, 10, 10) # Arbitrarty - Bayesian Callibration
-N_limits_microbes = c(10, 10, 10) # Arbitrarty - Bayesian Callibration
+N_limits_microbes = c(10, 10, 10, 10, 10) # Arbitrarty - Bayesian Callibration
 N_k_plant = c(0.2, 0.2, 0.2) # Arbitrarty - Bayesian Callibration
 N_k_fungal = c(0.2, 0.2, 0.2) # Arbitrarty - Bayesian Callibration
-N_k_microbes = c(0.2, 0.2, 0.2) # Arbitrarty - Bayesian Callibration
+N_k_microbes = c(0.2, 0.2, 0.2, 0.2, 0.2) # Arbitrarty - Bayesian Callibration
 SWC_sat_plant = c(0.4, 0.4, 0.4) # 0.4 value comes from the methods in Oyewole 2015, rest Arbitrarty - Bayesian Callibration
 SWC_sat_fungal = c(0.5, 0.5, 0.5) # Arbitrarty - Bayesian Callibration
-SWC_sat_microbes = c(0.5, 0.5, 0.5) # Arbitrarty - Bayesian Callibration
+SWC_sat_microbes = c(0.5, 0.5, 0.5, 0.5, 0.5) # Arbitrarty - Bayesian Callibration
 NH4_on_NO3 = c(10, 0.2, 0.5) # Arbitrarty - Bayesian Callibration
 
 C_value_param_myco = 1 # TODO
@@ -52,6 +52,7 @@ N_value_param_myco = 1 # TODO
 C_value_param_plant = 1 # TODO
 N_value_param_plant = 1 # TODO
 
+# TODO: check these!
 parameters_R = c(microbe_turnover, NC_in_root_opt, NC_fungal_opt, NC_microbe_opt, percentage_C_biomass,
                  N_limits_plant, N_limits_fungal, N_limits_microbes,
                  N_k_plant, N_k_fungal, N_k_microbes,
