@@ -43,7 +43,7 @@ Rcpp::List CASSIA_soil(int start_year,
                        bool Rm_acclimation,
 
                        bool using_spp_photosynthesis,
-                       bool trenching,
+                       int trenching_year,
                        bool CASSIA_graphs,
 
                        int etmodel,
@@ -90,7 +90,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
   // Forward init values (previous day values) as first values of result vectors
 
-  bool tree_alive = TRUE;
+  bool tree_alive = true;
 
   // std::vector<double> SW, Canopywater, SOG, S;
 
@@ -171,6 +171,12 @@ Rcpp::List CASSIA_soil(int start_year,
 
   int final_year = 1;
   for (int year : years_for_runs)  {
+    bool trenching;
+    if (year > trenching_year)  {
+      trenching = true;
+    } else {
+      trenching = false;
+    }
 
     // std::cout << " Year " << year;
 
@@ -191,13 +197,13 @@ Rcpp::List CASSIA_soil(int start_year,
     double equilibrium_temperature = (TAir[244] + TAir[245] + TAir[246] + TAir[247] + TAir[248] + TAir[249] + TAir[250] + TAir[251]) / 7 + 3;
 
     // B0, D00 and h00
-    double B0 = M_PI/4 * pow(parameters.D0, 2);
+    double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
     double D00 = parameters.D0;
     double h00 = parameters.h0;
     if (xylogensis_option) {
       double LH0 = parameters.h_increment / (0.5 * parameters.sHc);
       double LN0 = parameters.n_length / (0.5 * 4.641331 * parameters.sNc); // TODO: this had a typo in it, check the formula
-      double LR0 = 2 * parameters.m_R_tot / parameters.sRc; // TODO: check if these parameters are updated somewhere
+      double LR0 = 2.0 * parameters.m_R_tot / parameters.sRc; // TODO: check if these parameters are updated somewhere
     }
 
     /*
@@ -217,7 +223,7 @@ Rcpp::List CASSIA_soil(int start_year,
     needle_cohorts needles_cohorts;
     if (year > start_year) {
       // TODO: parameters, although it is okay as this is Hyytiälä, it should be updated when the other model is updated
-      needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3;
+      needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3.0;
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
     }
@@ -272,7 +278,7 @@ Rcpp::List CASSIA_soil(int start_year,
       } else {
         LAI_within_year = LAI;
       }
-      double fAPAR = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
+      double fAPAR = (1.0 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
 
       photosynthesis_out photosynthesis;
       double photosynthesis_per_stem;
@@ -282,19 +288,19 @@ Rcpp::List CASSIA_soil(int start_year,
         theta = parWater.SW; // Correct
         theta_canopy = parWater.CW; // Correct
         theta_snow = parWater.SOG; // Correct
-        gpp380 = 0; // Correct
+        gpp380 = 0.0; // Correct
         S = parWater.S; // Correct
-        PhenoS = 0; // Correct
-        fE = 0;
-        Throughfall = 0;
-        Snowmelt = 0;
-        intercepted = 0;
-        Drainage = 0;
-        canw = 0;
-        transp = 0;
-        evap = 0;
-        fWE = 0;
-        fW = 0;
+        PhenoS = 0.0; // Correct
+        fE = 0.0;
+        Throughfall = 0.0;
+        Snowmelt = 0.0;
+        intercepted = 0.0;
+        Drainage = 0.0;
+        canw = 0.0;
+        transp = 0.0;
+        evap = 0.0;
+        fWE = 0.0;
+        fW = 0.0;
       } else {
         theta = photosynthesis_old.theta;
         theta_canopy = photosynthesis_old.theta_canopy;
@@ -390,28 +396,28 @@ Rcpp::List CASSIA_soil(int start_year,
         sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
         sugar_values_for_next_iteration.sugar.xylem_sh = parameters.sugar_xylem_sh0;
         sugar_values_for_next_iteration.sugar.xylem_st = parameters.sugar_xylem_st0;
-        sugar_values_for_next_iteration.sugar.mycorrhiza = 0; // TODO: think about this
+        sugar_values_for_next_iteration.sugar.mycorrhiza = 0.0; // TODO: think about this
 
         sugar_values_for_next_iteration.starch.needles = parameters.starch_needles0;
         sugar_values_for_next_iteration.starch.phloem = parameters.starch_phloem0;
         sugar_values_for_next_iteration.starch.roots = parameters.starch_roots0;
         sugar_values_for_next_iteration.starch.xylem_sh = parameters.starch_xylem_sh0;
         sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
-        sugar_values_for_next_iteration.starch.mycorrhiza = 0;
+        sugar_values_for_next_iteration.starch.mycorrhiza = 0.0;
       } else if (day == 0 && year != start_year) {
         sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
         sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
         sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
         sugar_values_for_next_iteration.sugar.xylem_sh = parameters.sugar_xylem_sh0;
         sugar_values_for_next_iteration.sugar.xylem_st = parameters.sugar_xylem_st0;
-        sugar_values_for_next_iteration.sugar.mycorrhiza = 0;
+        sugar_values_for_next_iteration.sugar.mycorrhiza = 0.0;
 
         sugar_values_for_next_iteration.starch.needles = parameters.starch_needles0;
         sugar_values_for_next_iteration.starch.phloem = parameters.starch_phloem0;
         sugar_values_for_next_iteration.starch.roots = parameters.starch_roots0;
         sugar_values_for_next_iteration.starch.xylem_sh = parameters.starch_xylem_sh0;
         sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
-        sugar_values_for_next_iteration.starch.mycorrhiza = 0;
+        sugar_values_for_next_iteration.starch.mycorrhiza = 0.0;
       } else {
         carbo_balance sugar_model_out = sugar_model(day, TAir[count], photosynthesis_per_stem,
                                                     common, parameters,
@@ -467,12 +473,12 @@ Rcpp::List CASSIA_soil(int start_year,
         MYCOFON_for_next_iteration.C_fungal = 0.5; // TODO: replace, just for coding sake
         MYCOFON_for_next_iteration.C_roots_NonStruct = parameters.sugar_roots0;
         MYCOFON_for_next_iteration.C_fungal_NonStruct = parameters.sugar_roots0;
-        MYCOFON_for_next_iteration.N_roots_NonStruct = parameters.sugar_roots0; // TODO: replace, just for coding sake
-        MYCOFON_for_next_iteration.N_fungal_NonStruct = parameters.sugar_roots0; // TODO: replace, just for coding sake
+        MYCOFON_for_next_iteration.N_roots_NonStruct = parameters.sugar_roots0 * parameters_in.NC_in_root_opt; // TODO: replace, just for coding sake
+        MYCOFON_for_next_iteration.N_fungal_NonStruct = parameters.sugar_roots0 * parameters_in.NC_fungal_opt; // TODO: replace, just for coding sake
 
         soil_values_for_next_iteration.NH4 = 31.0; // 0.31; // NH40 (Korhonen, 2013)
         soil_values_for_next_iteration.NO3 = 20.0; // 0.002; // NO30 (Korhonen, 2013)
-        soil_values_for_next_iteration.N_FOM = 260.0; // Norg0 (Korhonen, 2013)
+        soil_values_for_next_iteration.N_FOM = 26.0; // Norg0 (Korhonen, 2013)
         soil_values_for_next_iteration.NC_mantle = 0.4; // TODO: input and replace somehow
         soil_values_for_next_iteration.NC_ERM = 0.4; // TODO: input and replace somehow
         soil_values_for_next_iteration.NC_needles = 0.5; // TODO: input and replace somehow
@@ -480,18 +486,18 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_values_for_next_iteration.NC_roots = 0.5; // TODO: input and replace somehow
 
         // TODO: this should obviously not all be 10 or 0...
-        soil_values_for_next_iteration.C_FOM_needles = 10.0;
-        soil_values_for_next_iteration.C_FOM_woody = 10.0;
-        soil_values_for_next_iteration.C_FOM_roots = 10.0;
-        soil_values_for_next_iteration.C_FOM_mantle = 10.0;
+        soil_values_for_next_iteration.C_FOM_needles = 20.0;
+        soil_values_for_next_iteration.C_FOM_woody = 15.0;
+        soil_values_for_next_iteration.C_FOM_roots = 30.0;
+        soil_values_for_next_iteration.C_FOM_mantle = 9.0;
         soil_values_for_next_iteration.C_FOM_ERM = 10.0;
-        soil_values_for_next_iteration.C_exudes = 0;
-        soil_values_for_next_iteration.C_SOM = 5.6;
+        soil_values_for_next_iteration.C_exudes = 0.0;
+        soil_values_for_next_iteration.C_SOM = 56.0;
         soil_values_for_next_iteration.N_SOM = 10.0;
         soil_values_for_next_iteration.C_decompose_FOM = 0.2;
         soil_values_for_next_iteration.C_decompose_SOM = 0.2;
-        soil_values_for_next_iteration.N_decompose_FOM = 0.4;
-        soil_values_for_next_iteration.N_decompose_SOM = 0.4;
+        soil_values_for_next_iteration.N_decompose_FOM = 0.2 * parameters_in.NC_microbe_opt;
+        soil_values_for_next_iteration.N_decompose_SOM = 0.2 * parameters_in.NC_microbe_opt;
       } else if (year != start_year && day == 0) {
         MYCOFON_for_next_iteration.C_biomass = MYCOFON_reset.C_biomass;
         MYCOFON_for_next_iteration.C_fungal = MYCOFON_reset.C_fungal;
@@ -523,11 +529,18 @@ Rcpp::List CASSIA_soil(int start_year,
         soil_values_for_next_iteration.N_decompose_SOM = soil_reset.N_decompose_SOM;
       }
 
+      MYCOFON_for_next_iteration.C_roots_NonStruct = sugar_values_for_next_iteration.sugar.roots;
+      if (trenching) {
+        MYCOFON_for_next_iteration.C_biomass = 0.0;
+        MYCOFON_for_next_iteration.C_roots_NonStruct = 0.0;
+        MYCOFON_for_next_iteration.N_roots_NonStruct = 0.0;
+      }
+
       MYCOFON_function_out MYCOFON_out = mycofon_balence(MYCOFON_for_next_iteration.C_biomass,
                                                          actual_growth_out.roots,
                                                          MYCOFON_for_next_iteration.C_fungal,
                                                          potential_growth.ecto,
-                                                         sugar_values_for_next_iteration.sugar.roots,
+                                                         MYCOFON_for_next_iteration.C_roots_NonStruct,
                                                          MYCOFON_for_next_iteration.N_roots_NonStruct,
                                                          MYCOFON_for_next_iteration.C_fungal_NonStruct,
                                                          MYCOFON_for_next_iteration.N_fungal_NonStruct,
@@ -539,7 +552,8 @@ Rcpp::List CASSIA_soil(int start_year,
                                                          TAir[count],
                                                          TSoil_B[count],
                                                          Soil_Moisture[count],
-                                                         false);
+                                                         false,
+                                                         trenching);
         // TODO: does the sugar balance for this need to be added to the CASSIA model?
       MYCOFON_for_next_iteration = MYCOFON_out;
 
@@ -556,17 +570,21 @@ Rcpp::List CASSIA_soil(int start_year,
       Litter_roots = actual_growth_out.roots / 365;
       Litter_ERM = actual_growth_out.roots / 365;
       Little_mantle = actual_growth_out.roots / 365;
+
       if (trenching) {
-        if (year > 2018) {
-          Litter_needles = 0;
-          Litter_woody = 0;
-          Litter_roots = 0;
-        }
+        Litter_needles = 0.0;
+        Litter_woody = 0.0;
+        Litter_roots = 0.0;
+
+        MYCOFON_for_next_iteration.exudes_plant = 0.0;
       }
 
       /*
        * SOIL
        */
+
+      // TODO: if there are no roots then there can't be transfers sort this!
+
       SYMPHONY_output Soil_All = symphony_multiple_FOM_daily(TSoil_B[count], Soil_Moisture[count],
                                                             soil_values_for_next_iteration.C_FOM_needles,
                                                             soil_values_for_next_iteration.C_FOM_woody,
@@ -580,16 +598,16 @@ Rcpp::List CASSIA_soil(int start_year,
                                                             Litter_needles, Litter_woody, Litter_roots, Little_mantle, Litter_ERM,
                                                             MYCOFON_for_next_iteration.exudes_fungal,
                                                             MYCOFON_for_next_iteration.exudes_plant,
-                                                            0.5, 0.5, 0.6, // TODO: this!
+                                                            0.5, 0.5, // TODO: this!
                                                             soil_values_for_next_iteration.NH4, soil_values_for_next_iteration.NO3,
                                                             soil_values_for_next_iteration.NC_needles, soil_values_for_next_iteration.NC_woody,
                                                             soil_values_for_next_iteration.NC_roots, soil_values_for_next_iteration.NC_mantle, soil_values_for_next_iteration.NC_ERM,
                                                             MYCOFON_for_next_iteration.uptake_NH4_plant, MYCOFON_for_next_iteration.uptake_NH4_fungal,
                                                             MYCOFON_for_next_iteration.uptake_NO3_plant, MYCOFON_for_next_iteration.uptake_NO3_fungal,
-                                                            MYCOFON_for_next_iteration.uptake_Norg_plant, MYCOFON_for_next_iteration.uptake_Norg_fungal, soil_values_for_next_iteration.SOM_Norg_used,
+                                                            MYCOFON_for_next_iteration.uptake_Norg_plant, MYCOFON_for_next_iteration.uptake_Norg_fungal,
+                                                            soil_values_for_next_iteration.SOM_Norg_used,
                                                             parameters_in.N_limits_microbes, parameters_in.N_k_microbes, parameters_in.SWC_limits_microbes,
-                                                            parameters_in.NC_microbe_opt, parameters_in.microbe_turnover);
-      soil_values_for_next_iteration = Soil_All;
+                                                            parameters_in.NC_microbe_opt, parameters_in.microbe_turnover, true);
 
       /*
        * Output
@@ -613,7 +631,7 @@ Rcpp::List CASSIA_soil(int start_year,
         respiration_output.growth.push_back(actual_growth_out.respiration_growth);
         respiration_output.microbes_FOM.push_back(Soil_All.Microbe_respiration_per_mass * Soil_All.C_decompose_FOM);
         respiration_output.microbes_SOM.push_back(Soil_All.Microbe_respiration_per_mass * Soil_All.C_decompose_SOM);
-        respiration_output.mycorrhiza.push_back(MYCOFON_for_next_iteration.respiration * MYCOFON_for_next_iteration.C_biomass);
+        respiration_output.mycorrhiza.push_back(MYCOFON_for_next_iteration.respiration * MYCOFON_for_next_iteration.C_fungal);
 
         potential_growth_output.height.push_back(potential_growth.height);
         potential_growth_output.needles.push_back(potential_growth.needles);
@@ -694,6 +712,7 @@ Rcpp::List CASSIA_soil(int start_year,
           soil_reset.C_FOM_roots = Soil_All.C_FOM_roots;
           soil_reset.C_FOM_mantle = Soil_All.C_FOM_mantle;
           soil_reset.C_FOM_ERM = Soil_All.C_FOM_ERM;
+          soil_reset.C_exudes = Soil_All.C_exudes;
           soil_reset.C_SOM = Soil_All.C_SOM;
           soil_reset.N_SOM = Soil_All.N_SOM;
           soil_reset.N_FOM = Soil_All.N_FOM;
@@ -728,6 +747,8 @@ Rcpp::List CASSIA_soil(int start_year,
         MYCOFON_output.uptake_Norg_fungal.push_back(MYCOFON_for_next_iteration.uptake_Norg_fungal);
         MYCOFON_output.from_CASSIA.push_back(MYCOFON_for_next_iteration.from_CASSIA);
         MYCOFON_output.to_CASSIA.push_back(MYCOFON_for_next_iteration.to_CASSIA);
+        MYCOFON_output.exudes_fungal.push_back(MYCOFON_for_next_iteration.exudes_fungal);
+        MYCOFON_output.exudes_plant.push_back(MYCOFON_for_next_iteration.exudes_plant);
         MYCOFON_output.Plant_demand.push_back(MYCOFON_for_next_iteration.Plant_demand);
         MYCOFON_output.Fungal_demand.push_back(MYCOFON_for_next_iteration.Fungal_demand);
         MYCOFON_output.Plant_given.push_back(MYCOFON_for_next_iteration.Plant_given);
@@ -860,7 +881,9 @@ Rcpp::List CASSIA_soil(int start_year,
                                                 Rcpp::_["uptake_NO3_fungal"] = MYCOFON_output.uptake_NO3_fungal,
                                                 Rcpp::_["uptake_Norg_fungal"] = MYCOFON_output.uptake_Norg_fungal,
                                                 Rcpp::_["from_CASSIA"] = MYCOFON_output.from_CASSIA,
-                                                Rcpp::_["to_CASSIA"] = MYCOFON_output.to_CASSIA);
+                                                Rcpp::_["to_CASSIA"] = MYCOFON_output.to_CASSIA,
+                                                Rcpp::_["plant_exudates"] = MYCOFON_output.exudes_plant,
+                                                Rcpp::_["fungal_exudates"] = MYCOFON_output.exudes_fungal);
   Rcpp::DataFrame df5 = Rcpp::DataFrame::create(Rcpp::_["GPP"] = photosynthesis_output.GPP,
                                                 Rcpp::_["ET"] = photosynthesis_output.ET,
                                                 Rcpp::_["SoilWater"] = photosynthesis_output.SoilWater,
