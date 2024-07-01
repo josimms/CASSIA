@@ -23,7 +23,6 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             double exudes_fungal,
                                             double imobilisation,
                                             double assimilation,
-                                            double retranslocation,
                                             double NH4_old,
                                             double NO3_old,
                                             double NC_needles,
@@ -42,7 +41,8 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
                                             std::vector<double> N_k_R,
                                             std::vector<double> SWC_k_R,
                                             double NC_microbe_opt,
-                                            double microbe_turnover)
+                                            double microbe_turnover,
+                                            bool tests)
 {
   /*
    * Initialization or declaration
@@ -60,7 +60,7 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   double C_FOM_ERM = C_FOM_ERM_old + Litter_ERM;                         // C kg
 
   // AGGREGATION
-  double C_FOM = C_FOM_needles + // TOOD: reallocation should be here somewhere!
+  double C_FOM = C_FOM_needles +
     C_FOM_woody +
     C_FOM_roots +
     C_FOM_mantle +
@@ -68,8 +68,8 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   double N_FOM = C_FOM_needles * NC_needles +
     C_FOM_woody * NC_woody +
     C_FOM_roots * NC_roots +
-    C_FOM_mantle * NC_mantle * retranslocation +
-    C_FOM_ERM * NC_ERM * retranslocation; // C kg
+    C_FOM_mantle * NC_mantle +
+    C_FOM_ERM * NC_ERM; // C kg
 
   /*
    * Nitrogen processes
@@ -79,9 +79,8 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   double NH4 = NH4_old - NH4_used_Plant - NH4_used_Fungal;             // C kg
   double NO3 = NO3_old - NO3_used_Plant - NO3_used_Fungal;             // C kg
   N_FOM = N_FOM - FOM_Norg_used_Plant - FOM_Norg_used_Fungal;          // C kg TODO: there is a chance that this will go negative!
-  double N_SOM = N_SOM_old;                                            // C kg
+  double N_SOM = N_SOM_old;                                            // C kg''
 
-  double NC_Litter = N_FOM/C_FOM;
 
   // TODO: what about the carbon considerations in the N used!
 
@@ -89,19 +88,18 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   // this includes the decomposition and mineralisation / immobilisation
   // Apart from the biomass that the microbes specialise in, the second N uptake is considered to be equally driven between the types
 
-
   // FOM
-  Rcpp::List FOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_FOM, N_decompose_FOM, C_FOM, NC_microbe_opt, NH4, NO3, N_FOM, Tmb, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, false, 0);
+  Rcpp::List FOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_FOM, N_decompose_FOM, C_Exudes, C_FOM, NC_microbe_opt, NH4, NO3, N_FOM, Tmb, SWC, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, false, 0, true);
   N_balence FOM_after_microbe_activity = list_to_N_balence(FOM_after_microbe_activity_list);    // C kg
 
   NO3 = NO3 - C_decompose_FOM*FOM_after_microbe_activity.NO3; // C kg eq
   NH4 = NH4 - C_decompose_FOM*FOM_after_microbe_activity.NH4;  // C kg eq
 
-  N_FOM = N_FOM - C_decompose_FOM*FOM_after_microbe_activity.Norg;   // C kg eq
-  N_SOM = N_SOM + microbe_turnover*(N_decompose_FOM);    // C kg eq
+  N_FOM = N_FOM - C_decompose_FOM * FOM_after_microbe_activity.Norg;   // C kg eq
+  N_SOM = N_SOM + microbe_turnover * (N_decompose_FOM);    // C kg eq
 
   // SOM
-  Rcpp::List SOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_SOM, N_decompose_SOM, C_SOM_old, NC_microbe_opt, NH4, NO3, N_SOM, Tmb, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, true, N_FOM);
+  Rcpp::List SOM_after_microbe_activity_list = Microbe_Uptake(C_decompose_SOM, N_decompose_SOM, C_Exudes, C_SOM_old, NC_microbe_opt, NH4, NO3, N_SOM, Tmb, SWC, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, true, N_FOM, true);
   N_balence SOM_after_microbe_activity = list_to_N_balence(SOM_after_microbe_activity_list);    // C kg
 
   // Update pure inorganic pools
@@ -124,17 +122,19 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   C_FOM_mantle = C_FOM_mantle - (C_FOM_mantle/C_FOM)*total_decomposition;               // C kg
   C_FOM_ERM = C_FOM_ERM - (C_FOM_ERM/C_FOM)*total_decomposition;                        // C kg
 
-  C_Exudes = C_Exudes + exudes_plant + exudes_fungal;
+  C_Exudes = C_Exudes + exudes_fungal + exudes_plant -
+    FOM_after_microbe_activity.C_exudes -
+    SOM_after_microbe_activity.C_exudes;
 
   // STEP 2: Update the SOM mass
-  double C_SOM = C_SOM_old - SOM_after_microbe_activity.C + microbe_turnover*(C_decompose_FOM + C_decompose_SOM);   // C kg
+  double C_SOM = C_SOM_old + microbe_turnover * (C_decompose_FOM + C_decompose_SOM) - SOM_after_microbe_activity.C;   // C kg
 
   // STEP 3: Update the microbes
-  double resp = 0.002; // TODO: add respiration function here!
-  C_decompose_FOM = (1 - microbe_turnover - resp) * C_decompose_FOM + FOM_after_microbe_activity.C;   // C kg
+  double resp = 0.02; // TODO: add respiration function here!
+  C_decompose_FOM = (1 - microbe_turnover - resp) * C_decompose_FOM + FOM_after_microbe_activity.C + FOM_after_microbe_activity.C_exudes;   // C kg
   N_decompose_FOM = (1 - microbe_turnover) * N_decompose_FOM + FOM_after_microbe_activity.NH4 + FOM_after_microbe_activity.NO3 + FOM_after_microbe_activity.Norg;   // C kg
 
-  C_decompose_SOM = (1 - microbe_turnover - resp) * C_decompose_SOM + SOM_after_microbe_activity.C;   // C kg
+  C_decompose_SOM = (1 - microbe_turnover - resp) * C_decompose_SOM + SOM_after_microbe_activity.C + SOM_after_microbe_activity.C_exudes;   // C kg
   N_decompose_SOM = (1 - microbe_turnover) * N_decompose_SOM + SOM_after_microbe_activity.NH4 + SOM_after_microbe_activity.NO3 + SOM_after_microbe_activity.Norg;   // C kg
   // TODO: 0.2 is a placeholder for respiration
 
@@ -168,10 +168,12 @@ SYMPHONY_output symphony_multiple_FOM_daily(double Tmb,
   out.NO3_Uptake_Microbe_FOM = FOM_after_microbe_activity.NO3;
   out.Norg_Uptake_Microbe_FOM = FOM_after_microbe_activity.Norg;
   out.C_Uptake_Microbe_FOM = FOM_after_microbe_activity.C;
+  out.C_exudes_Uptake_Microbe_FOM = FOM_after_microbe_activity.C_exudes;
   out.NH4_Uptake_Microbe_SOM = SOM_after_microbe_activity.NH4;
   out.NO3_Uptake_Microbe_SOM = SOM_after_microbe_activity.NO3;
   out.Norg_Uptake_Microbe_SOM = SOM_after_microbe_activity.Norg;
   out.C_Uptake_Microbe_SOM = SOM_after_microbe_activity.C;
+  out.C_exudes_Uptake_Microbe_SOM = SOM_after_microbe_activity.C_exudes;
 
   return(out);
 }
