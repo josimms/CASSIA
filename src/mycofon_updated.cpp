@@ -27,12 +27,16 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
                                      double T,
                                      double Tmb,
                                      double SWC,
-                                     bool mycofon_stratergy) {
+                                     bool mycofon_stratergy,
+                                     bool trenching) {
 
 
   // Mycorrhizal rate
   // TODO: this is now in the wrong place I think!
   double m = 0.9; // C_fungal / (C_roots * parameters_in.optimal_root_fungal_biomass_ratio);
+  if (trenching) {
+    m = 0;
+  }
   if (m > 1) {
     std::cout << "Warning: The mycorhization value (m) is more than 1. m = " << m << " Check the fungal_mass, root_mass and optimal_root_fungal_biomass_ratio values\n";
     m = 1;
@@ -152,7 +156,11 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
   /*
    * BALANCES OF THE STATE VARIABLES
    */
-  double to_CASSIA = 0.02*N_roots_NonStruct; // TODO: this should link to the litter model!
+  double to_CASSIA = 0.02 * N_roots_NonStruct; // TODO: this should link to the litter model!
+  if (trenching) {
+    to_CASSIA = 0.0;
+    max_C_from_CASSIA = 0.0;
+  }
 
   /*
    * Biomass mycorrhiza
@@ -175,7 +183,7 @@ MYCOFON_function_out mycofon_balence(double C_biomass,
    * Non structural elements!
    */
   // TODO: need an exude parameter!
-  double exudes_fungal = 0.2*C_fungal_NonStruct;
+  double exudes_fungal = 0.2 * C_fungal_NonStruct;
   C_fungal_NonStruct = C_fungal_NonStruct + C_given - myco_growth_C - exudes_fungal;
 
   N_fungal_NonStruct = N_fungal_NonStruct + uptake_fungal_all - myco_growth_N - N_given;
@@ -241,7 +249,8 @@ Rcpp::List mycofon_balence(double C_biomass,
                            double T,
                            double Tmb,
                            double SWC,
-                           bool mycofon_stratergy) {
+                           bool mycofon_stratergy,
+                           bool trenching) {
 
   parameters_soil parameters_in = parameters_initalise_test(parameters_R);
 
@@ -261,7 +270,8 @@ Rcpp::List mycofon_balence(double C_biomass,
                                                         T,
                                                         Tmb,
                                                         SWC,
-                                                        mycofon_stratergy);
+                                                        mycofon_stratergy,
+                                                        trenching);
 
   Rcpp::DataFrame df = Rcpp::DataFrame::create(Rcpp::_["C_biomass"] = MYCOFON_output.C_biomass,
                                                Rcpp::_["C_roots"] = MYCOFON_output.C_roots,
