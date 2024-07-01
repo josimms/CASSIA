@@ -59,6 +59,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   temp_rise = F
   drought = F
   Rm_acclimation = F
+  trenching = T
   etmodel = F
   LOGFLAG = F
 
@@ -74,9 +75,9 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   weather_original = rbind(rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017), weather_original_2018)
 
   extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
-                      PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("PAR")],
-                      VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("VPD")],
-                      CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018,c("CO2")],
+                      PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018 , c("PAR")],
+                      VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018 , c("VPD")],
+                      CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018 , c("CO2")],
                       fAPAR = rep(0.7, length = nrow(weather_original)))
   weather_original <- cbind(weather_original, extras)
   weather_original <- weather_original[-(365+366),]
@@ -169,10 +170,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    5, 5, 5, # N_k: NH4, NO3, Norg
                    0.3, 0.3, 0.3, # SWC_limit: NH4, NO3, Norg
                    # microbes
-                   60, 40, 0.3, # N_limits: NH4, NO3, Norg
-                   5, 5, 5, # N_k: NH4, NO3, Norg
-                   0.3, 0.3, 0.3, # SWC_limit: NH4, NO3, Norg
-                   60, 40, 0.3, # C limits
+                   60, 40, 0.3, 0.3, 10, # N_limits: NH4, NO3, Norg
+                   5, 5, 5, 5, 5, # N_k: NH4, NO3, Norg
+                   0.3, 0.3, 0.3, 0.3, 0.3, # SWC_limit: NH4, NO3, Norg
+                   400, 400, 0.3, # C limits
                    10, # NH4_on_NO3
                    0.9, # optimal_root_fungal_biomass_ratio (TODO: Heinonsalo?)
                    # TODO: 0.5 times just so I can get some good graphs for the presentation! Should be parametised
@@ -183,7 +184,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                    0.2, # turnover_fungal TODO: do I need this if the turnover is in Meyer?
                    1, # mantle_mass
                    1, # ERM_mass
-                   0.2, # growth_C (Franklin, 2017) TODO: was os 0.3 or 0.03?
+                   0.2, # growth_C (Franklin, 2017) TODO: was as 0.3 or 0.03?
                    0.9, # growth_N (TODO)
                    1, # C_value_param_myco
                    1, # N_value_param_myco
@@ -195,6 +196,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   ###
 
   if (soil_processes) {
+    trenching = FALSE
     CASSIA_new_output = CASSIA_soil(start_year, end_year, weather_original, GPP_ref,
                                     c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test), parameters_R,
                                     needle_mass_in,
@@ -205,8 +207,21 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                     mycorrhiza, root_as_Ding, sperling_sugar_model,
                                     xylogensis_option, environmental_effect_xylogenesis,
                                     temp_rise, drought, Rm_acclimation,
-                                    using_spp_photosynthesis, TRUE,
+                                    using_spp_photosynthesis, 2100, TRUE,
                                     etmodel, LOGFLAG)
+    trenching = TRUE
+    CASSIA_new_output_trenching = CASSIA_soil(start_year, end_year, weather_original, GPP_ref,
+                                              c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test), parameters_R,
+                                              needle_mass_in,
+                                              Throughfall,
+                                              storage_rest, storage_grows,
+                                              LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
+                                              trees_grow, growth_decreases, needle_mass_grows,
+                                              mycorrhiza, root_as_Ding, sperling_sugar_model,
+                                              xylogensis_option, environmental_effect_xylogenesis,
+                                              temp_rise, drought, Rm_acclimation,
+                                              using_spp_photosynthesis, 2015, TRUE,
+                                              etmodel, LOGFLAG)
   } else {
     CASSIA_new_output = CASSIA_yearly(start_year, end_year, weather_original, GPP_ref,
                                       c(pPREL, N_parameters), t(parameters_test), common_p, t(ratios_p), t(sperling_test),
@@ -218,7 +233,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                       mycorrhiza, root_as_Ding, sperling_sugar_model,
                                       xylogensis_option, environmental_effect_xylogenesis,
                                       temp_rise, drought, Rm_acclimation,
-                                      using_spp_photosynthesis, TRUE,
+                                      using_spp_photosynthesis, 2100, TRUE,
                                       etmodel, LOGFLAG)
   }
 
@@ -245,7 +260,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   for (var in 1:length(variables_new)) {
     if (var < length(variables_new)) {
       plot(dates, CASSIA_new_output[[1]][,c(variables_new[var])],
-           main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
+           main = "Outputs", xlab = "Date", ylab = gsub("_", " ", variables_new[var]), type = "l")
       lines(dates_original, Hyde_daily_original_plot[,c(variables_original[var])], col = "blue")
       plot(Hyde_daily_original_plot[,c(variables_original[var])][-731],
            CASSIA_new_output[[1]][,c(variables_new[var])][dates %in% dates_original][-731],
@@ -360,21 +375,26 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     par(mfrow = c(3, 2))
     for (i in 1:6) {
       if (sum(is.na(CASSIA_new_output$Fungal[,i])) < nrow(CASSIA_new_output$Fungal)) {
-        ylim = c(min(CASSIA_new_output$Fungal[,i], na.rm = T), max(CASSIA_new_output$Fungal[,i], na.rm = T))
+        ylim = c(min(CASSIA_new_output$Fungal[,i], CASSIA_new_output_trenching$Fungal[,1], na.rm = T),
+                 max(CASSIA_new_output$Fungal[,i], CASSIA_new_output_trenching$Fungal[,1], na.rm = T))
       } else {
         ylim = c(0, 1)
       }
         # Plot
       plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i],
            xlab = "Date", ylab = "", ylim = ylim, type = "l")
+      lines(dates, CASSIA_new_output_trenching$Fungal[,i], col = "red")
 
       # Reference Data
       if (names(CASSIA_new_output$Fungal)[i] == "C_roots_NonStruct") {
         points(as.Date(yu_data$Date), yu_data$sugar.root, pch = "o", col = "blue")
         points(as.Date(rownames(original.data)), original.data$roots_sugar, pch = "x", col = "blue")
+
       } else if (names(CASSIA_new_output$Fungal)[i] == "C_biomass") {
         # TODO: check Ryhti data if not
         # TODO: Pauliina for the data that was originally used to calibrate CASSIA - root biomass
+      } else if (names(CASSIA_new_output$Fungal)[i] == "C_fungal_NonStruct") {
+
       }
 
       if (sum(is.na(CASSIA_new_output$Fungal[,i])) == nrow(CASSIA_new_output$Fungal)) {
@@ -387,7 +407,8 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     par(mfrow = c(3, 4))
     for (i in 7:length(names(CASSIA_new_output$Fungal))) {
       if (sum(is.na(CASSIA_new_output$Fungal[,i])) < nrow(CASSIA_new_output$Fungal)) {
-        ylim = c(min(CASSIA_new_output$Fungal[,i], na.rm = T), max(CASSIA_new_output$Fungal[,i], na.rm = T))
+        ylim = c(min(CASSIA_new_output$Fungal[,i], CASSIA_new_output_trenching$Fungal[,i], na.rm = T),
+                 max(CASSIA_new_output$Fungal[,i], CASSIA_new_output_trenching$Fungal[,i], na.rm = T))
       } else {
         ylim = c(0, 1)
       }
@@ -395,6 +416,11 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
       # Plot
       plot(dates, CASSIA_new_output$Fungal[,i], main = names(CASSIA_new_output$Fungal)[i],
            xlab = "Date", ylab = "", ylim = ylim, type = "l")
+      lines(dates, CASSIA_new_output_trenching$Fungal[,i], col = "red")
+      if (i == length(names(CASSIA_new_output$Fungal))) {
+        legend("topleft", c("Control", "Trenched"),
+               col = c("black", "red"), lty = 1, bty = "n")
+      }
 
       # Test data
       if (names(CASSIA_new_output$Fungal)[i] == "uptake_plant") {
@@ -417,7 +443,8 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     par(mfrow = c(3, 3))
     for (i in 1:9) {
       if (sum(is.na(CASSIA_new_output$Soil[,i])) < nrow(CASSIA_new_output$Soil)) {
-        ylim = c(min(CASSIA_new_output$Soil[,i], na.rm = T), max(CASSIA_new_output$Soil[,i], na.rm = T))
+        ylim = c(min(CASSIA_new_output$Soil[,i], CASSIA_new_output_trenching$Soil[,i], na.rm = T),
+                 max(CASSIA_new_output$Soil[,i], CASSIA_new_output_trenching$Soil[,i], na.rm = T))
       } else {
         ylim = c(0, 1)
       }
@@ -425,6 +452,11 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
       # TOO: units
       plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i],
            xlab = "Date", ylab = "", ylim = ylim, type = "l")
+      lines(dates, CASSIA_new_output_trenching$Soil[,i], col = "red")
+      if (i == 9) {
+        legend("topleft", c("Control", "Trenched"), col = c("black", "red"), lty = 1, bty = "n")
+      }
+
 
       if (names(CASSIA_new_output$Soil)[i] == "C_decompose_FOM") {
         # TODO: is this in the respiration paper?
@@ -456,13 +488,19 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     par(mfrow = c(3, 3))
     for (i in c(10:13, 19:20)) {
       if (sum(is.na(CASSIA_new_output$Soil[,i])) < nrow(CASSIA_new_output$Soil)) {
-        ylim = c(min(CASSIA_new_output$Soil[,i], na.rm = T), max(CASSIA_new_output$Soil[,i], na.rm = T))
+        ylim = c(min(CASSIA_new_output$Soil[,i], CASSIA_new_output_trenching$Soil[,i], na.rm = T),
+                 max(CASSIA_new_output$Soil[,i], CASSIA_new_output_trenching$Soil[,i], na.rm = T))
       } else {
         ylim = c(0, 1)
       }
 
       plot(dates, CASSIA_new_output$Soil[,i], main = names(CASSIA_new_output$Soil)[i],
            xlab = "Date", ylab = "", ylim = ylim, type = "l")
+      lines(dates, CASSIA_new_output_trenching$Soil[,i], col = "red")
+      if (i == 20) {
+        legend("topleft", c("Control", "Trenched"),
+               col = c("black", "red"), lty = 1, bty = "n")
+      }
 
       if (names(CASSIA_new_output$Soil)[i] == "NH4") {
         points(nitrogen$date, nitrogen$nh4, col = "blue") # TODO: units?
@@ -616,17 +654,28 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     # Respiration graphs
     ###
 
-    par(mfrow = c(1, 1))
-    plot(NULL, main = "Total Respiration", xlab = "Dates", ylab = "Respiration ()",
-         ylim = c(min(unlist(lapply(CASSIA_new_output$Respiration, min, na.rm = T))),
-                  max(unlist(lapply(CASSIA_new_output$Respiration, max, na.rm = T)))),
-         xlim = c(dates[1], dates[length(dates)])) # TODO: add units
+    # Control
+    par(mfrow = c(3, 2))
     for (i in 1:ncol(CASSIA_new_output$Respiration)) {
-      lines(dates, CASSIA_new_output$Respiration[,c(i)], col = i)
+      range = c(min(CASSIA_new_output_trenching$Respiration[,c(i)], CASSIA_new_output$Respiration[,c(i)], na.rm = T),
+                max(CASSIA_new_output_trenching$Respiration[,c(i)], CASSIA_new_output$Respiration[,c(i)], na.rm = T))
+      plot(dates, CASSIA_new_output$Respiration[,c(i)], xlab = "Dates", ylab = "Respiration",
+           ylim = range, xlim = c(dates[1], dates[length(dates)]),
+           col = i, type = "l",
+           main = gsub("_", " ", gsub("respiration_", "", names(CASSIA_new_output$Respiration)))[i]) # TODO: add units
+      if (i > 2) {
+        lines(dates, CASSIA_new_output_trenching$Respiration[,c(i)], col = 1, lty = 2)
+      }
     }
-    legend("topleft", gsub("\\b([a-z])", "\\U\\1", gsub("_", " ", gsub("respiration_", "", names(out$Respiration))), perl = TRUE),
-           col = 1:5, lty = rep(1, 5), bty = "n", cex = 0.75)
+    legend("topright", c("Control", "Trenching"), col = 1, lty = 1:2, bty = "n", cex = 0.75)
+
   }
 
-  return(CASSIA_new_output)
+  par(mfrow = c(1, 1))
+  plot(dates, rowSums(CASSIA_new_output$Respiration), type = "l", main = "Total Ecosystem Respiration", xlab = "Dates", ylab = "Respiration", lwd = 2)
+  lines(dates, rowSums(CASSIA_new_output_trenching$Respiration), col = "red", lwd = 2)
+  legend("topleft", c("Control", "Trenching"), col = c("black", "red"), lty = 1, lwd = 2, bty = "n")
+
+  return(CASSIA_new_output_trenching)
 }
+
