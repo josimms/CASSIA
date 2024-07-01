@@ -167,6 +167,7 @@ likelyhood_sugar_model <- function(par, sum = T) {
   temp_rise = F
   drought = F
   Rm_acclimation = F
+  trenching = T
   etmodel = F
   LOGFLAG = F
 
@@ -213,7 +214,7 @@ likelyhood_sugar_model <- function(par, sum = T) {
                           mycorrhiza, root_as_Ding, sperling_sugar_model,
                           xylogensis_option, environmental_effect_xylogenesis,
                           temp_rise, drought, Rm_acclimation,
-                          using_spp_photosynthesis, TRUE,
+                          using_spp_photosynthesis, trenching, TRUE,
                           etmodel, LOGFLAG)
   simTab_growth = simTab[[1]]
   simTab_sugar = simTab[[2]]
