@@ -13,8 +13,8 @@ CASSIA_sensitivity <- function(bounds, names, start_year, end_year, weather, GPP
     .Call(`_CASSIA_CASSIA_sensitivity`, bounds, names, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG)
 }
 
-CASSIA_soil <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG) {
-    .Call(`_CASSIA_CASSIA_soil`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG)
+CASSIA_soil <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, trenching_year, CASSIA_graphs, etmodel, LOGFLAG) {
+    .Call(`_CASSIA_CASSIA_soil`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, trenching_year, CASSIA_graphs, etmodel, LOGFLAG)
 }
 
 xylogenesis_wrapper <- function(no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw) {
@@ -37,8 +37,8 @@ myco_growth <- function(C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_r
     .Call(`_CASSIA_myco_growth`, C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio)
 }
 
-mycofon_balence <- function(C_biomass, C_roots, C_fungal, C_ecto, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tmb, SWC, mycofon_stratergy) {
-    .Call(`_CASSIA_mycofon_balence`, C_biomass, C_roots, C_fungal, C_ecto, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tmb, SWC, mycofon_stratergy)
+mycofon_balence <- function(C_biomass, C_roots, C_fungal, C_ecto, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tmb, SWC, mycofon_stratergy, trenching) {
+    .Call(`_CASSIA_mycofon_balence`, C_biomass, C_roots, C_fungal, C_ecto, C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStruct, N_fungal_NonStruct, max_C_from_CASSIA, parameters_R, NH4, NO3, FOM_Norg, T, Tmb, SWC, mycofon_stratergy, trenching)
 }
 
 uptake_N <- function(N, T, SWC, N_limit, k, SWC_limit) {
@@ -57,8 +57,8 @@ Fungal_N_Uptake <- function(T, SWC, NH4, NO3, FOM_Norg, N_limits_R, N_k_R, SWC_k
     .Call(`_CASSIA_Fungal_N_Uptake`, T, SWC, NH4, NO3, FOM_Norg, N_limits_R, N_k_R, SWC_k_R, demand)
 }
 
-Microbe_Uptake <- function(C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg) {
-    .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, NC_Litter, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg)
+Microbe_Uptake <- function(C_microbe, N_micorbe, C_exudates, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg, tests) {
+    .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_exudates, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg, tests)
 }
 
 preles_test_cpp <- function(start_year, end_year, weather, pPREL, etmodel) {
