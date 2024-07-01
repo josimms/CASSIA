@@ -53,9 +53,20 @@ Rcpp::List plant_decision(double C_roots_NonStruct,
     double C_f = std::max(m*C_roots_NonStruct, 0.0); // Value from CASSIA
     double C_e_f = std::max((1-m)*C_roots_NonStruct, 0.0); // Value from CASSIA
 
-    return(Rcpp::List::create(Rcpp::_["Mycofon_demand"] = 1,
+    /*
+     * In the case of no biomass!
+     */
+
+    double demand;
+    if (C_roots_NonStruct > 0) {
+      demand = 1;
+    } else {
+      demand = 0; // As there are no roots
+    }
+
+    return(Rcpp::List::create(Rcpp::_["Mycofon_demand"] = demand,
                               Rcpp::_["Mycofon_allocation"] = C_allo,
-                              Rcpp::_["Franklin_demand"] = 1,
+                              Rcpp::_["Franklin_demand"] = demand,
                               Rcpp::_["Franklin_allocation"] = C_f,
                               Rcpp::_["Mycofon_exudes"] = C_e,
                               Rcpp::_["Franklin_exudes"] = C_e_f));
@@ -78,7 +89,7 @@ Rcpp::List myco_decision(double N_fungal_NonStruct,
    * N_max should be uptake rather than biomass!
    */
 
-  double N_allo = std::max(N_fungal_NonStruct*(1 - (N_roots_NonStruct / C_roots_NonStruct) / NC_fungal_opt), 0.0);
+  double N_allo = std::max(N_fungal_NonStruct * (1 - (N_roots_NonStruct / C_roots_NonStruct) / NC_fungal_opt), 0.0);
 
   /*
    * Nitrogen allocation from Franklin 2014
