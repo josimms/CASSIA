@@ -199,8 +199,8 @@ save(parameters_p, file = paste0(data.direct, "/parameters_p.RData"))
 ######
 ## Splerling parameters_p
 ######
-sperling_p <- data.frame(matrix(ncol = 2, nrow = 30))
-names(sperling_p) <- c("Hyde", "Lettosuo")
+sperling_p <- data.frame(matrix(ncol = 3, nrow = 30))
+names(sperling_p) <- c("Hyde", "Lettosuo", "Flakaliden_c", "HF_China")
 sperling_p[1,] <- c(0.3246781, 0.40, 0.40) # starch0
 sperling_p[2,] <- c(0.4184208, 0.35, 0.35) # sugar0
 sperling_p[3,] <- c(0.03, NA, NA) # starch.needles0
