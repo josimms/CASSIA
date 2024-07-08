@@ -436,7 +436,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       if (final_year%2==0) {
         years.push_back(year);
-        days.push_back(day);
+        days.push_back(day+1);
 
         respiration_output.maintenance.push_back(actual_growth_out.respiration_maintenance);
         respiration_output.growth.push_back(actual_growth_out.respiration_growth);
