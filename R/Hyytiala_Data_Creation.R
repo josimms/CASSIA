@@ -44,6 +44,9 @@ Hyytiala_Data_Creation <- function(raw.directory,
     #
     # NOTE! Don't run if no new data downloaded!
     ####
+
+    system.time(dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RH672")), read.csv, dec = ".")))
+
     RH672 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RH672")), read.csv, dec = "."))
     RH1250 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RH1250")), read.csv, dec = "."))
     RHTd <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RHTd")), read.csv, dec = "."))
