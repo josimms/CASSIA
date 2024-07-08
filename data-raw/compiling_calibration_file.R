@@ -24,14 +24,14 @@ reference_adder <- function(dataframe, string) {
 
 # Inport
 # TODO: This is reading in wrong, but sort out when plotting the data
-nitrogen_balence_data_raw_lys_mökki = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-c(1, 2)]), excel_Reading_function, sheet = "lys mökki")
+nitrogen_balence_data_raw_lys_mökki = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"), pattern = "Smear.+xls")), excel_Reading_function, sheet = "lys mökki")
 # lys mökki has the NH4, NO3 etc.
-nitrogen_balence_data_raw_Lumi = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-1]), excel_Reading_function, sheet = "Lumi")
-nitrogen_balence_data_raw_oksa = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-1]), excel_Reading_function, sheet = "oksa")
-nitrogen_balence_data_raw_karike = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-1]), excel_Reading_function, sheet = "karike")
-nitrogen_balence_data_raw_pato = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-1]), excel_Reading_function, sheet = "Pato")
-nitrogen_balence_data_raw_keskisade = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-1]), excel_Reading_function, sheet = "keskisade")
-nitrogen_balence_data_raw_mökki_runko = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-1]), excel_Reading_function, sheet = "mökki runko")
+nitrogen_balence_data_raw_Lumi = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"), pattern = "Smear.+xls")), excel_Reading_function, sheet = "Lumi")
+nitrogen_balence_data_raw_oksa = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"), pattern = "Smear.+xls")), excel_Reading_function, sheet = "oksa")
+nitrogen_balence_data_raw_karike = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"), pattern = "Smear.+xls")), excel_Reading_function, sheet = "karike")
+nitrogen_balence_data_raw_pato = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"), pattern = "Smear.+xls")), excel_Reading_function, sheet = "Pato")
+nitrogen_balence_data_raw_keskisade = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"), pattern = "Smear.+xls")), excel_Reading_function, sheet = "keskisade")
+nitrogen_balence_data_raw_mökki_runko = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"), pattern = "Smear.+xls")), excel_Reading_function, sheet = "mökki runko")
 
 ## TODO: work out exactly which ones of these are actually useful! Import extra ones if needed!
 # nitrogen_balence_data_raw_tensiometrit = lapply(paste0(raw_data_directory, "ancillary_ecosystem/", list.files(paste0(raw_data_directory, "ancillary_ecosystem/"))[-1]), excel_Reading_function, sheet = "Tensiometrit")
