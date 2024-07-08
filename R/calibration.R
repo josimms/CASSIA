@@ -310,10 +310,12 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   load(paste0(direct, "2024-01-19 13_51_32.011465 CASSIAout_sugar_model.RData"))
 
   Calibrated_Parameters = BayesianTools::MAP(CASSIAout_sugar_model)$parametersMAP
-  # calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes, jussi_data
+  calibration = F
+  sperling_sugar_model = F
+  using_spp_photosynthesis = T
+  soil_processes = F
+  jussi_data = F
   out = all_tests(c(Calibrated_Parameters), F, F, T, T, T)
 
   return(CASSIAout_sugar_model)
 }
-
-
