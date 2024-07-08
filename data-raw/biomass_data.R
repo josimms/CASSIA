@@ -4,7 +4,7 @@ direct = "~/Documents/CASSIA_Calibration/Raw_Data/ancillary_ecosystem/"
 # Karake
 ####
 
-karike_list = lapply(paste0(direct, list.files(path = direct)[2:28]), readxl::read_excel, sheet = "karike")
+karike_list = lapply(paste0(direct, list.files(path = direct)[3:29]), readxl::read_excel, sheet = "karike")
 karike_list = lapply(karike_list, function(x) {if (sum(c("pvm.", "pvm....2") %in% names(x)) != 0) {
   names(x)["pvm." == names(x) | "pvm....2" == names(x)] = "pvm"
   }
