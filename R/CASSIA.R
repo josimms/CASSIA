@@ -77,7 +77,7 @@ CASSIA <- function(
   ## Input tests!
   #####
   # Check that the sites are within the sites allowed
-  if ((site %in% c("Hyde", "Lettosuo", "Flakaliden_c")) == F) {stop("Unknown site: Please pick between Hyde, Lettosuom and Flakaliden_c")}
+  if ((site %in% c("Hyde", "Lettosuo", "Flakaliden_c", "HF_China")) == F) {stop("Unknown site: Please pick between Hyde, Lettosuo, Flakaliden_c and HF_China")}
 
   if (myco_model) {
     if (!sperling_model) {
@@ -666,7 +666,7 @@ CASSIA <- function(
       ew.width_pot <- ew.cells_pot * parameters[c("cell.d.ew"), c(site)] * 1000
       lw.width_pot <- lw.cells_pot * parameters[c("cell.d.lw"), c(site)] * 1000
       for (i in 1:n.days) if (sD[i] < parameters[c("sDc"), c(site)]^2 / parameters[c("Uggla"), c(site)]) pot.mm[i] <- ew.width_pot[i] else pot.mm[i] <- lw.width_pot[i] + max(ew.width_pot)
-    }
+    } # Environmental effect xylogenesis is false
 
     ## New bud growth
 
@@ -1301,39 +1301,3 @@ CASSIA <- function(
 
   return(out)
 }
-
-
-#sperling_2018 <- sperling_p
-#sperling_2018[3:12,1] <- c(0.015, 0.156, # 2018
-#                           0.034, 0.166, # as no data for 2018, used 2015 data
-#                           0.057, 0.2088, 0.4, 0.1, # 2018
-#                           0.0249, 0.021) # as no data for 2018, used 2015 data
-#sperling_2018_bayes <- sperling_2018
-#CASSIA_cali <- CASSIA(Hyde_weather[2923:3652,], "Hyde", sperling_model = TRUE,
-#                      mychorrhiza = FALSE, storage.reset = FALSE, phloem.trigger = T,
-#                      sperling = sperling_2018_bayes)[[1]][,c(1, 25:34)]
-#rownames(CASSIA_cali) <- CASSIA_cali$date
-#CASSIA_cali$date <- as.POSIXct(as.character(CASSIA_cali$date), format = "%Y-%m-%d")
-
-#par(mfrow = c(2, 1))
-#plot(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, main = "Sugar", col = "blue", type = "l", ylim = c(0, 0.8), xlab = "Days of the Year", ylab = "Sugar, kg C")
-#abline(h = 0, lty = 2, col = "grey")
-#lines(CASSIA_cali$date, CASSIA_cali$sugar.needles + CASSIA_cali$sugar.phloem + CASSIA_cali$sugar.roots, col = "blue")
-#lines(CASSIA_cali$date, CASSIA_cali$sugar.needles, col = "green")
-#lines(CASSIA_cali$date, CASSIA_cali$sugar.phloem, col = "brown")
-#lines(CASSIA_cali$date, CASSIA_cali$sugar.roots, col = "black")
-#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), tidyr::replace_na(yu.data$sugar.needles, 0) + tidyr::replace_na(yu.data$sugar.phloem, 0) + tidyr::replace_na(yu.data$sugar.roots, 0), col = "blue")
-#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.needles, col = "green")
-#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.phloem, col = "brown")
-#points(as.POSIXct(as.character(yu.data$date), format = "%Y-%m-%d"), yu.data$sugar.roots, col = "black")
-#abline(h = 0.41, lty = 2, col = "blue")
-#text(30, 0.43, "Expected Equilibrium", col = "blue", cex = 0.75)
-#SCb <- 0.23
-#abline(h = 0.23, lty = 2, col = "pink")
-#text(25, SCb, "\"bloom\" threshold", col = "pink", cex = 0.75)
-
-
-
-
-
-
