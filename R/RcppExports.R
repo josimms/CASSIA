@@ -33,6 +33,10 @@ growth_wrapper <- function(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF,
     .Call(`_CASSIA_growth_wrapper`, day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, growth_in, last_year_HH, no_day)
 }
 
+photosynthesis_julia <- function() {
+    .Call(`_CASSIA_photosynthesis_julia`)
+}
+
 myco_growth <- function(C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio) {
     .Call(`_CASSIA_myco_growth`, C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio)
 }
