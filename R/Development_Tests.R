@@ -41,6 +41,12 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   parameters <- initialize_parameters(calibration, new_parameters)
 
   ###
+  # Numerical tests of the functions in the model
+  ###
+
+  # TODO: write this
+
+  ###
   # Running the functions
   ###
 
@@ -105,6 +111,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   plot_comparison(CASSIA_new_output, variables_new, processed_data$dates, processed_data$dates_original,
                   Hyde_daily_original_plot, variables_original, processed_data$Photosynthesis_Reference, soil_processes)
 
+  # TODO: add a xylogenesis function here
+
+  # TODO: add the water dependencies
+
   ###
   # Sugar
   ###
@@ -115,6 +125,9 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   ###
 
   if (soil_processes) {
+    # Decision values
+    # TODO: write the decision graphs
+
     # Mycofon - Date
     plot_mycofon_data(CASSIA_new_output, CASSIA_new_output_trenching, processed_data$dates, loaded_data)
 
