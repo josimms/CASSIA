@@ -9,6 +9,8 @@ growth_out actual_growth(CASSIA_parameters parameters,
 
   growth_out actual_growth_out;
 
+  // TODO: check the storage initialisation
+
   /*
    * Height
    */
