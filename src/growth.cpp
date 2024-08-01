@@ -377,6 +377,7 @@ growth_out growth(int day,
   out.ecto = root_pot_growth; // TODO: temporary to get seasonal variation
   out.diameter = wall_pot_growth;
   out.bud = bud_pot_growth;
+  out.GD = GD;
   out.release = en_pot_release;
   out.use = en_pot_growth;
   out.previous_values = values_out;
