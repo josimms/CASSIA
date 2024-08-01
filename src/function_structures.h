@@ -93,6 +93,7 @@ struct growth_vector {
   std::vector<double> roots;
   std::vector<double> diameter;
   std::vector<double> bud;
+  std::vector<double> ring_width;
   std::vector<double> height_tot;
   std::vector<double> wall_tot;
   std::vector<double> g;

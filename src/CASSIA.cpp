@@ -128,6 +128,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
+  ring_width_out previous_ring_width;
   carbo_balance original_parameters;
 
   /*
@@ -422,7 +423,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                    sperling_sugar_model);
       // TODO: update the parameters like D0 and h0 that need to be updated
 
-      ring_width_out ring_width = ring_width_generator(day, ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
+      ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
+      previous_ring_width = ring_width;
 
       /*
        * Output
@@ -456,6 +458,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         actual_growth_output.roots.push_back(actual_growth_out.roots);
         actual_growth_output.diameter.push_back(actual_growth_out.wall);
         actual_growth_output.bud.push_back(actual_growth_out.bud);
+        actual_growth_output.ring_width.push_back(ring_width.tot_mm);
 
         sugar_values_output.sugar.push_back(sugar_values_for_next_iteration.sugar.needles +
           sugar_values_for_next_iteration.sugar.phloem +
@@ -552,7 +555,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                Rcpp::_["height_growth"] = actual_growth_output.height,
                                                Rcpp::_["respiration_growth"] = respiration_output.growth,
                                                Rcpp::_["respiration_maintenance"] = respiration_output.maintenance,
-                                               Rcpp::_["ring_width"] = 0.0); // TODO: where is the ring width?
+                                               Rcpp::_["ring_width"] = actual_growth_output.ring_width);
   Rcpp::DataFrame df2 = Rcpp::DataFrame::create(Rcpp::_["sugar"] = sugar_values_output.sugar,
                                                 Rcpp::_["starch"] = sugar_values_output.starch,
                                                 Rcpp::_["starch_needles"] = sugar_values_output.starch_needles,
