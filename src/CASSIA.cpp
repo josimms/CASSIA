@@ -422,6 +422,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                    sperling_sugar_model);
       // TODO: update the parameters like D0 and h0 that need to be updated
 
+      ring_width_out ring_width = ring_width_generator(day, ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
+
       /*
        * Output
        */

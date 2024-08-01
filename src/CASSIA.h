@@ -399,8 +399,6 @@ Rcpp::List CASSIA_yearly(int start_year,
                          int etmodel,
                          int LOGFLAG);
 
-#endif
-
 /*
  * Parameters
  */
@@ -417,3 +415,26 @@ p4 make_p4(std::vector<double> input);
 p5 make_p5(std::vector<double> input);
 p7 make_p7(std::vector<double> input);
 
+/*
+ * Ring Width
+ */
+
+struct ring_width_out {
+  double GD_tot;
+
+  double n_E_tot;
+  double n_W_tot;
+  double n_M_tot;
+
+  double ew_cells_tot;
+
+  double tot_mm;
+};
+
+ring_width_out ring_width_generator(int day,
+                                    ring_width_out previous_value,
+                                    growth_values_out growth_previous,
+                                    CASSIA_parameters parameters,
+                                    double GD_tot);
+
+#endif

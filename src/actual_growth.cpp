@@ -35,6 +35,12 @@ growth_out actual_growth(CASSIA_parameters parameters,
   actual_growth_out.roots = storage.roots * potential_growth.roots;
 
   /*
+   * GD
+   */
+  // TODO: storage is needles as the sugar model isn't being used here, but it should be a general storage term when the sugar model is being used
+  actual_growth_out.GD = storage.needles * potential_growth.GD;
+
+  /*
    * Respiration Growth
    */
   actual_growth_out.respiration_growth = common.Rg_R * actual_growth_out.roots +
