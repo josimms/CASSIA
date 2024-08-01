@@ -420,8 +420,6 @@ p7 make_p7(std::vector<double> input);
  */
 
 struct ring_width_out {
-  double GD_tot;
-
   double n_E_tot;
   double n_W_tot;
   double n_M_tot;
@@ -429,6 +427,9 @@ struct ring_width_out {
   double ew_cells_tot;
 
   double tot_mm;
+
+  double max_ew_cells_tot;
+  double max_ew_width_tot;
 };
 
 ring_width_out ring_width_generator(int day,
