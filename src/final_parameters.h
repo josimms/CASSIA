@@ -132,44 +132,45 @@ struct CASSIA_parameters {
   double eki_repo = -0.118;
   double stem_no = 1010;
   double m_R_tot = 0; // TODO: This shouldn't really exist here, not quite sure here
+  double diameter_start_day = 78; // TODO: why doesn't this parameter work?
 };
 
 struct CASSIA_common {
-  double a = 0.185;
-  double b = 18.4;
-  double TR0 = 0;
-  double abs_zero = 273.15;
-  double b_s = 4.14;
-  double theetta_FC = 0.62;
-  double phi_e = -0.00068;
-  double K_sat = 24.5;
-  double R_length = 5300;
-  double M_H20 = 0.018;
-  double r_cyl = 0.00425;
-  double r_root = 0.003;
-  double ypsilon = 1e-14;
-  double Rg_N = 0.35;
-  double Rg_S = 0.3;
-  double Rg_R = 0.35;
-  double gas_const = 0.314;
-  double M_C = 12.01;
-  double M_H = 1.008;
-  double M_O = 16;
-  double osmotic_sugar_conc = 2e+06;
+  double a;
+  double b;
+  double TR0;
+  double abs_zero;
+  double b_s;
+  double theetta_FC;
+  double phi_e;
+  double K_sat;
+  double R_length;
+  double M_H20;
+  double r_cyl;
+  double r_root;
+  double ypsilon;
+  double Rg_N;
+  double Rg_S;
+  double Rg_R;
+  double gas_const;
+  double M_C;
+  double M_H;
+  double M_O;
+  double osmotic_sugar_conc;
   double m_N;
   double Uggla;
 };
 
 struct CASSIA_ratios {
-  double form_factor = 0.6;
+  double form_factor;
   double needle_fineroot_ratio;
-  double sapwood_share = 0.8;
-  double height_growth_coefficient = 4.3;
-  double diameter_growth_coefficient = 1.6;
-  double height_growth_coefficient_max = 5.5;
-  double height_growth_coefficient_min = 3.8;
-  double diameter_growth_coefficient_max = 1.9;
-  double diameter_growth_coefficient_min = 1.5;
+  double sapwood_share;
+  double height_growth_coefficient;
+  double diameter_growth_coefficient;
+  double height_growth_coefficient_max;
+  double height_growth_coefficient_min;
+  double diameter_growth_coefficient_max;
+  double diameter_growth_coefficient_min;
 };
 
 /*
