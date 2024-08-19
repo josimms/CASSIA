@@ -1,6 +1,6 @@
 #include "CASSIA.h"
 
-/*
+
 int CASSIA_ratios_test(std::string fratios, std::string site) {
   // Example usage: read values for the 'Hyde' site
   CASSIA_ratios hyde_ratios = read_ratios(fratios, site);
@@ -52,5 +52,3 @@ int CASSIA_common_test(std::string fcommon) {
 
   return 0;
 }
-
-*/
