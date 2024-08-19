@@ -35,6 +35,8 @@ Rcpp::DataFrame replace_value_DataFrame(Rcpp::DataFrame df,
   return df1;
 }
 
+
+/*
 // [[Rcpp::export]]
 Rcpp::List CASSIA_sensitivity(Rcpp::DataFrame bounds,
                               std::vector<std::string> names,
@@ -133,7 +135,7 @@ Rcpp::List CASSIA_sensitivity(Rcpp::DataFrame bounds,
 
       out = CASSIA_yearly(start_year, end_year,
                           weather, GPP_ref,
-                          pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling,
+                          pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, site,
                           needle_mass_in, Throughfall, storage_rest, storage_grows,
                           LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
                           trees_grow, growth_decreases, needle_mass_grows,
@@ -152,3 +154,4 @@ Rcpp::List CASSIA_sensitivity(Rcpp::DataFrame bounds,
 
   return(output);
 }
+ */
