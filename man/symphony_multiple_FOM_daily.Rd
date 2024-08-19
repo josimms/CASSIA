@@ -48,54 +48,6 @@ Where d is decomposition.
 \eqn{C_\text{SOM} = C_\text{SOM} - u_\text{C}C^\text{microbe, SOM} + \text{turnover}*(C^\text{microbe, SOM} + C^\text{microbe, FOM})} \cr
 \eqn{C^\text{microbe, FOM} = (1 + u_{SOM}C^\text{microbe, FOM} - r(Tmb) - \text{turnover})C^\text{microbe, FOM}} \cr
 \eqn{C^\text{microbe, SOM} = (1 + u_{SOM}C^\text{microbe, SOM} - r(Tmb) - \text{turnover})C^\text{microbe, SOM}}
-
-\usage{
-
-symphony_multiple_FOM_daily(Tmb,
-                            SWC,
-                            C_FOM_needles_old,
-                            C_FOM_woody_old,
-                            C_FOM_roots_old,
-                            C_FOM_mantle_old,
-                            C_FOM_ERM_old,
-                            C_Exudes,
-                            C_SOM_old,
-                            N_SOM_old,
-                            C_decompose_FOM,
-                            C_decompose_SOM,
-                            N_decompose_FOM,
-                            N_decompose_SOM,
-                            Litter_needles,
-                            Litter_woody,
-                            Litter_roots,
-                            Litter_mantle,
-                            Litter_ERM,
-                            exudes_plant,
-                            exudes_fungal,
-                            imobilisation,
-                            assimilation,
-                            retranslocation,
-                            NH4_old,
-                            NO3_old,
-                            NC_needles,
-                            NC_woody,
-                            NC_roots,
-                            NC_mantle,
-                            NC_ERM,
-                            NH4_used_Plant,
-                            NH4_used_Fungal,
-                            NO3_used_Plant,
-                            NO3_used_Fungal,
-                            FOM_Norg_used_Plant,
-                            FOM_Norg_used_Fungal,
-                            SOM_Norg_used,
-                            respiration_microbes_params,
-                            N_limits_R,
-                            N_k_R,
-                            SWC_k_R,
-                            NC_microbe_opt,
-                            microbe_turnover)
-
 }
 
 \arguments{
