@@ -1,0 +1,176 @@
+## Inport libraries
+
+```{r}
+library(devtools)
+# install_github("josimms/CASSIA", force = TRUE)
+
+library(CASSIA)
+library(data.table)
+library(ggplot2)
+library(purrr)
+library(dplyr)
+library(tidyr)
+```
+
+## Weather and parameters imported
+
+```{r}
+wd = "/home/josimms/Documents/CASSIA_yiheng/DATA/"
+
+site = "HF_China"
+HF_weather <- read.csv(paste0(wd, "zzs_weather.csv"),header = T,sep=',')
+weather <- HF_weather
+weather_extra <- read.csv(paste0(wd, "zzs_Weather_extra.csv"),header = T,sep=',')
+
+weather <- cbind(weather, weather_extra)
+
+dates <- seq(as.Date(weather$date[1]), as.Date(weather$date[nrow(weather)]), by = "day")
+
+parameters_p_G <- read.csv(paste0(wd, "parameters_p_G.csv"), header = T, sep=',', row.names = 1)
+common_p_G <- read.csv(paste0(wd, "common_p_g.csv"), header = T, sep=',', row.names = 1)
+repo_p_G <- read.csv(paste0(wd, "repo_p_g.csv"), header = T, sep=',', row.names = 1)
+ratios_p_G <-read.csv(paste0(wd, "ratios_p_g.csv"), header = T, sep=',', row.names = 1)
+```
+
+## Weather plotted
+
+```{r}
+plot_weather_variables(HF_weather[,-1], dates)
+```
+
+## CASSIA with the original parameters, but the chinese weather data
+
+```{r}
+CASSIA_out_original_values <- CASSIA_cpp(weather, site = "HF_China",
+                                         ratios = ratios_p_G,
+                                         parameters = parameters_p_G,
+                                         common = common_p_G,
+                                         repo = repo_p_G,
+                                         photosynthesis_as_input = TRUE)
+```
+
+## Sensitivity analysis
+
+So although you have changed the weather parameters the results will not be ready as the parameters have not been changed.
+If you look at the 2015 paper (TODO: reference) then you can see the temperature controls for the seasonal behaviour
+First let's get the ring width to work, then it's possible to look at the other areas of growth.
+
+Ring width is controlled by a few parameters (that can be looked up in the parameter tables)
+sDc (in parameters)
+Uggla (in parameters)
+cell_d_ew (in parameters)
+cell_d_lw (in parameters)
+
+But ring width also depends on the diameter growth, itself depends on:
+tau_Ee, tau_We, tau_El, tau_Wl,
+sD0_Trad
+
+```{r}
+run_sensitivity <- function(param_name, range) {
+  map(range, function(i) {
+    parameters_p_G_new <- parameters_p_G
+    parameters_p_G_new[parameters_p_G_new$X == param_name, 2] <- i
+    CASSIA_cpp(weather, site = "HF_China",
+               ratios = ratios_p_G,
+               parameters = parameters_p_G_new,
+               common = common_p_G,
+               repo = repo_p_G,
+               photosynthesis_as_input = TRUE)
+  })
+}
+
+# Run sensitivity analyses
+sensitivity_sDc <- run_sensitivity("sDc", seq(4, 6, length.out = 20))
+sensitivity_uggla <- run_sensitivity("Uggla", seq(0.01, 10, length.out = 20))
+sensitivity_cell_d_ew <- run_sensitivity("cell.d.ew", seq(0.01, 10, length.out = 20))
+sensitivity_dgs <- run_sensitivity("diameter_start_day", seq(50, 100, length.out = 20))
+
+# Prepare data for plotting
+prepare_plot_data <- function(sensitivity_list, param_name, param_values) {
+  map_dfr(seq_along(sensitivity_list), function(i) {
+    data.frame(
+      days = seq_along(sensitivity_list[[i]]$Growth$ring_width),
+      ring_width = sensitivity_list[[i]]$Growth$ring_width,
+      param_value = param_values[i],
+      param_name = param_name
+    )
+  })
+}
+
+plot_data <- bind_rows(
+  prepare_plot_data(sensitivity_sDc, "sDc", seq(4, 6, length.out = 20)),
+  prepare_plot_data(sensitivity_uggla, "Uggla", seq(0.01, 10, length.out = 20)),
+  prepare_plot_data(sensitivity_cell_d_ew, "cell_d_ew", seq(0.01, 10, length.out = 20)),
+  prepare_plot_data(sensitivity_dgs, "diameter_growth_start", seq(50, 100, length.out = 20))
+)
+
+# Create plot
+ggplot(plot_data, aes(x = days, y = ring_width, color = param_value)) +
+  geom_point(alpha = 0.5, size = 0.5) +
+  scale_color_viridis_c() +
+  facet_wrap(~param_name, scales = "free_y", ncol = 2) +
+  labs(title = "Sensitivity Analysis",
+       x = "Days Since Simulation Start",
+       y = "Ring Width (through the year)",
+       color = "Parameter value") +
+  theme_minimal()
+```
+
+## Final parameters for the HF site
+
+```{r}
+
+CASSIA_out <- CASSIA_cpp(weather, site = "HF_China",
+                         ratios = ratios_p_G,
+                         parameters = parameters_p_G,
+                         common = common_p_G,
+                         repo = repo_p_G,
+                         photosynthesis_as_input = TRUE)
+
+```
+
+## Monthly aggregation
+
+```{r}
+convert_yday_to_month <- function(year, day_of_year) {
+  # Create a date object
+  date <- as.Date(paste(year, day_of_year), format="%Y %j")
+
+  # Extract year and month
+  year_month <- format(date, "%Y-%m")
+
+  return(year_month)
+}
+
+CASSIA_out$Growth$YM <- convert_yday_to_month(CASSIA_out$Growth$year, CASSIA_out$Growth$day)
+daily <- data.table::as.data.table(CASSIA_out$Growth)
+monthly_mean <- daily[, lapply(.SD, mean, na.rm = T), by = YM, .SDcols = -c("year", "day")]
+monthly_sum <- daily[, lapply(.SD, sum, na.rm = T), by = YM, .SDcols = -c("year", "day")]
+```
+
+## Testing the data
+
+```{r}
+
+# Generated random data here, just to plot the graphs
+your_data <- 0.01* abs(rnorm(nrow(monthly_sum))) # TODO: import your data here!
+
+# Plot your data and CASSIA data
+par(mfrow = c(2, 1), mar=c(5.1,6,4.1,2.1))
+plot(as.Date(paste0(monthly_mean$YM, "-01")), monthly_mean$roots_growth_potential,
+     main = "Wall Mean Growth Monthly Values", type = "l", cex = 0.5,
+     xlab = "Year", ylab = "Mean Monthly\n Roots Growth Potential (kg C)")
+points(as.Date(paste0(monthly_mean$YM, "-01")), your_data, col = "blue")
+legend("topright", c("Your Data", "CASSIA"), lty = c(0, 1), pch = c("o", ""), col = c("blue", "black"), bty = "n")
+plot(as.Date(paste0(monthly_sum$YM, "-01")), monthly_sum$roots_growth_potential,
+     main = "Wall Sum Growth Monthly Values", type = "l", cex = 0.5,
+     xlab = "Year", ylab = "Sum Monthly\n Roots Growth Potential (kg C)")
+
+# If good, then should be straight line
+# R^2, RMSE etc.
+par(mfrow = c(2, 1))
+plot(monthly_mean$roots_growth_potential, your_data,
+     main = "Modelled against Measured", xlab = "Modelled Data", ylab = "Wang YiHeng Data")
+plot(as.Date(paste0(monthly_mean$YM, "-01")), monthly_mean$roots_growth_potential - your_data,
+     main = "Residuals: Modelled - Measured", xlab = "Year", ylab = "Difference between\n modelled and measured")
+```
