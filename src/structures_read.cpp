@@ -1,6 +1,5 @@
 #include "CASSIA.h"
 
-
 CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
                                          Rcpp::DataFrame input_sperling) {
   CASSIA_parameters out;
@@ -254,6 +253,8 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
   out.eki_repo = temp123[0];
   std::vector<double> temp124 = input_parameters["stem_no"];
   out.stem_no = temp124[0];
+  std::vector<double> temp125 = input_parameters["diameter_start_day"];
+  out.diameter_start_day = temp125[0];
   return out;
 }
 
@@ -307,6 +308,135 @@ CASSIA_common make_common(Rcpp::DataFrame input) {
   out.Uggla = temp23[0];
   return(out);
 }
+
+
+CASSIA_common read_common_parameters(const std::string& filename) {
+  CASSIA_common common_params;
+
+  // Map to store parameter names and values
+  std::unordered_map<std::string, double> params;
+
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    return common_params;
+  }
+
+  std::string line;
+  std::getline(file, line); // Read header line
+
+  // Read each line of the file
+  while (std::getline(file, line)) {
+    std::stringstream ss(line);
+    std::string parameter;
+    std::string value_str;
+
+    // Read parameter and value from the line
+    std::getline(ss, parameter, ',');
+    std::getline(ss, value_str);
+
+    // Convert value to double and store in the map
+    double value = std::stod(value_str);
+    params[parameter] = value;
+  }
+  file.close();
+
+  // Assign values to the structure based on the map
+  common_params.a = params["a"];
+  common_params.b = params["b"];
+  common_params.TR0 = params["TR0"];
+  common_params.abs_zero = params["abs_zero"];
+  common_params.b_s = params["b_s"];
+  common_params.theetta_FC = params["theetta_FC"];
+  common_params.phi_e = params["phi_e"];
+  common_params.K_sat = params["K_sat"];
+  common_params.R_length = params["R_length"];
+  common_params.M_H20 = params["M_H20"];
+  common_params.r_cyl = params["r_cyl"];
+  common_params.r_root = params["r_root"];
+  common_params.ypsilon = params["ypsilon"];
+  common_params.Rg_N = params["Rg_N"];
+  common_params.Rg_S = params["Rg_S"];
+  common_params.Rg_R = params["Rg_R"];
+  common_params.gas_const = params["gas_const"];
+  common_params.M_C = params["M_C"];
+  common_params.M_H = params["M_H"];
+  common_params.M_O = params["M_O"];
+  common_params.osmotic_sugar_conc = params["osmotic_sugar_conc"];
+  common_params.m_N = params["m_N"];
+  common_params.Uggla = params["Uggla"];
+
+  return common_params;
+}
+
+CASSIA_ratios read_ratios(const std::string& filename, const std::string& site) {
+  CASSIA_ratios ratios;
+  std::ifstream file(filename);
+
+  if (!file.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    return ratios;
+  }
+
+  std::string line, header;
+  std::getline(file, header);  // Skip the header line
+
+  // Determine the column index for the chosen site
+  std::map<std::string, int> site_index = {
+    {"Hyde", 1},
+    {"Lettosuo", 2},
+    {"china", 3},
+    {"vario", 4}
+  };
+
+  int column_index = site_index[site];
+
+  while (std::getline(file, line)) {
+    std::istringstream linestream(line);
+    std::string parameter, value_str;
+    double value;
+
+    // Read the parameter name
+    std::getline(linestream, parameter, ',');
+
+    // Skip columns until we reach the desired site
+    for (int i = 0; i < column_index; ++i) {
+      std::getline(linestream, value_str, ',');
+    }
+
+    // Convert the value string to a double
+    if (!value_str.empty()) {
+      value = std::stod(value_str);
+    } else {
+      value = 0.0; // Handle missing values if necessary
+    }
+
+    // Assign values to the corresponding fields in the structure
+    if (parameter == "form_factor") {
+      ratios.form_factor = value;
+    } else if (parameter == "needle_fineroot_ratio") {
+      ratios.needle_fineroot_ratio = value;
+    } else if (parameter == "sapwood.share" || parameter == "sapwood_share") {
+      ratios.sapwood_share = value;
+    } else if (parameter == "height_growth_coefficient") {
+      ratios.height_growth_coefficient = value;
+    } else if (parameter == "diameter_growth_coefficient") {
+      ratios.diameter_growth_coefficient = value;
+    } else if (parameter == "height_growth_coefficient_max") {
+      ratios.height_growth_coefficient_max = value;
+    } else if (parameter == "height_growth_coefficient_min") {
+      ratios.height_growth_coefficient_min = value;
+    } else if (parameter == "diameter_growth_coefficient_max") {
+      ratios.diameter_growth_coefficient_max = value;
+    } else if (parameter == "diameter_growth_coefficient_min") {
+      ratios.diameter_growth_coefficient_min = value;
+    }
+  }
+
+  file.close();
+  return ratios;
+}
+
 
 CASSIA_ratios make_ratios(Rcpp::DataFrame input) {
   CASSIA_ratios out;
