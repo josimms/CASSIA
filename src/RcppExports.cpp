@@ -402,6 +402,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// printColumnNames
+void printColumnNames(Rcpp::DataFrame df);
+RcppExport SEXP _CASSIA_printColumnNames(SEXP dfSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type df(dfSEXP);
+    printColumnNames(df);
+    return R_NilValue;
+END_RCPP
+}
 // symphony
 Rcpp::List symphony(std::vector<double> params);
 RcppExport SEXP _CASSIA_symphony(SEXP paramsSEXP) {
@@ -459,6 +469,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_preles_test_cpp", (DL_FUNC) &_CASSIA_preles_test_cpp, 5},
     {"_CASSIA_repola_test_cpp", (DL_FUNC) &_CASSIA_repola_test_cpp, 2},
     {"_CASSIA_respiration_test_cpp", (DL_FUNC) &_CASSIA_respiration_test_cpp, 12},
+    {"_CASSIA_printColumnNames", (DL_FUNC) &_CASSIA_printColumnNames, 1},
     {"_CASSIA_symphony", (DL_FUNC) &_CASSIA_symphony, 1},
     {"_CASSIA_symphony_plus", (DL_FUNC) &_CASSIA_symphony_plus, 2},
     {"_CASSIA_symphony_plus_daily", (DL_FUNC) &_CASSIA_symphony_plus_daily, 5},
