@@ -166,9 +166,9 @@ growth_out growth(int day,
   g_sD_T = g;
   if (day == 0) {
     sD = parameters.sD0_Trad;
-  } else if (day <= 78) {
+  } else if (day <= parameters.diameter_start_day) {
     sD = growth_previous.sD;
-  } else if (day >= 79) {
+  } else if (day >= parameters.diameter_start_day+1) {
     if (sD_estim_T_count) {
       // TODO: not coded! need to add!
       sD = growth_previous.sD + g_sD_T;
