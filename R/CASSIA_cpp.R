@@ -21,9 +21,9 @@ CASSIA_cpp <- function(
     tau.t.roots = 3,
     tau.t.xylem.sh = 3,
     tau.t.xylem.st = 3,
-    ratios = ratios_p,
+    ratios = ratios_p, # "./data/ratio.csv",
     parameters = parameters_p,
-    common = common_p,
+    common = common_p,  # "./data/common.csv",
     sperling = sperling_p,
     repo = repo_p,
     pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
@@ -111,7 +111,7 @@ CASSIA_cpp <- function(
   end_year <- as.numeric(substring(weather$date[end(weather$date)], 1, 4))[1]
 
   out <- CASSIA_yearly(start_year, end_year, weather, GPP_ref,
-                       c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_p),
+                       c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_p), # site,
                        needle_mass_in,
                        Throughfall,
                        storage_reset, storage_grows,
