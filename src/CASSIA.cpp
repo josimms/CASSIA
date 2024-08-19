@@ -282,11 +282,11 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.ET = 0;
         photosynthesis.fS = 0;
         photosynthesis.SoilWater = 0;
-                                // call_preles(days_per_year, day,
-                                //           PAR[count], TAir[count], VPD[count], Precip[count],
-                                //           CO2[count], fAPAR, Nitrogen[count],
-                                //           parSite, parGPP, parET, parSnowRain,
-                                //           parWater, parN, etmodel);
+        // call_preles(days_per_year, day,
+        //           PAR[count], TAir[count], VPD[count], Precip[count],
+        //           CO2[count], fAPAR, Nitrogen[count],
+        //           parSite, parGPP, parET, parSnowRain,
+        //           parWater, parN, etmodel);
         // TODO: 5.6...
         photosynthesis.GPP = 5.6 * photosynthesis.GPP; // g C m-2 per day, so no conversion is needed!
         photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
@@ -320,10 +320,10 @@ Rcpp::List CASSIA_yearly(int start_year,
                                            root_as_Ding, xylogensis_option, environmental_effect_xylogenesis, sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
-                                           LH_estim, LN_estim, LD_estim,
-                                            // Last iteration value
-                                           growth_values_for_next_iteration, last_year_HH,
-                                           days_per_year);
+                                                                                                LH_estim, LN_estim, LD_estim,
+                                                                                                // Last iteration value
+                                                                                                growth_values_for_next_iteration, last_year_HH,
+                                                                                                days_per_year);
       // Saved for the next iteration
       growth_values_for_next_iteration = potential_growth.previous_values;
 
@@ -335,9 +335,9 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
                                          TAir[count], TSoil_A[count],
-                                         temp_rise, Rm_acclimation, mN_varies,
-                                         // parameters that I am not sure about
-                                         B0);
+                                                             temp_rise, Rm_acclimation, mN_varies,
+                                                             // parameters that I am not sure about
+                                                             B0);
 
       /*
        * Sugar
@@ -397,12 +397,12 @@ Rcpp::List CASSIA_yearly(int start_year,
       }
 
       /*
-      if (sugar_values_for_next_iteration.sugar.needles < 0 || sugar_values_for_next_iteration.sugar.phloem < 0 ||
-          sugar_values_for_next_iteration.sugar.xylem_sh < 0 || sugar_values_for_next_iteration.sugar.xylem_st < 0 ||
-          sugar_values_for_next_iteration.sugar.roots < 0) {
-        std::cout << "SUGAR IS NEGATIVE, STOP SIMULATION!\n";
-        return(Rcpp::DataFrame::create(0));
-      }
+       if (sugar_values_for_next_iteration.sugar.needles < 0 || sugar_values_for_next_iteration.sugar.phloem < 0 ||
+       sugar_values_for_next_iteration.sugar.xylem_sh < 0 || sugar_values_for_next_iteration.sugar.xylem_st < 0 ||
+       sugar_values_for_next_iteration.sugar.roots < 0) {
+       std::cout << "SUGAR IS NEGATIVE, STOP SIMULATION!\n";
+       return(Rcpp::DataFrame::create(0));
+       }
        */
 
       /*
@@ -582,5 +582,3 @@ Rcpp::List CASSIA_yearly(int start_year,
                             Rcpp::_["Preles"] = df3);
 
 }
-
-
