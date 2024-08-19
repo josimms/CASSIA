@@ -67,51 +67,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// CASSIA_sensitivity
-Rcpp::List CASSIA_sensitivity(Rcpp::DataFrame bounds, std::vector<std::string> names, int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> GPP_ref, std::vector<double> pPREL, Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, double needle_mass_in, double Throughfall, bool storage_rest, bool storage_grows, bool LH_estim, bool LN_estim, bool mN_varies, bool LD_estim, bool sD_estim_T_count, bool trees_grow, bool growth_decreases, bool needle_mass_grows, bool mycorrhiza, bool root_as_Ding, bool sperling_sugar_model, bool xylogensis_option, bool environmental_effect_xylogenesis, bool temp_rise, bool drought, bool Rm_acclimation, bool using_spp_photosynthesis, bool CASSIA_graphs, int etmodel, int LOGFLAG);
-RcppExport SEXP _CASSIA_CASSIA_sensitivity(SEXP boundsSEXP, SEXP namesSEXP, SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP GPP_refSEXP, SEXP pPRELSEXP, SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP needle_mass_inSEXP, SEXP ThroughfallSEXP, SEXP storage_restSEXP, SEXP storage_growsSEXP, SEXP LH_estimSEXP, SEXP LN_estimSEXP, SEXP mN_variesSEXP, SEXP LD_estimSEXP, SEXP sD_estim_T_countSEXP, SEXP trees_growSEXP, SEXP growth_decreasesSEXP, SEXP needle_mass_growsSEXP, SEXP mycorrhizaSEXP, SEXP root_as_DingSEXP, SEXP sperling_sugar_modelSEXP, SEXP xylogensis_optionSEXP, SEXP environmental_effect_xylogenesisSEXP, SEXP temp_riseSEXP, SEXP droughtSEXP, SEXP Rm_acclimationSEXP, SEXP using_spp_photosynthesisSEXP, SEXP CASSIA_graphsSEXP, SEXP etmodelSEXP, SEXP LOGFLAGSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type bounds(boundsSEXP);
-    Rcpp::traits::input_parameter< std::vector<std::string> >::type names(namesSEXP);
-    Rcpp::traits::input_parameter< int >::type start_year(start_yearSEXP);
-    Rcpp::traits::input_parameter< int >::type end_year(end_yearSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type weather(weatherSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type GPP_ref(GPP_refSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type pPREL(pPRELSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_parameters(pCASSIA_parametersSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_common(pCASSIA_commonSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_ratios(pCASSIA_ratiosSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_sperling(pCASSIA_sperlingSEXP);
-    Rcpp::traits::input_parameter< double >::type needle_mass_in(needle_mass_inSEXP);
-    Rcpp::traits::input_parameter< double >::type Throughfall(ThroughfallSEXP);
-    Rcpp::traits::input_parameter< bool >::type storage_rest(storage_restSEXP);
-    Rcpp::traits::input_parameter< bool >::type storage_grows(storage_growsSEXP);
-    Rcpp::traits::input_parameter< bool >::type LH_estim(LH_estimSEXP);
-    Rcpp::traits::input_parameter< bool >::type LN_estim(LN_estimSEXP);
-    Rcpp::traits::input_parameter< bool >::type mN_varies(mN_variesSEXP);
-    Rcpp::traits::input_parameter< bool >::type LD_estim(LD_estimSEXP);
-    Rcpp::traits::input_parameter< bool >::type sD_estim_T_count(sD_estim_T_countSEXP);
-    Rcpp::traits::input_parameter< bool >::type trees_grow(trees_growSEXP);
-    Rcpp::traits::input_parameter< bool >::type growth_decreases(growth_decreasesSEXP);
-    Rcpp::traits::input_parameter< bool >::type needle_mass_grows(needle_mass_growsSEXP);
-    Rcpp::traits::input_parameter< bool >::type mycorrhiza(mycorrhizaSEXP);
-    Rcpp::traits::input_parameter< bool >::type root_as_Ding(root_as_DingSEXP);
-    Rcpp::traits::input_parameter< bool >::type sperling_sugar_model(sperling_sugar_modelSEXP);
-    Rcpp::traits::input_parameter< bool >::type xylogensis_option(xylogensis_optionSEXP);
-    Rcpp::traits::input_parameter< bool >::type environmental_effect_xylogenesis(environmental_effect_xylogenesisSEXP);
-    Rcpp::traits::input_parameter< bool >::type temp_rise(temp_riseSEXP);
-    Rcpp::traits::input_parameter< bool >::type drought(droughtSEXP);
-    Rcpp::traits::input_parameter< bool >::type Rm_acclimation(Rm_acclimationSEXP);
-    Rcpp::traits::input_parameter< bool >::type using_spp_photosynthesis(using_spp_photosynthesisSEXP);
-    Rcpp::traits::input_parameter< bool >::type CASSIA_graphs(CASSIA_graphsSEXP);
-    Rcpp::traits::input_parameter< int >::type etmodel(etmodelSEXP);
-    Rcpp::traits::input_parameter< int >::type LOGFLAG(LOGFLAGSEXP);
-    rcpp_result_gen = Rcpp::wrap(CASSIA_sensitivity(bounds, names, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, storage_rest, storage_grows, LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count, trees_grow, growth_decreases, needle_mass_grows, mycorrhiza, root_as_Ding, sperling_sugar_model, xylogensis_option, environmental_effect_xylogenesis, temp_rise, drought, Rm_acclimation, using_spp_photosynthesis, CASSIA_graphs, etmodel, LOGFLAG));
-    return rcpp_result_gen;
-END_RCPP
-}
 // CASSIA_soil
 Rcpp::List CASSIA_soil(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> GPP_ref, std::vector<double> pPREL, Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, std::vector<double> parameters_R, double needle_mass_in, double Throughfall, bool storage_rest, bool storage_grows, bool LH_estim, bool LN_estim, bool mN_varies, bool LD_estim, bool sD_estim_T_count, bool trees_grow, bool growth_decreases, bool needle_mass_grows, bool mycorrhiza, bool root_as_Ding, bool sperling_sugar_model, bool xylogensis_option, bool environmental_effect_xylogenesis, bool temp_rise, bool drought, bool Rm_acclimation, bool using_spp_photosynthesis, int trenching_year, bool CASSIA_graphs, int etmodel, int LOGFLAG);
 RcppExport SEXP _CASSIA_CASSIA_soil(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP GPP_refSEXP, SEXP pPRELSEXP, SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP parameters_RSEXP, SEXP needle_mass_inSEXP, SEXP ThroughfallSEXP, SEXP storage_restSEXP, SEXP storage_growsSEXP, SEXP LH_estimSEXP, SEXP LN_estimSEXP, SEXP mN_variesSEXP, SEXP LD_estimSEXP, SEXP sD_estim_T_countSEXP, SEXP trees_growSEXP, SEXP growth_decreasesSEXP, SEXP needle_mass_growsSEXP, SEXP mycorrhizaSEXP, SEXP root_as_DingSEXP, SEXP sperling_sugar_modelSEXP, SEXP xylogensis_optionSEXP, SEXP environmental_effect_xylogenesisSEXP, SEXP temp_riseSEXP, SEXP droughtSEXP, SEXP Rm_acclimationSEXP, SEXP using_spp_photosynthesisSEXP, SEXP trenching_yearSEXP, SEXP CASSIA_graphsSEXP, SEXP etmodelSEXP, SEXP LOGFLAGSEXP) {
@@ -489,7 +444,6 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_CASSIA_yearly", (DL_FUNC) &_CASSIA_CASSIA_yearly, 33},
     {"_CASSIA_replace_value_DataFrame", (DL_FUNC) &_CASSIA_replace_value_DataFrame, 3},
-    {"_CASSIA_CASSIA_sensitivity", (DL_FUNC) &_CASSIA_CASSIA_sensitivity, 35},
     {"_CASSIA_CASSIA_soil", (DL_FUNC) &_CASSIA_CASSIA_soil, 35},
     {"_CASSIA_xylogenesis_wrapper", (DL_FUNC) &_CASSIA_xylogenesis_wrapper, 19},
     {"_CASSIA_plant_decision", (DL_FUNC) &_CASSIA_plant_decision, 5},
