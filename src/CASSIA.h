@@ -8,6 +8,12 @@
 #include <cmath>
 #include <numeric>
 #include "final_parameters.h"
+/*
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <map>
+*/
 
 #ifndef CASSIA_H
 #define CASSIA_H
@@ -407,6 +413,20 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters, Rcpp:
 CASSIA_common make_common(Rcpp::DataFrame input);
 CASSIA_ratios make_ratios(Rcpp::DataFrame input);
 MYCOFON_function_out MYCOFON_structure_conversion(Rcpp::List input);
+
+/*
+// Read from csv
+CASSIA_ratios read_ratios(const std::string& filename, const std::string& site);
+int CASSIA_ratios_test(std::string fratios, std::string site);
+CASSIA_common read_common_parameters(const std::string& filename);
+int CASSIA_common_test(std::string fcommon);
+ */
+
+/*CASSIA_ratios read_ratios(const std::string& filename, const std::string& site);
+ int CASSIA_ratios_test(std::string fratios, std::string site);
+ CASSIA_common read_common_parameters(const std::string& filename);
+ int CASSIA_common_test(std::string fcommon);
+ */
 
 p1 make_p1(std::vector<double> input);
 p2 make_p2(std::vector<double> input);
