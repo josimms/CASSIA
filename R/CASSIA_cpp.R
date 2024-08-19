@@ -111,7 +111,7 @@ CASSIA_cpp <- function(
   end_year <- as.numeric(substring(weather$date[end(weather$date)], 1, 4))[1]
 
   out <- CASSIA_yearly(start_year, end_year, weather, GPP_ref,
-                       c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_p), # site,
+                       c(pPREL, N_parameters), t(parameters), common, t(ratios), t(sperling), # site,
                        needle_mass_in,
                        Throughfall,
                        storage_reset, storage_grows,

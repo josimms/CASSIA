@@ -1,7 +1,25 @@
 #include "CASSIA.h"
 
+// [[Rcpp::export]]
+void printColumnNames(Rcpp::DataFrame df) {
+  if (df.size() == 0) {
+    Rcpp::Rcout << "The DataFrame is empty." << std::endl;
+    return;
+  }
+
+  Rcpp::CharacterVector col_names = df.names();
+
+  Rcpp::Rcout << "Column names:" << std::endl;
+  for (int i = 0; i < col_names.length(); ++i) {
+    Rcpp::Rcout << col_names[i] << std::endl;
+  }
+}
+
 CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
                                          Rcpp::DataFrame input_sperling) {
+
+  printColumnNames(input_parameters);
+
   CASSIA_parameters out;
   std::vector<double> temp = input_parameters["Q10.N"];
   out.Q10_N = temp[0];
@@ -440,8 +458,6 @@ CASSIA_ratios read_ratios(const std::string& filename, const std::string& site) 
 
 CASSIA_ratios make_ratios(Rcpp::DataFrame input) {
   CASSIA_ratios out;
-  std::vector<double> temp = input["form_factor"];
-  out.form_factor = temp[0];
   std::vector<double> temp1 = input["needle_fineroot_ratio"];
   out.needle_fineroot_ratio = temp1[0];
   std::vector<double> temp2 = input["sapwood.share"];
