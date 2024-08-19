@@ -69,6 +69,10 @@ respiration_test_cpp <- function(pCASSIA_parameters, pCASSIA_common, pCASSIA_rat
     .Call(`_CASSIA_respiration_test_cpp`, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0)
 }
 
+printColumnNames <- function(df) {
+    invisible(.Call(`_CASSIA_printColumnNames`, df))
+}
+
 symphony <- function(params) {
     .Call(`_CASSIA_symphony`, params)
 }
