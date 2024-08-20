@@ -14,6 +14,57 @@ library(viridis)
 library(gridExtra)
 ```
 
+## Useful Functions for later!
+
+```{r}
+# Function that changes the input values inputted into the code!
+run_sensitivity <- function(param_name, range) {
+  map(range, function(i) {
+    parameters_p_G_new <- parameters_p_G
+    if (param_name %in% rownames(parameters_p_G_new)) {
+      parameters_p_G_new$HF_China[rownames(parameters_p_G_new) == param_name] <- i
+      result <- CASSIA_cpp(weather, site = "HF_China",
+                           ratios = ratios_p_G,
+                           parameters = parameters_p_G_new,
+                           common = common_p_G,
+                           repo = repo_p_G,
+                           photosynthesis_as_input = TRUE,
+                           LD_estim = FALSE)
+      list(param_value = i, result = result)
+    } else {
+    print("Parameter not in the row names, is it spelt correctly? Is there an underscore rather than a dot?")
+    }
+  })
+}
+
+# Function that extracts the rows that we want to plot
+prepare_plot_data <- function(sensitivity_results, param_name, range) {
+  result_list <- list()
+  
+  for (i in seq_along(sensitivity_results)) {
+    result <- sensitivity_results[[i]]$result
+    param_value <- range[i]
+    
+    if (is.null(result$Growth) || is.null(result$Growth$ring_width)) {
+      print("Warning: Growth or ring_width is NULL")
+      next
+    }
+    
+    data <- tibble(
+      param_name = param_name,
+      param_value = param_value,
+      days = seq_along(result$Growth$ring_width),
+      ring_width = result$Growth$ring_width
+    )
+    
+    result_list[[i]] <- data
+  }
+  
+  final_result <- bind_rows(result_list)
+  return(final_result)
+}
+```
+
 ## Weather and parameters imported
 
 ```{r}
@@ -48,112 +99,120 @@ CASSIA_out_original_values <- CASSIA_cpp(weather, site = "HF_China",
                                          parameters = parameters_p_G,
                                          common = common_p_G,
                                          repo = repo_p_G,
-                                         photosynthesis_as_input = TRUE)
+                                         photosynthesis_as_input = TRUE,
+                                         LD_estim = FALSE)
 ```
 
 ## Sensitivity analysis
 
 So although you have changed the weather parameters the results will not be ready as the parameters have not been changed.
-If you look at the 2015 paper (TODO: reference) then you can see the temperature controls for the seasonal behaviour
+If you look at the 2015 paper then you can see the temperature controls for the seasonal behaviour
 First let's get the ring width to work, then it's possible to look at the other areas of growth.
 
-Ring width is controlled by a few parameters (that can be looked up in the parameter tables)
-sDc (in parameters)
-Uggla (in parameters)
-cell_d_ew (in parameters)
-cell_d_lw (in parameters)
+First we look at the diameter growth.
+g is controlled by the air temperature and common parameters a and b.
+sD0.Trad and sDc control the seasonality of the fD multiplier.
+And finally the LD multiplier is controlled by the LD0 and diameter_growth_coefficient parameters.
+LD_estim being true alters the summer response of the LD multiplier. But this is currently set up for boreal weather conditions. (TODO: make this dependent on temperature). I would advise you to have the LD_estim parameter as FALSE for now, but we can look into this later!
 
-But ring width also depends on the diameter growth, itself depends on:
-tau_Ee, tau_We, tau_El, tau_Wl,
-sD0_Trad
+SEASONAL PARAMETER CHECK
+
+(functions found after library!)
 
 ```{r}
-run_sensitivity <- function(param_name, range) {
-  map(range, function(i) {
-    parameters_p_G_new <- parameters_p_G
-    parameters_p_G_new[parameters_p_G_new$X == param_name, 2] <- i
-    CASSIA_cpp(weather, site = "HF_China",
-               ratios = ratios_p_G,
-               parameters = parameters_p_G_new,
-               common = common_p_G,
-               repo = repo_p_G,
-               photosynthesis_as_input = TRUE)
-  })
-}
+#ratio.diameter_growth_coefficient
+#parameters.LD0
 
 # Run sensitivity analyses
-sensitivity_sDc <- run_sensitivity("sDc", seq(4, 6, length.out = 20))
-sensitivity_uggla <- run_sensitivity("Uggla", seq(0.01, 10, length.out = 20))
-sensitivity_cell_d_ew <- run_sensitivity("cell.d.ew", seq(0.01, 10, length.out = 20))
-sensitivity_dgs <- run_sensitivity("diameter_start_day", seq(50, 100, length.out = 20))
-sensitivity_tau_Ee <- run_sensitivity("tau_Ee", seq(2, 5, length.out = 20))
-sensitivity_tau_We <- run_sensitivity("tau_We", seq(2, 5, length.out = 20))
-sensitivity_tau_El <- run_sensitivity("tau_El", seq(2, 5, length.out = 20))
-sensitivity_tau_Wl <- run_sensitivity("tau_Wl", seq(2, 5, length.out = 20))
+sensitivity_sDc <- run_sensitivity("sDc", seq(0, 10, length.out = 20))
+sensitivity_sD0_Trad <- run_sensitivity("sD0.Trad", seq(-7, 0, length.out = 20))
+sensitivity_dgs <- run_sensitivity("diameter_start_day", seq(50, 200, length.out = 20))
+sensitivity_uggla <- run_sensitivity("Uggla", seq(1, 10, length.out = 20))
 
-# Prepare data for plotting
-prepare_plot_data <- function(sensitivity_list, param_name, param_values) {
-  map_dfr(seq_along(sensitivity_list), function(i) {
-    data.frame(
-      days = seq_along(sensitivity_list[[i]]$Growth$ring_width),
-      ring_width = sensitivity_list[[i]]$Growth$ring_width,
-      param_value = param_values[i],
-      param_name = param_name
-    )
-  })
-}
-
+# Prepare plot data
 plot_data <- bind_rows(
   prepare_plot_data(sensitivity_sDc, "sDc", seq(4, 6, length.out = 20)),
-  prepare_plot_data(sensitivity_uggla, "Uggla", seq(0.01, 10, length.out = 20)),
-  prepare_plot_data(sensitivity_cell_d_ew, "cell_d_ew", seq(0.01, 10, length.out = 20)),
-  prepare_plot_data(sensitivity_dgs, "diameter_growth_start", seq(50, 100, length.out = 20)),
-  prepare_plot_data(sensitivity_tau_Ee, "tau_Ee", seq(3, 5, length.out = 20)),
-  prepare_plot_data(sensitivity_tau_We, "tau_We", seq(3, 5, length.out = 20)),
-  prepare_plot_data(sensitivity_tau_El, "tau_El", seq(3, 5, length.out = 20)),
-  prepare_plot_data(sensitivity_tau_Wl, "tau_Wl", seq(3, 5, length.out = 20))
+  prepare_plot_data(sensitivity_sD0_Trad, "sD0.Trad", seq(-7, 0, length.out = 20)),
+  prepare_plot_data(sensitivity_dgs, "diameter_start_day", seq(50, 100, length.out = 20)),
+  prepare_plot_data(sensitivity_uggla, "Uggla", seq(1, 10, length.out = 20))
 )
 
-# Create a list of plots, one for each parameter
-plot_list <- plot_data %>%
-  split(.$param_name) %>%
-  map(function(df) {
-    param <- unique(df$param_name)
-    ggplot(df, aes(x = days, y = ring_width, color = param_value)) +
-      geom_point(alpha = 0.5, size = 0.5) +
-      scale_color_viridis_c(option = switch(param,
-                                            "sDc" = "A",
-                                            "Uggla" = "B",
-                                            "cell_d_ew" = "C",
-                                            "diameter_growth_start" = "D",
-                                            "tau_Ee"= "E",
-                                            "tau_We" = "F",
-                                            "tau_El" = "G",
-                                            "tau_Wl" = "H"),
-                            name = param) +
-      labs(title = paste0("Sensitivity Analysis: ", param),
-           x = "Days Since Simulation Start",
-           y = "Ring Width") +
-      theme_minimal() +
-      theme(legend.position = "bottom",
-            plot.title = element_text(size = 10),
-            axis.title = element_text(size = 8),
-            axis.text = element_text(size = 6),
-            legend.title = element_text(size = 8),
-            legend.text = element_text(size = 6))
-  })
+par(mfrow = c(2, 2))
+for (param in unique(plot_data$param_name)) {
+  to_plot = plot_data[plot_data$param_name == param,]
+  cols = rainbow(20)
+  plot(NULL,
+       xlim = c(min(to_plot$days),
+                max(to_plot$days)),
+       ylim = c(min(to_plot$ring_width), 
+                max(to_plot$ring_width)), main = param,
+       xlab = "Days",
+       ylab = "Ring Width")
+  count = 1
+  for (value in unique(to_plot$param_value)) {
+    lines = to_plot[to_plot$param_value == value,]
+    points(lines$days, lines$ring_width, col = cols[count], pch = "-")
+    count = count + 1
+  }
+}
 
-# First 2x2 grid
-final_plot1 <- grid.arrange(grobs = plot_list[1:4], ncol = 2, nrow = 2)
+```
 
-# Second 2x2 grid
-final_plot2 <- grid.arrange(grobs = plot_list[5:8], ncol = 2, nrow = 2)
+RING WIDTH AND DIAMETER PARAMETERS
 
+The diameter growth, itself depends on:
+tau_Ee, tau_We, tau_El, tau_Wl
+And ring width also depends on
+Uggla, cell_d_ew
+
+```{r}
+## Look at the late and early wood parameters
+sensitivity_tau_Ee <- run_sensitivity("tau.Ee", seq(1, 10, length.out = 20))
+sensitivity_tau_We <- run_sensitivity("tau.We", seq(1, 10, length.out = 20))
+sensitivity_tau_El <- run_sensitivity("tau.El", seq(1, 10, length.out = 20))
+sensitivity_tau_Wl <- run_sensitivity("tau.Wl", seq(1, 10, length.out = 20))
+sensitivity_cell_d_ew <- run_sensitivity("cell.d.ew", seq(0.00001, 0.001, length.out = 20))
+sensitivity_cell_d_ew <- run_sensitivity("cell.d.lw", seq(0.00001, 0.001, length.out = 20))
+sensitivity_cell_l_ew <- run_sensitivity("cell.l.ew", seq(0.00001, 0.001, length.out = 20))
+sensitivity_cell_l_ew <- run_sensitivity("cell.l.lw", seq(0.00001, 0.001, length.out = 20))
+
+plot_data <- bind_rows(
+  prepare_plot_data(sensitivity_tau_Ee, "tau_Ee", seq(1, 10, length.out = 20)),
+  prepare_plot_data(sensitivity_tau_We, "tau_We", seq(1, 10, length.out = 20)),
+  prepare_plot_data(sensitivity_tau_El, "tau_El", seq(1, 10, length.out = 20)),
+  prepare_plot_data(sensitivity_tau_Wl, "tau_Wl", seq(1, 10, length.out = 20)),
+  prepare_plot_data(sensitivity_cell_d_ew, "cell_d_ew", seq(0.00001, 0.001, length.out = 20)),
+  prepare_plot_data(sensitivity_cell_d_ew, "cell_d_lw", seq(0.00001, 0.001, length.out = 20)),
+  prepare_plot_data(sensitivity_cell_d_ew, "cell_l_ew", seq(0.00001, 0.001, length.out = 20)),
+  prepare_plot_data(sensitivity_cell_d_ew, "cell_l_lw", seq(0.00001, 0.001, length.out = 20))
+)
+
+par(mfrow = c(2, 2))
+for (param in unique(plot_data$param_name)) {
+  to_plot = plot_data[plot_data$param_name == param,]
+  cols = rainbow(20)
+  plot(NULL,
+       xlim = c(min(to_plot$days),
+                max(to_plot$days)),
+       ylim = c(min(to_plot$ring_width), 
+                max(to_plot$ring_width)), main = param,
+       xlab = "Days",
+       ylab = "Ring Width")
+  count = 1
+  for (value in unique(to_plot$param_value)) {
+    lines = to_plot[to_plot$param_value == value,]
+    points(lines$days, lines$ring_width, col = cols[count], pch = "-")
+    count = count + 1
+  }
+}
 ```
 
 ## Final parameters for the HF site
 
 ```{r}
+
+## Final parameters when you have them!
+parameters_p_G_final <- parameters_p_G
 
 CASSIA_out <- CASSIA_cpp(weather, site = "HF_China",
                          ratios = ratios_p_G,
