@@ -10,6 +10,8 @@ library(ggplot2)
 library(purrr)
 library(dplyr)
 library(tidyr)
+library(viridis)
+library(gridExtra)
 ```
 
 ## Weather and parameters imported
@@ -84,6 +86,10 @@ sensitivity_sDc <- run_sensitivity("sDc", seq(4, 6, length.out = 20))
 sensitivity_uggla <- run_sensitivity("Uggla", seq(0.01, 10, length.out = 20))
 sensitivity_cell_d_ew <- run_sensitivity("cell.d.ew", seq(0.01, 10, length.out = 20))
 sensitivity_dgs <- run_sensitivity("diameter_start_day", seq(50, 100, length.out = 20))
+sensitivity_tau_Ee <- run_sensitivity("tau_Ee", seq(2, 5, length.out = 20))
+sensitivity_tau_We <- run_sensitivity("tau_We", seq(2, 5, length.out = 20))
+sensitivity_tau_El <- run_sensitivity("tau_El", seq(2, 5, length.out = 20))
+sensitivity_tau_Wl <- run_sensitivity("tau_Wl", seq(2, 5, length.out = 20))
 
 # Prepare data for plotting
 prepare_plot_data <- function(sensitivity_list, param_name, param_values) {
@@ -101,19 +107,48 @@ plot_data <- bind_rows(
   prepare_plot_data(sensitivity_sDc, "sDc", seq(4, 6, length.out = 20)),
   prepare_plot_data(sensitivity_uggla, "Uggla", seq(0.01, 10, length.out = 20)),
   prepare_plot_data(sensitivity_cell_d_ew, "cell_d_ew", seq(0.01, 10, length.out = 20)),
-  prepare_plot_data(sensitivity_dgs, "diameter_growth_start", seq(50, 100, length.out = 20))
+  prepare_plot_data(sensitivity_dgs, "diameter_growth_start", seq(50, 100, length.out = 20)),
+  prepare_plot_data(sensitivity_tau_Ee, "tau_Ee", seq(3, 5, length.out = 20)),
+  prepare_plot_data(sensitivity_tau_We, "tau_We", seq(3, 5, length.out = 20)),
+  prepare_plot_data(sensitivity_tau_El, "tau_El", seq(3, 5, length.out = 20)),
+  prepare_plot_data(sensitivity_tau_Wl, "tau_Wl", seq(3, 5, length.out = 20))
 )
 
-# Create plot
-ggplot(plot_data, aes(x = days, y = ring_width, color = param_value)) +
-  geom_point(alpha = 0.5, size = 0.5) +
-  scale_color_viridis_c() +
-  facet_wrap(~param_name, scales = "free_y", ncol = 2) +
-  labs(title = "Sensitivity Analysis",
-       x = "Days Since Simulation Start",
-       y = "Ring Width (through the year)",
-       color = "Parameter value") +
-  theme_minimal()
+# Create a list of plots, one for each parameter
+plot_list <- plot_data %>%
+  split(.$param_name) %>%
+  map(function(df) {
+    param <- unique(df$param_name)
+    ggplot(df, aes(x = days, y = ring_width, color = param_value)) +
+      geom_point(alpha = 0.5, size = 0.5) +
+      scale_color_viridis_c(option = switch(param,
+                                            "sDc" = "A",
+                                            "Uggla" = "B",
+                                            "cell_d_ew" = "C",
+                                            "diameter_growth_start" = "D",
+                                            "tau_Ee"= "E",
+                                            "tau_We" = "F",
+                                            "tau_El" = "G",
+                                            "tau_Wl" = "H"),
+                            name = param) +
+      labs(title = paste0("Sensitivity Analysis: ", param),
+           x = "Days Since Simulation Start",
+           y = "Ring Width") +
+      theme_minimal() +
+      theme(legend.position = "bottom",
+            plot.title = element_text(size = 10),
+            axis.title = element_text(size = 8),
+            axis.text = element_text(size = 6),
+            legend.title = element_text(size = 8),
+            legend.text = element_text(size = 6))
+  })
+
+# First 2x2 grid
+final_plot1 <- grid.arrange(grobs = plot_list[1:4], ncol = 2, nrow = 2)
+
+# Second 2x2 grid
+final_plot2 <- grid.arrange(grobs = plot_list[5:8], ncol = 2, nrow = 2)
+
 ```
 
 ## Final parameters for the HF site
