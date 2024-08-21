@@ -206,6 +206,54 @@ for (param in unique(plot_data$param_name)) {
   }
 }
 ```
+## Fitting
+
+Now you have an idea of what parameter does what, we can start by fitting the sDc as this is probably the most site dependent. Do this by considering one year and then testing the fit with the next years.
+
+Advice from Pauliina "For a publication I think it would be good to fit the most important parameter(s) with some kind of a “proper” fitting method (using maybe one year and checking how it behaves for other years). sDc is the parameter that I would assume is most site dependent. Thus, I´d fit sDc for e.g. the first year. If the onset looks somewhat okay it could be as it is but if not then you could consider fitting that (either sD0 or onset day or both) too.
+
+I don´t remember exactly the earlier emails but was the purpose to model ring width and is the measured data that (and not microcores or something like that)? If yes, then tauE and tauW are not that important and I would leave them as they are. Anyway, there´s not really a way for fitting those unless there exists microcore data. Or if there is existing literature for the study area then that can of course be used. Perhaps YiHeng could check this and also if she finds literature about cell dimensions then it would be easy to use those and cite in a publication."
+
+```{r}
+## Final parameters when you have them!
+parameters_p_G_fitting <- parameters_p_G
+parameters_p_G_fitting$HF_China[rownames(parameters_p_G_fitting) == "sDc"] <- 10
+
+CASSIA_out_fitting_values <- CASSIA_cpp(weather[substring(weather$date, 1, 4) == "2022",], site = "HF_China",
+                                         ratios = ratios_p_G,
+                                         parameters = parameters_p_G_fitting,
+                                         common = common_p_G,
+                                         repo = repo_p_G,
+                                         photosynthesis_as_input = TRUE,
+                                         LD_estim = FALSE)
+
+# TODO: Alter the parameters until this fits well!
+
+par(mfrow = c(1, 2))
+your_data <- cumsum(0.01* abs(rnorm(365))) # TODO: import your data here!
+plot(CASSIA_out_fitting_values$Growth$ring_width,
+     xlab = "Days in 2022", ylab = "Ring Width", main = "Fitting Data")
+points(your_data, pch = "+", col = "blue")
+legend("topleft", c("CASSIA", "Data"), pch = c("o", "+"), col = c("black", "blue"), bty = "n")
+
+# See how the model fits compared to the next years
+
+CASSIA_out_fitting_values_all <- CASSIA_cpp(weather, site = "HF_China",
+                                         ratios = ratios_p_G,
+                                         parameters = parameters_p_G_fitting,
+                                         common = common_p_G,
+                                         repo = repo_p_G,
+                                         photosynthesis_as_input = TRUE,
+                                         LD_estim = FALSE)
+
+all_your_data <- c(your_data, your_data, your_data)
+plot(CASSIA_out_fitting_values_all$Growth$ring_width,
+     xlab = "Days since 2020.01.01", ylab = "Ring Width", main = "All Years")
+points(all_your_data, pch = "+", col = "blue")
+legend("topleft", c("CASSIA", "Data"), pch = c("o", "+"), col = c("black", "blue"), bty = "n")
+
+```
+
 
 ## Final parameters for the HF site
 
@@ -216,7 +264,7 @@ parameters_p_G_final <- parameters_p_G
 
 CASSIA_out <- CASSIA_cpp(weather, site = "HF_China",
                          ratios = ratios_p_G,
-                         parameters = parameters_p_G,
+                         parameters = parameters_p_G_final,
                          common = common_p_G,
                          repo = repo_p_G,
                          photosynthesis_as_input = TRUE)
