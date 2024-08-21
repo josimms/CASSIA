@@ -68,6 +68,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   p5 parWater = make_p5(pPREL);
   p7 parN = make_p7(pPREL);
 
+
   CASSIA_common common = make_common(pCASSIA_common);
   CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
