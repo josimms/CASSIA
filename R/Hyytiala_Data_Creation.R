@@ -192,6 +192,8 @@ Hyytiala_Data_Creation <- function(raw.directory,
     all.daily.sum$PAR <- 0.000001 * 24 * second_multiplier(Daily_Missing$Percentage) * all.daily.sum$PAR
     all.daily.sum$Glob <- 0.000001 * 24 * second_multiplier(Daily_Missing_Glob$Percentage) * all.daily.sum$Glob
     all.daily.sum$Glob67 <- 0.000001 * 24 * second_multiplier(Daily_Missing_Glob$Percentage67) * all.daily.sum$Glob67
+    all.daily.sum$Glob_umol <- all.daily.sum$Glob
+    all.daily.sum$Glob67_umol <- all.daily.sum$Glob67
     all.daily.sum$PAR[Daily_Missing$Missing >= 0.75] <- NA
     all.daily.sum$Glob[Daily_Missing_Glob$Missing >= 0.75] <- NA
     all.daily.sum$Glob67[Daily_Missing_Glob$Missing67 >= 0.75] <- NA
