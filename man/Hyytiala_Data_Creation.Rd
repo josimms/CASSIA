@@ -5,7 +5,7 @@
 
 \arguments{
   \item{raw.directory}{
-    This need s directory to download the files from the internet and to create a file for the weather data, after the data has been created in the format needed for CASSIA.
+    This need a directory to download the files from the internet and to create a file for the weather data, after the data has been created in the format needed for CASSIA.
   }
   \item{year_start}{
     The year that the data download starts from

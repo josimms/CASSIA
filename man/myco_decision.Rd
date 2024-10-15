@@ -71,7 +71,7 @@ myco_decision(C_fungal,
 }
 
 \author{
-  Joanna Simms, joanna.x.simms@ad.helsinki.fi
+  Joanna Simms, joanna.x.simms@helsinki.fi
 }
 \references{
   Meyer, Astrid, et al. "Simulating mycorrhiza contribution to forest C-and N cycling-the MYCOFON model." Plant and soil 327 2010: 493-517.

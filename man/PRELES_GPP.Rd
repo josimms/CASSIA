@@ -41,10 +41,10 @@
 
 \author{
   Documentation: Joanna Simms
-  Content: Pauliina Schiestl-Aalto
+  Code: Adapted from https://github.com/ForModLabUHel/Rprebasso and Pauliina Schitzel-Aalto.
 }
 
 \note{
-  Created: 27.07.2022
-  Last updated: 27.07.2022
+  Created: 15.10.2024
+  Last updated: 15.10.2024
 }

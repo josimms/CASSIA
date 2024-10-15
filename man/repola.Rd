@@ -4,6 +4,8 @@
 
 \description{
   A function to impliment the repola growth equations.
+  
+  Refers to the cpp function rather than the R function.
 }
 
 \arguments{
