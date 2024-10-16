@@ -1,8 +1,6 @@
 sort_CMIP <- function(TEMP_DIR = "~/Documents/Austria/cmip6_data/temp",
                       ANSWER_DIR = "~/Documents/Austria/Plant-FATE/tests/data",
                       path_test = "/home/josimms/Documents/Austria/Plant-FATE/tests/data") {
-  library(ncdf4)
-  library(data.table)
 
   # Constants
   TARGET_LON <- 24.29477
