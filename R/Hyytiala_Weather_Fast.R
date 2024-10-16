@@ -150,8 +150,6 @@ daily_list <- function(environmental.variable.list) {
 ###
 
 raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/") {
-  library(data.table)
-  library(dplyr)
 
   ## Big files only run if really really nesicary!
   downloading_data()

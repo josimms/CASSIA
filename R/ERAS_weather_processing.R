@@ -52,12 +52,6 @@ plot_data <- function(data, title_prefix, monthly) {
 
 ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data",
                             path_test = "/home/josimms/Documents/Austria/Plant-FATE/tests/data") {
-  library(ncdf4)
-  library(bigleaf)
-  library(data.table)
-  library(dplyr)
-  library(lubridate)
-
   variables <- c('t2m', 'ssrd', 'swvl1', 'swvl2')
 
   # Pre-allocate lists
