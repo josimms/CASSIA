@@ -1,0 +1,77 @@
+# Sensitivity Analysis
+
+```{r, echo = FALSE}
+library(CASSIA)
+library(data.table)
+library(ggplot2)
+library(purrr)
+library(dplyr)
+library(tidyr)
+library(viridis)
+library(gridExtra)
+```
+
+## Sensitivity analysis function
+
+When fitting a model for a new site you need to do some sensitivity analysis. This is done parameter per parameter with the function below.
+
+```{r}
+run_sensitivity <- function(param_name, range) {
+  map(range, function(i) {
+    parameters_p_G_new <- parameters_p
+    if (param_name %in% rownames(parameters_p_G_new)) {
+      parameters_p_G_new$HF_China[rownames(parameters_p_G_new) == param_name] <- i
+      result <- CASSIA_cpp(data_format, site = "Hyde",
+                           ratios = ratios_p_G,
+                           parameters = parameters_p_G_new,
+                           common = common_p_G,
+                           repo = repo_p_G,
+                           photosynthesis_as_input = TRUE,
+                           LD_estim = FALSE)
+      list(param_value = i, result = result)
+    } else {
+    print("Parameter not in the row names, is it spelt correctly? Is there an underscore rather than a dot?")
+    }
+  })
+}
+
+sensitivity_sDc <- run_sensitivity("sDc", seq(0, 10, length.out = 20))
+sensitivity_sD0_Trad <- run_sensitivity("sD0.Trad", seq(-7, 0, length.out = 20))
+sensitivity_dgs <- run_sensitivity("diameter_start_day", seq(50, 200, length.out = 20))
+sensitivity_uggla <- run_sensitivity("Uggla", seq(1, 10, length.out = 20))
+```
+
+## Plotting the results
+
+To understand the results it is usually easier to plot them. An example of plotting is below!
+
+``` {r}
+# Prepare plot data
+plot_data <- bind_rows(
+  prepare_plot_data(sensitivity_sDc, "sDc", seq(4, 6, length.out = 20)),
+  prepare_plot_data(sensitivity_sD0_Trad, "sD0.Trad", seq(-7, 0, length.out = 20)),
+  prepare_plot_data(sensitivity_dgs, "diameter_start_day", seq(50, 100, length.out = 20)),
+  prepare_plot_data(sensitivity_uggla, "Uggla", seq(1, 10, length.out = 20))
+)
+
+par(mfrow = c(2, 2))
+for (param in unique(plot_data$param_name)) {
+  to_plot = plot_data[plot_data$param_name == param,]
+  cols = rainbow(20)
+  plot(NULL,
+       xlim = c(min(to_plot$days),
+                max(to_plot$days)),
+       ylim = c(min(to_plot$ring_width), 
+                max(to_plot$ring_width)), main = param,
+       xlab = "Days",
+       ylab = "Ring Width")
+  count = 1
+  for (value in unique(to_plot$param_value)) {
+    lines = to_plot[to_plot$param_value == value,]
+    points(lines$days, lines$ring_width, col = cols[count], pch = "-")
+    count = count + 1
+  }
+}
+```
+
+
