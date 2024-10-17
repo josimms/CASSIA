@@ -2,6 +2,8 @@ test_cds_api <- function() {
 
   ###
   # TODO: This doesn't work yet, in R, but does work in terminal, should fix later!
+  #
+  # NOTE API system changed, check with the phyton code, first!
   ###
 
   python_code <- '
@@ -95,3 +97,4 @@ def download_data(start_year, end_year):
     print("CDS API connection failed. Please check your API key and internet connection.")
   }
 }
+
