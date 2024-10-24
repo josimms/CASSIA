@@ -51,6 +51,8 @@ process_weather_data <- function(using_spp_photosynthesis) {
 
   # Read and combine weather data from 2015 to 2018
   weather_original <- read_and_combine_weather_data(2015, 2018)
+  weather_original$X <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+  names(weather_original)[1] <- "date"
 
   # Add extra columns to the combined weather data
   extras <- data.frame(
@@ -373,35 +375,35 @@ plot_sugar_starch_comparison <- function(CASSIA_new_output, dates, original_data
 # Mycofon
 ####
 
-plot_mycofon_data <- function(CASSIA_new_output, CASSIA_new_output_trenching, dates, loaded_data) {
+plot_mycofon_data <- function(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, dates, loaded_data) {
 
   plot_fungal_data <- function(start, end, layout) {
     par(mfrow = layout)
     for (i in start:end) {
       # Calculate y-axis limits
-      ylim <- if (any(!is.na(CASSIA_new_output$Fungal[,i]))) {
-        range(c(CASSIA_new_output$Fungal[,i], CASSIA_new_output_trenching$Fungal[,i]), na.rm = TRUE)
+      ylim <- if (any(!is.na(CASSIA_new_output_not_trenching$Fungal[,i]))) {
+        range(c(CASSIA_new_output_not_trenching$Fungal[,i], CASSIA_new_output_trenching$Fungal[,i]), na.rm = TRUE)
       } else {
         c(0, 1)
       }
 
       # Plot data
-      plot(dates, CASSIA_new_output$Fungal[,i],
-           main = names(CASSIA_new_output$Fungal)[i],
+      plot(dates, CASSIA_new_output_not_trenching$Fungal[,i],
+           main = names(CASSIA_new_output_not_trenching$Fungal)[i],
            xlab = "Date", ylab = "", ylim = ylim, type = "l")
       lines(dates, CASSIA_new_output_trenching$Fungal[,i], col = "red")
 
       # Add reference data
-      add_reference_data(names(CASSIA_new_output$Fungal)[i])
+      add_reference_data(names(CASSIA_new_output_not_trenching$Fungal)[i])
 
       # Check for all NAs
-      if (all(is.na(CASSIA_new_output$Fungal[,i]))) {
-        title(sub = paste0(names(CASSIA_new_output$Fungal)[i], " is all NAs!"))
-        warning(paste0(names(CASSIA_new_output$Fungal)[i], " is all NAs!"))
+      if (all(is.na(CASSIA_new_output_not_trenching$Fungal[,i]))) {
+        title(sub = paste0(names(CASSIA_new_output_not_trenching$Fungal)[i], " is all NAs!"))
+        warning(paste0(names(CASSIA_new_output_not_trenching$Fungal)[i], " is all NAs!"))
       }
 
       # Add legend on last plot
-      if (i == length(names(CASSIA_new_output$Fungal))) {
+      if (i == length(names(CASSIA_new_output_not_trenching$Fungal))) {
         legend("topleft", c("Control", "Trenched"),
                col = c("black", "red"), lty = 1, bty = "n")
       }
@@ -438,34 +440,34 @@ plot_mycofon_data <- function(CASSIA_new_output, CASSIA_new_output_trenching, da
   plot_fungal_data(1, 6, c(3, 2))
 
   # Plot second set of variables
-  plot_fungal_data(7, length(names(CASSIA_new_output$Fungal)), c(3, 4))
+  plot_fungal_data(7, length(names(CASSIA_new_output_not_trenching$Fungal)), c(3, 4))
 }
 
 #####
 # Symphony
 #####
 
-plot_soil_data <- function(CASSIA_new_output, CASSIA_new_output_trenching, dates, loaded_data) {
+plot_soil_data <- function(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, dates, loaded_data) {
 
   plot_soil_variables <- function(indices, mfrow = c(3, 3)) {
     par(mfrow = mfrow)
     for (i in indices) {
-      ylim <- if (any(!is.na(CASSIA_new_output$Soil[,i]))) {
-        range(c(CASSIA_new_output$Soil[,i], CASSIA_new_output_trenching$Soil[,i]), na.rm = TRUE)
+      ylim <- if (any(!is.na(CASSIA_new_output_not_trenching$Soil[,i]))) {
+        range(c(CASSIA_new_output_not_trenching$Soil[,i], CASSIA_new_output_trenching$Soil[,i]), na.rm = TRUE)
       } else {
         c(0, 1)
       }
 
-      plot(dates, CASSIA_new_output$Soil[,i],
-           main = names(CASSIA_new_output$Soil)[i],
+      plot(dates, CASSIA_new_output_not_trenching$Soil[,i],
+           main = names(CASSIA_new_output_not_trenching$Soil)[i],
            xlab = "Date", ylab = "", ylim = ylim, type = "l")
       lines(dates, CASSIA_new_output_trenching$Soil[,i], col = "red")
 
-      add_specific_data(names(CASSIA_new_output$Soil)[i])
+      add_specific_data(names(CASSIA_new_output_not_trenching$Soil)[i])
 
-      if (all(is.na(CASSIA_new_output$Soil[,i]))) {
-        title(sub = paste0(names(CASSIA_new_output$Soil)[i], " is all NAs!"))
-        warning(paste0(names(CASSIA_new_output$Soil)[i], " is all NAs!"))
+      if (all(is.na(CASSIA_new_output_not_trenching$Soil[,i]))) {
+        title(sub = paste0(names(CASSIA_new_output_not_trenching$Soil)[i], " is all NAs!"))
+        warning(paste0(names(CASSIA_new_output_not_trenching$Soil)[i], " is all NAs!"))
       }
 
       if (i == tail(indices, 1)) {
@@ -510,7 +512,7 @@ plot_soil_data <- function(CASSIA_new_output, CASSIA_new_output_trenching, dates
 # Uptake
 #####
 
-plot_nitrogen_uptake <- function(CASSIA_new_output, weather_original, oyewole_2015_calibration_data) {
+plot_nitrogen_uptake <- function(CASSIA_new_output_not_trenching, weather_original, oyewole_2015_calibration_data) {
 
   plot_uptake <- function(n_type) {
     par(mfrow = c(3, 4))
@@ -542,11 +544,11 @@ plot_nitrogen_uptake <- function(CASSIA_new_output, weather_original, oyewole_20
   }
 
   calculate_ylim <- function(n_type) {
-    if (any(!is.na(CASSIA_new_output$Fungal[[paste0("uptake_", n_type, "_fungal")]]))) {
+    if (any(!is.na(CASSIA_new_output_not_trenching$Fungal[[paste0("uptake_", n_type, "_fungal")]]))) {
       list(
-        Fungal = range(CASSIA_new_output$Fungal[[paste0("uptake_", n_type, "_fungal")]], na.rm = TRUE),
-        Plant = range(CASSIA_new_output$Fungal[[paste0("uptake_", n_type, "_plant")]], na.rm = TRUE),
-        Microbes = range(CASSIA_new_output$Preles[[paste0("uptake_", n_type, "_microbial")]], na.rm = TRUE)
+        Fungal = range(CASSIA_new_output_not_trenching$Fungal[[paste0("uptake_", n_type, "_fungal")]], na.rm = TRUE),
+        Plant = range(CASSIA_new_output_not_trenching$Fungal[[paste0("uptake_", n_type, "_plant")]], na.rm = TRUE),
+        Microbes = range(CASSIA_new_output_not_trenching$Preles[[paste0("uptake_", n_type, "_microbial")]], na.rm = TRUE)
       )
     } else {
       list(Fungal = c(0, 1), Plant = c(0, 1), Microbes = c(0, 1))
@@ -554,18 +556,18 @@ plot_nitrogen_uptake <- function(CASSIA_new_output, weather_original, oyewole_20
   }
 
   get_n_range <- function(n_type) {
-    if (any(!is.na(CASSIA_new_output$Soil[[n_type]]))) {
-      CASSIA_new_output$Soil[[n_type]]
+    if (any(!is.na(CASSIA_new_output_not_trenching$Soil[[n_type]]))) {
+      CASSIA_new_output_not_trenching$Soil[[n_type]]
     } else {
-      seq(0, 1, length.out = nrow(CASSIA_new_output$Soil))
+      seq(0, 1, length.out = nrow(CASSIA_new_output_not_trenching$Soil))
     }
   }
 
   get_y_data <- function(y) {
     if (grepl("microbial", y)) {
-      CASSIA_new_output$Preles[[y]]
+      CASSIA_new_output_not_trenching$Preles[[y]]
     } else {
-      CASSIA_new_output$Fungal[[y]]
+      CASSIA_new_output_not_trenching$Fungal[[y]]
     }
   }
 
@@ -592,18 +594,18 @@ plot_nitrogen_uptake <- function(CASSIA_new_output, weather_original, oyewole_20
 # Respiration
 #####
 
-plot_respiration_data <- function(CASSIA_new_output, CASSIA_new_output_trenching, dates) {
+plot_respiration_data <- function(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, dates) {
   par(mfrow = c(3, 2))
 
   plot_respiration <- function(i) {
     range <- range(c(CASSIA_new_output_trenching$Respiration[,i],
-                     CASSIA_new_output$Respiration[,i]), na.rm = TRUE)
+                     CASSIA_new_output_not_trenching$Respiration[,i]), na.rm = TRUE)
 
-    plot(dates, CASSIA_new_output$Respiration[,i],
+    plot(dates, CASSIA_new_output_not_trenching$Respiration[,i],
          xlab = "Dates", ylab = "Respiration",
          ylim = range, xlim = range(dates),
          col = i, type = "l",
-         main = clean_title(names(CASSIA_new_output$Respiration)[i]))
+         main = clean_title(names(CASSIA_new_output_not_trenching$Respiration)[i]))
 
     if (i > 2) {
       lines(dates, CASSIA_new_output_trenching$Respiration[,i], col = 1, lty = 2)
@@ -614,7 +616,7 @@ plot_respiration_data <- function(CASSIA_new_output, CASSIA_new_output_trenching
     gsub("_", " ", gsub("respiration_", "", title))
   }
 
-  for (i in 1:ncol(CASSIA_new_output$Respiration)) {
+  for (i in 1:ncol(CASSIA_new_output_not_trenching$Respiration)) {
     plot_respiration(i)
   }
 
@@ -625,11 +627,11 @@ plot_respiration_data <- function(CASSIA_new_output, CASSIA_new_output_trenching
 # Total Ecosystem Respiration
 #####
 
-plot_total_ecosystem_respiration <- function(CASSIA_new_output, CASSIA_new_output_trenching, dates) {
+plot_total_ecosystem_respiration <- function(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, dates) {
   par(mfrow = c(1, 1))
 
-  total_resp_control <- rowSums(CASSIA_new_output$Respiration)
-  total_resp_trenching <- rowSums(CASSIA_new_output_trenching$Respiration)
+  total_resp_control <- rowSums(CASSIA_new_output_not_trenching$Respiration)
+  total_resp_trenching <- rowSums(CASSIA_new_output_not_trenching_trenching$Respiration)
 
   y_range <- range(c(total_resp_control, total_resp_trenching), na.rm = TRUE)
 

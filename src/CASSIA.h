@@ -451,4 +451,50 @@ ring_width_out ring_width_generator(int day,
                                     CASSIA_parameters parameters,
                                     double GD_tot);
 
+/*
+ * Settings defined
+ */
+
+// Define a struct to hold the settings
+struct Settings {
+  bool storage_reset;
+  bool storage_grows;
+
+  bool LN_estim;
+  bool mN_varies;
+
+  bool LD_estim;
+  bool sD_estim_T_count;
+
+  bool LH_estim;
+  bool trees_grow;
+  bool growth_decreases;
+  bool needle_mass_grows;
+
+  bool phloem_trigger;
+  bool mycorrhiza;
+  bool root_as_Ding;
+
+  bool sperling_model;
+  bool myco_model;
+  bool xylogensis_option;
+
+  bool PRELES_GPP;
+  bool environmental_effect_xylogenesis;
+
+  bool photosynthesis_as_input;
+
+  int photoparameters;
+  bool temp_rise;
+  bool drought;
+  bool Rm_acclimation;
+
+  bool CASSIA_graphs;
+  bool etmodel;
+  bool LOGFLAG;
+};
+
+// Inporting settings function
+Settings parseSettings(Rcpp::List settingsList);
+
 #endif

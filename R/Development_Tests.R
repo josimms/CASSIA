@@ -6,29 +6,49 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   ###
   # Settings and parameters
   ###
-  storage_rest = F
-  storage_grows = F
-  LH_estim = T
-  LN_estim = T
-  mN_varies = T
-  LD_estim = T
-  sD_estim_T_count = F
-  trees_grow = F
-  growth_decreases = F
-  needle_mass_grows = F
-  mycorrhiza = T
-  root_as_Ding = T
-  xylogensis_option = F
-  environmental_effect_xylogenesis = F
-  temp_rise = F
-  drought = F
-  Rm_acclimation = F
-  trenching = T
-  etmodel = F
-  LOGFLAG = F
+  settings_basic = list(
+    storage_reset = TRUE,			# storage.reset<-TRUE=Same initial storage each year, storage.reset<-False, The storage on the last day of year X is  postponded to the first day of the year X+1
+    storage_grows = FALSE,			# TRUE if the critical storage level increases with tree size.
+
+    LN_estim = TRUE,				# LN depends on the GPP during previous july-august
+    mN_varies = TRUE,				# needle mass (in maintenance respiration) is 2/3 of the total during period 1.10 - 31.5.
+
+    LD_estim = TRUE,				# LD depends on the GPP during March-August
+    sD_estim_T_count = FALSE,			# sD depends on the number of days when g in growing window - analogue to needles
+
+    LH_estim = TRUE,
+
+    trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
+    growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
+    needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
+
+    phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
+
+    mycorrhiza = TRUE, 			# If allocation to mychorrhiza is taken into account
+    root_as_Ding = TRUE,
+
+    sperling_model = FALSE,       # Dynamic sugar model using Sperling's enzyme dynamics
+    myco_model = FALSE,           # Joanna's mycomodel development!
+    xylogenesis = FALSE,
+
+    PRELES_GPP = FALSE,
+    environment_effect_xylogenesis = FALSE,
+
+    photosynthesis_as_input = TRUE,
+
+    photoparameters = 3,
+    temp_rise = FALSE,
+    drought = FALSE,
+    Rm_acclimation = TRUE,
+
+    CASSIA_graphs = TRUE,
+
+    etmodel = F,
+    LOGFLAG = F
+  )
 
   ### WEATHER
-  processed_data <- process_weather_data(using_spp_photosynthesis)
+  processed_data <- process_weather_data(settings_basic$photosynthesis_as_input)
   dates_original <- seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")[-c(366+365)]
 
   ### VALIDATION DATA
@@ -50,47 +70,46 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # Running the functions
   ###
 
-  soil_processes = T
+  soil_processes = F
   if (soil_processes) {
-    trenching = FALSE
-    CASSIA_new_output = CASSIA_soil(processed_data$start_year, processed_data$end_year, processed_data$weather_original, GPP_ref,
-                                    c(parameters$pPREL, parameters$N_parameters), t(parameters$parameters_test), common_p, t(ratios_p), t(parameters$sperling_test), parameters$parameters_R,
-                                    parameters$needle_mass_in,
-                                    parameters$Throughfall,
-                                    storage_rest, storage_grows,
-                                    LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
-                                    trees_grow, growth_decreases, needle_mass_grows,
-                                    mycorrhiza, root_as_Ding, sperling_sugar_model,
-                                    xylogensis_option, environmental_effect_xylogenesis,
-                                    temp_rise, drought, Rm_acclimation,
-                                    using_spp_photosynthesis, 2100, TRUE,
-                                    etmodel, LOGFLAG)
-    trenching = TRUE
-    CASSIA_new_output_trenching = CASSIA_soil(processed_data$start_year, processed_data$end_year, processed_data$weather_original, GPP_ref,
-                                              c(parameters$pPREL, parameters$N_parameters), t(parameters$parameters_test), common_p, t(ratios_p), t(parameters$sperling_test), parameters$parameters_R,
-                                              parameters$needle_mass_in,
-                                              parameters$Throughfall,
-                                              storage_rest, storage_grows,
-                                              LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
-                                              trees_grow, growth_decreases, needle_mass_grows,
-                                              mycorrhiza, root_as_Ding, sperling_sugar_model,
-                                              xylogensis_option, environmental_effect_xylogenesis,
-                                              temp_rise, drought, Rm_acclimation,
-                                              using_spp_photosynthesis, 2015, TRUE,
-                                              etmodel, LOGFLAG)
+    CASSIA_new_output_not_trenching = CASSIA_cpp(weather = processed_data$weather_original,
+                                                GPP_ref,
+                                                site = "Hyde",
+                                                pPREL = c(parameters$pPREL, parameters$N_parameters),
+                                                parameters = parameters$parameters_test,
+                                                common = common_p,
+                                                ratios = ratios_p,
+                                                sperling = parameters$sperling_test,
+                                                parameters_R = parameters$parameters_R,
+                                                needle_mass_in = parameters$needle_mass_in,
+                                                Throughfall = parameters$Throughfall,
+                                                trenching_year = NA,
+                                                soil = TRUE)
+    CASSIA_new_output_trenching = CASSIA_cpp(weather = processed_data$weather_original,
+                                              GPP_ref,
+                                              site = "Hyde",
+                                              pPREL = c(parameters$pPREL, parameters$N_parameters),
+                                              parameters = parameters$parameters_test,
+                                              common = common_p,
+                                              ratios = ratios_p,
+                                              sperling = parameters$sperling_test,
+                                              parameters_R = parameters$parameters_R,
+                                              needle_mass_in = parameters$needle_mass_in,
+                                              Throughfall = parameters$Throughfall,
+                                              trenching_year = 2015,
+                                              soil = TRUE)
   } else {
-    CASSIA_new_output = CASSIA_yearly(processed_data$start_year, processed_data$end_year, processed_data$weather_original, GPP_ref,
-                                      c(parameters$pPREL, parameters$N_parameters), t(parameters$parameters_test), common_p, t(ratios_p), t(parameters$sperling_test),
-                                      parameters$needle_mass_in,
-                                      parameters$Throughfall,
-                                      storage_rest, storage_grows,
-                                      LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
-                                      trees_grow, growth_decreases, needle_mass_grows,
-                                      mycorrhiza, root_as_Ding, sperling_sugar_model,
-                                      xylogensis_option, environmental_effect_xylogenesis,
-                                      temp_rise, drought, Rm_acclimation,
-                                      using_spp_photosynthesis, TRUE,
-                                      etmodel, LOGFLAG)
+    settings_basic$sperling_model = TRUE
+    CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
+                                   site = "Hyde",
+                                   pPREL = c(parameters$pPREL, parameters$N_parameters),
+                                   parameters = parameters$parameters_test,
+                                   common = common_p,
+                                   ratios = ratios_p,
+                                   sperling = parameters$sperling_test,
+                                   needle_mass_in = parameters$needle_mass_in,
+                                   Throughfall = parameters$Throughfall,
+                                   settings = settings_basic)
   }
 
   ###
@@ -129,16 +148,16 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     # TODO: write the decision graphs
 
     # Mycofon - Date
-    plot_mycofon_data(CASSIA_new_output, CASSIA_new_output_trenching, processed_data$dates, loaded_data)
+    plot_mycofon_data(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, processed_data$dates, loaded_data)
 
     # Symphony - Date
-    plot_soil_data(CASSIA_new_output, CASSIA_new_output_trenching, dates, loaded_data)
+    plot_soil_data(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, processed_data$weather_original$date, loaded_data)
 
     # Uptake - Environment
-    plot_nitrogen_uptake(CASSIA_new_output, processed_data$weather_original, loaded_data$oyewole_2015_calibration_data)
+    plot_nitrogen_uptake(CASSIA_new_output_not_trenching, processed_data$weather_original, loaded_data$oyewole_2015_calibration_data)
 
     # Respiration soil breakdown
-    plot_respiration_data(CASSIA_new_output, CASSIA_new_output_trenching, dates)
+    plot_respiration_data(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, dates)
   }
 
   ###

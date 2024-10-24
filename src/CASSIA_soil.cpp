@@ -15,39 +15,10 @@ Rcpp::List CASSIA_soil(int start_year,
                        std::vector<double> parameters_R,
 
                        double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
-
                        double Throughfall,
-
-                       bool storage_rest,
-                       bool storage_grows,
-
-                       bool LH_estim,
-                       bool LN_estim,
-                       bool mN_varies,
-                       bool LD_estim,
-                       bool sD_estim_T_count,
-
-                       bool trees_grow,
-                       bool growth_decreases,
-                       bool needle_mass_grows,
-
-                       bool mycorrhiza,
-                       bool root_as_Ding,
-                       bool sperling_sugar_model,
-
-                       bool xylogensis_option,
-
-                       bool environmental_effect_xylogenesis,
-                       bool temp_rise,
-                       bool drought,
-                       bool Rm_acclimation,
-
-                       bool using_spp_photosynthesis,
                        int trenching_year,
-                       bool CASSIA_graphs,
 
-                       int etmodel,
-                       int LOGFLAG) {
+                       Rcpp::List settings) {
 
   /*
    * Read into structures
@@ -67,6 +38,8 @@ Rcpp::List CASSIA_soil(int start_year,
   // As C_fungal: 50:50 mantle and ERM, Meyer 2010
   // parameters_in.mantle_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
   // parameters_in.ERM_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
+
+  Settings boolsettings = parseSettings(settings);
 
   /*
    * Weather input made into vectors
@@ -200,7 +173,7 @@ Rcpp::List CASSIA_soil(int start_year,
     double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
     double D00 = parameters.D0;
     double h00 = parameters.h0;
-    if (xylogensis_option) {
+    if (boolsettings.xylogensis_option) {
       double LH0 = parameters.h_increment / (0.5 * parameters.sHc);
       double LN0 = parameters.n_length / (0.5 * 4.641331 * parameters.sNc); // TODO: this had a typo in it, check the formula
       double LR0 = 2.0 * parameters.m_R_tot / parameters.sRc; // TODO: check if these parameters are updated somewhere
@@ -214,7 +187,7 @@ Rcpp::List CASSIA_soil(int start_year,
      * if there is no growth then the needle mass stays at the originally calculated value
      */
 
-    if (needle_mass_grows) {
+    if (boolsettings.needle_mass_grows) {
       repola_values = repola(parameters); // Needle mass is then calculated on the next D0 and h0 values
     } else {
       repola_values.needle_mass = needle_mass_in;
@@ -240,7 +213,7 @@ Rcpp::List CASSIA_soil(int start_year,
      */
 
     int days_per_year = leap_year(year);
-    if (CASSIA_graphs) {
+    if (boolsettings.CASSIA_graphs) {
       days_per_year = 365;
     }
     /*
@@ -320,7 +293,7 @@ Rcpp::List CASSIA_soil(int start_year,
         fW = photosynthesis_old.fW;
       }
 
-      if (using_spp_photosynthesis) {
+      if (boolsettings.photosynthesis_as_input) {
         photosynthesis.GPP = Photosynthesis_IN[count];
         photosynthesis_per_stem = Photosynthesis_IN[count] / 1010 * 10000/1000;
       } else {
@@ -328,7 +301,7 @@ Rcpp::List CASSIA_soil(int start_year,
         photosynthesis = preles(day, PAR[day], TAir[day], VPD[day], Precip[day],
                                 CO2[day], fAPAR, Nitrogen[day],
                                 parSite, parGPP, parET, parSnowRain, parWater, parN,
-                                etmodel, theta, theta_snow, theta_canopy, Throughfall,
+                                boolsettings.etmodel, theta, theta_snow, theta_canopy, Throughfall,
                                 S, PhenoS, Snowmelt, intercepted, Drainage, canw,
                                 fE, transp, evap, fWE, fW, gpp380);
 
@@ -363,10 +336,10 @@ Rcpp::List CASSIA_soil(int start_year,
 
       GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
       growth_out potential_growth = growth(day, year, TAir[count], TSoil_A[count], TSoil_B[count], Soil_Moisture[count], photosynthesis.GPP, GPP_ref[day],
-                                           root_as_Ding, xylogensis_option, environmental_effect_xylogenesis, sD_estim_T_count,
+                                           boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
-                                           LH_estim, LN_estim, LD_estim,
+                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
                                            // Last iteration value
                                            growth_values_for_next_iteration, last_year_HH,
                                            days_per_year);
@@ -381,7 +354,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
                                          TAir[count], TSoil_A[count],
-                                         temp_rise, Rm_acclimation, mN_varies,
+                                         boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
                                          // parameters that I am not sure about
                                          B0); // TODO: respiration for the fungi and microbes
 
@@ -424,9 +397,9 @@ Rcpp::List CASSIA_soil(int start_year,
                                                     D00,
                                                     potential_growth.previous_values.sH,
                                                     resp,
-                                                    sperling_sugar_model,
+                                                    boolsettings.sperling_model,
                                                     tree_alive,
-                                                    storage_grows,
+                                                    boolsettings.storage_grows,
                                                     repola_values.needle_mass,
                                                     equilibrium_temperature,
                                                     potential_growth,
@@ -457,7 +430,7 @@ Rcpp::List CASSIA_soil(int start_year,
       growth_out actual_growth_out = actual_growth(parameters, common,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
-                                                   sperling_sugar_model);
+                                                   boolsettings.sperling_model);
 
       // std::cout << "\n";
 
