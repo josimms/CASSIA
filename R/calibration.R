@@ -186,7 +186,7 @@ likelyhood_sugar_model <- function(par, sum = T) {
   ## p = c(100, 0.250, 0.07, 2, rep(NA, 26)) from the Väriö code
 
   ### Import data
-  direct <- "~/Documents/CASSIA_Calibration/"
+  direct <- "~/Documents/CASSIA_Calibration/Processed_Data/"
   load(paste0(direct, "original.data.RData"))
   # All of the observations made into a vector
   # Data processing done outside of the likelihood function to make it quicker
@@ -204,18 +204,18 @@ likelyhood_sugar_model <- function(par, sum = T) {
   sperling_sugar_model = T
   using_spp_photosynthesis = T
 
-  simTab <- CASSIA_yearly(2015, 2016, weather_original, GPP_ref,
-                          c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_par),
-                          needle_mass_in,
-                          Throughfall,
-                          storage_rest, storage_grows,
-                          LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
-                          trees_grow, growth_decreases, needle_mass_grows,
-                          mycorrhiza, root_as_Ding, sperling_sugar_model,
-                          xylogensis_option, environmental_effect_xylogenesis,
-                          temp_rise, drought, Rm_acclimation,
-                          using_spp_photosynthesis, trenching, TRUE,
-                          etmodel, LOGFLAG)
+  simTab <- CASSIA_cpp(weather_original, "Hyde",
+                       c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_par),
+                       needle_mass_in,
+                       Throughfall,
+                       storage_rest, storage_grows,
+                       LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
+                       trees_grow, growth_decreases, needle_mass_grows,
+                       mycorrhiza, root_as_Ding, sperling_sugar_model,
+                       xylogensis_option, environmental_effect_xylogenesis,
+                       temp_rise, drought, Rm_acclimation,
+                       using_spp_photosynthesis, TRUE,
+                       etmodel, LOGFLAG)
   simTab_growth = simTab[[1]]
   simTab_sugar = simTab[[2]]
   Hyde_daily_original_cali <- Hyde_daily_original[c(1:730),]
@@ -277,7 +277,7 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
 
   # TODO: make new bounds!
   # Run with different parameters sets and check the likelihood, if changes can then use the Bayesian methods
-  direct <- "~/Documents/CASSIA_Calibration/"
+  direct <- "~/Documents/CASSIA_Calibration/Processed_Data/"
   bounds_all <- read.delim(paste0(direct, "bounds_all.csv"), sep = ",", row.names = 1)
   bounds_all$UL[1:27] = c(4, 10, 8, 8, 1,
                           12, 12, 12, 12, 12,
@@ -288,8 +288,8 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   bounds_all$UL[48:57] <- rep(3, 10)
 
   # create priors
-  prior <- BayesianTools::createUniformPrior(c(bounds_all[,1]),
-                                             c(bounds_all[,2]),
+  prior <- BayesianTools::createUniformPrior(bounds_all[,1],
+                                             bounds_all[,2],
                                              best = NULL)
 
   # Bayesian set up
@@ -303,7 +303,7 @@ CASSIA_calibration <- function(preform_callibration = FALSE) {
   # Running the MCMC alogorithm
   # Use DEzs as I have read the paper for this one Past samples version
   # If a starting value is given rows are the number of chains and columns are the parameters
-  CASSIAout_sugar_model <- BayesianTools::runMCMC(bayesianSetup = CASSIABayesianSetup, sampler = "DREAMzshttp://127.0.0.1:26757/graphics/1177605b-b3f9-4c49-8fa3-d13b82665e01.png", settings = settings)
+  CASSIAout_sugar_model <- BayesianTools::runMCMC(bayesianSetup = CASSIABayesianSetup, sampler = "DREAMzs", settings = settings)
 
   save(CASSIAout_sugar_model, file = paste0(direct, gsub(":", "_", Sys.time()), " CASSIAout_sugar_model.RData"))
 
