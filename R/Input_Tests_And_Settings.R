@@ -47,7 +47,7 @@ validate_weather_data <- function(weather, PRELES_GPP) {
   }
 
   # Check temperature values
-  check_values(weather$Temp, -30, 30)
+  check_values(weather$T, -30, 30)
 
   # Check PF values
   check_values(weather$PF, -10, 20)
@@ -72,7 +72,7 @@ validate_weather_data <- function(weather, PRELES_GPP) {
   }
 
   # Check for NA values in columns
-  check_na(weather$Temp)
+  check_na(weather$T)
   check_na(weather$PF)
   check_na(weather$Tsa)
   check_na(weather$Tsb)
