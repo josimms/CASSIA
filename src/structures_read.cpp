@@ -454,8 +454,6 @@ CASSIA_ratios read_ratios(const std::string& filename, const std::string& site) 
 
 
 CASSIA_ratios make_ratios(Rcpp::DataFrame input) {
-  // printColumnNames(input);
-
   CASSIA_ratios out;
   std::vector<double> temp = input["form_factor"];
   out.form_factor = temp[0];
