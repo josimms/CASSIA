@@ -47,7 +47,7 @@ validate_weather_data <- function(weather, PRELES_GPP) {
   }
 
   # Check temperature values
-  check_values(weather$T, -30, 30)
+  check_values(weather$T, -30, 40)
 
   # Check PF values
   check_values(weather$PF, -10, 20)
