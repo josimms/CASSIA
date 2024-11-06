@@ -15,4 +15,3 @@ Suggests:
     knitr,
     rmarkdown
 VingetteBuilder: knitr
-Encoding: UTF-8
