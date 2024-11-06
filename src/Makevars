@@ -1,0 +1,67 @@
+CXX_STD = CXX17
+EXTERNAL_DIR = ../external
+PHYDRO_PATH = $(EXTERNAL_DIR)/phydro
+LIBPSPM_PATH = $(EXTERNAL_DIR)/libpspm
+FLARE_PATH = $(EXTERNAL_DIR)/flare
+
+# include and lib dirs (esp for cuda)
+INC_PATH :=  -I../inst/include -I../src -I$(PHYDRO_PATH)/inst/include -I$(LIBPSPM_PATH)/include -I$(FLARE_PATH)/include -I$(PHYDRO_PATH)/inst/LBFGSpp/include -I/usr/include/eigen3
+# flags
+PKG_CXXFLAGS = -O3 -fPIC -std=c++17 -Wall -Wextra 
+PKG_CXXFLAGS += -Wno-sign-compare -Wno-unused-variable \
+-Wno-unused-but-set-variable -Wno-float-conversion \
+-Wno-unused-parameter -Wno-cast-function-type
+
+PKG_CPPFLAGS = $(INC_PATH)
+
+# Need libstdc++fs for using std::filesystem, and link Julia
+PKG_LIBS = -L"$(LIBPSPM_PATH)"/lib -lpspm -lstdc++fs
+
+SOURCES = yearly_initial_conditions.cpp \
+          test_input.cpp \
+          symphony_model_plus.cpp \
+          symphony_many_FOM.cpp \
+          sugar_model.cpp \
+          structures_read.cpp \
+          ring_width.cpp \
+          respiration.cpp \
+          repola.cpp \
+          reading_settings.cpp \
+          preles.cpp \
+          PlantFateLogic.cpp \
+          n_uptake.cpp \
+          mycofon_updated.cpp \
+          myco_growth.cpp \
+          growth.cpp \
+          decision_functions.cpp \
+          cell_enlargment.cpp \
+          CASSIA.cpp \
+          CASSIA_soil.cpp \
+          CASSIA_sensitivity.cpp \
+          actual_growth.cpp
+
+# Obtain the object files
+OBJECTS=$(SOURCES:.cpp=.o) 
+
+.PHONY: all libpspm
+
+# Make the shared object
+all: $(SHLIB)
+
+$(SHLIB): libpspm
+
+# To compile libpspm, pass down g++ and ar from here, and clear profiling flags (as they are not supported on windows)
+libpspm:
+	(cd $(LIBPSPM_PATH) && $(MAKE) CXX=$(CXX17) AR=$(AR) PROFILING_FLAGS="")
+
+# Provide recipe to remove all objects
+clean:
+	@rm -f $(OBJECTS)
+	(cd $(LIBPSPM_PATH) && $(MAKE) clean)
+
+# Initialize Julia
+#$(SHLIB): | init_julia
+
+#init_julia:
+#	@echo "Initializing Julia..."
+#	@$(R_HOME)/bin/Rscript -e 'library(JuliaCall); julia_setup()'
