@@ -466,10 +466,9 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                    boolsettings.sperling_model);
 
       // Cumulative values
-      // TODO: indexes
-      culm_growth.height[day] = culm_growth.height[day-1] + actual_growth_out.height;
-      culm_growth.roots[day] = culm_growth.roots[day-1] + actual_growth_out.roots;
-      culm_growth.needles[day] = culm_growth.needles[day-1] + actual_growth_out.needles;
+      culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
+      culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
+      culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
 
       // std::cout << "\n";
 

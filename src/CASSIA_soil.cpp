@@ -106,8 +106,6 @@ Rcpp::List CASSIA_soil(int start_year,
   MYCOFON_function_out MYCOFON_for_next_iteration;
   SYMPHONY_output soil_values_for_next_iteration;
 
-  std::cout << ":D\n";
-
   /*
    * Vectors for the outputs
    */
@@ -135,8 +133,6 @@ Rcpp::List CASSIA_soil(int start_year,
   GPP_previous_sum.push_back(481.3); // TODO; make this a variable input, rather than this 2015 value
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
-
-  std::cout << ":)\n";
 
   /*
    * YEAR LOOP
@@ -176,8 +172,6 @@ Rcpp::List CASSIA_soil(int start_year,
     /*
      * Yearly initialization
      */
-
-    std::cout << ":O\n";
 
     // Temperature equilibrium for the sugar model
     //	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
@@ -237,8 +231,6 @@ Rcpp::List CASSIA_soil(int start_year,
     // Set up the initial conditions
     yearly_in yearly = yearly_initial_conditions(days_per_year); // TODO: growth should be added to this!
 
-    std::cout << ":)\n";
-
     /*
      * DAYS LOOP
      */
@@ -273,7 +265,7 @@ Rcpp::List CASSIA_soil(int start_year,
       double photosynthesis_per_stem;
       double theta, theta_snow, theta_canopy, Throughfall, S, PhenoS,
       Snowmelt, intercepted, Drainage, canw, fE, transp, evap, fWE, fW, gpp380;
-      if (day == 1 && year == start_year) {
+      if ((day == 1) && (year == start_year)) {
         theta = parWater.SW; // Correct
         theta_canopy = parWater.CW; // Correct
         theta_snow = parWater.SOG; // Correct
@@ -473,12 +465,9 @@ Rcpp::List CASSIA_soil(int start_year,
                                                    boolsettings.sperling_model);
 
       // Cumulative values
-      // TODO: indexes
-      culm_growth.height[day] = culm_growth.height[day-1] + actual_growth_out.height;
-      culm_growth.roots[day] = culm_growth.roots[day-1] + actual_growth_out.roots;
-      culm_growth.needles[day] = culm_growth.needles[day-1] + actual_growth_out.needles;
-
-      // std::cout << "\n";
+      culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
+      culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
+      culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
 
       /*
        * MYCOFON
