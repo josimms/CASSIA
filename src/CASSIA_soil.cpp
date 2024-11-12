@@ -106,6 +106,8 @@ Rcpp::List CASSIA_soil(int start_year,
   MYCOFON_function_out MYCOFON_for_next_iteration;
   SYMPHONY_output soil_values_for_next_iteration;
 
+  std::cout << ":D\n";
+
   /*
    * Vectors for the outputs
    */
@@ -114,9 +116,9 @@ Rcpp::List CASSIA_soil(int start_year,
   growth_vector actual_growth_output;
   growth_vector culm_growth;
   PlantAssimilationResult phydro_assimilation;
-  culm_growth.height[0] = parameters.h0;
-  culm_growth.roots[0] = 0.1; // TODO: what is the initialisation here?
-  culm_growth.needles[0] = repola_values.needle_mass;
+  culm_growth.height.push_back(parameters.h0);
+  culm_growth.roots.push_back(0.1); // TODO: what is the initialisation here? Surely there is a value for this!
+  culm_growth.needles.push_back(repola_values.needle_mass);
   biomass_vector biomass_output;
   sugar_values_vector sugar_values_output;
   photo_out_vector photosynthesis_output;
@@ -133,6 +135,8 @@ Rcpp::List CASSIA_soil(int start_year,
   GPP_previous_sum.push_back(481.3); // TODO; make this a variable input, rather than this 2015 value
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
+
+  std::cout << ":)\n";
 
   /*
    * YEAR LOOP
@@ -161,8 +165,6 @@ Rcpp::List CASSIA_soil(int start_year,
       trenching = false;
     }
 
-    // std::cout << " Year " << year;
-
     /*
      * Daily output
      */
@@ -174,6 +176,8 @@ Rcpp::List CASSIA_soil(int start_year,
     /*
      * Yearly initialization
      */
+
+    std::cout << ":O\n";
 
     // Temperature equilibrium for the sugar model
     //	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
@@ -232,6 +236,8 @@ Rcpp::List CASSIA_soil(int start_year,
 
     // Set up the initial conditions
     yearly_in yearly = yearly_initial_conditions(days_per_year); // TODO: growth should be added to this!
+
+    std::cout << ":)\n";
 
     /*
      * DAYS LOOP

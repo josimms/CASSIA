@@ -113,9 +113,9 @@ Rcpp::List CASSIA_eeo(int start_year,
   growth_vector actual_growth_output;
   growth_vector culm_growth;
   PlantAssimilationResult phydro_assimilation;
-  culm_growth.height[0] = parameters.h0;
-  culm_growth.roots[0] = 0.1; // TODO: what is the initialisation here?
-  culm_growth.needles[0] = repola_values.needle_mass;
+  culm_growth.height.push_back(parameters.h0);
+  culm_growth.roots.push_back(0.1); // TODO: what is the initialisation here? Surely there is a value for this!
+  culm_growth.needles.push_back(repola_values.needle_mass);
   biomass_vector biomass_output;
   sugar_values_vector sugar_values_output;
   photo_out_vector photosynthesis_output;
