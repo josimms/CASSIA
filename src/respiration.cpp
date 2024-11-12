@@ -23,7 +23,7 @@ respiration_out respiration(int day,
   }
 
   double Rm_accl = 1;
-  if (temp_rise & Rm_acclimation) {
+  if ((temp_rise) & (Rm_acclimation)) {
     Rm_accl = 0.85;
   }
 
@@ -33,7 +33,7 @@ respiration_out respiration(int day,
 
   double m_N_tot2;
   if (mN_varies) {
-    if (day > 149 & day < 284) {
+    if ((day > 149) & (day < 284)) {
       m_N_tot2 = m_N_tot;
     } else {
       m_N_tot2 = m_N_tot * 2/3;

@@ -101,7 +101,7 @@ growth_out growth(int day,
   } else {
     sH = growth_previous.sH + g_sH;
   }
-  if (sH > 0 & sH < parameters.sHc) {
+  if ((sH > 0) & (sH < parameters.sHc)) {
     fH = (sin(2 * M_PI/parameters.sHc * (sH - parameters.sHc / 4)) + 1) / 2;
   } else {
     fH = 0;
@@ -128,7 +128,7 @@ growth_out growth(int day,
   } else {
     sN = growth_previous.sN + g_sN;
   }
-  if (sN > 0 & sN < pow(parameters.sNc, 2)) {
+  if ((sN > 0) & (sN < pow(parameters.sNc, 2))) {
     fN = (parameters.sNc * pow(sN, 0.5) - sN) / (pow(parameters.sNc, 2.0)/4.0);
   } else {
     fN = 0.0;
@@ -176,7 +176,7 @@ growth_out growth(int day,
       sD = growth_previous.sD + g_sD_T;
     }
   }
-  if (sD > 0 & sD < pow(parameters.sDc, 2.0)) {
+  if ((sD > 0) & (sD < pow(parameters.sDc, 2.0))) {
     fD = (parameters.sDc*pow(sD, 0.5) - sD)/(pow(parameters.sDc, 2.0)/4);
   } else {
     fD = 0;
@@ -296,7 +296,7 @@ growth_out growth(int day,
 
   if (root_as_Ding) {
     double fib_coef = 0.25;                                  // 0.25, 2.3  # Determines the proportion of fibrous roots (1 leads to 37 % of fibrous roots, 0.25 to 13 % of fibrous roots and 2.3 to 63 % of fibrous roots)
-    if (day >= 149 & day < 319) {
+    if ((day >= 149) & (day < 319)) {
       fR = 1/(1+exp(-0.038014*(day-148-56.06243)));
     } else {
       fR = 0;
@@ -322,7 +322,7 @@ growth_out growth(int day,
     } else {
       sR = growth_previous.sR + g_sR;
     }
-    if (sR > 0 & sR < parameters.sRc) {
+    if ((sR > 0) & (sR < parameters.sRc)) {
       fR = (sin(2 * M_PI / parameters.sRc * (sR - parameters.sRc / 4)) + 1) / 2;
     }
   }

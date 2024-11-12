@@ -49,10 +49,10 @@ double uptake_N(double N,   // UNITS: C kg
     // Water
     u_w = std::max(pow(SWC, 8.0) / (pow(SWC_limit, 8.0) + pow(SWC, 8.0)), 0.0);
     all = u * u_t * u_w;
-    if (u_t < 0 | u_t > 1) {
+    if ((u_t < 0) | (u_t > 1)) {
       std::cout << "Warning! u_t out of bounds. u_t = " << u_t << "\n";
     }
-    if (u_w < 0 | u_w > 1) {
+    if ((u_w < 0) | (u_w > 1)) {
       std::cout << "Warning! u_t out of bounds. u_w = " << u_w << "\n";
     }
   }
@@ -93,10 +93,10 @@ double uptake_C(double C,     // UNITS: C kg
     // Water
     u_w = pow(SWC, 8.0) / (pow(SWC_limit, 8.0) + pow(SWC, 8.0));
     all = u * u_t * u_w;
-    if (u_t < 0 | u_t > 1) {
+    if ((u_t < 0) | (u_t > 1)) {
       std::cout << "Warning! u_t out of bounds. u_t = " << u_t << "\n";
     }
-    if (u_w < 0 | u_w > 1) {
+    if ((u_w < 0) | (u_w > 1)) {
       std::cout << "Warning! u_t out of bounds. u_w = " << u_w << "\n";
     }
   }

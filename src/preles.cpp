@@ -544,7 +544,7 @@ Rcpp::List preles_test_cpp(int start_year, int end_year,
   photo_out_vector photosynthesis_output;
   photosynthesis_out photosynthesis_old;
   for (int year : years) {
-    if (year == 2008 | year == 2012 | year == 2016 | year == 2020) {
+    if ((year == 2008) | (year == 2012) | (year == 2016) | (year == 2020)) {
       no_days = 366;
     } else {
       no_days = 365;

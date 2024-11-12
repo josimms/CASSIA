@@ -277,19 +277,19 @@ carbo_balance sugar_model(int day,
      * Storage check
      */
 
-    if (sugar.needles <= 0 & starch.needles <= 0) {
+    if ((sugar.needles <= 0) & (starch.needles <= 0)) {
       std::cerr << " Day " << day << " No Storage needles! Plant died" << "\n";
     }
-    if (sugar.phloem <= 0 & starch.phloem <= 0) {
+    if ((sugar.phloem <= 0) & (starch.phloem <= 0)) {
       std::cerr << " Day " << day << " No Storage phloem! Plant died" << "\n";
     }
-    if (sugar.roots <= 0 & starch.roots <= 0) {
+    if ((sugar.roots <= 0) & (starch.roots <= 0)) {
       std::cerr <<  " Day " << day << " No Storage roots! Plant died" << "\n";
     }
-    if (sugar.xylem_sh <= 0 & starch.xylem_sh <= 0) {
+    if ((sugar.xylem_sh <= 0) & (starch.xylem_sh <= 0)) {
       std::cerr << " Day " << day << " No Storage xylem shoot! Plant died" << "\n";
     }
-    if (sugar.xylem_st <= 0 & starch.xylem_st <= 0) {
+    if ((sugar.xylem_st <= 0) & (starch.xylem_st <= 0)) {
       std::cerr << " Day " << day << " No Storage xylem stem! Plant died" << "\n";
     }
 
@@ -414,7 +414,8 @@ carbo_balance sugar_model(int day,
         myco_allocation = 0.0;
       }
 
-      sugar_all = sugar.needles + PF - pot_growth.use + pot_growth.release - storage_term_Rm * resp.Rm_a -
+
+      sugar_all = sugar.needles + PF - pot_growth.use + pot_growth.release - storage_term.respiration * resp.Rm_a -
         (1 + common.Rg_S) * storage * pot_growth.height -
         (1 + common.Rg_S) * storage * pot_growth.diameter -
         (1 + common.Rg_N) * storage * pot_growth.needles -
@@ -442,7 +443,7 @@ carbo_balance sugar_model(int day,
       storage_term.xylem_st = storage;
     }
 
-    if (sugar.needles <= 0 & starch.needles <= 0) {
+    if ((sugar.needles <= 0) & (starch.needles <= 0)) {
       std::cout << " No Storage! Plant died" << "\n";
       tree_alive = FALSE;
     }
