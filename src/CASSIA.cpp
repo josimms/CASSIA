@@ -10,6 +10,7 @@ int leap_year(int year)
   }
 }
 
+//' @export
 // [[Rcpp::export]]
 Rcpp::List CASSIA_yearly(int start_year,
                          int end_year,
@@ -275,8 +276,6 @@ Rcpp::List CASSIA_yearly(int start_year,
         GPP_sum = GPP_sum_yesterday;
       }
 
-      std::cout << ":)\n";
-
       /*
        * Potential Growth
        *
@@ -319,7 +318,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       // TODO; need to check the indexes!
-      if (day == 0 & year == start_year) {
+      if ((day == 0) & (year == start_year)) {
         sugar_values_for_next_iteration.sugar.needles = original_parameters.sugar.needles = parameters.sugar_needles0;
         sugar_values_for_next_iteration.sugar.phloem = original_parameters.sugar.phloem = parameters.sugar_phloem0;
         sugar_values_for_next_iteration.sugar.roots = original_parameters.sugar.roots = parameters.sugar_roots0;
@@ -333,7 +332,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_for_next_iteration.starch.xylem_sh = original_parameters.starch.xylem_sh = parameters.starch_xylem_sh0;
         sugar_values_for_next_iteration.starch.xylem_st = original_parameters.starch.xylem_st = parameters.starch_xylem_st0;
         sugar_values_for_next_iteration.starch.mycorrhiza = original_parameters.starch.mycorrhiza = 0;
-      } else if (day == 0 & year != start_year) {
+      } else if ((day == 0) & (year != start_year)) {
         sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
         sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
         sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
