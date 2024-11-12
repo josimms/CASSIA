@@ -1,5 +1,6 @@
 #include "CASSIA.h"
 
+//' @export
 // [[Rcpp::export]]
 Rcpp::List CASSIA_soil(int start_year,
                        int end_year,
@@ -39,6 +40,8 @@ Rcpp::List CASSIA_soil(int start_year,
   // parameters_in.mantle_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
   // parameters_in.ERM_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
 
+  phydro_canopy_parameters phydro_parameters; // TODO: make this into the inputs
+
   Settings boolsettings = parseSettings(settings);
 
   /*
@@ -56,6 +59,8 @@ Rcpp::List CASSIA_soil(int start_year,
   std::vector<double> Soil_Moisture = weather["MB"];
   std::vector<double> Precip  = weather["Rain"];
   std::vector<double> CO2 = weather["CO2"];
+  // TODO: make the PA value input or remove it from the code!
+  // std::vector<double> PA = weather["PA"];
 
   /*
    * Structures set up
@@ -107,6 +112,11 @@ Rcpp::List CASSIA_soil(int start_year,
 
   growth_vector potential_growth_output;
   growth_vector actual_growth_output;
+  growth_vector culm_growth;
+  PlantAssimilationResult phydro_assimilation;
+  culm_growth.height[0] = parameters.h0;
+  culm_growth.roots[0] = 0.1; // TODO: what is the initialisation here?
+  culm_growth.needles[0] = repola_values.needle_mass;
   biomass_vector biomass_output;
   sugar_values_vector sugar_values_output;
   photo_out_vector photosynthesis_output;
@@ -297,18 +307,42 @@ Rcpp::List CASSIA_soil(int start_year,
         photosynthesis.GPP = Photosynthesis_IN[count];
         photosynthesis_per_stem = Photosynthesis_IN[count] / 1010 * 10000/1000;
       } else {
-        double fAPAR = 0.7; // TODO: just for the first checks
-        photosynthesis = preles(day, PAR[day], TAir[day], VPD[day], Precip[day],
-                                CO2[day], fAPAR, Nitrogen[day],
-                                parSite, parGPP, parET, parSnowRain, parWater, parN,
-                                boolsettings.etmodel, theta, theta_snow, theta_canopy, Throughfall,
-                                S, PhenoS, Snowmelt, intercepted, Drainage, canw,
-                                fE, transp, evap, fWE, fW, gpp380);
+        if (boolsettings.phydro) {
+          double lai = 1.8; // TODO: add a value here?
+          double mass_to_area = 1.8; // TODO: add a value here?
+          double crown_area = culm_growth.needles[day-1] * mass_to_area; // TODO: check that the canopy area is the whole area rather than the intercepting area
+          double zeta = crown_area / culm_growth.roots[day-1];
+          double n_layers = 3; // TODO: does this need to be predetermined in the canopy area / env bits
+          // TODO: note that nitrogen is the nitrogen store in the leaf rather than the nitrogen input overall
+          double Nitrogen = 1; // Currently no functions for this!
 
-        photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
-        fS = photosynthesis.fS;
+          double PA = 1000;
+          double SWP = 0.01;
 
-        photosynthesis_old = photosynthesis;
+          double fipar = 0.7; // TODO: real value
+
+          phydro_assimilation = calc_plant_assimilation_rate(fipar,
+                                                             PAR[day], TAir[day], VPD[day], Precip[day], CO2[day], Nitrogen, PA, SWP,
+                                                             phydro_parameters, lai, n_layers, crown_area, culm_growth.height[day-1], zeta);
+
+          // TODO: need to check the exact unit of GPP going into the model
+          photosynthesis.GPP = phydro_assimilation.gpp;
+
+
+        } else {
+          double fAPAR = 0.7; // TODO: just for the first checks
+          photosynthesis = preles(day, PAR[day], TAir[day], VPD[day], Precip[day],
+                                  CO2[day], fAPAR, Nitrogen[day],
+                                  parSite, parGPP, parET, parSnowRain, parWater, parN,
+                                  boolsettings.etmodel, theta, theta_snow, theta_canopy, Throughfall,
+                                  S, PhenoS, Snowmelt, intercepted, Drainage, canw,
+                                  fE, transp, evap, fWE, fW, gpp380);
+
+          photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
+          fS = photosynthesis.fS;
+
+          photosynthesis_old = photosynthesis;
+        }
       }
 
       if (day == 0) {
@@ -431,6 +465,12 @@ Rcpp::List CASSIA_soil(int start_year,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
                                                    boolsettings.sperling_model);
+
+      // Cumulative values
+      // TODO: indexes
+      culm_growth.height[day] = culm_growth.height[day-1] + actual_growth_out.height;
+      culm_growth.roots[day] = culm_growth.roots[day-1] + actual_growth_out.roots;
+      culm_growth.needles[day] = culm_growth.needles[day-1] + actual_growth_out.needles;
 
       // std::cout << "\n";
 
@@ -595,7 +635,8 @@ Rcpp::List CASSIA_soil(int start_year,
       GPP_sum_yesterday = GPP_sum;
 
       if (final_year%2==0) {
-        // TODO: Add soil and mycofon here!
+
+        // To vectors
 
         years.push_back(year);
         days.push_back(day);
