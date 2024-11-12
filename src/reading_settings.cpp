@@ -32,6 +32,7 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.environmental_effect_xylogenesis = Rcpp::as<bool>(settingsList["environment_effect_xylogenesis"]);
 
   settings.photosynthesis_as_input = Rcpp::as<bool>(settingsList["photosynthesis_as_input"]);
+  settings.phydro = Rcpp::as<bool>(settingsList["ecoevolutionary"]);
 
   settings.photoparameters = Rcpp::as<int>(settingsList["photoparameters"]);
   settings.temp_rise = Rcpp::as<bool>(settingsList["temp_rise"]);
