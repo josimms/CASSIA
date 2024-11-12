@@ -371,38 +371,55 @@ Rcpp::List CASSIA_yearly(int start_year,
                          Rcpp::DataFrame pCASSIA_sperling,
 
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
-
                          double Throughfall,
 
-                         bool storage_rest,
-                         bool storage_grows,
+                         Rcpp::List settings);
 
-                         bool LH_estim,
-                         bool LN_estim,
-                         bool mN_varies,
-                         bool LD_estim,
-                         bool sD_estim_T_count,
+/*
+ * Ecoevolutionary
+ */
 
-                         bool trees_grow,
-                         bool growth_decreases,
-                         bool needle_mass_grows,
+Rcpp::List CASSIA_eeo(int start_year,
+                      int end_year,
 
-                         bool mycorrhiza,
-                         bool root_as_Ding,
-                         bool sperling_sugar_model,
+                      Rcpp::DataFrame weather,
+                      std::vector<double> GPP_ref,
 
-                         bool xylogensis_option,
+                      std::vector<double> pPREL,
+                      Rcpp::DataFrame pCASSIA_parameters,
+                      Rcpp::DataFrame pCASSIA_common,
+                      Rcpp::DataFrame pCASSIA_ratios,
+                      Rcpp::DataFrame pCASSIA_sperling,
+                      std::vector<double> parameters_R,
 
-                         bool environmental_effect_xylogenesis,
-                         bool temp_rise,
-                         bool drought,
-                         bool Rm_acclimation,
+                      double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
+                      double Throughfall,
+                      int trenching_year,
 
-                         bool using_spp_photosynthesis,
-                         bool CASSIA_graphs,
+                      Rcpp::List settings);
 
-                         int etmodel,
-                         int LOGFLAG);
+/*
+ * Soil
+ */
+
+Rcpp::List CASSIA_soil(int start_year,
+                       int end_year,
+
+                       Rcpp::DataFrame weather,
+                       std::vector<double> GPP_ref,
+
+                       std::vector<double> pPREL,
+                       Rcpp::DataFrame pCASSIA_parameters,
+                       Rcpp::DataFrame pCASSIA_common,
+                       Rcpp::DataFrame pCASSIA_ratios,
+                       Rcpp::DataFrame pCASSIA_sperling,
+                       std::vector<double> parameters_R,
+
+                       double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
+                       double Throughfall,
+                       int trenching_year,
+
+                       Rcpp::List settings);
 
 /*
  * Parameters
@@ -483,6 +500,7 @@ struct Settings {
   bool environmental_effect_xylogenesis;
 
   bool photosynthesis_as_input;
+  bool phydro;
 
   int photoparameters;
   bool temp_rise;
@@ -496,5 +514,13 @@ struct Settings {
 
 // Inporting settings function
 Settings parseSettings(Rcpp::List settingsList);
+
+/*
+ * Plant Fate Logic
+ */
+
+PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
+                                                     double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                     phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta);
 
 #endif

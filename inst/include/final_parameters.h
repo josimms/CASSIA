@@ -173,6 +173,36 @@ struct CASSIA_ratios {
   double diameter_growth_coefficient_min;
 };
 
+struct phydro_canopy_parameters {
+  // Photosynthesis
+  double alpha; // Cost for photosynthesis
+  double gamma; // Cost for water
+  double infra_translation; // Conversion from area biomass ratio to nitrogen price
+  double kphio; // Quantum yield
+  double rd; // Dark respiration
+  double a_jmax = 50; // Nitorgen to jmax ratio
+
+  double p50_leaf;        ///< Leaf or whole-plant hydraulic vulnerability [MPa] (calculated from Xylem P50 and Safety margin)
+  double K_leaf;          ///< Leaf conductivity [m]
+  double b_leaf;          ///< Shape parameter of leaf vulnerabilty curve [-]
+  double cbio; // TODO: what is this?
+
+  // Environment
+  int n_layers;
+  double total_crown_area;
+  std::vector<double> z_star;
+  std::vector<double> fapar_tot;
+  std::vector<double> canopy_openness;
+
+  // Canopy
+  double m;
+  double n;
+  double zm_H; // qm, zm_H Precomputed Geometric parameters
+  double qm;
+  double fg; // fg upper canopy gap fraction
+  double k_light;
+};
+
 /*
  * PRELES structure
  */
