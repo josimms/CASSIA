@@ -59,7 +59,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   ### PARAMETERS
   new_parameters <- rep(0.5, 27)  # Example new parameters
   calibration = F
-  parameters <- initialize_parameters(calibration, new_parameters)
+  parameters_all <- initialize_parameters(calibration, new_parameters)
 
   ###
   # Numerical tests of the functions in the model
@@ -74,37 +74,37 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   soil_processes = TRUE
   CASSIA_new_output_not_trenching = CASSIA_cpp(weather = processed_data$weather_original,
                                               site = "Hyde",
-                                              pPREL = c(parameters$pPREL, parameters$N_parameters),
-                                              parameters = parameters$parameters_test,
+                                              pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                              parameters = parameters_all$parameters_test,
                                               common = common_p,
                                               ratios = ratios_p,
-                                              sperling = parameters$sperling_test,
-                                              parameters_R = parameters$parameters_R,
-                                              needle_mass_in = parameters$needle_mass_in,
-                                              Throughfall = parameters$Throughfall,
+                                              sperling = parameters_all$sperling_test,
+                                              parameters_R = parameters_all$parameters_R,
+                                              needle_mass_in = parameters_all$needle_mass_in,
+                                              Throughfall = parameters_all$Throughfall,
                                               trenching_year = NA,
                                               soil = soil_processes)
   CASSIA_new_output_trenching = CASSIA_cpp(weather = processed_data$weather_original,
                                             site = "Hyde",
-                                            pPREL = c(parameters$pPREL, parameters$N_parameters),
-                                            parameters = parameters$parameters_test,
+                                            pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                            parameters = parameters_all$parameters_test,
                                             common = common_p,
                                             ratios = ratios_p,
-                                            sperling = parameters$sperling_test,
-                                            parameters_R = parameters$parameters_R,
-                                            needle_mass_in = parameters$needle_mass_in,
-                                            Throughfall = parameters$Throughfall,
+                                            sperling = parameters_all$sperling_test,
+                                            parameters_R = parameters_all$parameters_R,
+                                            needle_mass_in = parameters_all$needle_mass_in,
+                                            Throughfall = parameters_all$Throughfall,
                                             trenching_year = 2015,
                                             soil = soil_processes)
   CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
                                  site = "Hyde",
-                                 pPREL = c(parameters$pPREL, parameters$N_parameters),
-                                 parameters = parameters$parameters_test,
+                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                 parameters = parameters_all$parameters_test,
                                  common = common_p,
                                  ratios = ratios_p,
-                                 sperling = parameters$sperling_test,
-                                 needle_mass_in = parameters$needle_mass_in,
-                                 Throughfall = parameters$Throughfall)
+                                 sperling = parameters_all$sperling_test,
+                                 needle_mass_in = parameters_all$needle_mass_in,
+                                 Throughfall = parameters_all$Throughfall)
 
   ###
   # Weather Data Plots
