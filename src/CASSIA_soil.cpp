@@ -235,10 +235,7 @@ Rcpp::List CASSIA_soil(int start_year,
      * DAYS LOOP
      */
     photosynthesis_out photosynthesis_old;
-    int count;
     for (int day = 0; day < days_per_year; day++) {
-      count = (year - start_year)*days_per_year + day;
-      // std::cout << " Day: " << day;
 
       /*
        * PHOTOSYNTHESIS
@@ -302,8 +299,8 @@ Rcpp::List CASSIA_soil(int start_year,
       }
 
       if (boolsettings.photosynthesis_as_input) {
-        photosynthesis.GPP = Photosynthesis_IN[count];
-        photosynthesis_per_stem = Photosynthesis_IN[count] / 1010 * 10000/1000;
+        photosynthesis.GPP = Photosynthesis_IN[day];
+        photosynthesis_per_stem = Photosynthesis_IN[day] / 1010 * 10000/1000;
       } else {
         if (boolsettings.phydro) {
           double lai = 1.8; // TODO: add a value here?
@@ -343,6 +340,8 @@ Rcpp::List CASSIA_soil(int start_year,
         }
       }
 
+      std::cout << "photosynthesis.GPP " << photosynthesis.GPP << "\n";
+
       if (day == 0) {
         GPP_sum = 0.0;
       } else if (day <= 182) {
@@ -360,14 +359,14 @@ Rcpp::List CASSIA_soil(int start_year,
        */
 
       double en_pot_growth_old;
-      if (count < 11) {
+      if (day < 11) {
         en_pot_growth_old = 0.0;
       } else {
-        en_pot_growth_old = potenital_growth_use[count-11];
+        en_pot_growth_old = potenital_growth_use[day-11];
       }
 
       GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
-      growth_out potential_growth = growth(day, year, TAir[count], TSoil_A[count], TSoil_B[count], Soil_Moisture[count], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[day], TSoil_A[day], TSoil_B[day], Soil_Moisture[day], photosynthesis.GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
@@ -385,7 +384,7 @@ Rcpp::List CASSIA_soil(int start_year,
        */
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
-                                         TAir[count], TSoil_A[count],
+                                         TAir[day], TSoil_A[day],
                                          boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
                                          // parameters that I am not sure about
                                          B0); // TODO: respiration for the fungi and microbes
@@ -424,7 +423,7 @@ Rcpp::List CASSIA_soil(int start_year,
         sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
         sugar_values_for_next_iteration.starch.mycorrhiza = 0.0;
       } else {
-        carbo_balance sugar_model_out = sugar_model(day, TAir[count], photosynthesis_per_stem,
+        carbo_balance sugar_model_out = sugar_model(day, TAir[day], photosynthesis_per_stem,
                                                     common, parameters,
                                                     D00,
                                                     potential_growth.previous_values.sH,
@@ -557,9 +556,9 @@ Rcpp::List CASSIA_soil(int start_year,
                                                          soil_values_for_next_iteration.NH4,
                                                          soil_values_for_next_iteration.NO3,
                                                          soil_values_for_next_iteration.N_FOM,
-                                                         TAir[count],
-                                                         TSoil_B[count],
-                                                         Soil_Moisture[count],
+                                                         TAir[day],
+                                                         TSoil_B[day],
+                                                         Soil_Moisture[day],
                                                          false,
                                                          trenching);
         // TODO: does the sugar balance for this need to be added to the CASSIA model?
@@ -593,7 +592,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
       // TODO: if there are no roots then there can't be transfers sort this!
 
-      SYMPHONY_output Soil_All = symphony_multiple_FOM_daily(TSoil_B[count], Soil_Moisture[count],
+      SYMPHONY_output Soil_All = symphony_multiple_FOM_daily(TSoil_B[day], Soil_Moisture[day],
                                                             soil_values_for_next_iteration.C_FOM_needles,
                                                             soil_values_for_next_iteration.C_FOM_woody,
                                                             soil_values_for_next_iteration.C_FOM_roots,

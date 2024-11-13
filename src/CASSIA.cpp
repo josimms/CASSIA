@@ -44,6 +44,10 @@ Rcpp::List CASSIA_yearly(int start_year,
   CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
 
+  CASSIA_parameter_test(parameters);
+  // CASSIA_common_test(pCASSIA_common);
+  // CASSIA_ratios_test(pCASSIA_ratios, "Hyde");
+
   Settings boolsettings = parseSettings(settings);
 
   /*
@@ -219,11 +223,7 @@ Rcpp::List CASSIA_yearly(int start_year,
     /*
      * DAYS LOOP
      */
-    int count;
     for (int day = 0; day < days_per_year; day++) {
-      count = (year - start_year)*days_per_year + day;
-
-      // std::cout << " Day: " << day;
 
       /*
        * PHOTOSYNTHESIS
@@ -249,8 +249,8 @@ Rcpp::List CASSIA_yearly(int start_year,
       double photosynthesis_per_stem;
       photosynthesis_out photosynthesis;
       if (boolsettings.photosynthesis_as_input) {
-        photosynthesis.GPP = Photosynthesis_IN[count];
-        photosynthesis_per_stem = Photosynthesis_IN[count] / 1010 * 10000/1000;
+        photosynthesis.GPP = Photosynthesis_IN[day];
+        photosynthesis_per_stem = Photosynthesis_IN[day] / 1010 * 10000/1000;
       } else {
         photosynthesis.GPP = 0;
         photosynthesis.ET = 0;
@@ -276,6 +276,8 @@ Rcpp::List CASSIA_yearly(int start_year,
         GPP_sum = GPP_sum_yesterday;
       }
 
+      std::cout << "photosynthesis.GPP: " << photosynthesis.GPP << " Photosynthesis: " << Photosynthesis_IN[day] << "\n";
+
       /*
        * Potential Growth
        *
@@ -283,14 +285,14 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       double en_pot_growth_old;
-      if (count < 11) {
+      if (day < 11) {
         en_pot_growth_old = 0.0;
       } else {
-        en_pot_growth_old = potenital_growth_use[count-11];
+        en_pot_growth_old = potenital_growth_use[day-11];
       }
 
       GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
-      growth_out potential_growth = growth(day, year, TAir[count], TSoil_A[count], TSoil_B[count], Soil_Moisture[count], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[day], TSoil_A[day], TSoil_B[day], Soil_Moisture[day], photosynthesis.GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
@@ -308,7 +310,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
-                                         TAir[count], TSoil_A[count],
+                                         TAir[day], TSoil_A[day],
                                                              boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
                                                              // parameters that I am not sure about
                                                              B0);
@@ -347,7 +349,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
         sugar_values_for_next_iteration.starch.mycorrhiza = 0;
       } else {
-        carbo_balance sugar_model_out = sugar_model(day, TAir[count], photosynthesis_per_stem,
+        carbo_balance sugar_model_out = sugar_model(day, TAir[day], photosynthesis_per_stem,
                                                     common, parameters,
                                                     D00,
                                                     potential_growth.previous_values.sH,
@@ -407,7 +409,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       needles_last = potential_growth.needles;
       potenital_growth_use.push_back(potential_growth.use);
       if (!tree_alive) {
-        std::cout << "The tree is dead due to sugar storage\n";
+        // std::cout << "The tree is dead due to sugar storage\n";
       }
 
       GPP_sum_yesterday = GPP_sum;
