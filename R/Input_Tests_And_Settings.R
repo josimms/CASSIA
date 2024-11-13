@@ -38,7 +38,7 @@ update_model_settings <- function(settings) {
   return(settings)
 }
 
-validate_weather_data <- function(weather, PRELES_GPP) {
+validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
   # Function to generate warning messages
   check_values <- function(column, min_val, max_val) {
     if (any(column < min_val | column > max_val, na.rm = TRUE)) {
@@ -67,7 +67,7 @@ validate_weather_data <- function(weather, PRELES_GPP) {
   # Function to check for NA values and issue warnings
   check_na <- function(column) {
     if (any(is.na(column))) {
-      error(paste(deparse(substitute(column)), "has NA values. Check input."))
+      stop(paste(deparse(substitute(column)), "has NA values. Check input."))
     }
   }
 

@@ -130,7 +130,7 @@ CASSIA_cpp <- function(
   updated_settings <- update_model_settings(settings)
 
   # Is the weather data correct?
-  validate_weather_data(weather, updated_settings$PRELES_GPP)
+  validate_weather_data(weather, updated_settings$PRELES_GPP, updated_settings$ecoevolutionary)
 
   #####
   ## Model conditions derived from model inputs
