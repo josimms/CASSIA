@@ -340,8 +340,6 @@ Rcpp::List CASSIA_soil(int start_year,
         }
       }
 
-      std::cout << "photosynthesis.GPP " << photosynthesis.GPP << "\n";
-
       if (day == 0) {
         GPP_sum = 0.0;
       } else if (day <= 182) {

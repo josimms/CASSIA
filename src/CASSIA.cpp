@@ -44,10 +44,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
 
-  CASSIA_parameter_test(parameters);
-  // CASSIA_common_test(pCASSIA_common);
-  // CASSIA_ratios_test(pCASSIA_ratios, "Hyde");
-
   Settings boolsettings = parseSettings(settings);
 
   /*
@@ -275,8 +271,6 @@ Rcpp::List CASSIA_yearly(int start_year,
       } else if (day > 245) {
         GPP_sum = GPP_sum_yesterday;
       }
-
-      std::cout << "photosynthesis.GPP: " << photosynthesis.GPP << " Photosynthesis: " << Photosynthesis_IN[day] << "\n";
 
       /*
        * Potential Growth
