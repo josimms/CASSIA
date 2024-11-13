@@ -61,16 +61,84 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   calibration = F
   parameters_all <- initialize_parameters(calibration, new_parameters)
 
+  ### PLOTTING INFORMATION
+  variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
+  variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
+
+  Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365),]
+
   ###
   # Numerical tests of the functions in the model
   ###
 
+  weather_with_na = processed_data$weather_original
+  weather_with_na_row = weather_with_na
+  weather_with_na_row[10,] = NA
+
+  weather_with_na_column = weather_with_na
+  weather_with_na_column[,3] = NA
+
+  soil_processes = FALSE
+  CASSIA_new_output_na_row = CASSIA_cpp(weather = weather_with_na_row,
+                                 site = "Hyde",
+                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                 parameters = parameters_all$parameters_test,
+                                 common = common_p,
+                                 ratios = ratios_p,
+                                 sperling = parameters_all$sperling_test,
+                                 needle_mass_in = parameters_all$needle_mass_in,
+                                 Throughfall = parameters_all$Throughfall)
+
+  CASSIA_new_output_na_col = CASSIA_cpp(weather = weather_with_na_column,
+                                        site = "Hyde",
+                                        pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                        parameters = parameters_all$parameters_test,
+                                        common = common_p,
+                                        ratios = ratios_p,
+                                        sperling = parameters_all$sperling_test,
+                                        needle_mass_in = parameters_all$needle_mass_in,
+                                        Throughfall = parameters_all$Throughfall)
+
+  if (sum(is.na(summary(CASSIA_new_output_na_row$Growth))) != 0) {
+    print("weather_with_na_row causes error: Test Passed")
+  }
+  if (sum(is.na(summary(CASSIA_new_output_na_col$Growth))) != 0) {
+    print("weather_with_na_row causes error: Test Passed")
+  }
+
   # TODO: write this
 
   ###
-  # Running the functions
+  # Weather Data Plots
   ###
 
+  plot_weather_variables(processed_data$weather_original, processed_data$dates)
+
+  ###
+  # Plotting the results
+  #
+  # NO SOIL
+  ###
+
+  soil_processes = FALSE
+  CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
+                                 site = "Hyde",
+                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                 parameters = parameters_all$parameters_test,
+                                 common = common_p,
+                                 ratios = ratios_p,
+                                 sperling = parameters_all$sperling_test,
+                                 needle_mass_in = parameters_all$needle_mass_in,
+                                 Throughfall = parameters_all$Throughfall)
+
+  plot_comparison(CASSIA_new_output, variables_new, processed_data$dates, processed_data$dates_original,
+                  Hyde_daily_original_plot, variables_original, processed_data$Photosynthesis_Reference, soil_processes)
+
+  plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+
+  ### SOIL
+
+  ### Soil Processes
   soil_processes = TRUE
   CASSIA_new_output_not_trenching = CASSIA_cpp(weather = processed_data$weather_original,
                                               site = "Hyde",
@@ -84,6 +152,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                               Throughfall = parameters_all$Throughfall,
                                               trenching_year = NA,
                                               soil = soil_processes)
+
   CASSIA_new_output_trenching = CASSIA_cpp(weather = processed_data$weather_original,
                                             site = "Hyde",
                                             pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
@@ -96,46 +165,16 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                             Throughfall = parameters_all$Throughfall,
                                             trenching_year = 2015,
                                             soil = soil_processes)
-  CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
-                                 site = "Hyde",
-                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                 parameters = parameters_all$parameters_test,
-                                 common = common_p,
-                                 ratios = ratios_p,
-                                 sperling = parameters_all$sperling_test,
-                                 needle_mass_in = parameters_all$needle_mass_in,
-                                 Throughfall = parameters_all$Throughfall)
 
-  ###
-  # Weather Data Plots
-  ###
-
-  plot_weather_variables(processed_data$weather_original, processed_data$dates)
-
-  ###
-  # Previous CASSIA Outpoints against new outputs
-  ###
-  variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
-  variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
-
-  Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365),]
-
-  # TODO: debug
-  plot_comparison(CASSIA_new_output, variables_new, processed_data$dates, processed_data$dates_original,
+  plot_comparison(CASSIA_new_output_not_trenching, variables_new, processed_data$dates, processed_data$dates_original,
                   Hyde_daily_original_plot, variables_original, processed_data$Photosynthesis_Reference, soil_processes)
 
-  # TODO: add a xylogenesis function here
+  plot_comparison(CASSIA_new_output_trenching, variables_new, processed_data$dates, processed_data$dates_original,
+                  Hyde_daily_original_plot, variables_original, processed_data$Photosynthesis_Reference, soil_processes)
 
-  # TODO: add the water dependencies
-
-  ###
-  # Sugar
-  ###
   plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
 
-  ###
-  # Soil Processes
-  ###
+  ### Extra Soil Processes
 
   if (soil_processes) {
     # Decision values
@@ -158,7 +197,11 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # Respiration
   ###
 
-  plot_total_ecosystem_respiration(CASSIA_new_output, CASSIA_new_output_trenching, dates)
+  plot_total_ecosystem_respiration(CASSIA_new_output_not_trenching, CASSIA_new_output_trenching, dates)
+
+  # TODO: add a xylogenesis function here
+
+  # TODO: add the water dependencies
 
   return(CASSIA_new_output_trenching)
 }
