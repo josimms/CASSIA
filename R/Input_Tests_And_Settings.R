@@ -67,17 +67,9 @@ validate_weather_data <- function(weather, PRELES_GPP) {
   # Function to check for NA values and issue warnings
   check_na <- function(column) {
     if (any(is.na(column))) {
-      warning(paste(deparse(substitute(column)), "has NA values. Check input."))
+      error(paste(deparse(substitute(column)), "has NA values. Check input."))
     }
   }
-
-  # Check for NA values in columns
-  check_na(weather$T)
-  check_na(weather$PF)
-  check_na(weather$Tsa)
-  check_na(weather$Tsb)
-  check_na(weather$M.soil)
-  check_na(weather$Rain)
 
   # Check if weather data has the required columns
   if (PRELES_GPP) {
@@ -85,11 +77,30 @@ validate_weather_data <- function(weather, PRELES_GPP) {
     if (!all(required_columns %in% names(weather))) {
       stop("Incomplete weather data - incorrect variables, or named incorrectly")
     }
+
+    check_na(weather$T)
+    check_na(weather$P)
+    check_na(weather$Tsa)
+    check_na(weather$Tsb)
+    check_na(weather$M.soil) # MB?
+    check_na(weather$Rain)
+    check_na(weather$PAR)
+    check_na(weather$VPD)
+    check_na(weather$fAPAR)
+  } else if (ecoevolutionary) {
+    ### TODO: required columns for the weather data
   } else {
     required_columns <- c("date", "T", "P", "TSA", "TSB", "MB", "Rain")
     if (!all(required_columns %in% names(weather))) {
       stop("Incomplete weather data - incorrect variables, or named incorrectly")
     }
+
+    check_na(weather$T)
+    check_na(weather$P)
+    check_na(weather$Tsa)
+    check_na(weather$Tsb)
+    check_na(weather$M.soil) # MB?
+    check_na(weather$Rain)
   }
 }
 
