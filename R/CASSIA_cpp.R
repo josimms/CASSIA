@@ -136,8 +136,9 @@ CASSIA_cpp <- function(
   ## Model conditions derived from model inputs
   #####
   # years from weather data
-  start_year <- as.numeric(substring(weather$date[end(weather$date)], 1, 4))[2]
-  end_year <- as.numeric(substring(weather$date[end(weather$date)], 1, 4))[1]
+  date_range = as.numeric(substring(weather$dates[c(1, nrow(weather))], 1, 4))
+  start_year <- date_range[1]
+  end_year <- date_range[2]
 
   if (soil) {
     out <- CASSIA_soil(start_year, end_year, weather, GPP_ref_in,
