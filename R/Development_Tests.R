@@ -58,7 +58,6 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   ### PARAMETERS
   new_parameters <- rep(0.5, 27)  # Example new parameters
-  calibration = F
   parameters_all <- initialize_parameters(calibration, new_parameters)
 
   ### PLOTTING INFORMATION
@@ -71,42 +70,58 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # Numerical tests of the functions in the model
   ###
 
-  weather_with_na = processed_data$weather_original
-  weather_with_na_row = weather_with_na
-  weather_with_na_row[10,] = NA
+  an.error.occured <- c()
+  for (i in 1:nrow(weather_with_na)) {
+    weather_with_na = processed_data$weather_original
+    weather_with_na_row = weather_with_na
+    weather_with_na_row[i,] = NA
 
-  weather_with_na_column = weather_with_na
-  weather_with_na_column[,3] = NA
-
-  soil_processes = FALSE
-  CASSIA_new_output_na_row = CASSIA_cpp(weather = weather_with_na_row,
-                                 site = "Hyde",
-                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                 parameters = parameters_all$parameters_test,
-                                 common = common_p,
-                                 ratios = ratios_p,
-                                 sperling = parameters_all$sperling_test,
-                                 needle_mass_in = parameters_all$needle_mass_in,
-                                 Throughfall = parameters_all$Throughfall)
-
-  CASSIA_new_output_na_col = CASSIA_cpp(weather = weather_with_na_column,
-                                        site = "Hyde",
-                                        pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                        parameters = parameters_all$parameters_test,
-                                        common = common_p,
-                                        ratios = ratios_p,
-                                        sperling = parameters_all$sperling_test,
-                                        needle_mass_in = parameters_all$needle_mass_in,
-                                        Throughfall = parameters_all$Throughfall)
-
-  if (sum(is.na(summary(CASSIA_new_output_na_row$Growth))) != 0) {
-    print("weather_with_na_row causes error: Test Passed")
+    tryCatch({soil_processes = FALSE
+    CASSIA_new_output_na_row = CASSIA_cpp(weather = weather_with_na_row,
+                                          site = "Hyde",
+                                          pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                          parameters = parameters_all$parameters_test,
+                                          common = common_p,
+                                          ratios = ratios_p,
+                                          sperling = parameters_all$sperling_test,
+                                          needle_mass_in = parameters_all$needle_mass_in,
+                                          Throughfall = parameters_all$Throughfall)},
+    error = function(e) {
+      # Set error flag to TRUE if an error occurs
+      an.error.occured[i] <<- TRUE
+    }
+    )
   }
-  if (sum(is.na(summary(CASSIA_new_output_na_col$Growth))) != 0) {
-    print("weather_with_na_row causes error: Test Passed")
+  if (sum(an.error.occured) == nrow(weather_with_na)) {
+    print("Test passed NA in row")
+  } else {
+    stop("Test failed. Not all NAs in rows caught.")
   }
 
-  # TODO: write this
+  an.error.occured <- c()
+  for (j in c(2:7)) { ## Only checking for the original columns
+    weather_with_na_column = processed_data$weather_original
+    weather_with_na_column[,j] = NA
+
+    tryCatch({CASSIA_new_output_na_col = CASSIA_cpp(weather = weather_with_na_column,
+                                                    site = "Hyde",
+                                                    pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                                    parameters = parameters_all$parameters_test,
+                                                    common = common_p,
+                                                    ratios = ratios_p,
+                                                    sperling = parameters_all$sperling_test,
+                                                    needle_mass_in = parameters_all$needle_mass_in,
+                                                    Throughfall = parameters_all$Throughfall)},
+             error = function(e) {
+               # Set error flag to TRUE if an error occurs
+               an.error.occured[j-1] <<- TRUE
+             })
+  }
+  if (sum(an.error.occured) == 6) {
+    print("Test passed NA in column")
+  } else {
+    stop("Test failed. Not all NAs in columns caught.")
+  }
 
   ###
   # Weather Data Plots
