@@ -289,7 +289,8 @@ plot_comparison <- function(CASSIA_new_output, variables_new, dates, dates_origi
 
 plot_weather_variables <- function(weather_original, dates) {
   par(mfrow = c(3, 3))
-  for (clim in 2:ncol(weather_original)) {
+  not_dates = !(names(weather_original) %in% c("dates", "Date", "date", "X"))
+  for (clim in which(not_dates)) {
     plot(dates, weather_original[,clim],
          main = names(weather_original)[clim],
          ylab = names(weather_original)[clim],
