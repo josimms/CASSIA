@@ -13,5 +13,7 @@ Imports: Rcpp (>= 1.0.9), data.table, dplyr, ncdf4, bigleaf, lubridate
 LinkingTo: Rcpp
 Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VingetteBuilder: knitr
+Config/testthat/edition: 3
