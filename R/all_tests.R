@@ -65,19 +65,17 @@ process_weather_data <- function(using_spp_photosynthesis) {
 
   # Combine weather data with extra columns and remove specific rows
   weather_original <- cbind(weather_original, extras)
-  weather_original <- weather_original[-c(365 + 366), ]
+  weather_original <- weather_original
 
   # Set up dates
   dates_original <- seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
-  dates_original <- dates_original[-c(365 + 366)]
+  dates_original <- dates_original
   dates <- dates_original
   start_year <- 2015
   end_year <- 2018
-  Photosynthesis_Reference <- weather_original$P
 
   # Adjust weather data and dates if not using spp photosynthesis
   if (!using_spp_photosynthesis) {
-    Photosynthesis_Reference <- weather_original$P
     weather_original <- data_format
     weather_original$Nitrogen <- rep(0.012, nrow(weather_original))
     weather_original$P <- rep(0.0, nrow(weather_original))
@@ -104,10 +102,7 @@ process_weather_data <- function(using_spp_photosynthesis) {
   # Return the processed weather data and dates
   return(list(weather_original = weather_original,
               dates = dates,
-              dates_original = dates_original,
-              start_year = start_year,
-              end_year = end_year,
-              Photosynthesis_Reference = Photosynthesis_Reference)) # TODO: should the end and start dates be hard coded?
+              dates_original = dates_original))
 }
 
 ####
@@ -238,44 +233,45 @@ initialize_parameters <- function(calibration = FALSE, new_parameters = NULL) {
 # Plot old CASSIA verison against new CASSIA version
 #####
 
-plot_comparison <- function(CASSIA_new_output, variables_new, dates, dates_original, Hyde_daily_original_plot, variables_original, Photosynthesis_Reference, soil_processes = FALSE) {
+plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_original_plot, variables_original, soil_processes = FALSE) {
   par(mfrow = c(3, 3))
+
+  dates = as.Date(strptime(paste(CASSIA_new_output$Growth$year, CASSIA_new_output$Growth$day), format = "%Y %j"))
+  dates_original = as.Date(strptime(paste(Hyde_daily_original_plot$year, Hyde_daily_original_plot$day), format = "%Y %j"))
 
   for (var in 1:length(variables_new)) {
     if (var < length(variables_new)) {
       # Plot Outputs
-      plot(dates, CASSIA_new_output[[1]][, variables_new[var]],
+      plot(dates, CASSIA_new_output$Growth[, variables_new[var]],
            main = "Outputs", xlab = "Date", ylab = gsub("_", " ", variables_new[var]), type = "l")
       lines(dates_original, Hyde_daily_original_plot[, variables_original[var]], col = "blue")
 
       # Plot New against Old
-      plot(Hyde_daily_original_plot[, variables_original[var]][-731],
-           CASSIA_new_output[[1]][, variables_new[var]][dates %in% dates_original][-731],
+      plot(Hyde_daily_original_plot[, variables_original[var]],
+           CASSIA_new_output$Growth[, variables_new[var]][-731],
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
 
       # Plot Residuals
-      plot(dates_original, Hyde_daily_original_plot[, variables_original[var]] - CASSIA_new_output[[1]][, variables_new[var]][dates %in% dates_original],
+      plot(dates_original, Hyde_daily_original_plot[, variables_original[var]] - CASSIA_new_output$Growth[, variables_new[var]][-731],
            main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
 
     } else {
-      # Determine index for photo data based on soil_processes
-      photo_index <- ifelse(soil_processes, 5, 3)
-
       # Plot Outputs
-      plot(dates, CASSIA_new_output[[photo_index]][, variables_new[var]],
+      plot(dates, CASSIA_new_output$Preles[, variables_new[var]],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
-      lines(dates_original, Photosynthesis_Reference, col = "blue")
+      lines(dates_original, Hyde_daily_original_plot$P * 1010 * 0.1, col = "blue")
 
       # Plot New against Old
-      plot(Photosynthesis_Reference,
-           CASSIA_new_output[[photo_index]][, variables_new[var]][dates %in% dates_original],
-           main = "New against old", xlab = "Original data", ylab = "New Data")
+      plot(Hyde_daily_original_plot$P * 1010 * 0.1,
+           CASSIA_new_output$Preles[, variables_new[var]][-731],
+           main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
 
       # Plot Residuals
-      plot(dates_original, Photosynthesis_Reference - CASSIA_new_output[[photo_index]][, variables_new[var]][dates %in% dates_original],
-           main = "Residuals", xlab = "Date", ylab = "original - new output")
+      plot(dates_original, Hyde_daily_original_plot$P * 1010 * 0.1 - CASSIA_new_output$Preles[, variables_new[var]][-731],
+           main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
+      legend("topright", c("C++ Model", "Original R Model"), col = c("black", "blue"), bty = "n", lty = 1, cex = 0.75)
     }
   }
 }

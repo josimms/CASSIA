@@ -64,16 +64,15 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
   variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
-  Hyde_daily_original_plot <- Hyde_daily_original[1:(365+365+365+365),]
+  Hyde_daily_original_plot <- Hyde_daily_original
 
   ###
   # Numerical tests of the functions in the model
   ###
 
   an.error.occured <- c()
-  for (i in 1:nrow(weather_with_na)) {
-    weather_with_na = processed_data$weather_original
-    weather_with_na_row = weather_with_na
+  for (i in 1:nrow(processed_data$weather_original)) {
+    weather_with_na_row = processed_data$weather_original
     weather_with_na_row[i,] = NA
 
     tryCatch({soil_processes = FALSE
@@ -92,7 +91,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     }
     )
   }
-  if (sum(an.error.occured) == nrow(weather_with_na)) {
+  if (sum(an.error.occured) == nrow(processed_data$weather_original)) {
     print("Test passed NA in row")
   } else {
     stop("Test failed. Not all NAs in rows caught.")
@@ -123,6 +122,21 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     stop("Test failed. Not all NAs in columns caught.")
   }
 
+  photosynthesis_input_CASSIA_output <- CASSIA_cpp(weather = processed_data$weather_original,
+                                                   site = "Hyde",
+                                                   pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                                   parameters = parameters_all$parameters_test,
+                                                   common = common_p,
+                                                   ratios = ratios_p,
+                                                   sperling = parameters_all$sperling_test,
+                                                   needle_mass_in = parameters_all$needle_mass_in,
+                                                   Throughfall = parameters_all$Throughfall,
+                                                   photosynthesis_as_input = TRUE)
+
+  if (sum(abs(processed_data$weather_original$P - photosynthesis_input_CASSIA_output$Preles$GPP) > rep(1e-17, nrow(photosynthesis_input_CASSIA_output$Preles))) > 1) {
+    stop("Photosynthesis in not the same as photosynthesis out, when using_spp_photosynthesis is TRUE")
+  }
+
   ###
   # Weather Data Plots
   ###
@@ -136,6 +150,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   ###
 
   soil_processes = FALSE
+
   CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
                                  site = "Hyde",
                                  pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
@@ -146,8 +161,8 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                  needle_mass_in = parameters_all$needle_mass_in,
                                  Throughfall = parameters_all$Throughfall)
 
-  plot_comparison(CASSIA_new_output, variables_new, processed_data$dates, processed_data$dates_original,
-                  Hyde_daily_original_plot, variables_original, processed_data$Photosynthesis_Reference, soil_processes)
+  plot_comparison(CASSIA_new_output, variables_new,
+                  Hyde_daily_original_plot, variables_original, soil_processes)
 
   plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
 
@@ -181,13 +196,15 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                             trenching_year = 2015,
                                             soil = soil_processes)
 
-  plot_comparison(CASSIA_new_output_not_trenching, variables_new, processed_data$dates, processed_data$dates_original,
-                  Hyde_daily_original_plot, variables_original, processed_data$Photosynthesis_Reference, soil_processes)
+  plot_comparison(CASSIA_new_output_not_trenching, variables_new,
+                  Hyde_daily_original_plot, variables_original, soil_processes)
 
-  plot_comparison(CASSIA_new_output_trenching, variables_new, processed_data$dates, processed_data$dates_original,
-                  Hyde_daily_original_plot, variables_original, processed_data$Photosynthesis_Reference, soil_processes)
+  plot_comparison(CASSIA_new_output_trenching, variables_new,
+                  Hyde_daily_original_plot, variables_original, soil_processes)
 
-  plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+  plot_sugar_starch_comparison(CASSIA_new_output_not_trenching, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+
+  plot_sugar_starch_comparison(CASSIA_new_output_trenching, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
 
   ### Extra Soil Processes
 
