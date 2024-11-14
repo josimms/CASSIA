@@ -166,6 +166,24 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
 
+  ### SUGAR NO SOIL
+
+  CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
+                                 site = "Hyde",
+                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                 parameters = parameters_all$parameters_test,
+                                 common = common_p,
+                                 ratios = ratios_p,
+                                 sperling = parameters_all$sperling_test,
+                                 needle_mass_in = parameters_all$needle_mass_in,
+                                 Throughfall = parameters_all$Throughfall,
+                                 sperling_model = T)
+
+  plot_comparison(CASSIA_new_output, variables_new,
+                  Hyde_daily_original_plot, variables_original, soil_processes)
+
+  plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+
   ### SOIL
 
   ### Soil Processes
