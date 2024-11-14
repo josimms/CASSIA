@@ -137,6 +137,9 @@ CASSIA_cpp <- function(
   #####
   # years from weather data
   date_range = as.numeric(substring(weather$dates[c(1, nrow(weather))], 1, 4))
+  if (sum(date_range %in% 0:2500) < 2) {
+    stop("Dates are not between 0 and 2500. Is the column called dates?")
+  }
   start_year <- date_range[1]
   end_year <- date_range[2]
 
