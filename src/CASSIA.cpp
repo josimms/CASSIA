@@ -142,6 +142,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   }
 
   int final_year = 1;
+  int days_gone = 0;
   for (int year : years_for_runs)  {
 
     // std::cout << " Year " << year;
@@ -206,9 +207,6 @@ Rcpp::List CASSIA_yearly(int start_year,
      */
 
     int days_per_year = leap_year(year);
-    if (boolsettings.CASSIA_graphs) {
-      days_per_year = 365;
-    }
     /*
      * Yearly initial conditions updated
      */
@@ -219,7 +217,9 @@ Rcpp::List CASSIA_yearly(int start_year,
     /*
      * DAYS LOOP
      */
+    int weather_index;
     for (int day = 0; day < days_per_year; day++) {
+      weather_index = days_gone + day;
 
       /*
        * PHOTOSYNTHESIS
@@ -245,8 +245,8 @@ Rcpp::List CASSIA_yearly(int start_year,
       double photosynthesis_per_stem;
       photosynthesis_out photosynthesis;
       if (boolsettings.photosynthesis_as_input) {
-        photosynthesis.GPP = Photosynthesis_IN[day];
-        photosynthesis_per_stem = Photosynthesis_IN[day] / 1010 * 10000/1000;
+        photosynthesis.GPP = Photosynthesis_IN[weather_index];
+        photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
       } else {
         photosynthesis.GPP = 0;
         photosynthesis.ET = 0;
@@ -286,7 +286,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       }
 
       GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
-      growth_out potential_growth = growth(day, year, TAir[day], TSoil_A[day], TSoil_B[day], Soil_Moisture[day], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], photosynthesis.GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
@@ -304,7 +304,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
-                                         TAir[day], TSoil_A[day],
+                                         TAir[weather_index], TSoil_A[weather_index],
                                                              boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
                                                              // parameters that I am not sure about
                                                              B0);
@@ -343,7 +343,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
         sugar_values_for_next_iteration.starch.mycorrhiza = 0;
       } else {
-        carbo_balance sugar_model_out = sugar_model(day, TAir[day], photosynthesis_per_stem,
+        carbo_balance sugar_model_out = sugar_model(day, TAir[weather_index], photosynthesis_per_stem,
                                                     common, parameters,
                                                     D00,
                                                     potential_growth.previous_values.sH,
@@ -399,6 +399,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       /*
        * Output
        */
+
       HH = potential_growth.previous_values.HH;
       needles_last = potential_growth.needles;
       potenital_growth_use.push_back(potential_growth.use);
@@ -465,6 +466,8 @@ Rcpp::List CASSIA_yearly(int start_year,
     last_year_HH = HH;
 
     if (final_year%2==0) {
+      days_gone = days_gone + days_per_year;
+
       GPP_mean = 463.8833; // TODO: should change this!
       GPP_previous_sum.push_back(GPP_sum);
 
