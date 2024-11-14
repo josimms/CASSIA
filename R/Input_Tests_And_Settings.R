@@ -50,16 +50,16 @@ validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
   check_values(weather$T, -30, 40)
 
   # Check PF values
-  check_values(weather$PF, -10, 20)
+  check_values(weather$P, -10, 20)
 
   # Check Tsa values
-  check_values(weather$Tsa, -10, 20)
+  check_values(weather$TSA, -10, 20)
 
   # Check Tsb values
-  check_values(weather$Tsb, -10, 20)
+  check_values(weather$TSB, -10, 20)
 
   # Check M.soil values
-  check_values(weather$M.soil, 0, 1)
+  check_values(weather$MB, 0, 1)
 
   # Check Rain values
   check_values(weather$Rain, 0, 50)
@@ -80,9 +80,9 @@ validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
 
     check_na(weather$T)
     check_na(weather$P)
-    check_na(weather$Tsa)
-    check_na(weather$Tsb)
-    check_na(weather$M.soil) # MB?
+    check_na(weather$TSA)
+    check_na(weather$TSB)
+    check_na(weather$MB)
     check_na(weather$Rain)
     check_na(weather$PAR)
     check_na(weather$VPD)
@@ -97,9 +97,9 @@ validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
 
     check_na(weather$T)
     check_na(weather$P)
-    check_na(weather$Tsa)
-    check_na(weather$Tsb)
-    check_na(weather$M.soil) # MB?
+    check_na(weather$TSA)
+    check_na(weather$TSB)
+    check_na(weather$MB)
     check_na(weather$Rain)
   }
 }
