@@ -262,16 +262,13 @@ plot_comparison <- function(CASSIA_new_output, variables_new, dates, dates_origi
       # Determine index for photo data based on soil_processes
       photo_index <- ifelse(soil_processes, 5, 3)
 
-      print(length(dates_original))
-      print(length(Photosynthesis_Reference))
-
       # Plot Outputs
       plot(dates, CASSIA_new_output[[photo_index]][, variables_new[var]],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
       lines(dates_original, Photosynthesis_Reference, col = "blue")
 
       # Plot New against Old
-      plot(Photosynthesis_Reference[-length(Photosynthesis_Reference) + 1],
+      plot(Photosynthesis_Reference,
            CASSIA_new_output[[photo_index]][, variables_new[var]][dates %in% dates_original],
            main = "New against old", xlab = "Original data", ylab = "New Data")
       abline(0, 1, col = "red")
