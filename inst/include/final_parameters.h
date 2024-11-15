@@ -207,61 +207,61 @@ struct phydro_canopy_parameters {
  * PRELES structure
  */
 
-struct p1 {
-  double soildepth = 413.0;
-  double ThetaFC = 0.45;
-  double ThetaPWP = 0.118;
-  double tauDrainage = 3.0;
-};
+//struct p1 {
+//  double soildepth = 413.0;
+//  double ThetaFC = 0.45;
+//  double ThetaPWP = 0.118;
+//  double tauDrainage = 3.0;
+//};
 
 //  GPP model
-struct p2 {
-  double beta = 0.7457;
-  double tau = 10.93;
-  double S0 = -3.063;
-  double Smax = 17.72;
-  double kappa = -0.1027;
-  double gamma = 0.03673;
-  double soilthres = 0.7779; // used for fW with ETmodel = 2 | 4 | 6
-  double bCO2 = 0.5; // used for fW with ETmodel = 1 | 3 | 5
-  double xCO2 = -0.364; // used for fW with ETmodel = 1 | 3 | 5;
-  double t0 = -999; // Birch phenology parameters: 26th Feb = 57 DOY
-  double tcrit = -999; // (Linkosalo et al)           1.5 C
-  double tsumcrit = -999; //                                 134  C
-};
+//struct p2 {
+//  double beta = 0.7457;
+//  double tau = 10.93;
+//  double S0 = -3.063;
+//  double Smax = 17.72;
+//  double kappa = -0.1027;
+//  double gamma = 0.03673;
+//  double soilthres = 0.7779; // used for fW with ETmodel = 2 | 4 | 6
+//  double bCO2 = 0.5; // used for fW with ETmodel = 1 | 3 | 5
+//  double xCO2 = -0.364; // used for fW with ETmodel = 1 | 3 | 5;
+//  double t0 = -999; // Birch phenology parameters: 26th Feb = 57 DOY
+//  double tcrit = -999; // (Linkosalo et al)           1.5 C
+//  double tsumcrit = -999; //                                 134  C
+//};
 
 // ET-model
-struct p3 {
-  double beta = 0.2715;
-  double kappa = 0.8351;
-  double chi = 0.07348;
-  double soilthres = 0.9996; // used for fW with ETmodel = 2 | 4
-  double nu = 0.4428;
-};
+//struct p3 {
+//  double beta = 0.2715;
+//  double kappa = 0.8351;
+//  double chi = 0.07348;
+//  double soilthres = 0.9996; // used for fW with ETmodel = 2 | 4
+//  double nu = 0.4428;
+//};
 
 // Rain and Snow models: interception and melting of snow
-struct p4 {
-  double MeltCoef = 1.2;
+//struct p4 {
+//  double MeltCoef = 1.2;
   // double Ifrac;
-  double I0 = 0.33;
-  double CWmax = 4.970496;
-  double SnowThreshold = 0.0;
-  double T_0 = 0.0;
-};
+  //  double I0 = 0.33;
+  //  double CWmax = 4.970496;
+  //  double SnowThreshold = 0.0;
+  //  double T_0 = 0.0;
+  //};
 
 // Storage components
-struct p5 {
-  double SW = 160.0; // Soilw water at beginning
-  double CW = 0.0; // Canopy water
-  double SOG = 0.0; // Snow on Ground
-  double S = 20.0; // State of temperature acclimation
-};
+//struct p5 {
+//  double SW = 160.0; // Soilw water at beginning
+//  double CW = 0.0; // Canopy water
+//  double SOG = 0.0; // Snow on Ground
+//  double S = 20.0; // State of temperature acclimation
+//};
 
-struct p6 {
-  double cvGPP; // Coefficients of variation for GPP, ET and SW
-  double cvET;  // Used in MCMC-calibration only
-  double cvSW;
-};
+//struct p6 {
+//  double cvGPP; // Coefficients of variation for GPP, ET and SW
+//  double cvET;  // Used in MCMC-calibration only
+//  double cvSW;
+//};
 
 struct p7 {
   double a = 0.1; // gradient

@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <iomanip>
+#include <prelesglobals.h>
 
 #ifndef CASSIA_H
 #define CASSIA_H
@@ -113,7 +114,8 @@ yearly_in yearly_initial_conditions(double days_per_year);
  * sugar_model.cpp
  */
 
-carbo_balance sugar_model(int day,
+carbo_balance sugar_model(int year,
+                          int day,
                           double TAir,
                           double PF,
 
