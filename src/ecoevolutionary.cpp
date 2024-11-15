@@ -422,7 +422,7 @@ Rcpp::List CASSIA_eeo(int start_year,
         sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
         sugar_values_for_next_iteration.starch.mycorrhiza = 0.0;
       } else {
-        carbo_balance sugar_model_out = sugar_model(day, TAir[day], photosynthesis_per_stem,
+        carbo_balance sugar_model_out = sugar_model(year, day, TAir[day], photosynthesis_per_stem,
                                                     common, parameters,
                                                     D00,
                                                     potential_growth.previous_values.sH,

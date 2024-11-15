@@ -70,14 +70,12 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   bool tree_alive = TRUE;
 
-  // std::vector<double> SW, Canopywater, SOG, S;
+  std::vector<double> SW, Canopywater, SOG, S;
+  SW.push_back(0); // TODO initial conditions
+  Canopywater.push_back(0);
+  SOG.push_back(0);
+  S.push_back(0);
 
-  /*
-   * SW.push_back(SWinit);
-   Canopywater.push_back(CWinit);
-   SOG.push_back(SOGinit);
-   S.push_back(Sinit);
-   */
 
   double CH = parameters.density_tree * parameters.carbon_share;
   double M_suc = 12 * common.M_C + 22 * common.M_H + 11 * common.M_O;
@@ -103,7 +101,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
   ring_width_out previous_ring_width;
-  carbo_balance original_parameters;
+  // carbo_balance original_parameters;
 
   /*
    * Vectors for the outputs
@@ -144,9 +142,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   int final_year = 1;
   int days_gone = 0;
   for (int year : years_for_runs)  {
-
-    // std::cout << " Year " << year;
-
     /*
      * Daily output
      */
@@ -219,6 +214,8 @@ Rcpp::List CASSIA_yearly(int start_year,
      */
     int weather_index;
     for (int day = 0; day < days_per_year; day++) {
+      std::cout << "Year " << year << " Day " << day;
+
       weather_index = days_gone + day;
 
       /*
@@ -278,22 +275,19 @@ Rcpp::List CASSIA_yearly(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
-      double en_pot_growth_old;
-      if (day < 11) {
-        en_pot_growth_old = 0.0;
-      } else {
+      double en_pot_growth_old = 0.0;
+      if (day > 10) {
         en_pot_growth_old = potenital_growth_use[day-11];
       }
 
-      GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
       growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], photosynthesis.GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
-                                                                                                boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
-                                                                                                // Last iteration value
-                                                                                                growth_values_for_next_iteration, last_year_HH,
-                                                                                                days_per_year);
+                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
+                                           // Last iteration value
+                                           growth_values_for_next_iteration, last_year_HH,
+                                           days_per_year);
       // Saved for the next iteration
       growth_values_for_next_iteration = potential_growth.previous_values;
 
@@ -313,58 +307,27 @@ Rcpp::List CASSIA_yearly(int start_year,
        * Sugar
        */
 
-      // TODO; need to check the indexes!
-      if ((day == 0) & (year == start_year)) {
-        sugar_values_for_next_iteration.sugar.needles = original_parameters.sugar.needles = parameters.sugar_needles0;
-        sugar_values_for_next_iteration.sugar.phloem = original_parameters.sugar.phloem = parameters.sugar_phloem0;
-        sugar_values_for_next_iteration.sugar.roots = original_parameters.sugar.roots = parameters.sugar_roots0;
-        sugar_values_for_next_iteration.sugar.xylem_sh = original_parameters.sugar.xylem_sh = parameters.sugar_xylem_sh0;
-        sugar_values_for_next_iteration.sugar.xylem_st = original_parameters.sugar.xylem_st = parameters.sugar_xylem_st0;
-        sugar_values_for_next_iteration.sugar.mycorrhiza = original_parameters.sugar.mycorrhiza = 0; // TODO: think about this
-
-        sugar_values_for_next_iteration.starch.needles = original_parameters.starch.needles = parameters.starch_needles0;
-        sugar_values_for_next_iteration.starch.phloem = original_parameters.starch.phloem = parameters.starch_phloem0;
-        sugar_values_for_next_iteration.starch.roots = original_parameters.starch.roots = parameters.starch_roots0;
-        sugar_values_for_next_iteration.starch.xylem_sh = original_parameters.starch.xylem_sh = parameters.starch_xylem_sh0;
-        sugar_values_for_next_iteration.starch.xylem_st = original_parameters.starch.xylem_st = parameters.starch_xylem_st0;
-        sugar_values_for_next_iteration.starch.mycorrhiza = original_parameters.starch.mycorrhiza = 0;
-      } else if ((day == 0) & (year != start_year)) {
-        sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
-        sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
-        sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
-        sugar_values_for_next_iteration.sugar.xylem_sh = parameters.sugar_xylem_sh0;
-        sugar_values_for_next_iteration.sugar.xylem_st = parameters.sugar_xylem_st0;
-        sugar_values_for_next_iteration.sugar.mycorrhiza = 0;
-
-        sugar_values_for_next_iteration.starch.needles = parameters.starch_needles0;
-        sugar_values_for_next_iteration.starch.phloem = parameters.starch_phloem0;
-        sugar_values_for_next_iteration.starch.roots = parameters.starch_roots0;
-        sugar_values_for_next_iteration.starch.xylem_sh = parameters.starch_xylem_sh0;
-        sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
-        sugar_values_for_next_iteration.starch.mycorrhiza = 0;
-      } else {
-        carbo_balance sugar_model_out = sugar_model(day, TAir[weather_index], photosynthesis_per_stem,
-                                                    common, parameters,
-                                                    D00,
-                                                    potential_growth.previous_values.sH,
-                                                    resp,
-                                                    boolsettings.sperling_model,
-                                                    tree_alive,
-                                                    boolsettings.storage_grows,
-                                                    repola_values.needle_mass,
-                                                    equilibrium_temperature,
-                                                    potential_growth,
-                                                    sugar_values_for_next_iteration.sugar,
-                                                    sugar_values_for_next_iteration.starch,
-                                                    sugar_values_for_next_iteration.previous_values);
-        // Saved for the next iteration
-        sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
-        sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
-        sugar_values_for_next_iteration.starch = sugar_model_out.starch;
-        sugar_values_for_next_iteration.storage = sugar_model_out.storage;
-        parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
-        tree_alive = sugar_model_out.previous_values.tree_alive;
-      }
+      carbo_balance sugar_model_out = sugar_model(year, day, TAir[weather_index], photosynthesis_per_stem,
+                                                  common, parameters,
+                                                  D00,
+                                                  potential_growth.previous_values.sH,
+                                                  resp,
+                                                  boolsettings.sperling_model,
+                                                  tree_alive,
+                                                  boolsettings.storage_grows,
+                                                  repola_values.needle_mass,
+                                                  equilibrium_temperature,
+                                                  potential_growth,
+                                                  sugar_values_for_next_iteration.sugar,
+                                                  sugar_values_for_next_iteration.starch,
+                                                  sugar_values_for_next_iteration.previous_values);
+      // Saved for the next iteration
+      sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
+      sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
+      sugar_values_for_next_iteration.starch = sugar_model_out.starch;
+      sugar_values_for_next_iteration.storage = sugar_model_out.storage;
+      parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
+      tree_alive = sugar_model_out.previous_values.tree_alive;
 
       /*
        if (sugar_values_for_next_iteration.sugar.needles < 0 || sugar_values_for_next_iteration.sugar.phloem < 0 ||
@@ -491,20 +454,6 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     // TODO: need to add the growth of things here!
     final_year = final_year + 1;
-
-    if (year == final_year + 1) {
-      parameters.sugar_needles0 = original_parameters.sugar.needles;
-      parameters.sugar_phloem0 = original_parameters.sugar.phloem;
-      parameters.sugar_roots0 = original_parameters.sugar.roots;
-      parameters.sugar_xylem_sh0 = original_parameters.sugar.xylem_sh;
-      parameters.sugar_xylem_st0 = original_parameters.sugar.xylem_st;
-
-      parameters.starch_needles0 = original_parameters.starch.needles;
-      parameters.starch_phloem0 = original_parameters.starch.phloem;
-      parameters.starch_roots0 = original_parameters.starch.roots;
-      parameters.starch_xylem_sh0 = original_parameters.starch.xylem_sh;
-      parameters.starch_xylem_st0 = original_parameters.starch.xylem_st;
-    }
   }
 
   ///////////////////////
