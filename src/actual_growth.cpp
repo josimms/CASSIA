@@ -14,27 +14,47 @@ growth_out actual_growth(CASSIA_parameters parameters,
   /*
    * Height
    */
-  actual_growth_out.height = potential_growth.height * (0.082179938 * storage.phloem + 0.821799379 * storage.xylem_st + 0.096020683 * storage.xylem_sh);
+
+  double sugar_limit_hight;
+  if (sperling_sugar_model) {
+    sugar_limit_hight = (0.082179938 * storage.phloem + 0.821799379 * storage.xylem_st + 0.096020683 * storage.xylem_sh);
+  } else {
+    sugar_limit_hight = storage.needles;
+  }
+  actual_growth_out.height = potential_growth.height * sugar_limit_hight;
 
   /*
    * Wall
    */
-  actual_growth_out.wall = potential_growth.diameter * (0.082179938 * storage.phloem + 0.821799379 * storage.xylem_st + 0.096020683 * storage.xylem_sh);
+
+  double sugar_limit_wall;
+  if (sperling_sugar_model) {
+    sugar_limit_wall = (0.082179938 * storage.phloem + 0.821799379 * storage.xylem_st + 0.096020683 * storage.xylem_sh);
+  } else {
+    sugar_limit_wall = storage.needles;
+  }
+  actual_growth_out.wall = potential_growth.diameter * sugar_limit_wall;
 
   /*
    * Bud
    */
-  actual_growth_out.bud = storage.needles * potential_growth.bud;
+  actual_growth_out.bud = potential_growth.bud * storage.needles;
 
   /*
    * Needles
    */
-  actual_growth_out.needles = storage.needles * potential_growth.needles;
+  actual_growth_out.needles = potential_growth.needles * storage.needles;
 
   /*
    * Roots
    */
-  actual_growth_out.roots = storage.roots * potential_growth.roots;
+  double sugar_limit_roots;
+  if (sperling_sugar_model) {
+    sugar_limit_roots = storage.roots;
+  } else {
+    sugar_limit_roots = storage.needles;
+  }
+  actual_growth_out.roots = potential_growth.roots * sugar_limit_roots;
 
   /*
    * GD
