@@ -150,6 +150,8 @@ Rcpp::List CASSIA_yearly(int start_year,
     xylogensis_out xylogensis_vector;
     double fS;
 
+    std::vector<double> release;
+
     /*
      * Yearly initialization
      */
@@ -275,21 +277,24 @@ Rcpp::List CASSIA_yearly(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
-      double en_pot_growth_old = 0.0;
-      if (day > 10) {
-        en_pot_growth_old = potenital_growth_use[day-11];
-      }
-
       growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], photosynthesis.GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
-                                           CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
+                                           CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
                                            boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
+                                           boolsettings.tests,
                                            // Last iteration value
                                            growth_values_for_next_iteration, last_year_HH,
                                            days_per_year);
       // Saved for the next iteration
       growth_values_for_next_iteration = potential_growth.previous_values;
+      release.push_back(potential_growth.previous_values.en_pot_growth);
+      double lim = std::ceil(parameters.tau_Ee);
+      if (day > (lim-1)) {
+        potential_growth.release = release[day-lim];
+      } else {
+        potential_growth.release = 0.0;
+      }
 
       /*
        * Respiration
@@ -358,6 +363,8 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
+
+      std::cout << "\n";
 
       /*
        * Output
