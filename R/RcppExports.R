@@ -31,8 +31,8 @@ CASSIA_eeo <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_pa
     .Call(`_CASSIA_CASSIA_eeo`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings)
 }
 
-growth_wrapper <- function(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, growth_in, last_year_HH, no_day) {
-    .Call(`_CASSIA_growth_wrapper`, day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, growth_in, last_year_HH, no_day)
+growth_wrapper <- function(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, tests, growth_in, last_year_HH, no_day) {
+    .Call(`_CASSIA_growth_wrapper`, day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, tests, growth_in, last_year_HH, no_day)
 }
 
 myco_growth <- function(C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio) {

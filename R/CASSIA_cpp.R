@@ -86,7 +86,8 @@ CASSIA_cpp <- function(
     Throughfall = 1,
     trenching_year = NA,
     soil = FALSE,
-    ecoevolutionary = FALSE) {
+    ecoevolutionary = FALSE,
+    tests = FALSE) {
 
   ####
   # Testing the input and initial conditions
@@ -120,6 +121,7 @@ CASSIA_cpp <- function(
                   "drought" = drought,
                   "Rm_acclimation" = Rm_acclimation,
                   "CASSIA_graphs" = CASSIA_graphs,
+                  "tests" = tests,
                   "etmodel" = etmodel,
                   "LOGFLAG" = LOGFLAG,
                   "ecoevolutionary" = ecoevolutionary

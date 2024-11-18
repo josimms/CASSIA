@@ -160,13 +160,13 @@ growth_out growth(int day,
                   CASSIA_ratios ratio,
                   double CH,
                   double B0,
-                  double en_pot_growth_old,
                   double GPP_mean,
                   double GPP_previous_sum,
 
                   bool LH_estim,
                   bool LN_estim,
                   bool LD_estim,
+                  bool tests,
 
                   growth_values_out growth_previous,
                   double last_year_HH,
@@ -510,6 +510,7 @@ struct Settings {
   bool Rm_acclimation;
 
   bool CASSIA_graphs;
+  bool tests;
   bool etmodel;
   bool LOGFLAG;
 };

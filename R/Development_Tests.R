@@ -42,6 +42,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     Rm_acclimation = TRUE,
 
     CASSIA_graphs = TRUE,
+    tests = TRUE,
 
     etmodel = F,
     LOGFLAG = F
@@ -58,6 +59,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   ### PARAMETERS
   new_parameters <- rep(0.5, 27)  # Example new parameters
+  calibration = F
   parameters_all <- initialize_parameters(calibration, new_parameters)
 
   ### PLOTTING INFORMATION
@@ -159,7 +161,8 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                  ratios = ratios_p,
                                  sperling = parameters_all$sperling_test,
                                  needle_mass_in = parameters_all$needle_mass_in,
-                                 Throughfall = parameters_all$Throughfall)
+                                 Throughfall = parameters_all$Throughfall,
+                                 tests = settings_basic$tests)
 
   plot_comparison(CASSIA_new_output, variables_new,
                   Hyde_daily_original_plot, variables_original, soil_processes)

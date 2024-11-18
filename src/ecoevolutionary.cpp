@@ -368,8 +368,8 @@ Rcpp::List CASSIA_eeo(int start_year,
       growth_out potential_growth = growth(day, year, TAir[day], TSoil_A[day], TSoil_B[day], Soil_Moisture[day], photosynthesis.GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
-                                           CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum[year-start_year],
-                                                                                                boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
+                                           CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
+                                                                                                boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim, boolsettings.tests,
                                                                                                 // Last iteration value
                                                                                                 growth_values_for_next_iteration, last_year_HH,
                                                                                                 days_per_year);

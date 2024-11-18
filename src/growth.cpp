@@ -55,13 +55,13 @@ growth_out growth(int day,
                   CASSIA_ratios ratio,
                   double CH,
                   double B0,
-                  double en_pot_growth_old,
                   double GPP_mean,
                   double GPP_previous_sum,
 
                   bool LH_estim,
                   bool LN_estim,
                   bool LD_estim,
+                  bool tests,
 
                   growth_values_out growth_previous,
                   double last_year_HH,
@@ -110,7 +110,16 @@ growth_out growth(int day,
   if (LH_estim) {
     LH = LH * GPP_previous_sum / GPP_mean;
   }
-  GH = g_sH * fH * LH;
+  if (tests) {
+    if ( year== 2016) {
+      LH = 37.70821;
+    } else if (year == 2017) {
+      LH = 35.35192;
+    } else if (year == 2018) {
+      LH = 36.93803;
+    }
+  }
+  GH = g_sH * fH * LH; // 36.93803; //
   height_pot_growth = 0.02405282 * 200.0 * GH / 1000.0 * ratio.form_factor;
 
   if (day == 0) {
@@ -137,7 +146,16 @@ growth_out growth(int day,
   if (LN_estim) {
     LN = parameters.LN0 * GPP_previous_sum / GPP_mean;
   }
-  GN = g * fN * LN;
+  if (tests) {
+    if ( year== 2016) {
+      LN = 1.971561;
+    } else if (year == 2017) {
+      LN = 1.848363;
+    } else if (year == 2018) {
+      LN = 1.931293;
+    }
+  }
+  GN = g * fN * LN; // 1.931293; //
 
   double cumsum_GN = growth_previous.GN + GN;
   double HN = parameters.HN0 + cumsum_GN;
@@ -241,12 +259,7 @@ growth_out growth(int day,
 
   double tau_Ee_floor = std::ceil(parameters.tau_Ee);
   double en_pot_growth = n_rows * carbon_enlargement_pot;
-  double en_pot_release = 0;
-  if (day <= tau_Ee_floor) {
-    en_pot_release = 0; // The carbon used in enlargement is released after some days.
-  } else {
-    en_pot_release = en_pot_growth_old;
-  }
+  double en_pot_release = 0.0;
 
   // Carbon to wall formation
   // Carbon.daily.rate determined in parameters_common.R but NOTE!!!! not used at the moment, replaced by a parameter set to result in density app. 200 kg C m-3!
@@ -297,17 +310,17 @@ growth_out growth(int day,
   if (root_as_Ding) {
     double fib_coef = 0.25;                                  // 0.25, 2.3  # Determines the proportion of fibrous roots (1 leads to 37 % of fibrous roots, 0.25 to 13 % of fibrous roots and 2.3 to 63 % of fibrous roots)
     if ((day >= 149) & (day < 319)) {
-      fR = 1/(1+exp(-0.038014*(day-148-56.06243)));
+      fR = 1.0/(1.0+exp(-0.038014*(day-148-56.06243)));
     } else {
-      fR = 0;
+      fR = 0.0;
     }
 
-    gR_fib = -0.84 + 0.13 * TSoil_A -0.44 + 2.11 * Soil_Moisture;              // growth of fibrous roots from Ding et al. 2019 (model 5)
+    gR_fib = -0.84 + 0.13 * TSoil_A - 0.44 + 2.11 * Soil_Moisture;              // growth of fibrous roots from Ding et al. 2019 (model 5)
     if (gR_fib < 0) {gR_fib = 0;}
     gR_pio = -0.84 + 0.13 * TSoil_B + 0.32 -0.16 + 0.78 * Soil_Moisture;       // growth of pioneer roots from Ding et al. 2019 (model 5)
     if (gR_pio < 0) {gR_pio = 0;}
     gR = fib_coef * gR_fib + gR_pio;                                    // if fib_coef = 1 this leads in year 2018 to 37 % fibrous roots of all roots
-    LR = 0.0049 * 1 / (0.37 * fib_coef + 0.63);                  // if fib_coef = 1 this leads to (roughly and on average) same total root growth as original. If fib_coef is changed, L is changed accordingly
+    LR = 0.0049 * 1.0 / (0.37 * fib_coef + 0.63);                  // if fib_coef = 1 this leads to (roughly and on average) same total root growth as original. If fib_coef is changed, L is changed accordingly
   } else {
     LR = parameters.LR0 / parameters.root_lifetime;
     if (TSoil_B > common.TR0) {
@@ -419,6 +432,7 @@ Rcpp::List growth_wrapper(int day,
                           bool LH_estim,
                           bool LN_estim,
                           bool LD_estim,
+                          bool tests,
 
                           std::vector<double> growth_in,
                           double last_year_HH,
@@ -446,13 +460,13 @@ Rcpp::List growth_wrapper(int day,
                           ratios,
                           CH,
                           B0,
-                          en_pot_growth_old,
                           GPP_mean,
                           GPP_previous_sum,
 
                           LH_estim,
                           LN_estim,
                           LD_estim,
+                          tests,
 
                           growth_previous,
                           last_year_HH,

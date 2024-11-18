@@ -40,6 +40,7 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.Rm_acclimation = Rcpp::as<bool>(settingsList["Rm_acclimation"]);
 
   settings.CASSIA_graphs = Rcpp::as<bool>(settingsList["CASSIA_graphs"]);
+  settings.tests = Rcpp::as<bool>(settingsList["tests"]);
   settings.etmodel = Rcpp::as<bool>(settingsList["etmodel"]);
   settings.LOGFLAG = Rcpp::as<bool>(settingsList["LOGFLAG"]);
 
