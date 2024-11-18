@@ -66,6 +66,7 @@ process_weather_data <- function(using_spp_photosynthesis) {
   # Combine weather data with extra columns and remove specific rows
   weather_original <- cbind(weather_original, extras)
   weather_original <- weather_original
+  weather_original$P <- weather_original$P # / (10000/1000) * 1010
 
   # Set up dates
   dates_original <- seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
@@ -260,16 +261,16 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
       # Plot Outputs
       plot(dates, CASSIA_new_output$Preles[, variables_new[var]],
            main = "Outputs", xlab = "Date", ylab = variables_new[var], type = "l")
-      lines(dates_original, Hyde_daily_original_plot$P * 1010 * 0.1, col = "blue")
+      lines(dates_original, Hyde_daily_original_plot$P / (10000/1000) * 1010, col = "blue")
 
       # Plot New against Old
-      plot(Hyde_daily_original_plot$P * 1010 * 0.1,
+      plot(Hyde_daily_original_plot$P / (10000/1000) * 1010,
            CASSIA_new_output$Preles[, variables_new[var]][-731],
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
 
       # Plot Residuals
-      plot(dates_original, Hyde_daily_original_plot$P * 1010 * 0.1 - CASSIA_new_output$Preles[, variables_new[var]][-731],
+      plot(dates_original, Hyde_daily_original_plot$P / (10000/1000) * 1010 - CASSIA_new_output$Preles[, variables_new[var]][-731],
            main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
       legend("topright", c("C++ Model", "Original R Model"), col = c("black", "blue"), bty = "n", lty = 1, cex = 0.75)
     }
