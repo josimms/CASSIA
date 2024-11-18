@@ -190,7 +190,7 @@ carbo_balance sugar_model(int year,
       sugar.needles = sugar.needles + PF -          // Last day sugar + daily photosynthesis
         resp.RmN * storage_term.needles -                          // maintenance respiration (altered by the carbon storage)
         (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) -          // growth and growth respiration altered by the storage
-        pot_growth.use + pot_growth.release -                                                           // growth sugar use and + release and to the rest of the organs
+        pot_growth.use + pot_growth.release -     // TODO: should this move to the phliem / xylem?                                                      // growth sugar use and + release and to the rest of the organs
         concentration_gradient.needles_to_phloem*needles_mass +                            // transfer between organs
         (Kd.needles - Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass;   // + sperling processes with links to the needles growth process
 
@@ -412,20 +412,20 @@ carbo_balance sugar_model(int year,
     double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch;
     double myco_allocation;
     if (day == 0) {
-      sugar_all = sugar.needles = 0.4184208;
-      starch_all = starch.needles = parameters.starch00;
+      sugar_all = 0.4184208;
+      starch_all = parameters.starch00;
       to_sugar = 0;
       to_starch = 0;
       storage = storage_term.respiration = 1;
     } else {
       storage = std::max(0.0 , std::min(1.0 , ak * (1.0 - 1.0 / exp(parameters.alfa * (sugar.needles + starch.needles - parameters.Wala)))));
-      if (storage < 0.1) {
+      if ((sugar.needles + starch.needles) < 0.1) {
         storage_term.respiration = 0.0;
       } else {
         storage_term.respiration = 1.0;
       }
 
-      if ((sH > parameters.sHc) & (sugar.needles + starch.needles > 0.07)) {
+      if ((sH > parameters.sHc) & ((sugar.needles + starch.needles) > 0.07)) {
         myco_allocation = PF * 0.3;
       } else {
         myco_allocation = 0.0;
@@ -458,8 +458,6 @@ carbo_balance sugar_model(int year,
       storage_term.xylem_sh = storage;
       storage_term.xylem_st = storage;
     }
-
-    std::cout << " release " << pot_growth.release << " storage_term " << storage_term.needles << " sugar_all " << sugar_all << " starch_all " << starch_all << " PF " << PF << "\n";
 
     if ((sugar.needles <= 0) & (starch.needles <= 0)) {
       std::cout << " No Storage! Plant died" << "\n";
