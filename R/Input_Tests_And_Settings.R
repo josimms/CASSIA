@@ -75,7 +75,7 @@ validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
   if (PRELES_GPP) {
     required_columns <- c("dates", "Date", "T", "P", "TSA", "TSB", "MB", "Rain", "PAR", "VPD", "fAPAR")
     if (!all(required_columns %in% names(weather))) {
-      stop("Incomplete weather data - incorrect variables, or named incorrectly")
+      stop(paste("Incomplete weather data - incorrect variables, or named incorrectly. Check columns", which(all(required_columns %in% names(weather)))))
     }
 
     check_na(weather$T)
@@ -92,7 +92,7 @@ validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
   } else {
     required_columns <- c("dates", "T", "P", "TSA", "TSB", "MB", "Rain")
     if (!all(required_columns %in% names(weather))) {
-      stop("Incomplete weather data - incorrect variables, or named incorrectly")
+      stop(paste("Incomplete weather data - incorrect variables, or named incorrectly. Check columns", which(all(required_columns %in% names(weather)))))
     }
 
     check_na(weather$T)
