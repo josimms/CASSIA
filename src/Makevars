@@ -15,6 +15,7 @@ PKG_INCL = -I../inst/include \
 	-I$(Rprebasso_PATH)/src \
 	-I"$(R_PACKAGE_DIR)/inst/include" \
 	-I"$(R_PACKAGE_DIR)/include" \
+	-I"$(R_PACKAGE_DIR)/external/phydro/inst/include" \
 	-I"$(R_PACKAGE_DIR)/inst/external/phydro/inst/include" \
 	-I"$(R_PACKAGE_DIR)/inst/external/phydro/inst/LBFGSpp/include" \
 	-I"$(R_PACKAGE_DIR)/inst/external/libpspm/include" \
