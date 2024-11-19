@@ -216,7 +216,7 @@ Rcpp::List CASSIA_yearly(int start_year,
      */
     int weather_index;
     for (int day = 0; day < days_per_year; day++) {
-      std::cout << "Year " << year << " Day " << day;
+      // std::cout << "Year " << year << " Day " << day;
 
       weather_index = days_gone + day;
 
@@ -364,7 +364,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
 
-      std::cout << "\n";
+      // std::cout << "\n";
 
       /*
        * Output

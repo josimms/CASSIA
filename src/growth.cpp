@@ -96,6 +96,7 @@ growth_out growth(int day,
    * Height
    */
   g_sH = g;
+  std::cout << " parameters.sH0 " << parameters.sH0;
   if (day == 0) {
     sH = parameters.sH0 + g_sH; // First day that it could have a value is this!
   } else {
@@ -119,7 +120,7 @@ growth_out growth(int day,
       LH = 36.93803;
     }
   }
-  GH = g_sH * fH * LH; // 36.93803; //
+  GH = g_sH * fH * LH;
   height_pot_growth = 0.02405282 * 200.0 * GH / 1000.0 * ratio.form_factor;
 
   if (day == 0) {
@@ -155,7 +156,7 @@ growth_out growth(int day,
       LN = 1.931293;
     }
   }
-  GN = g * fN * LN; // 1.931293; //
+  GN = g * fN * LN;
 
   double cumsum_GN = growth_previous.GN + GN;
   double HN = parameters.HN0 + cumsum_GN;
