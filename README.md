@@ -18,6 +18,8 @@ install_github("josimms/CASSIA")
 
 ### Example R
 
+**markdown files cover using the model, also sensitivity analysis and weather processing**
+
 The CASSIA model (function: CASSIA_cpp) can be simply run with two arguments, as the package includes preprocessed parameters and weather data from Hyytiälä (via SPP model further information in vingettes). This will run the model with its most basic functions, although additional functions can be easily added by toggles as seen in the second example. Toggles are found in the documentation. 
 
 Some weather data is included in the package and formated by "process_weather_data". Other functions such as Hyde_Data_Creation and raw_to_daily_monthly_hyytiala, are used to get the weather data in the correct form. These can also be used as a reference for building your own weather data. NOTE: currently the weather processes are being rewritten for the new photosynthesis functionalities. 
@@ -56,7 +58,9 @@ ratios_new[1,c("Hyde")] = 0.65
 CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", ratios = ratios_new)
 ```
 
-If you are using the model in Hyytiälä or Väriö then the model is calibrated. If not the model is not yet calibrated for your site. This means that you need to calibrate the model! To do this look at the markdown files for advice
+If you are using the model in Hyytiälä or Väriö then the model is calibrated. If not the model is not yet calibrated for your site. This means that you need to calibrate the model! To do this look at the markdown files for advice.
+
+**markdown files cover using the model again, also sensitivity analysis and weather processing**
 
 Sidenote: If you have an error along the lines of 
 
