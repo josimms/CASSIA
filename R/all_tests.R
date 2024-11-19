@@ -57,9 +57,9 @@ process_weather_data <- function(using_spp_photosynthesis) {
   # Add extra columns to the combined weather data
   extras <- data.frame(
     Nitrogen = rep(0.012, nrow(weather_original)),
-    PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018, "PAR"],
-    VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018, "VPD"],
-    CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2018, "CO2"],
+    PAR = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "PAR"],
+    VPD = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "VPD"],
+    CO2 = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "CO2"],
     fAPAR = rep(0.7, nrow(weather_original))
   )
 
