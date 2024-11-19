@@ -5,7 +5,7 @@ LIBPSPM_PATH = $(EXTERNAL_DIR)/libpspm
 Rprebasso_PATH = $(EXTERNAL_DIR)/Rprebasso
 
 # Path to the directory containing the external header files
-PKG_INCL = -I../inst/include -I$(PHYDRO_PATH)/inst/include -I$(PHYDRO_PATH)/inst/LBFGSpp/include -I$(LIBPSPM_PATH)/include -I/usr/include/eigen3 -I$(Rprebasso_PATH)/inst/include
+PKG_INCL = -I../inst/include -I$(PHYDRO_PATH)/inst/include -I$(PHYDRO_PATH)/inst/LBFGSpp/include -I$(LIBPSPM_PATH)/include -I/usr/include/eigen3 -I$(Rprebasso_PATH)/src
 
 # Flags for the C++ compiler
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) $(PKG_INCL)
