@@ -9,6 +9,10 @@ library(dplyr)
 library(tidyr)
 library(viridis)
 library(gridExtra)
+
+# Get the weather data
+photosynthesis_as_input = TRUE
+processed_data = process_weather_data(photosynthesis_as_input)
 ```
 
 ## Sensitivity analysis function
@@ -18,16 +22,11 @@ When fitting a model for a new site you need to do some sensitivity analysis. Th
 ```{r}
 run_sensitivity <- function(param_name, range) {
   map(range, function(i) {
-    parameters_p_G_new <- parameters_p
-    if (param_name %in% rownames(parameters_p_G_new)) {
-      parameters_p_G_new$HF_China[rownames(parameters_p_G_new) == param_name] <- i
-      result <- CASSIA_cpp(data_format, site = "Hyde",
-                           ratios = ratios_p_G,
-                           parameters = parameters_p_G_new,
-                           common = common_p_G,
-                           repo = repo_p_G,
-                           photosynthesis_as_input = TRUE,
-                           LD_estim = FALSE)
+    parameters_p_new <- parameters_p
+    if (param_name %in% rownames(parameters_p_new)) {
+      parameters_p_new$HF_China[rownames(parameters_p_new) == param_name] <- i
+      result <- CASSIA_cpp(processed_data$weather_original, site = "Hyde",
+                           parameters = parameters_p_G_new)
       list(param_value = i, result = result)
     } else {
     print("Parameter not in the row names, is it spelt correctly? Is there an underscore rather than a dot?")
