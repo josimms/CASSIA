@@ -317,12 +317,12 @@ Rcpp::List CASSIA_eeo(int start_year,
 
           double fipar = 0.7; // TODO: real value
 
-          phydro_assimilation = calc_plant_assimilation_rate(fipar,
-                                                             PAR[day], TAir[day], VPD[day], Precip[day], CO2[day], Nitrogen, PA, SWP,
-                                                             phydro_parameters, lai, n_layers, crown_area, culm_growth.height[day-1], zeta);
+          //phydro_assimilation = calc_plant_assimilation_rate(fipar,
+          //                                                   PAR[day], TAir[day], VPD[day], Precip[day], CO2[day], Nitrogen, PA, SWP,
+          //                                                   phydro_parameters, lai, n_layers, crown_area, culm_growth.height[day-1], zeta);
 
           // TODO: need to check the exact unit of GPP going into the model
-          photosynthesis.GPP = phydro_assimilation.gpp;
+          //photosynthesis.GPP = phydro_assimilation.gpp;
 
 
         } else {
