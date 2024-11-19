@@ -15,7 +15,15 @@ library(CASSIA)
 The model has automatic settings which produces the results as in the 2015 paper in Hyytiälä. The parameters and input weather for Hyytiälä are automatically included in the package.
 
 ```{r}
-out = CASSIA_cpp(data_format, site = "Hyde") # TODO: make this work
+# import the package
+library(CASSIA)
+
+# Get the weather data
+photosynthesis_as_input = TRUE
+processed_data = process_weather_data(photosynthesis_as_input)
+
+# Run the model
+out = CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
 ```
 
 The model has a list datasets for the output. These are for the growth, sugar model and preles (photosynthesis model) respectively.
@@ -31,7 +39,7 @@ The other settings of the model an be accessed by the function argument switches
 The following example means that the trees growth, so that the model uses the previous year's growth as the initial conditions for the next year.
 
 ```{r}
-out2 = CASSIA_cpp(data_format, site = "Hyde", trees_grow = TRUE) # TODO: make this work
+out2 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", LN_estim = TRUE)
 
 # To ccheck the possible options
 ?CASSIA
@@ -45,7 +53,7 @@ The meaning of the parameters can be found in the CASSIA instruction booklet.
 parameters_updated <- parameters_p
 parameters_updated[c("root.lifetime	"),c("Hyde")] <- 2
 
-out3 = CASSIA_cpp(data_format, site = "Hyde", parameters = parameters_updated) # TODO: make this work
+out3 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", parameters = parameters_updated) # TODO: make this work
 ```
 
 Finally, the weather data should be considered. Due to the linking with different photosynthesis models the weather needed in the model currently takes two forms. One for the basic model which includes the photosynthesis values as an input and the other the environmental variables needed for the PRELES model.
@@ -53,5 +61,5 @@ Finally, the weather data should be considered. Due to the linking with differen
 Due to the current definition of the model the weather data should be in the same format as the default Hyyyiälä data even if the PRELES model is not used to calculate the photosynthesis input. However the values in these columns can just be NA values.
 
 ```{r}
-head(data_format)
+head(processed_data$weather_original)
 ```
