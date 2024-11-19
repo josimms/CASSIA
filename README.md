@@ -6,7 +6,7 @@ CASSIA model is an intra-annual growth model for an individual tree in boreal co
 
 The main mathematical structure and equations are found in Schiestl‐Aalto 2015 where the science behind this model as well as the basic principle and structure are clearly explained. The variable links in the papers and the model are written in the vingette section of this package. This basic equations have been added to and reported in later publications listed below. This package also has newer developments not yet published in papers such as a sugar internal allocation model and xylogenesis.
 
-This model has been used in numerous papers (see Literature) - mainly considering Hyytiälä (SMEAR II Station, University of Helsinki). Most of the code has been written by Schiestl‐Aalto, with only small additions by others. The development of the code can be seen in the papers below, although this package does have newer developments not yet published in papers such as a sugar addition and xylogenesis. Note: future developments of the CASSIA model will seperate these into spereate functions, but at the moment all of the code is together in one file to be able to make the original code into a package.
+This model has been used in numerous papers (see Literature) - mainly considering Hyytiälä (SMEAR II Station, University of Helsinki). Most of the code has been written by Schiestl‐Aalto, with small additions by others. Note: future developments of the CASSIA model will seperate different versions of the model into different functions.
 
 ### Downloading Package for Use
 
@@ -18,98 +18,54 @@ install_github("josimms/CASSIA")
 
 ### Example R
 
-As the package includes preprocessed weather data from Hyytiälä (via SPP model further information in vingettes) and amongst others the Hyytiälä configuration it is possible to simply run the model by stipulating these two arguments. This will run the model with its most basic functions, although additional functions can be easily added by toggles as seen in the second example. Toggles are found in the documentation.
+The CASSIA model (function: CASSIA_cpp) can be simply run with two arguments, as the package includes preprocessed parameters and weather data from Hyytiälä (via SPP model further information in vingettes). This will run the model with its most basic functions, although additional functions can be easily added by toggles as seen in the second example. Toggles are found in the documentation. 
+
+Some weather data is included in the package and formated by "process_weather_data". Other functions such as Hyde_Data_Creation and raw_to_daily_monthly_hyytiala, are used to get the weather data in the correct form. These can also be used as a reference for building your own weather data. NOTE: currently the weather processes are being rewritten for the new photosynthesis functionalities. 
+
+Wather data format also depends on the photsynthesis model used, the basic input of the model is that photosynthesis per tree is an input, but it can also be calculated in the CASSIA package if needed. The different photosynthesis input methods need different weather data formats. The weather data needed is detailed in the represctive photosynthesis models.
+1. PRELES
+2. p-hydro
+The R function will give an error if the weather data is wrongly named, within unexpected bounds or if it has NAs.
 
 ```{r}
+# import the package
 library(CASSIA)
-CASSIA(weather = Hyde_weather, site = "Hyde")
+
+# Get the weather data
+photosynthesis_as_input = TRUE
+processed_data = process_weather_data(photosynthesis_as_input)
+
+# Run the model
+CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
 ```
 
-Hyde_weather is included in the package, and another function is included Hyde_Data_Creation, which could be used as a reference for building your own weather data.
-
-Here the argument for mychorrhiza has been changed to FALSE (default is TRUE). Now mychorrhiza settings will be taken into account when the model is running. To see all of the possible processes that are considered in the model look to the CASSIA function documentation. This also provides the initial conditions and settings of the model. The formatting and inputs are also listed here and should be considered.
+To use a different model setting you can use a toggle. An example that doesn't require changing any of the rest of the inputs is LN.estim. This means that a GPP correction is not applied to the potenital needle growth claculations.
 
 ```{r}
-library(CASSIA)
-CASSIA(weather = Hyde_weather, site = "Hyde", mychorrhiza = FALSE)
+CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", LN.estim = FALSE)
+```
+There should be an error or a warning if you have choosen a set of toggles that cannot coexit. Usually the model will assume which combination you ment and run with the corrected toggles, so these should be checked carefully.
+
+The package automatically has tables of parameters included. These are notated with a _p after the argument name as in the function. The easiest way to reformulate the model is thus take these as a base and change the parameters you would like to accordingly. All of the parameters are named in the code objects and then are explained further in the CASSIA instruction booklet and the original articles.
+
+In the data-raw folder you can also see how the _p objects are made if you would prefer this as a basis for your new parameters. An example of the first method is:
+
+```{r}
+ratios_new = ratios_p
+ratios_new[1,c("Hyde")] = 0.65
+CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", ratios = ratios_new)
 ```
 
-If you have an error along the lines of 
+If you are using the model in Hyytiälä or Väriö then the model is calibrated. If not the model is not yet calibrated for your site. This means that you need to calibrate the model! To do this look at the markdown files for advice
+
+Sidenote: If you have an error along the lines of 
 
 ```{r}
 Error in if GENERIC ARGUMENT missing value where TRUE/FALSE needed
 ```
 It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report then send joanna.x.simms@helsinki.fi an email.
 
-(Code working as of 19th Jan 2024 - contact Joanna if not working)
-
-### Example C++ model via R interface
-
-The C++ model has less automatic features than the R version of the model. This means that when you call the function you have to be more explicit about all of the arguments as well as including different weather data. There is a working example in the package, however this is not fully documented. A basic example is as follows.
-
-(Code currently under revision, so could not be working - this code will be updated by Feburary with a working version)
-
-```{r}
-### Toggle setting
-storage_rest = T
-storage_grows = F
-LH_estim = T
-LN_estim = T
-mN_varies = T
-LD_estim = T
-sD_estim_T_count = F
-trees_grow = F
-growth_decreases = F
-needle_mass_grows = F
-mycorrhiza = T
-root_as_Ding = T
-sperling_sugar_model = F
-using_spp_photosynthesis = T
-xylogensis_option = F
-environmental_effect_xylogenesis = F
-temp_rise = F
-drought = F
-Rm_acclimation = F
-etmodel = F
-LOGFLAG = F
-
-### Non automatic parameters
-N_parameters = c(1, 1)
-pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
-            0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
-            0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
-            -999.9, -999.9, -999.9)
-
-### Weather dataset updated with the extra terms needed for the C++ model
-weather_original_2015 = read.csv(file = "./data/weather_original_2015.csv", header = T, sep = ",")
-weather_original_2016 = read.csv(file = "./data/weather_original_2016.csv", header = T, sep = ",")
-weather_original_2017 = read.csv(file = "./data/weather_original_2017.csv", header = T, sep = ",")
-weather_original = rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017)
-
-extras = data.frame(Nitrogen = rep(0.012, length = nrow(weather_original)),
-                    PAR = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("PAR")],
-                    VPD = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("VPD")],
-                    CO2 = data_format[substring(data_format$Date, 1, 4) %in% 2015:2017,c("CO2")],
-                    fAPAR = rep(0.7, length = nrow(weather_original)))
-weather_original <- cbind(weather_original, extras)
-weather_original <- weather_original[-c(365+365),]
-
-### Function call
-CASSIA_yearly(2015, 2016, weather_original, GPP_ref,
-              c(pPREL, N_parameters), t(parameters_p), common_p, t(ratios_p), t(sperling_par),
-              needle_mass_in,
-              Throughfall,
-              storage_rest, storage_grows,
-              LH_estim, LN_estim, mN_varies, LD_estim, sD_estim_T_count,
-              trees_grow, growth_decreases, needle_mass_grows,
-              mycorrhiza, root_as_Ding, sperling_sugar_model,
-              xylogensis_option, environmental_effect_xylogenesis,
-              temp_rise, drought, Rm_acclimation,
-              using_spp_photosynthesis, TRUE,
-              etmodel, LOGFLAG)
-```
-
-The other parameters are defined in the model automatically, although they have to be called, and can be found in the data folder.
+(Code working as of 19th Nov 2024 - contact Joanna if not working)
 
 ### Ongoing Projects
 
