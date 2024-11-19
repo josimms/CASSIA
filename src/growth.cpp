@@ -96,7 +96,6 @@ growth_out growth(int day,
    * Height
    */
   g_sH = g;
-  std::cout << " parameters.sH0 " << parameters.sH0;
   if (day == 0) {
     sH = parameters.sH0 + g_sH; // First day that it could have a value is this!
   } else {
