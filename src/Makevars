@@ -7,6 +7,7 @@ all: $(SHLIB)
 
 PKG_INCL = -I../inst/include \
 	-I../include \
+	-I./external/phydro/inst/include \
 	-I$(PHYDRO_PATH)/inst/include \
 	-I$(PHYDRO_PATH)/inst/LBFGSpp/include \
 	-I$(LIBPSPM_PATH)/include \
