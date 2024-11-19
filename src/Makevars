@@ -17,7 +17,8 @@ PKG_INCL = -I../inst/include \
 	-I"$(R_PACKAGE_DIR)/inst/external/phydro/inst/include" \
 	-I"$(R_PACKAGE_DIR)/inst/external/phydro/inst/LBFGSpp/include" \
 	-I"$(R_PACKAGE_DIR)/inst/external/libpspm/include" \
-	-I"$(R_PACKAGE_DIR)/inst/external/Rprebasso/src"
+	-I"$(R_PACKAGE_DIR)/inst/external/Rprebasso/src" \
+	-I"$(R_PACKAGE_DIR)/inst/external/phydro/include"
 
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) $(PKG_INCL)
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)
