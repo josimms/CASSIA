@@ -1,0 +1,6 @@
+[submodule "external/Rprebasso"]
+	path = external/Rprebasso
+	url = https://github.com/josimms/Rprebasso
+[submodule "external/phydro"]
+	path = external/phydro
+	url = https://github.com/josimms/phydro
