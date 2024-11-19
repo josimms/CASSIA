@@ -1,4 +1,4 @@
-#include "external/phydro/inst/include/phydro.h"
+#include <phydro.h>
 #include "function_structures.h"
 #include "final_parameters.h"
 

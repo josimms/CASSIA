@@ -4,11 +4,22 @@ PHYDRO_PATH = $(EXTERNAL_DIR)/phydro
 LIBPSPM_PATH = $(EXTERNAL_DIR)/libpspm
 Rprebasso_PATH = $(EXTERNAL_DIR)/Rprebasso
 
+# Use pkg-config or R's system paths
+PKG_INCL = -I$(R_TOOLS)/include -I$(R_INCLUDE) \
+	   -I$(PWD)/inst/include \
+           -I"$(R_PACKAGE_DIR)/inst/include" \
+           -I"$(R_PACKAGE_DIR)/inst/external/phydro/inst/include" \
+           -I"$(R_PACKAGE_DIR)/inst/external/phydro/inst/LBFGSpp/include" \
+           -I"$(R_PACKAGE_DIR)/inst/external/Rprebasso/inst/include"
+
 # Path to the directory containing the external header files
-PKG_INCL = -I../inst/include -I$(PHYDRO_PATH)/inst/include -I$(PHYDRO_PATH)/inst/LBFGSpp/include -I$(LIBPSPM_PATH)/include -I/usr/include/eigen3 -I$(Rprebasso_PATH)/src
+#PKG_INCL = -I../inst/include -I$(PHYDRO_PATH)/inst/include -I$(PHYDRO_PATH)/inst/LBFGSpp/include -#I$(LIBPSPM_PATH)/include -I/usr/include/eigen3 -I$(Rprebasso_PATH)/src
 
 # Flags for the C++ compiler
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) $(PKG_INCL)
 
 # Linker flags, including any external libraries
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)
+
+
+
