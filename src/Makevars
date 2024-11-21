@@ -1,18 +1,23 @@
+# Define external directories
 EXTERNAL_DIR = ../external
 PHYDRO_PATH = $(EXTERNAL_DIR)/phydro
 LIBPSPM_PATH = $(EXTERNAL_DIR)/libpspm
-Rprebasso_PATH = $(EXTERNAL_DIR)/Rprebasso
+RPREBASSO_PATH = $(EXTERNAL_DIR)/Rprebasso
 
+# Define the source files from external packages
+FS_MODEL_SRC = $(RPREBASSO_PATH)/src/gpp.c
+	
+# Compile target
 all: $(SHLIB)
 
+# Include paths for the package
 PKG_INCL = -I../inst/include \
 	-I../include \
-	-I./external/phydro/inst/include \
 	-I$(PHYDRO_PATH)/inst/include \
 	-I$(PHYDRO_PATH)/inst/LBFGSpp/include \
 	-I$(LIBPSPM_PATH)/include \
 	-I/usr/include/eigen3 \
-	-I$(Rprebasso_PATH)/src \
+	-I$(RPREBASSO_PATH)/src \
 	-I"$(R_PACKAGE_DIR)/inst/include" \
 	-I"$(R_PACKAGE_DIR)/include" \
 	-I"$(R_PACKAGE_DIR)/external/phydro/inst/include" \
@@ -24,3 +29,14 @@ PKG_INCL = -I../inst/include \
 
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) $(PKG_INCL)
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)
+
+# Object files
+OBJS = $(FS_MODEL_SRC:.c=.o)
+
+# Rules for compiling .c files into object files
+%.o: %.c
+	$(CC) $(CFLAGS) $(PKG_CPPFLAGS) -c $< -o $@
+
+# Link object files into the shared library
+$(SHLIB): $(OBJS)
+
