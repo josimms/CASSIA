@@ -1,5 +1,6 @@
 #include "CASSIA.h"
 
+/*
 struct fS_out {
   double fS;
   double S;
@@ -17,12 +18,12 @@ fS_out fS_model(double S, double T, p2 GPP_par) {
   out.S = S;
   return(out);
 };
-
+*/
 
 /*
  * Seasonality of foliage
  */
-
+/*
 struct fPheno_out {
   double fPheno;
   double PhenoS;
@@ -44,18 +45,21 @@ fPheno_out fPheno_model(p2 GPP_par, double T, double PhenoS,
     }
 
     if (PhenoS > GPP_par.tsumcrit - 0.005) fPheno = 1; else fPheno = 0;
+ */
     /* Quick solution to leaf out:
      * After end of July we just apply season prediction based on conifer fS
      *  for gradual leaf out. Assume leaves drop much faster that fS.
      *  ...essentially this should be light driven process...i think. */
+    /*
     if (DOY > 212) {
       fPheno = fS * fS;
       if (fPheno < 0.5) {
         fPheno = 0;
       }
     }
-
+*/
     /* If there is no t0 parameter, it is an evergreen */
+    /*
   } else {
     fPheno = 1;
   }
@@ -71,11 +75,12 @@ struct snow_out {
   double snowmelt;
   double precip;
 };
+     */
 
 /*
  * Snow model
  */
-
+/*
 snow_out snow(double TAir, double Precip, double snow, p4 SnowRain_par, double snow_melt){
 
   double NewSnow;
@@ -105,11 +110,12 @@ snow_out snow(double TAir, double Precip, double snow, p4 SnowRain_par, double s
 
   return(out);
 };
-
+*/
 /*
  * CO2
  */
 
+/*
 double fCO2_model_mean(double CO2, p2 GPP_par ) {
   return(1 + GPP_par.bCO2 * log(CO2/380) );
 };
@@ -117,20 +123,24 @@ double fCO2_model_mean(double CO2, p2 GPP_par ) {
 double fCO2_ET_model_mean(double CO2, p2 GPP_par ) {
   return(1 + GPP_par.xCO2 * log(CO2/380) );
 };
+ */
 
 /*
  * Nitrogen
  */
 
+/*
 double fN_sub(double N, p7 N_par) {
   double out = N_par.a*N+N_par.b;
   return(out);
 };
+ */
 
 /*
  * Rain interception
  */
 
+/*
 struct interception_out {
   double precip;
   double intercepted;
@@ -151,11 +161,13 @@ interception_out interceptionfun(double Precip, double intercepted, double TAir,
   out.precip = Precip;
   return(out);
 }
+ */
 
 /*
  * ET function
  */
 
+/*
 struct ETfun_out {
   double ET;
   double canw;
@@ -202,7 +214,10 @@ ETfun_out ETfun(double D, double theta, double ppfd, double fAPAR, double T,
 
 
   // Calculate soil constraint, simple linear following Granier 1987
-  if (ET_par.soilthres < -998) { /*-999 omits water control*/
+  if (ET_par.soilthres < -998) {
+*/
+/*-999 omits water control*/
+/*
   fWsub = 1;
   } else {
     if (REW < ET_par.soilthres) {
@@ -259,11 +274,12 @@ ETfun_out ETfun(double D, double theta, double ppfd, double fAPAR, double T,
   return(out);
 }
 
+ */
 /*
  * Swbalance
  */
 
-
+/*
 struct sw_balance_out {
   double theta;
   double drainage;
@@ -337,12 +353,12 @@ sw_balance_out swbalance(double theta, double throughfall, double snowmelt, doub
   return(out);
 }
 
-
+*/
 /*
  * GPP function
  */
 
-
+/*
 gpp_out GPPfun(double PAR, double VPD, double CO2, double theta,
             double fAPAR, double Nitrogen, double fSsub,
             p2 GPP_par, p1 Site_par, p7 N_par) {
@@ -388,6 +404,7 @@ gpp_out GPPfun(double PAR, double VPD, double CO2, double theta,
 
   return(out);
 }
+ */
 
 /*
  * Preles
@@ -421,6 +438,7 @@ photosynthesis_out preles(int day,
                           double gpp380)
 {
 
+  /*
   if (PAR < -900) {std::cout << "PAR is too low\n";}
   if (TAir < -900) {std::cout << "TAir is too low\n";}
   if (VPD < 0 || VPD > 6) {std::cout << "VPD is out of bounds\n";}
@@ -480,8 +498,9 @@ photosynthesis_out preles(int day,
   double SOG = theta_snow;
   double SW = soilwater_balance.theta;
   double Canopywater = soilwater_balance.canw;
-
+*/
   photosynthesis_out out;
+  /*
   out.GPP = gpp.gpp;
   out.ET = ET_out.ET;
   out.SoilWater = SW;
@@ -505,7 +524,7 @@ photosynthesis_out preles(int day,
   out.evap = ET_out.evap;
   out.fWE = ET_out.fWE;
   out.gpp380 = gpp.gpp380;
-
+*/
   return(out);
 }
 
@@ -514,7 +533,7 @@ photosynthesis_out preles(int day,
  */
 
 
-// [[Rcpp::export]]
+/*
 Rcpp::List preles_test_cpp(int start_year, int end_year,
                            Rcpp::DataFrame weather,
                            std::vector<double> pPREL,
@@ -636,3 +655,4 @@ Rcpp::List preles_test_cpp(int start_year, int end_year,
                             Rcpp::_["fE"] = photosynthesis_output.fE,
                             Rcpp::_["fN"] = photosynthesis_output.fN);
 }
+ */
