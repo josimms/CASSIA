@@ -14,6 +14,7 @@
 #include <map>
 #include <iomanip>
 #include <prelesglobals.h>
+#include <vector>
 
 #ifndef CASSIA_H
 #define CASSIA_H
