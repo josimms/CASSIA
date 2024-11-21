@@ -63,10 +63,6 @@ Microbe_Uptake <- function(C_microbe, N_micorbe, C_exudates, C_soil_compartment,
     .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_exudates, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg, tests)
 }
 
-preles_test_cpp <- function(start_year, end_year, weather, pPREL, etmodel) {
-    .Call(`_CASSIA_preles_test_cpp`, start_year, end_year, weather, pPREL, etmodel)
-}
-
 repola_test_cpp <- function(pCASSIA_parameters, pCASSIA_sperling) {
     .Call(`_CASSIA_repola_test_cpp`, pCASSIA_parameters, pCASSIA_sperling)
 }
