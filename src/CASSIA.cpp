@@ -38,6 +38,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   p3 parET = make_p3(pPREL);
   p4 parSnowRain = make_p4(pPREL);
   p5 parWater = make_p5(pPREL);
+  p6 parInitials = make_p6(pPREL);
   p7 parN = make_p7(pPREL);
 
   CASSIA_common common = make_common(pCASSIA_common);
@@ -247,18 +248,8 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.GPP = Photosynthesis_IN[weather_index];
         photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
       } else {
-        photosynthesis.GPP = 0;
-        photosynthesis.ET = 0;
-        photosynthesis.fS = 0;
-        photosynthesis.SoilWater = 0;
-        // call_preles(days_per_year, day,
-        //           PAR[count], TAir[count], VPD[count], Precip[count],
-        //           CO2[count], fAPAR, Nitrogen[count],
-        //           parSite, parGPP, parET, parSnowRain,
-        //           parWater, parN, etmodel);
-        // TODO: 5.6...
-        photosynthesis.GPP = 5.6 * photosynthesis.GPP; // g C m-2 per day, so no conversion is needed!
-        photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
+        photosynthesis = preles_cpp(day, PAR[weather_index], TAir[weather_index], Precip[weather_index], VPD[weather_index], CO2[weather_index], fAPAR,
+                                    parSite, parGPP, parET, parSnowRain, parInitials, 0.5);
         fS = photosynthesis.fS;
       }
       if (day == 0) {
