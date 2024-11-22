@@ -37,8 +37,6 @@ photosynthesis_out preles_cpp(int day,
 
   fPheno = fPheno_model(GPP_par, T, &PhenoS, day, fS);
 
-  std::cout << " Day: " << day;
-
   fAPAR = fAPAR * fPheno;
 
   GPPfun(&GPP, &gpp380, I, D, CO2, theta, fAPAR, fS,
@@ -82,6 +80,7 @@ photosynthesis_out preles_cpp(int day,
   out.GPP = GPP;
   out.ET = ET;
   out.SoilWater = theta;
+  out.fS = fS;
 
   return out;
 }
