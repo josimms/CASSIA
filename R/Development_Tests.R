@@ -146,6 +146,40 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   plot_weather_variables(processed_data$weather_original, processed_data$dates)
 
   ###
+  # Preles CASSIA against PRELES original
+  ###
+
+  newwest_version = T
+  if (!newwest_version) {
+    devtools::install_github("josimms/Rprebasso", force = T)
+  }
+
+  preles_original <- Rprebasso::PRELES(processed_data$weather_original$PAR,
+                                       processed_data$weather_original$T,
+                                       processed_data$weather_original$VPD,
+                                       processed_data$weather_original$Rain,
+                                       processed_data$weather_original$CO2,
+                                       processed_data$weather_original$fAPAR)
+
+  preles_CASSIA <- preles_test(processed_data$weather_original)
+
+  par(mfrow = c(3, 2))
+  plot(preles_original$GPP, ylab = "GPP")
+  points(preles_CASSIA$GPP, col = "blue")
+
+  plot(preles_original$GPP, preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA")
+
+  plot(preles_original$ET, ylab = "ET")
+  points(preles_CASSIA$ET, col = "blue")
+
+  plot(preles_original$ET, preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA")
+
+  plot(preles_original$SW, ylab = "Soil Water")
+  points(preles_CASSIA$SoilWater, col = "blue")
+
+  plot(preles_original$SW, preles_CASSIA$SoilWater, xlab = "Original", ylab = "CASSIA")
+
+  ###
   # Plotting the results
   #
   # NO SOIL
