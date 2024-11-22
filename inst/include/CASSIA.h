@@ -247,24 +247,6 @@ struct photosynthesis_out {
   double ET;
   double SoilWater;
   double fS;
-  double fW;
-  double fN;
-  double fCO2;
-  double theta_canopy;
-  double Throughfall;
-  double theta;
-  double theta_snow;
-  double S_state;
-  double PhenoS;
-  double Snowmelt;
-  double intercepted;
-  double Drainage;
-  double canw;
-  double fE;
-  double transp;
-  double evap;
-  double fWE;
-  double gpp380;
 };
 
 struct photo_out_vector {
@@ -272,42 +254,7 @@ struct photo_out_vector {
   std::vector<double> ET;
   std::vector<double> SoilWater;
   std::vector<double> fS;
-  std::vector<double> fW;
-  std::vector<double> fE;
-  std::vector<double> fN;
 };
-
-photosynthesis_out preles(int day,
-                          double PAR, double TAir, double VPD, double Precip,
-                          double CO2, double fAPAR, double Nitrogen,
-                          p1 Site_par,
-                          p2 GPP_par,
-                          p3 ET_par,
-                          p4 SnowRain_par,
-                          p5 Water_par,
-                          p7 N_par,
-                          int etmodel,
-                          double theta,
-                          double theta_snow,
-                          double theta_canopy,
-                          double Throughfall,
-                          double S_state,
-                          double PhenoS,
-                          double Snowmelt,
-                          double intercepted,
-                          double Drainage,
-                          double canw,
-                          double fE,
-                          double transp,
-                          double evap,
-                          double fWE,
-                          double fW,
-                          double gpp380);
-
-Rcpp::List preles_test_cpp(int start_year, int end_year,
-                           Rcpp::DataFrame weather,
-                           std::vector<double> pPREL,
-                           int etmodel);
 
 photosynthesis_out preles_cpp(int day,
                               double I,
@@ -316,14 +263,14 @@ photosynthesis_out preles_cpp(int day,
                               double D,
                               double CO2,
                               double fAPAR,
-                              double S,
-                              double PhenoS,
                               p1 Site_par,
-                               p2 GPP_par,
+                              p2 GPP_par,
                               p3 ET_par,
                               p4 SnowRain_par,
                               p5 Initials_snow,
                               double LOGFLAG);
+
+Rcpp::DataFrame preles_test(Rcpp::DataFrame weather);
 
 /*
  * Respiration
