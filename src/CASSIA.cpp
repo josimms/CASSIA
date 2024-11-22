@@ -121,6 +121,8 @@ Rcpp::List CASSIA_yearly(int start_year,
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
 
+  photosynthesis_out photosynthesis;
+
   /*
    * YEAR LOOP
    */
@@ -148,7 +150,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     carbo_tracker carbo_tracker_vector;
     xylogensis_out xylogensis_vector;
-    double fS;
+    photosynthesis.fS = 0.0;
 
     std::vector<double> release;
 
@@ -235,22 +237,21 @@ Rcpp::List CASSIA_yearly(int start_year,
       if (day < 182) { // TODO: I decided that the start of July is the end of spring
         LAI_within_year = 2.0/3.0*LAI + f_modifer*1.0/3.0*LAI;
       } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
-        LAI_within_year = 2.0/3.0*LAI + fS*1.0/3.0*LAI;
+        LAI_within_year = 2.0/3.0*LAI + photosynthesis.fS*1.0/3.0*LAI;
       } else {
         LAI_within_year = LAI;
       }
       double fAPAR = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
 
       double photosynthesis_per_stem;
-      photosynthesis_out photosynthesis;
       if (boolsettings.photosynthesis_as_input) {
         photosynthesis.GPP = Photosynthesis_IN[weather_index];
         photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
       } else {
         photosynthesis = preles_cpp(day, PAR[weather_index], TAir[weather_index], Precip[weather_index], VPD[weather_index], CO2[weather_index], fAPAR,
                                     parSite, parGPP, parET, parSnowRain, parWater, 0.5);
-        fS = photosynthesis.fS;
       }
+
       if (day == 0) {
         GPP_sum = 0.0;
       } else if (day <= 182) {
