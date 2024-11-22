@@ -38,7 +38,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   p3 parET = make_p3(pPREL);
   p4 parSnowRain = make_p4(pPREL);
   p5 parWater = make_p5(pPREL);
-  p6 parInitials = make_p6(pPREL);
   p7 parN = make_p7(pPREL);
 
   CASSIA_common common = make_common(pCASSIA_common);
@@ -249,7 +248,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
       } else {
         photosynthesis = preles_cpp(day, PAR[weather_index], TAir[weather_index], Precip[weather_index], VPD[weather_index], CO2[weather_index], fAPAR,
-                                    parSite, parGPP, parET, parSnowRain, parInitials, 0.5);
+                                    parSite, parGPP, parET, parSnowRain, parWater, 0.5);
         fS = photosynthesis.fS;
       }
       if (day == 0) {
