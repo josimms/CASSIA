@@ -5,8 +5,19 @@ LIBPSPM_PATH = $(EXTERNAL_DIR)/libpspm
 RPREBASSO_PATH = $(EXTERNAL_DIR)/Rprebasso
 
 # Define the source files from external packages
-FS_MODEL_SRC = $(RPREBASSO_PATH)/src/gpp.c
-	
+FS_MODEL_SRC = $(RPREBASSO_PATH)/src/gpp.c \
+	$(RPREBASSO_PATH)/src/call_preles.c \
+	$(RPREBASSO_PATH)/src/preles.c \
+	$(RPREBASSO_PATH)/src/initruns.c \
+	$(RPREBASSO_PATH)/src/water.c
+
+# Define external object files
+EXTERNAL_OBJS = $(RPREBASSO_PATH)/src/gpp.o \
+	$(RPREBASSO_PATH)/src/call_preles.o \
+	$(RPREBASSO_PATH)/src/preles.o \
+	$(RPREBASSO_PATH)/src/initruns.o \
+	$(RPREBASSO_PATH)/src/water.o
+
 # Compile target
 all: $(SHLIB)
 
@@ -28,7 +39,7 @@ PKG_INCL = -I../inst/include \
 	-I"$(R_PACKAGE_DIR)/inst/external/phydro/include"
 
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) $(PKG_INCL)
-PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS)
+PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(EXTERNAL_OBJS)
 
 # Object files
 OBJS = $(FS_MODEL_SRC:.c=.o)
@@ -38,5 +49,4 @@ OBJS = $(FS_MODEL_SRC:.c=.o)
 	$(CC) $(CFLAGS) $(PKG_CPPFLAGS) -c $< -o $@
 
 # Link object files into the shared library
-$(SHLIB): $(OBJS)
-
+$(SHLIB): $(OBJS) $(EXTERNAL_OBJS)
