@@ -337,6 +337,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// preles_test
+Rcpp::DataFrame preles_test(Rcpp::DataFrame weather);
+RcppExport SEXP _CASSIA_preles_test(SEXP weatherSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type weather(weatherSEXP);
+    rcpp_result_gen = Rcpp::wrap(preles_test(weather));
+    return rcpp_result_gen;
+END_RCPP
+}
 // repola_test_cpp
 Rcpp::List repola_test_cpp(Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_sperling);
 RcppExport SEXP _CASSIA_repola_test_cpp(SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_sperlingSEXP) {
@@ -436,6 +447,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_Plant_N_Uptake", (DL_FUNC) &_CASSIA_Plant_N_Uptake, 11},
     {"_CASSIA_Fungal_N_Uptake", (DL_FUNC) &_CASSIA_Fungal_N_Uptake, 9},
     {"_CASSIA_Microbe_Uptake", (DL_FUNC) &_CASSIA_Microbe_Uptake, 18},
+    {"_CASSIA_preles_test", (DL_FUNC) &_CASSIA_preles_test, 1},
     {"_CASSIA_repola_test_cpp", (DL_FUNC) &_CASSIA_repola_test_cpp, 2},
     {"_CASSIA_respiration_test_cpp", (DL_FUNC) &_CASSIA_respiration_test_cpp, 12},
     {"_CASSIA_printColumnNames", (DL_FUNC) &_CASSIA_printColumnNames, 1},
