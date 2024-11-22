@@ -154,6 +154,8 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     devtools::install_github("josimms/Rprebasso", force = T)
   }
 
+  processed_data <- process_weather_data(TRUE)
+
   preles_original <- Rprebasso::PRELES(processed_data$weather_original$PAR,
                                        processed_data$weather_original$T,
                                        processed_data$weather_original$VPD,
@@ -163,21 +165,39 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   preles_CASSIA <- preles_test(processed_data$weather_original)
 
+  soil_processes = FALSE
+  CASSIA_preles <- CASSIA_cpp(weather = processed_data$weather_original,
+                              site = "Hyde",
+                              pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                              parameters = parameters_all$parameters_test,
+                              common = common_p,
+                              ratios = ratios_p,
+                              sperling = parameters_all$sperling_test,
+                              needle_mass_in = parameters_all$needle_mass_in,
+                              Throughfall = parameters_all$Throughfall,
+                              photosynthesis_as_input = FALSE)
+
   par(mfrow = c(3, 2))
   plot(preles_original$GPP, ylab = "GPP")
   points(preles_CASSIA$GPP, col = "blue")
+  points(CASSIA_preles$Preles$GPP, col = "purple")
 
-  plot(preles_original$GPP, preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA")
+  plot(preles_original$GPP, preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA", col = "blue")
+  points(preles_original$GPP, CASSIA_preles$Preles$GPP, col = "purple")
 
   plot(preles_original$ET, ylab = "ET")
   points(preles_CASSIA$ET, col = "blue")
+  points(CASSIA_preles$Preles$ET, col = "purple")
 
-  plot(preles_original$ET, preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA")
+  plot(preles_original$ET, preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA", col = "blue")
+  points(preles_original$ET, CASSIA_preles$Preles$ET, col = "purple")
 
   plot(preles_original$SW, ylab = "Soil Water")
   points(preles_CASSIA$SoilWater, col = "blue")
+  points(CASSIA_preles$Preles$SoilWater, col = "purple")
 
-  plot(preles_original$SW, preles_CASSIA$SoilWater, xlab = "Original", ylab = "CASSIA")
+  plot(preles_original$SW, preles_CASSIA$SoilWater, xlab = "Original", ylab = "CASSIA", col = "blue")
+  points(preles_original$SW, CASSIA_preles$Preles$SoilWater, col = "purple")
 
   ###
   # Plotting the results
@@ -185,6 +205,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # NO SOIL
   ###
 
+  processed_data <- process_weather_data(settings_basic$photosynthesis_as_input)
   soil_processes = FALSE
 
   CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
