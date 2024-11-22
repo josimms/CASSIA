@@ -54,6 +54,8 @@ process_weather_data <- function(using_spp_photosynthesis) {
   weather_original$dates <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
   names(weather_original)[1] <- "date"
 
+  names(data_format)[1] <- "dates"
+
   # Add extra columns to the combined weather data
   extras <- data.frame(
     Nitrogen = rep(0.012, nrow(weather_original)),
