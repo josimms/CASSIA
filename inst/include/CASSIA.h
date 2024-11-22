@@ -309,6 +309,22 @@ Rcpp::List preles_test_cpp(int start_year, int end_year,
                            std::vector<double> pPREL,
                            int etmodel);
 
+photosynthesis_out preles_cpp(int day,
+                              double I,
+                              double T,
+                              double P,
+                              double D,
+                              double CO2,
+                              double fAPAR,
+                              double S,
+                              double PhenoS,
+                              p1 Site_par,
+                               p2 GPP_par,
+                              p3 ET_par,
+                              p4 SnowRain_par,
+                              p5 Initials_snow,
+                              double LOGFLAG);
+
 /*
  * Respiration
  */
