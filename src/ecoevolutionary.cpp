@@ -1,5 +1,14 @@
 #include "CASSIA.h"
 
+int leap_year(int year)
+{
+  if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
+    return 366;
+  } else {
+    return 365;
+  }
+}
+
 // [[Rcpp::export]]
 Rcpp::List CASSIA_eeo(int start_year,
                        int end_year,
@@ -69,15 +78,6 @@ Rcpp::List CASSIA_eeo(int start_year,
 
   bool tree_alive = true;
 
-  // std::vector<double> SW, Canopywater, SOG, S;
-
-  /*
-   * SW.push_back(SWinit);
-   Canopywater.push_back(CWinit);
-   SOG.push_back(SOGinit);
-   S.push_back(Sinit);
-   */
-
   double CH = parameters.density_tree * parameters.carbon_share;
   double M_suc = 12 * common.M_C + 22 * common.M_H + 11 * common.M_O;
 
@@ -101,7 +101,7 @@ Rcpp::List CASSIA_eeo(int start_year,
 
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
-  carbo_balance original_parameters;
+  ring_width_out previous_ring_width;
   MYCOFON_function_out MYCOFON_for_next_iteration;
   SYMPHONY_output soil_values_for_next_iteration;
 
@@ -133,6 +133,9 @@ Rcpp::List CASSIA_eeo(int start_year,
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
 
+  photosynthesis_out photosynthesis;
+  photo_out_vector photosynthesis_output;
+
   /*
    * YEAR LOOP
    */
@@ -152,6 +155,7 @@ Rcpp::List CASSIA_eeo(int start_year,
   }
 
   int final_year = 1;
+  int days_gone = 0;
   for (int year : years_for_runs)  {
     bool trenching;
     if (year > trenching_year)  {
@@ -160,15 +164,13 @@ Rcpp::List CASSIA_eeo(int start_year,
       trenching = false;
     }
 
-    // std::cout << " Year " << year;
-
     /*
      * Daily output
      */
 
     carbo_tracker carbo_tracker_vector;
     xylogensis_out xylogensis_vector;
-    double fS;
+    photosynthesis.fS = 0.0;
 
     /*
      * Yearly initialization
@@ -222,9 +224,7 @@ Rcpp::List CASSIA_eeo(int start_year,
      */
 
     int days_per_year = leap_year(year);
-    if (boolsettings.CASSIA_graphs) {
-      days_per_year = 365;
-    }
+
     /*
      * Yearly initial conditions updated
      */
@@ -235,8 +235,10 @@ Rcpp::List CASSIA_eeo(int start_year,
     /*
      * DAYS LOOP
      */
-    photosynthesis_out photosynthesis_old;
+    int weather_index;
     for (int day = 0; day < days_per_year; day++) {
+
+      weather_index = days_gone + day;
 
       /*
        * PHOTOSYNTHESIS
@@ -244,55 +246,56 @@ Rcpp::List CASSIA_eeo(int start_year,
        * There are yearly, but not daily dependencies other than environmental states here!
        */
 
-      // Uses the method from Tian 2021
-      // Extinction coefficient 0.52 is from Tian 2021 as well
-      // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
-      double LAI = 3; // TODO
-      double f_modifer = needles_last/growth_values_for_next_iteration.max_N;
-      double LAI_within_year;
-      if (day < 182) { // TODO: I decided that the start of July is the end of spring
-        LAI_within_year = 2.0/3.0*LAI + f_modifer*1.0/3.0*LAI;
-      } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
-        LAI_within_year = 2.0/3.0*LAI + fS*1.0/3.0*LAI;
-      } else {
-        LAI_within_year = LAI;
-      }
-      double fAPAR = (1.0 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
-
-      photosynthesis_out photosynthesis;
-      double photosynthesis_per_stem;
-
-      if (boolsettings.photosynthesis_as_input) {
-        photosynthesis.GPP = Photosynthesis_IN[day];
-        photosynthesis_per_stem = Photosynthesis_IN[day] / 1010 * 10000/1000;
-      } else {
-        if (boolsettings.phydro) {
-          double lai = 1.8; // TODO: add a value here?
-          double mass_to_area = 1.8; // TODO: add a value here?
-          double crown_area = culm_growth.needles[day-1] * mass_to_area; // TODO: check that the canopy area is the whole area rather than the intercepting area
-          double zeta = crown_area / culm_growth.roots[day-1];
-          double n_layers = 3; // TODO: does this need to be predetermined in the canopy area / env bits
-          // TODO: note that nitrogen is the nitrogen store in the leaf rather than the nitrogen input overall
-          double Nitrogen = 1; // Currently no functions for this!
-
-          double PA = 1000;
-          double SWP = 0.01;
-
-          double fipar = 0.7; // TODO: real value
-
-          //phydro_assimilation = calc_plant_assimilation_rate(fipar,
-          //                                                   PAR[day], TAir[day], VPD[day], Precip[day], CO2[day], Nitrogen, PA, SWP,
-          //                                                   phydro_parameters, lai, n_layers, crown_area, culm_growth.height[day-1], zeta);
-
-          // TODO: need to check the exact unit of GPP going into the model
-          //photosynthesis.GPP = phydro_assimilation.gpp;
-
-
+      double fAPAR_used, fS_out;
+      if (!boolsettings.photosynthesis_as_input & boolsettings.fAPAR_Tian) {
+        // Uses the method from Tian 2021
+        // Extinction coefficient 0.52 is from Tian 2021 as well
+        // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
+        double LAI = 3; // TODO
+        double f_modifer = needles_last/growth_values_for_next_iteration.max_N;
+        double LAI_within_year;
+        if (day < 182) { // TODO: I decided that the start of July is the end of spring
+          LAI_within_year = 2.0/3.0*LAI + f_modifer*1.0/3.0*LAI;
+        } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
+          LAI_within_year = 2.0/3.0*LAI + fS_out*1.0/3.0*LAI;
         } else {
-          // TODO: not that day should be unded to the weather index used in the CASSIA function
-          photosynthesis = preles_cpp(day, PAR[day], TAir[day], Precip[day], VPD[day], CO2[day], fAPAR,
-                                      parSite, parGPP, parET, parSnowRain, parWater, 0.5);
-          fS = photosynthesis.fS;
+          LAI_within_year = LAI;
+        }
+        fAPAR_used = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
+      } else {
+        fAPAR_used = fAPAR[weather_index];
+      }
+
+      double photosynthesis_per_stem, GPP, ET, SoilWater;
+      if (boolsettings.photosynthesis_as_input) {
+        photosynthesis.GPP = Photosynthesis_IN[weather_index];
+        photosynthesis.ET = 0.0;
+        photosynthesis.SoilWater = 0.0;
+        photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
+
+        if (final_year%2!=0) {
+          photosynthesis_output.GPP.push_back(photosynthesis.GPP);
+          photosynthesis_output.ET.push_back(photosynthesis.ET);
+          photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
+        }
+      } else {
+        if (final_year%2!=0) {
+          photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
+                                      VPD[weather_index], CO2[weather_index], fAPAR_used,
+                                      parSite, parGPP, parET, parSnowRain, parWater, 0.0);
+          photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
+          photosynthesis_output.GPP.push_back(photosynthesis.GPP);
+          photosynthesis_output.ET.push_back(photosynthesis.ET);
+          photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
+          photosynthesis_output.fS.push_back(photosynthesis.fS);
+          GPP = photosynthesis_output.GPP[weather_index];
+          ET = photosynthesis_output.ET[weather_index];
+          SoilWater = photosynthesis_output.SoilWater[weather_index];
+          fS_out = photosynthesis_output.fS[weather_index];
+        } else {
+          GPP = photosynthesis_output.GPP[day];
+          ET = photosynthesis_output.ET[day];
+          SoilWater = photosynthesis_output.SoilWater[day];
         }
       }
 
@@ -319,17 +322,23 @@ Rcpp::List CASSIA_eeo(int start_year,
         en_pot_growth_old = potenital_growth_use[day-11];
       }
 
-      GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
-      growth_out potential_growth = growth(day, year, TAir[day], TSoil_A[day], TSoil_B[day], Soil_Moisture[day], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], photosynthesis.GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
-                                                                                                boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim, boolsettings.tests,
-                                                                                                // Last iteration value
-                                                                                                growth_values_for_next_iteration, last_year_HH,
-                                                                                                days_per_year);
+                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim, boolsettings.tests,
+                                          // Last iteration value
+                                           growth_values_for_next_iteration, last_year_HH,
+                                           days_per_year);
       // Saved for the next iteration
       growth_values_for_next_iteration = potential_growth.previous_values;
+      release.push_back(potential_growth.previous_values.en_pot_growth);
+      double lim = std::ceil(parameters.tau_Ee);
+      if (day > (lim-1)) {
+        potential_growth.release = release[day-lim];
+      } else {
+        potential_growth.release = 0.0;
+      }
 
       /*
        * Respiration
@@ -339,66 +348,36 @@ Rcpp::List CASSIA_eeo(int start_year,
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
                                          TAir[day], TSoil_A[day],
-                                                             boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
-                                                             // parameters that I am not sure about
-                                                             B0); // TODO: respiration for the fungi and microbes
+                                         boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
+                                         // parameters that I am not sure about
+                                         B0); // TODO: respiration for the fungi and microbes
 
       /*
        * Sugar
        */
 
-      // TODO; need to check the indexes!
-      if ((day == 0) && (year == start_year)) {
-        sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
-        sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
-        sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
-        sugar_values_for_next_iteration.sugar.xylem_sh = parameters.sugar_xylem_sh0;
-        sugar_values_for_next_iteration.sugar.xylem_st = parameters.sugar_xylem_st0;
-        sugar_values_for_next_iteration.sugar.mycorrhiza = 0.0; // TODO: think about this
-
-        sugar_values_for_next_iteration.starch.needles = parameters.starch_needles0;
-        sugar_values_for_next_iteration.starch.phloem = parameters.starch_phloem0;
-        sugar_values_for_next_iteration.starch.roots = parameters.starch_roots0;
-        sugar_values_for_next_iteration.starch.xylem_sh = parameters.starch_xylem_sh0;
-        sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
-        sugar_values_for_next_iteration.starch.mycorrhiza = 0.0;
-      } else if (day == 0 && year != start_year) {
-        sugar_values_for_next_iteration.sugar.needles = parameters.sugar_needles0;
-        sugar_values_for_next_iteration.sugar.phloem = parameters.sugar_phloem0;
-        sugar_values_for_next_iteration.sugar.roots = parameters.sugar_roots0;
-        sugar_values_for_next_iteration.sugar.xylem_sh = parameters.sugar_xylem_sh0;
-        sugar_values_for_next_iteration.sugar.xylem_st = parameters.sugar_xylem_st0;
-        sugar_values_for_next_iteration.sugar.mycorrhiza = 0.0;
-
-        sugar_values_for_next_iteration.starch.needles = parameters.starch_needles0;
-        sugar_values_for_next_iteration.starch.phloem = parameters.starch_phloem0;
-        sugar_values_for_next_iteration.starch.roots = parameters.starch_roots0;
-        sugar_values_for_next_iteration.starch.xylem_sh = parameters.starch_xylem_sh0;
-        sugar_values_for_next_iteration.starch.xylem_st = parameters.starch_xylem_st0;
-        sugar_values_for_next_iteration.starch.mycorrhiza = 0.0;
-      } else {
-        carbo_balance sugar_model_out = sugar_model(year, day, TAir[day], photosynthesis_per_stem,
-                                                    common, parameters,
-                                                    D00,
-                                                    potential_growth.previous_values.sH,
-                                                    resp,
-                                                    boolsettings.sperling_model,
-                                                    tree_alive,
-                                                    boolsettings.storage_grows,
-                                                    repola_values.needle_mass,
-                                                    equilibrium_temperature,
-                                                    potential_growth,
-                                                    sugar_values_for_next_iteration.sugar,
-                                                    sugar_values_for_next_iteration.starch,
-                                                    sugar_values_for_next_iteration.previous_values);
-        // Saved for the next iteration
-        sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
-        sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
-        sugar_values_for_next_iteration.starch = sugar_model_out.starch;
-        sugar_values_for_next_iteration.storage = sugar_model_out.storage;
-        parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
-        tree_alive = sugar_model_out.previous_values.tree_alive;
-      }
+      carbo_balance sugar_model_out = sugar_model(year, day, TAir[weather_index],
+                                                  photosynthesis_per_stem,
+                                                  common, parameters,
+                                                  D00,
+                                                  potential_growth.previous_values.sH,
+                                                  resp,
+                                                  boolsettings.sperling_model,
+                                                  tree_alive,
+                                                  boolsettings.storage_grows,
+                                                  repola_values.needle_mass,
+                                                  equilibrium_temperature,
+                                                  potential_growth,
+                                                  sugar_values_for_next_iteration.sugar,
+                                                  sugar_values_for_next_iteration.starch,
+                                                  sugar_values_for_next_iteration.previous_values);
+      // Saved for the next iteration
+      sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
+      sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
+      sugar_values_for_next_iteration.starch = sugar_model_out.starch;
+      sugar_values_for_next_iteration.storage = sugar_model_out.storage;
+      parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
+      tree_alive = sugar_model_out.previous_values.tree_alive;
 
       /*
        * Actual growth
@@ -416,6 +395,10 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
                                                    boolsettings.sperling_model);
+      // TODO: update the parameters like D0 and h0 that need to be updated
+
+      ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
+      previous_ring_width = ring_width;
 
       // Cumulative values
       culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
@@ -751,20 +734,6 @@ Rcpp::List CASSIA_eeo(int start_year,
 
     // TODO: need to add the growth of things here!
     final_year = final_year + 1;
-
-    if (year == final_year + 1) {
-      parameters.sugar_needles0 = original_parameters.sugar.needles;
-      parameters.sugar_phloem0 = original_parameters.sugar.phloem;
-      parameters.sugar_roots0 = original_parameters.sugar.roots;
-      parameters.sugar_xylem_sh0 = original_parameters.sugar.xylem_sh;
-      parameters.sugar_xylem_st0 = original_parameters.sugar.xylem_st;
-
-      parameters.starch_needles0 = original_parameters.starch.needles;
-      parameters.starch_phloem0 = original_parameters.starch.phloem;
-      parameters.starch_roots0 = original_parameters.starch.roots;
-      parameters.starch_xylem_sh0 = original_parameters.starch.xylem_sh;
-      parameters.starch_xylem_st0 = original_parameters.starch.xylem_st;
-    }
   }
 
   ///////////////////////
