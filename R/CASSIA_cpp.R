@@ -30,10 +30,13 @@ CASSIA_cpp <- function(
     common = common_p,  # "./data/common.csv",
     sperling = sperling_p,
     repo = repo_p,
-    pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
-               0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
-               0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
-               -999.9, -999.9, -999.9, 1/0.012, 0.0),
+    pPREL = c(413.0, 0.450, 0.118, 3.0,
+              0.745700, 10.930000, -3.06300, 17.720000, -0.102700, 0.036730, 0.777900, 0.500, -0.364,
+              0.271500, 0.835100, 0.073480, 0.999600, 0.442800,
+              1.2, 0.33, 4.970496, 0.0, 0.0,
+              160.0, 0.0, 0.0, 20.0,
+              -999.9, -999.9, -999.9,
+              1/0.012, 0.0),
 
     #####
     ## Default values of the set up
@@ -85,8 +88,11 @@ CASSIA_cpp <- function(
     needle_mass_in = 4.467638,
     Throughfall = 1,
     trenching_year = NA,
+
     soil = FALSE,
     ecoevolutionary = FALSE,
+    fAPAR_Tian = FALSE,
+
     tests = FALSE) {
 
   ####
@@ -124,7 +130,8 @@ CASSIA_cpp <- function(
                   "tests" = tests,
                   "etmodel" = etmodel,
                   "LOGFLAG" = LOGFLAG,
-                  "ecoevolutionary" = ecoevolutionary
+                  "ecoevolutionary" = ecoevolutionary,
+                  "fAPAR_Tian" = fAPAR_Tian
   )
 
   # Are the model settings valid?
