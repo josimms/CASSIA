@@ -479,9 +479,9 @@ CASSIA_ratios make_ratios(Rcpp::DataFrame input) {
 p1 make_p1(std::vector<double> input) {
   p1 out;
   out.soildepth = input[0];
-  out.tauDrainage = input[3];
   out.ThetaFC = input[1];
   out.ThetaPWP = input[2];
+  out.tauDrainage = input[3];
   return(out);
 }
 
