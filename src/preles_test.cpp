@@ -14,9 +14,10 @@ photosynthesis_out preles_cpp(int day,
                               p5 Initials_snow,
                               double LOGFLAG) {
   // TODO: initialise / make these into values that are inputs as well!
-  double theta, theta_canopy, theta_snow, S_state, Snowmelt;
-  double Interception, Drainage, etmodel, transp, evap, fWE, PhenoS;
-  double GPP, gpp380, fD, fW, fE, fEgpp, fPheno;
+  static double S_state, PhenoS, fD, fW, fEgpp, gpp380;
+  static double theta, theta_canopy, theta_snow, Snowmelt;
+  static double Interception, Drainage, etmodel, transp, evap;
+  static double GPP, fE, fWE, fPheno;
 
   photosynthesis_out out;
   if (day==0) {
@@ -27,12 +28,18 @@ photosynthesis_out preles_cpp(int day,
     Snowmelt = 0.0;
     Interception = 0.0;
     Drainage = 0.0;
+    transp = 0.0;
+    evap = 0.0;
+    fWE = 0.0;
     PhenoS=0.0;
     fPheno=0.0;
-    fEgpp = 0.0;
+    GPP = 0.0;
     gpp380 = 0.0;
+    fD = 0.0;
+    fW = 0.0;
+    fEgpp = 0.0;
   }
-    // Call the function
+
   double fS = fS_model(&S_state, T, GPP_par);
 
   fPheno = fPheno_model(GPP_par, T, &PhenoS, day, fS);
@@ -96,9 +103,9 @@ Rcpp::DataFrame preles_test(Rcpp::DataFrame weather) {
 
   p1 Site_par;
   Site_par.soildepth = 413.0;
-  Site_par.tauDrainage = 3;
   Site_par.ThetaFC = 0.45;
   Site_par.ThetaPWP = 0.118;
+  Site_par.tauDrainage = 3;
 
   p2 GPP_par;
   GPP_par.beta = 0.745700;
@@ -125,6 +132,7 @@ Rcpp::DataFrame preles_test(Rcpp::DataFrame weather) {
   SnowRain_par.MeltCoef = 1.2;
   SnowRain_par.I0 = 0.33;
   SnowRain_par.CWmax = 4.970496;
+  SnowRain_par.SnowThreshold = 0.0;
   SnowRain_par.T_0 = 0.0;
 
   p5 Initials_snow;
