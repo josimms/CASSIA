@@ -177,27 +177,51 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                               Throughfall = parameters_all$Throughfall,
                               photosynthesis_as_input = FALSE)
 
+  CASSIA_preles_Xianglin <- CASSIA_cpp(weather = processed_data$weather_original,
+                                       site = "Hyde",
+                                       pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                       parameters = parameters_all$parameters_test,
+                                       common = common_p,
+                                       ratios = ratios_p,
+                                       sperling = parameters_all$sperling_test,
+                                       needle_mass_in = parameters_all$needle_mass_in,
+                                       Throughfall = parameters_all$Throughfall,
+                                       photosynthesis_as_input = FALSE,
+                                       fAPAR_Tian = TRUE)
+
   par(mfrow = c(3, 2))
-  plot(preles_original$GPP, ylab = "GPP")
-  points(preles_CASSIA$GPP, col = "blue")
-  points(CASSIA_preles$Preles$GPP, col = "purple")
+  ylim = c(0, max(c(CASSIA_preles_Xianglin$Preles$GPP, CASSIA_preles$Preles$GPP, preles_CASSIA$GPP)))
+  plot(preles_original$GPP, ylab = "GPP", type = "l", ylim = ylim)
+  lines(preles_CASSIA$GPP, col = "blue")
+  lines(CASSIA_preles$Preles$GPP, col = "purple")
+  lines(CASSIA_preles_Xianglin$Preles$GPP, col = "green")
 
-  plot(preles_original$GPP, preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA", col = "blue")
+  ylim = c(0, max(c(preles_CASSIA$GPP, CASSIA_preles_Xianglin$Preles$GPP)))
+  plot(preles_original$GPP, preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
   points(preles_original$GPP, CASSIA_preles$Preles$GPP, col = "purple")
+  points(preles_original$GPP, CASSIA_preles_Xianglin$Preles$GPP, col = "green")
 
-  plot(preles_original$ET, ylab = "ET")
-  points(preles_CASSIA$ET, col = "blue")
-  points(CASSIA_preles$Preles$ET, col = "purple")
+  ylim = c(0, max(c(preles_CASSIA$ET, CASSIA_preles_Xianglin$Preles$ET)))
+  plot(preles_original$ET, ylab = "ET", type = "l", ylim = ylim)
+  lines(preles_CASSIA$ET, col = "blue")
+  lines(CASSIA_preles$Preles$ET, col = "purple")
+  lines(CASSIA_preles_Xianglin$Preles$ET, col = "green")
 
-  plot(preles_original$ET, preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA", col = "blue")
+  ylim = c(0, max(c(preles_CASSIA$ET, CASSIA_preles_Xianglin$Preles$ET)))
+  plot(preles_original$ET, preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
   points(preles_original$ET, CASSIA_preles$Preles$ET, col = "purple")
+  points(preles_original$ET, CASSIA_preles_Xianglin$Preles$ET, col = "green")
 
-  plot(preles_original$SW, ylab = "Soil Water")
-  points(preles_CASSIA$SoilWater, col = "blue")
-  points(CASSIA_preles$Preles$SoilWater, col = "purple")
+  plot(preles_original$SW, ylab = "Soil Water", type = "l")
+  lines(preles_CASSIA$SoilWater, col = "blue")
+  lines(CASSIA_preles$Preles$SoilWater, col = "purple")
+  lines(CASSIA_preles_Xianglin$Preles$SoilWater, col = "green")
 
   plot(preles_original$SW, preles_CASSIA$SoilWater, xlab = "Original", ylab = "CASSIA", col = "blue")
   points(preles_original$SW, CASSIA_preles$Preles$SoilWater, col = "purple")
+  points(preles_original$SW, CASSIA_preles_Xianglin$Preles$SoilWater, col = "green")
+  legend("topleft", c("Original", "Preles Wrapper", "Preles in CASSIA", "Xianglin fAPAR"), col = c("black", "blue", "purple", "green"),
+         pch = c(1, 1, 1), bty = "n")
 
   ###
   # Plotting the results
@@ -223,6 +247,17 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                   Hyde_daily_original_plot, variables_original, soil_processes)
 
   plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+
+  ### PRELES
+
+  par(mfrow = c(3, 1))
+  plot(CASSIA_preles$Preles$GPP)
+  points(CASSIA_new_output$Preles, col = "blue")
+
+  plot_comparison(CASSIA_preles, variables_new,
+                  Hyde_daily_original_plot, variables_original, soil_processes)
+
+  ### Phydro
 
   ### SUGAR NO SOIL
 
