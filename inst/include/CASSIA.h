@@ -467,6 +467,7 @@ struct Settings {
 
   bool photosynthesis_as_input;
   bool phydro;
+  bool fAPAR_Tian;
 
   int photoparameters;
   bool temp_rise;

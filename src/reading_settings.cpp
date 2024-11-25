@@ -33,6 +33,7 @@ Settings parseSettings(Rcpp::List settingsList) {
 
   settings.photosynthesis_as_input = Rcpp::as<bool>(settingsList["photosynthesis_as_input"]);
   settings.phydro = Rcpp::as<bool>(settingsList["ecoevolutionary"]);
+  settings.fAPAR_Tian = Rcpp::as<bool>(settingsList["fAPAR_Tian"]);
 
   settings.photoparameters = Rcpp::as<int>(settingsList["photoparameters"]);
   settings.temp_rise = Rcpp::as<bool>(settingsList["temp_rise"]);
