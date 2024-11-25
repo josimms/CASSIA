@@ -2,11 +2,10 @@
 
 int leap_year(int year)
 {
-  if (year % 4 != 0) {
-    return 365;
-  }
-  else {
+  if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
     return 366;
+  } else {
+    return 365;
   }
 }
 
@@ -70,13 +69,6 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   bool tree_alive = TRUE;
 
-  std::vector<double> SW, Canopywater, SOG, S;
-  SW.push_back(0); // TODO initial conditions
-  Canopywater.push_back(0);
-  SOG.push_back(0);
-  S.push_back(0);
-
-
   double CH = parameters.density_tree * parameters.carbon_share;
   double M_suc = 12 * common.M_C + 22 * common.M_H + 11 * common.M_O;
 
@@ -110,7 +102,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   growth_vector potential_growth_output;
   growth_vector actual_growth_output;
   sugar_values_vector sugar_values_output;
-  photo_out_vector photosynthesis_output;
   resp_vector respiration_output;
   needle_cohorts last_cohorts;
   double last_year_HH;
@@ -122,6 +113,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   std::vector<double> potenital_growth_use;
 
   photosynthesis_out photosynthesis;
+  photo_out_vector photosynthesis_output;
 
   /*
    * YEAR LOOP
@@ -228,29 +220,59 @@ Rcpp::List CASSIA_yearly(int start_year,
        * There are yearly, but not daily dependencies other than environmental states here!
        */
 
-      // Uses the method from Tian 2021
-      // Extinction coefficient 0.52 is from Tian 2021 as well
-      // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
-      double LAI = 3; // TODO
-      double f_modifer = needles_last/growth_values_for_next_iteration.max_N;
-      double LAI_within_year;
-      if (day < 182) { // TODO: I decided that the start of July is the end of spring
-        LAI_within_year = 2.0/3.0*LAI + f_modifer*1.0/3.0*LAI;
-      } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
-        LAI_within_year = 2.0/3.0*LAI + photosynthesis.fS*1.0/3.0*LAI;
+      double fAPAR_used, fS_out;
+      if (!boolsettings.photosynthesis_as_input & boolsettings.fAPAR_Tian) {
+        // Uses the method from Tian 2021
+        // Extinction coefficient 0.52 is from Tian 2021 as well
+        // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
+        double LAI = 3; // TODO
+        double f_modifer = needles_last/growth_values_for_next_iteration.max_N;
+        double LAI_within_year;
+        if (day < 182) { // TODO: I decided that the start of July is the end of spring
+          LAI_within_year = 2.0/3.0*LAI + f_modifer*1.0/3.0*LAI;
+        } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
+          LAI_within_year = 2.0/3.0*LAI + fS_out*1.0/3.0*LAI;
+        } else {
+          LAI_within_year = LAI;
+        }
+        fAPAR_used = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
       } else {
-        LAI_within_year = LAI;
+        fAPAR_used = fAPAR[weather_index];
       }
-      double fAPAR = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
 
-      double photosynthesis_per_stem;
+      double photosynthesis_per_stem, GPP, ET, SoilWater;
       if (boolsettings.photosynthesis_as_input) {
         photosynthesis.GPP = Photosynthesis_IN[weather_index];
+        photosynthesis.ET = 0.0;
+        photosynthesis.SoilWater = 0.0;
         photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
+
+        if (final_year%2!=0) {
+          photosynthesis_output.GPP.push_back(photosynthesis.GPP);
+          photosynthesis_output.ET.push_back(photosynthesis.ET);
+          photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
+        }
       } else {
-        photosynthesis = preles_cpp(day, PAR[weather_index], TAir[weather_index], Precip[weather_index], VPD[weather_index], CO2[weather_index], fAPAR,
-                                    parSite, parGPP, parET, parSnowRain, parWater, 0.5);
+        if (final_year%2!=0) {
+          photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
+                                      VPD[weather_index], CO2[weather_index], fAPAR_used,
+                                                                                   parSite, parGPP, parET, parSnowRain, parWater, 0.0);
+          photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
+          photosynthesis_output.GPP.push_back(photosynthesis.GPP);
+          photosynthesis_output.ET.push_back(photosynthesis.ET);
+          photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
+          photosynthesis_output.fS.push_back(photosynthesis.fS);
+          GPP = photosynthesis_output.GPP[weather_index];
+          ET = photosynthesis_output.ET[weather_index];
+          SoilWater = photosynthesis_output.SoilWater[weather_index];
+          fS_out = photosynthesis_output.fS[weather_index];
+        } else {
+          GPP = photosynthesis_output.GPP[day];
+          ET = photosynthesis_output.ET[day];
+          SoilWater = photosynthesis_output.SoilWater[day];
+        }
       }
+
 
       if (day == 0) {
         GPP_sum = 0.0;
@@ -268,7 +290,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
-      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
@@ -295,15 +317,16 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
                                          TAir[weather_index], TSoil_A[weather_index],
-                                                             boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
-                                                             // parameters that I am not sure about
-                                                             B0);
+                                         boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
+                                         // parameters that I am not sure about
+                                         B0);
 
       /*
        * Sugar
        */
 
-      carbo_balance sugar_model_out = sugar_model(year, day, TAir[weather_index], photosynthesis_per_stem,
+      carbo_balance sugar_model_out = sugar_model(year, day, TAir[weather_index],
+                                                  photosynthesis_per_stem,
                                                   common, parameters,
                                                   D00,
                                                   potential_growth.previous_values.sH,
@@ -414,11 +437,6 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_output.sugar_xylem_st.push_back(sugar_values_for_next_iteration.sugar.xylem_st);
         sugar_values_output.sugar_roots.push_back(sugar_values_for_next_iteration.sugar.roots);
         sugar_values_output.sugar_mycorrhiza.push_back(sugar_values_for_next_iteration.sugar.mycorrhiza);
-
-        photosynthesis_output.GPP.push_back(photosynthesis.GPP);
-        photosynthesis_output.ET.push_back(photosynthesis.ET);
-        photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
-        photosynthesis_output.fS.push_back(photosynthesis.fS);
       }
     }
 
