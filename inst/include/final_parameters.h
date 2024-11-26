@@ -180,7 +180,7 @@ struct phydro_canopy_parameters {
   double infra_translation; // Conversion from area biomass ratio to nitrogen price
   double kphio; // Quantum yield
   double rd; // Dark respiration
-  double a_jmax = 50; // Nitorgen to jmax ratio
+  double a_jmax; // Nitorgen to jmax ratio
 
   double p50_leaf;        ///< Leaf or whole-plant hydraulic vulnerability [MPa] (calculated from Xylem P50 and Safety margin)
   double K_leaf;          ///< Leaf conductivity [m]
