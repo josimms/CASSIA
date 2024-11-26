@@ -1,6 +1,4 @@
-#include <phydro.h>
-#include "function_structures.h"
-#include "final_parameters.h"
+#include "CASSIA.h"
 
 // **
 // ** Gross and Net Assimilation
@@ -109,12 +107,23 @@ double crown_area_above(double z, double crown_area, double height, phydro_canop
 // **
 
 
-PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
-                                                     double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
-                                                     phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta){
+PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta){
+
+  /*
+   * Calculate the parameters
+   */
+  // crown_area_above is the leaved area not considering gaps
+  double total_crown_area = crown_area_above(0.0, crown_area, height, par); // This is just one tree rather than all of them as in PlantFate
+  double n_layers = int(total_crown_area / 0.99);
+
   // TODO: lai should be calculated in the CASSIA model
   double fapar = 1 - exp(-par.k_light * lai);
   bool by_layer = false;
+
+  /*
+   * plant_assim processes start
+   */
 
   PlantAssimilationResult plant_assim;
   plant_assim.gpp        = 0;
