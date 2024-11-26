@@ -59,7 +59,8 @@ Rcpp::List CASSIA_eeo(int start_year,
   std::vector<double> Precip  = weather["Rain"];
   std::vector<double> CO2 = weather["CO2"];
   // TODO: make the PA value input or remove it from the code!
-  // std::vector<double> PA = weather["PA"];
+  std::vector<double> PA = weather["PA"];
+  std::vector<double> SWP = weather["SWP"];
 
   /*
    * Structures set up
@@ -116,6 +117,7 @@ Rcpp::List CASSIA_eeo(int start_year,
 
   photosynthesis_out photosynthesis;
   photo_out_vector photosynthesis_output;
+  PlantAssimilationResult photosynthesis_phydro;
 
   growth_vector culm_growth;
   PlantAssimilationResult phydro_assimilation;
@@ -242,11 +244,11 @@ Rcpp::List CASSIA_eeo(int start_year,
        */
 
       double fAPAR_used, fS_out;
+      // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
+      double LAI = 3.0;
       if (!boolsettings.photosynthesis_as_input & boolsettings.fAPAR_Tian) {
         // Uses the method from Tian 2021
         // Extinction coefficient 0.52 is from Tian 2021 as well
-        // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
-        double LAI = 3; // TODO
         double f_modifer = needles_last/growth_values_for_next_iteration.max_N;
         double LAI_within_year;
         if (day < 182) { // TODO: I decided that the start of July is the end of spring
@@ -261,7 +263,7 @@ Rcpp::List CASSIA_eeo(int start_year,
         fAPAR_used = fAPAR[weather_index];
       }
 
-      double photosynthesis_per_stem, GPP, ET, SoilWater;
+      double photosynthesis_per_stem, GPP, ET, SoilWater, zeta;
       if (boolsettings.photosynthesis_as_input) {
         GPP = photosynthesis.GPP = Photosynthesis_IN[weather_index];
         ET = photosynthesis.ET = 0.0;
@@ -273,7 +275,7 @@ Rcpp::List CASSIA_eeo(int start_year,
           photosynthesis_output.ET.push_back(photosynthesis.ET);
           photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
         }
-      } else {
+      } else if (boolsettings.PRELES_GPP) {
         if (final_year%2!=0) {
           photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
                                       VPD[weather_index], CO2[weather_index], fAPAR_used,
@@ -292,6 +294,41 @@ Rcpp::List CASSIA_eeo(int start_year,
           ET = photosynthesis_output.ET[day];
           SoilWater = photosynthesis_output.SoilWater[day];
         }
+      } else {
+        phydro_canopy_parameters parPhydro;
+        parPhydro.a_jmax = 800;
+        parPhydro.alpha = 0.2;
+        parPhydro.b_leaf
+        parPhydro.canopy_openness
+        parPhydro.cbio
+        parPhydro.fapar_tot
+        parPhydro.fg
+        parPhydro.gamma
+        parPhydro.infra_translation
+        parPhydro.K_leaf
+        parPhydro.k_light
+        parPhydro.kphio = 0.087;
+        parPhydro.m
+        parPhydro.n
+        parPhydro.p50_leaf
+        parPhydro.qm
+        parPhydro.rd = 0.015;
+        parPhydro.total_crown_area
+        parPhydro.z_star
+        parPhydro.zm_H
+
+
+        double crown_area = 5.0; // TODO: need to generate this value from the model But tryint to get the ocde to work first!
+        zeta = LAI / culm_growth.roots[day-1]; // TODO: is this defined correctly?
+
+        photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
+                                                             CO2[weather_index], Nitrogen[weather_index], PA[weather_index], SWP[weather_index],
+                                                             parPhydro, LAI, crown_area, culm_growth.height[day-1], zeta);
+
+        GPP = photosynthesis_phydro.gpp;
+        ET = 0.0; // TODO: is this an output?
+        SoilWater = 0.0; // TODO: is this an output?
+
       }
 
       if (day == 0) {
@@ -390,9 +427,12 @@ Rcpp::List CASSIA_eeo(int start_year,
       previous_ring_width = ring_width;
 
       // Cumulative values
-      culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
-      culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
-      culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
+      // TODO: what should be the logic here?
+      if (final_year%2==0) {
+        culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
+        culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
+        culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
+      }
 
       // std::cout << "\n";
 
