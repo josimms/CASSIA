@@ -484,6 +484,12 @@ struct Settings {
 Settings parseSettings(Rcpp::List settingsList);
 
 /*
+ * Leap year
+ */
+
+int leap_year(int year);
+
+/*
  * Plant Fate Logic
  */
 
