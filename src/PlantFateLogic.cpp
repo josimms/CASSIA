@@ -6,7 +6,7 @@
 // ** Gross and Net Assimilation
 // **
 
-/*
+
 phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
                                                     double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
                                                     phydro_canopy_parameters par, double zeta){
@@ -71,13 +71,13 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
 
   return photo_leaf;
 }
-*/
+
 
 // **
 // ** Building the canopy
 // **
 
-/*
+
 double q(double z, double height, phydro_canopy_parameters par){
   if (z > height || z < 0) return 0;
   else{
@@ -102,13 +102,13 @@ double crown_area_above(double z, double crown_area, double height, phydro_canop
     return crown_area * (1 - fq * fq * par.fg);
   }
 }
-*/
+
 
 // **
 // ** Plant assimilation for the canopy
 // **
 
-/*
+
 PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
                                                      double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
                                                      phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta){
@@ -189,4 +189,4 @@ PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
 
   return plant_assim;
 }
-*/
+
