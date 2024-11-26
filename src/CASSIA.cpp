@@ -1,13 +1,12 @@
 #include "CASSIA.h"
 
-int leap_year(int year)
-{
+int leap_year(int year) {
   if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
     return 366;
   } else {
     return 365;
   }
-}
+};
 
 //' @export
 // [[Rcpp::export]]
@@ -67,7 +66,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   // Forward init values (previous day values) as first values of result vectors
 
-  bool tree_alive = TRUE;
+  bool tree_alive = true;
 
   double CH = parameters.density_tree * parameters.carbon_share;
   double M_suc = 12 * common.M_C + 22 * common.M_H + 11 * common.M_O;
@@ -93,7 +92,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
   ring_width_out previous_ring_width;
-  // carbo_balance original_parameters;
 
   /*
    * Vectors for the outputs
@@ -161,7 +159,7 @@ Rcpp::List CASSIA_yearly(int start_year,
     if (boolsettings.xylogensis_option) {
       double LH0 = parameters.h_increment / (0.5 * parameters.sHc);
       double LN0 = parameters.n_length / (0.5 * parameters.sNc);
-      double LR0 = 2 * parameters.m_R_tot / parameters.sRc; // TODO: check if these parameters are updated somewhere
+      double LR0 = 2.0 * parameters.m_R_tot / parameters.sRc; // TODO: check if these parameters are updated somewhere
     }
 
     /*
@@ -242,9 +240,9 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       double photosynthesis_per_stem, GPP, ET, SoilWater;
       if (boolsettings.photosynthesis_as_input) {
-        photosynthesis.GPP = Photosynthesis_IN[weather_index];
-        photosynthesis.ET = 0.0;
-        photosynthesis.SoilWater = 0.0;
+        GPP = photosynthesis.GPP = Photosynthesis_IN[weather_index];
+        ET = photosynthesis.ET = 0.0;
+        SoilWater = photosynthesis.SoilWater = 0.0;
         photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
 
         if (final_year%2!=0) {
@@ -256,7 +254,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         if (final_year%2!=0) {
           photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
                                       VPD[weather_index], CO2[weather_index], fAPAR_used,
-                                                                                   parSite, parGPP, parET, parSnowRain, parWater, 0.0);
+                                      parSite, parGPP, parET, parSnowRain, parWater, 0.0);
           photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
           photosynthesis_output.GPP.push_back(photosynthesis.GPP);
           photosynthesis_output.ET.push_back(photosynthesis.ET);
