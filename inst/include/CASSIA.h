@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <prelesglobals.h>
 #include <vector>
+#include <phydro.h>
 
 #ifndef CASSIA_H
 #define CASSIA_H
@@ -493,8 +494,7 @@ int leap_year(int year);
  * Plant Fate Logic
  */
 
-//PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
-  //                                                   double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
-    //                                                 phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta);
+PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta);
 
 #endif
