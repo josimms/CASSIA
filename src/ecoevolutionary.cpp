@@ -1,14 +1,5 @@
 #include "CASSIA.h"
 
-int leap_year(int year)
-{
-  if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
-    return 366;
-  } else {
-    return 365;
-  }
-}
-
 // [[Rcpp::export]]
 Rcpp::List CASSIA_eeo(int start_year,
                        int end_year,
@@ -102,6 +93,7 @@ Rcpp::List CASSIA_eeo(int start_year,
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
   ring_width_out previous_ring_width;
+
   MYCOFON_function_out MYCOFON_for_next_iteration;
   SYMPHONY_output soil_values_for_next_iteration;
 
@@ -111,30 +103,31 @@ Rcpp::List CASSIA_eeo(int start_year,
 
   growth_vector potential_growth_output;
   growth_vector actual_growth_output;
-  growth_vector culm_growth;
-  PlantAssimilationResult phydro_assimilation;
-  culm_growth.height.push_back(parameters.h0);
-  culm_growth.roots.push_back(0.1); // TODO: what is the initialisation here? Surely there is a value for this!
-  culm_growth.needles.push_back(repola_values.needle_mass);
-  biomass_vector biomass_output;
   sugar_values_vector sugar_values_output;
-  photo_out_vector photosynthesis_output;
   resp_vector respiration_output;
-  MYCOFON_vector MYCOFON_output;
-  SYMPHONY_vector soil_output;
   needle_cohorts last_cohorts;
   double last_year_HH;
   double last_year_maxN;
   double GPP_mean;
   std::vector<double> GPP_previous_sum;
-  SYMPHONY_output soil_reset;
-  MYCOFON_function_out MYCOFON_reset;
   GPP_previous_sum.push_back(481.3); // TODO; make this a variable input, rather than this 2015 value
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
 
   photosynthesis_out photosynthesis;
   photo_out_vector photosynthesis_output;
+
+  growth_vector culm_growth;
+  PlantAssimilationResult phydro_assimilation;
+  culm_growth.height.push_back(parameters.h0);
+  culm_growth.roots.push_back(0.1); // TODO: what is the initialisation here? Surely there is a value for this!
+  culm_growth.needles.push_back(repola_values.needle_mass);
+  biomass_vector biomass_output;
+
+  MYCOFON_vector MYCOFON_output;
+  SYMPHONY_vector soil_output;
+  SYMPHONY_output soil_reset;
+  MYCOFON_function_out MYCOFON_reset;
 
   /*
    * YEAR LOOP
@@ -171,6 +164,8 @@ Rcpp::List CASSIA_eeo(int start_year,
     carbo_tracker carbo_tracker_vector;
     xylogensis_out xylogensis_vector;
     photosynthesis.fS = 0.0;
+
+    std::vector<double> release;
 
     /*
      * Yearly initialization
@@ -268,9 +263,9 @@ Rcpp::List CASSIA_eeo(int start_year,
 
       double photosynthesis_per_stem, GPP, ET, SoilWater;
       if (boolsettings.photosynthesis_as_input) {
-        photosynthesis.GPP = Photosynthesis_IN[weather_index];
-        photosynthesis.ET = 0.0;
-        photosynthesis.SoilWater = 0.0;
+        GPP = photosynthesis.GPP = Photosynthesis_IN[weather_index];
+        ET = photosynthesis.ET = 0.0;
+        SoilWater = photosynthesis.SoilWater = 0.0;
         photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
 
         if (final_year%2!=0) {
@@ -304,7 +299,7 @@ Rcpp::List CASSIA_eeo(int start_year,
       } else if (day <= 182) {
         GPP_sum = GPP_sum_yesterday;
       } else if (day > 182 && day <= 244) {
-        GPP_sum = GPP_sum_yesterday + photosynthesis.GPP;
+        GPP_sum = GPP_sum_yesterday + GPP;
       } else if (day > 245) {
         GPP_sum = GPP_sum_yesterday;
       }
@@ -315,19 +310,13 @@ Rcpp::List CASSIA_eeo(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
-      double en_pot_growth_old;
-      if (day < 11) {
-        en_pot_growth_old = 0.0;
-      } else {
-        en_pot_growth_old = potenital_growth_use[day-11];
-      }
-
-      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
-                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim, boolsettings.tests,
-                                          // Last iteration value
+                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
+                                           boolsettings.tests,
+                                           // Last iteration value
                                            growth_values_for_next_iteration, last_year_HH,
                                            days_per_year);
       // Saved for the next iteration
@@ -347,10 +336,10 @@ Rcpp::List CASSIA_eeo(int start_year,
        */
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
-                                         TAir[day], TSoil_A[day],
+                                         TAir[weather_index], TSoil_A[weather_index],
                                          boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
                                          // parameters that I am not sure about
-                                         B0); // TODO: respiration for the fungi and microbes
+                                         B0);
 
       /*
        * Sugar
@@ -565,9 +554,6 @@ Rcpp::List CASSIA_eeo(int start_year,
       GPP_sum_yesterday = GPP_sum;
 
       if (final_year%2==0) {
-
-        // To vectors
-
         years.push_back(year);
         days.push_back(day);
 
@@ -613,11 +599,6 @@ Rcpp::List CASSIA_eeo(int start_year,
         sugar_values_output.sugar_xylem_st.push_back(sugar_values_for_next_iteration.sugar.xylem_st);
         sugar_values_output.sugar_roots.push_back(sugar_values_for_next_iteration.sugar.roots);
         sugar_values_output.sugar_mycorrhiza.push_back(sugar_values_for_next_iteration.sugar.mycorrhiza);
-
-        photosynthesis_output.GPP.push_back(photosynthesis.GPP);
-        photosynthesis_output.ET.push_back(photosynthesis.ET);
-        photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
-        photosynthesis_output.fS.push_back(photosynthesis.fS);
 
         soil_output.C_decompose_FOM.push_back(Soil_All.C_decompose_FOM);
         soil_output.C_decompose_SOM.push_back(Soil_All.C_decompose_SOM);
@@ -712,6 +693,8 @@ Rcpp::List CASSIA_eeo(int start_year,
     last_year_HH = HH;
 
     if (final_year%2==0) {
+      days_gone = days_gone + days_per_year;
+
       GPP_mean = 463.8833; // TODO: should change this!
       GPP_previous_sum.push_back(GPP_sum);
 
