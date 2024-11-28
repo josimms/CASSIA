@@ -296,6 +296,68 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   ### Phydro
 
+  weather_Amazon <- read.delim("~/Documents/Austria/Plant-FATE/tests/data/MetData_AmzFACE_Monthly_2000_2015_PlantFATE_new.csv", sep = ",")
+  weather_Amazon$VPD <- 100 * weather_Amazon$VPD # Pa
+  weather_Amazon$PAR <- weather_Amazon$PAR # umol m-2 s-1
+  weather_Amazon$SWP <- - weather_Amazon$SWP # umol m-2 s-1
+  # NOTE! Dates are absolutely not right! Just to see if the photosynthesis would work!
+  weather_Amazon$dates <- seq(as.Date("1960-01-01"), as.Date("1960-07-10"), by = "day")
+  names(weather_Amazon) <- c("Year", "Month", "Decimal_year", "T", "VPD", "PAR", "PAR_max", "SWP", "dates")
+  weather_Amazon$fAPAR = 0.7
+  weather_Amazon$Nitrogen = 1
+  weather_Amazon$P = NA
+  weather_Amazon$TSA = NA
+  weather_Amazon$TSB = NA
+  weather_Amazon$MB = NA
+  weather_Amazon$Rain = NA
+  weather_Amazon$CO2 = 421.38
+  weather_Amazon$PA = 101325
+
+  # PAR [umol m-2 s-1], PAR Net radiation [W m-2], - MPa
+  summary(weather_Amazon)
+
+  CASSIA_phydro_amazon <- CASSIA_cpp(weather = weather_Amazon,
+                                     site = "Hyde",
+                                     pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                     parameters = parameters_all$parameters_test,
+                                     common = common_p,
+                                     ratios = ratios_p,
+                                     sperling = parameters_all$sperling_test,
+                                     needle_mass_in = parameters_all$needle_mass_in,
+                                     Throughfall = parameters_all$Throughfall,
+                                     photosynthesis_as_input = FALSE,
+                                     ecoevolutionary = TRUE)
+
+  weather_ERAS_phydro <- read.delim("~/Documents/ERAS_dataset.csv", sep =",")
+  weather_ERAS_phydro$VPD <- 0.1 * weather_Amazon$VPD # kPa
+  weather_ERAS_phydro$dates <- seq(as.Date(paste(weather_ERAS_phydro$Year[1], weather_ERAS_phydro$Month[1], "01", sep = "-")),
+                                   as.Date(paste(weather_ERAS_phydro$Year[nrow(weather_ERAS_phydro)], weather_ERAS_phydro$Month[nrow(weather_ERAS_phydro)], "31", sep = "-")),
+                                   by = "day")
+  names(weather_ERAS_phydro) <- c("Year", "Month", "Decimal_year", "T", "VPD", "PAR", "PAR_max", "SWP", "dates")
+  weather_ERAS_phydro$fAPAR = 0.7
+  weather_ERAS_phydro$Nitrogen = 1
+  weather_ERAS_phydro$P = NA
+  weather_ERAS_phydro$TSA = NA
+  weather_ERAS_phydro$TSB = NA
+  weather_ERAS_phydro$MB = NA
+  weather_ERAS_phydro$Rain = NA
+  weather_ERAS_phydro$CO2 = 421.38
+  weather_ERAS_phydro$PA = 101325
+
+  CASSIA_phydro_ecoevolutionary <- CASSIA_cpp(weather = weather_ERAS_phydro,
+                                              site = "Hyde",
+                                              pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                              parameters = parameters_all$parameters_test,
+                                              common = common_p,
+                                              ratios = ratios_p,
+                                              sperling = parameters_all$sperling_test,
+                                              needle_mass_in = parameters_all$needle_mass_in,
+                                              Throughfall = parameters_all$Throughfall,
+                                              photosynthesis_as_input = FALSE,
+                                              ecoevolutionary = TRUE)
+
+  plot(CASSIA_phydro_ecoevolutionary$Preles$GPP)
+
   ### SUGAR NO SOIL
 
   CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
