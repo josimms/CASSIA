@@ -88,7 +88,7 @@ validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
     check_na(weather$VPD)
     check_na(weather$fAPAR)
   } else if (ecoevolutionary) {
-    ### TODO: required columns for the weather data
+    required_columns <- c("dates", "T", "PAR", "VPD")
   } else {
     required_columns <- c("dates", "T", "P", "TSA", "TSB", "MB", "Rain")
     if (!all(required_columns %in% names(weather))) {
