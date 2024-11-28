@@ -140,6 +140,12 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   }
 
   ###
+  # Installing the model from github
+  ###
+
+  devtools::install_github("josimms/CASSIA@adding_externals", force = TRUE)
+
+  ###
   # Weather Data Plots
   ###
 
@@ -296,7 +302,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   ### Phydro
 
-  weather_Amazon <- read.delim("~/Documents/Austria/Plant-FATE/tests/data/MetData_AmzFACE_Monthly_2000_2015_PlantFATE_new.csv", sep = ",")
+  weather_Amazon <- read.delim("~/Documents/Austria/Plant-FATE/testss/data/MetData_AmzFACE_Monthly_2000_2015_PlantFATE_new.csv", sep = ",")
   weather_Amazon$VPD <- 100 * weather_Amazon$VPD # Pa
   weather_Amazon$PAR <- weather_Amazon$PAR # umol m-2 s-1
   weather_Amazon$SWP <- - weather_Amazon$SWP # umol m-2 s-1
