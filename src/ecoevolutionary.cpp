@@ -295,31 +295,33 @@ Rcpp::List CASSIA_eeo(int start_year,
           SoilWater = photosynthesis_output.SoilWater[day];
         }
       } else {
+        // NOTE: the values are taken from p_test_v2.ini
         phydro_canopy_parameters parPhydro;
+        parPhydro.alpha = 0.1008;           // Cost of maintaining photosynthetic capacity (Ref: Joshi et al 2022, removed shrubs and gymnosperms)
+        parPhydro.gamma = 1.1875;           // Cost of maintaining hydraulic pathway  (Ref: Joshi et al 2022, removed shrubs and gymnosperms)
+        parPhydro.infra_translation = 5;    // Translation from biomass area ratio to Ib
+        parPhydro.kphio = 0.055; // 0.087            // Quantum yield efficiency
+        parPhydro.rd = 0.011; // 0.015              // ratio of leaf dark respiration rate to vcmax [-]  (Ref: 0.011 in Farquhar et al 1980, 0.015 in Collatz et al 1991)
         parPhydro.a_jmax = 800;
-        parPhydro.alpha = 0.2;
-        parPhydro.b_leaf
-        parPhydro.canopy_openness
-        parPhydro.cbio
-        parPhydro.fapar_tot
-        parPhydro.fg
-        parPhydro.gamma
-        parPhydro.infra_translation
-        parPhydro.K_leaf
-        parPhydro.k_light
-        parPhydro.kphio = 0.087;
-        parPhydro.m
-        parPhydro.n
-        parPhydro.p50_leaf
-        parPhydro.qm
-        parPhydro.rd = 0.015;
-        parPhydro.total_crown_area
-        parPhydro.z_star
-        parPhydro.zm_H
 
+        // Note the p50_leaf was commented and this was the value p50_xylem -2.29 was there
+        parPhydro.p50_leaf = -1.5;          // Leaf P50 [MPa]
+        parPhydro.K_leaf = 0.5e-16;         // Leaf conductance [m]  ---> ** Calibrated to gs **
+        parPhydro.b_leaf = 1;               // Shape parameter of xylem vulnerabilty curve [-]
+        parPhydro.cbio = 2.45e-2;           // kg biomass per mol CO2 = 12.011 gC / mol CO2 * 1e-3 kgC/gC * 2.04 kg biomass/kg
+        // TODO: replace with a boreal shape
+        parPhydro.m = 1.5;                  // crown shape smoothness
+        parPhydro.n = 3;                    // crown top-heaviness
+        parPhydro.fg = 0.1;                 // upper canopy gap fraction
+        parPhydro.qm = 0.0;                 // TODO: no idea...
+        parPhydro.zm_H = 0.0;               // TODO: this is calculated somehow!
+
+        // This value is random, although 15 is one of the values from PlantFate
+        parPhydro.z_star = {15, 10, 5, 0};
+        parPhydro.canopy_openness = {1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)};
 
         double crown_area = 5.0; // TODO: need to generate this value from the model But tryint to get the ocde to work first!
-        zeta = LAI / culm_growth.roots[day-1]; // TODO: is this defined correctly?
+        zeta = 0.2; // LAI / culm_growth.roots[day-1]; // TODO: is this defined correctly?
 
         photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
                                                              CO2[weather_index], Nitrogen[weather_index], PA[weather_index], SWP[weather_index],
