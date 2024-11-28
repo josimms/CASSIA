@@ -30,9 +30,9 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
     TAir,     // growth temperature TODO: what is this?
     Iabs_acclim,          // midday incident PAR [umol m-2 s-1]
     PAR,     // Net radiation [W m-2] (only used for LE calculations which we dont use) // FIXME. Should this be Rnl? See message to Beni
-    VPD,    // vpd [kPa]
-    CO2,	  // co2 [ppm]
-    PA,     // surface pressure [Pa]
+    VPD,     // vpd [kPa]
+    CO2,	   // co2 [ppm]
+    PA,      // surface pressure [Pa]
     Nitrogen, // Leaf nitrogen store!
     fapar,                // fraction of absorbed PAR
     par.kphio,            // phi0 - quantum yield
@@ -115,11 +115,13 @@ PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double TAir, do
    */
   // crown_area_above is the leaved area not considering gaps
   double total_crown_area = crown_area_above(0.0, crown_area, height, par); // This is just one tree rather than all of them as in PlantFate
-  double n_layers = int(total_crown_area / 0.99);
+  double n_layers = 3; // TODO: make this work int(total_crown_area / 0.99);
 
   // TODO: lai should be calculated in the CASSIA model
+  lai = 1.8; // TODO: so this the same as the amazon values
   double fapar = 1 - exp(-par.k_light * lai);
   bool by_layer = false;
+  std::cout << " n_layers " << n_layers << " fapar " << fapar << " lai "<< lai;
 
   /*
    * plant_assim processes start
