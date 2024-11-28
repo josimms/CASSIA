@@ -185,7 +185,7 @@ struct phydro_canopy_parameters {
   double p50_leaf;        ///< Leaf or whole-plant hydraulic vulnerability [MPa] (calculated from Xylem P50 and Safety margin)
   double K_leaf;          ///< Leaf conductivity [m]
   double b_leaf;          ///< Shape parameter of leaf vulnerabilty curve [-]
-  double cbio; // TODO: what is this?
+  double cbio;            // kg biomass per mol CO2 = 12.011 gC / mol CO2 * 1e-3 kgC/gC * 2.04 kg biomass/kg
 
   // Environment
   int n_layers;
