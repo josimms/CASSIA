@@ -1,12 +1,10 @@
-#include <phydro.h>
-#include "function_structures.h"
-#include "final_parameters.h"
+#include "CASSIA.h"
 
 // **
 // ** Gross and Net Assimilation
 // **
 
-/*
+
 phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
                                                     double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
                                                     phydro_canopy_parameters par, double zeta){
@@ -32,9 +30,9 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
     TAir,     // growth temperature TODO: what is this?
     Iabs_acclim,          // midday incident PAR [umol m-2 s-1]
     PAR,     // Net radiation [W m-2] (only used for LE calculations which we dont use) // FIXME. Should this be Rnl? See message to Beni
-    VPD,    // vpd [kPa]
-    CO2,	  // co2 [ppm]
-    PA,     // surface pressure [Pa]
+    VPD,     // vpd [kPa]
+    CO2,	   // co2 [ppm]
+    PA,      // surface pressure [Pa]
     Nitrogen, // Leaf nitrogen store!
     fapar,                // fraction of absorbed PAR
     par.kphio,            // phi0 - quantum yield
@@ -71,13 +69,13 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
 
   return photo_leaf;
 }
-*/
+
 
 // **
 // ** Building the canopy
 // **
 
-/*
+
 double q(double z, double height, phydro_canopy_parameters par){
   if (z > height || z < 0) return 0;
   else{
@@ -102,19 +100,32 @@ double crown_area_above(double z, double crown_area, double height, phydro_canop
     return crown_area * (1 - fq * fq * par.fg);
   }
 }
-*/
+
 
 // **
 // ** Plant assimilation for the canopy
 // **
 
-/*
-PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
-                                                     double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
-                                                     phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta){
+
+PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta){
+
+  /*
+   * Calculate the parameters
+   */
+  // crown_area_above is the leaved area not considering gaps
+  double total_crown_area = crown_area_above(0.0, crown_area, height, par); // This is just one tree rather than all of them as in PlantFate
+  double n_layers = 3; // TODO: make this work int(total_crown_area / 0.99);
+
   // TODO: lai should be calculated in the CASSIA model
+  lai = 1.8; // TODO: so this the same as the amazon values
   double fapar = 1 - exp(-par.k_light * lai);
   bool by_layer = false;
+  std::cout << " n_layers " << n_layers << " fapar " << fapar << " lai "<< lai;
+
+  /*
+   * plant_assim processes start
+   */
 
   PlantAssimilationResult plant_assim;
   plant_assim.gpp        = 0;
@@ -189,4 +200,4 @@ PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
 
   return plant_assim;
 }
-*/
+

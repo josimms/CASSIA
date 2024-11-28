@@ -337,18 +337,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// preles_test_cpp
-Rcpp::List preles_test_cpp(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> pPREL, int etmodel);
-RcppExport SEXP _CASSIA_preles_test_cpp(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP pPRELSEXP, SEXP etmodelSEXP) {
+// preles_test
+Rcpp::DataFrame preles_test(Rcpp::DataFrame weather);
+RcppExport SEXP _CASSIA_preles_test(SEXP weatherSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type start_year(start_yearSEXP);
-    Rcpp::traits::input_parameter< int >::type end_year(end_yearSEXP);
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type weather(weatherSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type pPREL(pPRELSEXP);
-    Rcpp::traits::input_parameter< int >::type etmodel(etmodelSEXP);
-    rcpp_result_gen = Rcpp::wrap(preles_test_cpp(start_year, end_year, weather, pPREL, etmodel));
+    rcpp_result_gen = Rcpp::wrap(preles_test(weather));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -451,7 +447,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_Plant_N_Uptake", (DL_FUNC) &_CASSIA_Plant_N_Uptake, 11},
     {"_CASSIA_Fungal_N_Uptake", (DL_FUNC) &_CASSIA_Fungal_N_Uptake, 9},
     {"_CASSIA_Microbe_Uptake", (DL_FUNC) &_CASSIA_Microbe_Uptake, 18},
-    {"_CASSIA_preles_test_cpp", (DL_FUNC) &_CASSIA_preles_test_cpp, 5},
+    {"_CASSIA_preles_test", (DL_FUNC) &_CASSIA_preles_test, 1},
     {"_CASSIA_repola_test_cpp", (DL_FUNC) &_CASSIA_repola_test_cpp, 2},
     {"_CASSIA_respiration_test_cpp", (DL_FUNC) &_CASSIA_respiration_test_cpp, 12},
     {"_CASSIA_printColumnNames", (DL_FUNC) &_CASSIA_printColumnNames, 1},
