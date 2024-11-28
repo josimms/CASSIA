@@ -1,28 +1,25 @@
-# Define external directories
+# External directories
 EXTERNAL_DIR = ../external
 PHYDRO_PATH = $(EXTERNAL_DIR)/phydro
 LIBPSPM_PATH = $(EXTERNAL_DIR)/libpspm
 RPREBASSO_PATH = $(EXTERNAL_DIR)/Rprebasso
 
-# Define the source files from external packages
+# Source files from external packages
 FS_MODEL_SRC = $(RPREBASSO_PATH)/src/gpp.c \
 	$(RPREBASSO_PATH)/src/call_preles.c \
 	$(RPREBASSO_PATH)/src/preles.c \
 	$(RPREBASSO_PATH)/src/initruns.c \
 	$(RPREBASSO_PATH)/src/water.c
 
-# Define external object files
+# External object files
 EXTERNAL_OBJS = $(RPREBASSO_PATH)/src/gpp.o \
 	$(RPREBASSO_PATH)/src/call_preles.o \
 	$(RPREBASSO_PATH)/src/preles.o \
 	$(RPREBASSO_PATH)/src/initruns.o \
 	$(RPREBASSO_PATH)/src/water.o
 
-# Compile target
-all: $(SHLIB)
-
 # Include paths for the package
-PKG_INCL = -I../inst/include \
+PKG_CPPFLAGS = -I../inst/include \
 	-I../include \
 	-I$(PHYDRO_PATH)/inst/include \
 	-I$(PHYDRO_PATH)/inst/LBFGSpp/include \
@@ -38,15 +35,21 @@ PKG_INCL = -I../inst/include \
 	-I"$(R_PACKAGE_DIR)/inst/external/Rprebasso/src" \
 	-I"$(R_PACKAGE_DIR)/inst/external/phydro/include"
 
-PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) $(PKG_INCL)
+# Compiler flags
+PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) \
+	-Wno-unused-variable
+
+# Linker flags
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(EXTERNAL_OBJS)
 
-# Object files
-OBJS = $(FS_MODEL_SRC:.c=.o)
+# Default target: build the shared library
+all: $(SHLIB)
 
 # Rules for compiling .c files into object files
 %.o: %.c
 	$(CC) $(CFLAGS) $(PKG_CPPFLAGS) -c $< -o $@
 
-# Link object files into the shared library
-$(SHLIB): $(OBJS) $(EXTERNAL_OBJS)
+# Rule for linking object files into the shared library
+$(SHLIB): $(FS_MODEL_SRC:.c=.o) $(EXTERNAL_OBJS)
+	$(CXX) $(PKG_CXXFLAGS) -o $@ $^ $(PKG_LIBS)
+
