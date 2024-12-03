@@ -61,6 +61,7 @@ Rcpp::List CASSIA_eeo(int start_year,
   // TODO: make the PA value input or remove it from the code!
   std::vector<double> PA = weather["PA"];
   std::vector<double> SWP = weather["SWP"];
+  std::vector<double> PAR_max = weather["PAR_max"];
 
   /*
    * Structures set up
@@ -302,30 +303,42 @@ Rcpp::List CASSIA_eeo(int start_year,
         parPhydro.infra_translation = 5;    // Translation from biomass area ratio to Ib
         parPhydro.kphio = 0.055; // 0.087            // Quantum yield efficiency
         parPhydro.rd = 0.011; // 0.015              // ratio of leaf dark respiration rate to vcmax [-]  (Ref: 0.011 in Farquhar et al 1980, 0.015 in Collatz et al 1991)
-        parPhydro.a_jmax = 800;
+        parPhydro.a_jmax = 50; // TODO: 800 or 50?
+
+        parPhydro.k_light = 0.5;
 
         // Note the p50_leaf was commented and this was the value p50_xylem -2.29 was there
-        parPhydro.p50_leaf = -1.5;          // Leaf P50 [MPa]
-        parPhydro.K_leaf = 0.5e-16;         // Leaf conductance [m]  ---> ** Calibrated to gs **
+        parPhydro.p50_leaf = -0.748637;          // Leaf P50 [MPa]
+        parPhydro.K_leaf = 5e-17;         // Leaf conductance [m]  ---> ** Calibrated to gs **
         parPhydro.b_leaf = 1;               // Shape parameter of xylem vulnerabilty curve [-]
         parPhydro.cbio = 2.45e-2;           // kg biomass per mol CO2 = 12.011 gC / mol CO2 * 1e-3 kgC/gC * 2.04 kg biomass/kg
         // TODO: replace with a boreal shape
         parPhydro.m = 1.5;                  // crown shape smoothness
         parPhydro.n = 3;                    // crown top-heaviness
         parPhydro.fg = 0.1;                 // upper canopy gap fraction
-        parPhydro.qm = 0.0;                 // TODO: no idea...
-        parPhydro.zm_H = 0.0;               // TODO: this is calculated somehow!
+        // qm defined in plant_architecture
+        parPhydro.qm = parPhydro.m * parPhydro.n * pow((parPhydro.n - 1) / (parPhydro.m * parPhydro.n - 1), 1 - 1 / parPhydro.n) * pow((parPhydro.m - 1) * parPhydro.n / (parPhydro.m * parPhydro.n - 1), parPhydro.m - 1);
+        // zm_H defined in plant_architecture
+        parPhydro.zm_H = pow((parPhydro.n - 1) / (parPhydro.m * parPhydro.n - 1), 1 / parPhydro.n);
 
         // This value is random, although 15 is one of the values from PlantFate
         parPhydro.z_star = {15, 10, 5, 0};
         parPhydro.canopy_openness = {1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)};
 
-        double crown_area = 5.0; // TODO: need to generate this value from the model But tryint to get the ocde to work first!
+        parPhydro.tau_weather = 7;
+
+        double height = 1.48766;
+        // culm_growth.height[day-1]
+        double diameter = 0.01;
+
+        // TODO: need to generate this value from CASSIA trying to check the code first!
+        // TODO: something wrong here!
+        double crown_area = 0.132131; // M_PI * 6000 / (4 * 75) * height * diameter;
         zeta = 0.2; // LAI / culm_growth.roots[day-1]; // TODO: is this defined correctly?
 
-        photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
+        photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], PAR_max[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
                                                              CO2[weather_index], Nitrogen[weather_index], PA[weather_index], SWP[weather_index],
-                                                             parPhydro, LAI, crown_area, culm_growth.height[day-1], zeta);
+                                                             parPhydro, LAI, crown_area, height, zeta);
 
         GPP = photosynthesis_phydro.gpp;
         ET = 0.0; // TODO: is this an output?
