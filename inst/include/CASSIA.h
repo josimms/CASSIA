@@ -494,7 +494,7 @@ int leap_year(int year);
  * Plant Fate Logic
  */
 
-PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
                                                      phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta);
 
 #endif
