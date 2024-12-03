@@ -143,7 +143,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   # Installing the model from github
   ###
 
-  devtools::install_github("josimms/CASSIA@adding_externals", force = TRUE)
+  testing_remote = FALSE
+  if (testing_remote) {
+    devtools::install_github("josimms/CASSIA@adding_externals", force = TRUE)
+  }
 
   ###
   # Weather Data Plots
@@ -302,7 +305,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   ### Phydro
 
-  weather_Amazon <- read.delim("~/Documents/Austria/Plant-FATE/testss/data/MetData_AmzFACE_Monthly_2000_2015_PlantFATE_new.csv", sep = ",")
+  weather_Amazon <- read.delim("~/Documents/Austria/Plant-FATE/tests/data/MetData_AmzFACE_Monthly_2000_2015_PlantFATE_new.csv", sep = ",")
   weather_Amazon$VPD <- 100 * weather_Amazon$VPD # Pa
   weather_Amazon$PAR <- weather_Amazon$PAR # umol m-2 s-1
   weather_Amazon$SWP <- - weather_Amazon$SWP # umol m-2 s-1
@@ -316,13 +319,15 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   weather_Amazon$TSB = NA
   weather_Amazon$MB = NA
   weather_Amazon$Rain = NA
-  weather_Amazon$CO2 = 421.38
+  weather_Amazon$CO2 = 365
   weather_Amazon$PA = 101325
+
+  weather_Amazon_2013 <- weather_Amazon[weather_Amazon$Year > 2012,]
 
   # PAR [umol m-2 s-1], PAR Net radiation [W m-2], - MPa
   summary(weather_Amazon)
 
-  CASSIA_phydro_amazon <- CASSIA_cpp(weather = weather_Amazon,
+  CASSIA_phydro_amazon <- CASSIA_cpp(weather = weather_Amazon_2013,
                                      site = "Hyde",
                                      pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
                                      parameters = parameters_all$parameters_test,
@@ -335,7 +340,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                      ecoevolutionary = TRUE)
 
   weather_ERAS_phydro <- read.delim("~/Documents/ERAS_dataset.csv", sep =",")
-  weather_ERAS_phydro$VPD <- 0.1 * weather_Amazon$VPD # kPa
+  weather_ERAS_phydro$VPD <- 0.1 * weather_ERAS_phydro$VPD # kPa
   weather_ERAS_phydro$dates <- seq(as.Date(paste(weather_ERAS_phydro$Year[1], weather_ERAS_phydro$Month[1], "01", sep = "-")),
                                    as.Date(paste(weather_ERAS_phydro$Year[nrow(weather_ERAS_phydro)], weather_ERAS_phydro$Month[nrow(weather_ERAS_phydro)], "31", sep = "-")),
                                    by = "day")
