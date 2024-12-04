@@ -495,6 +495,15 @@ int leap_year(int year);
  */
 
 PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
-                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta);
+                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta, int day);
+
+phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
+                                                    double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                    double TAir_assim, double PAR_assim, double VPD_assim, double CO2_assim, double SWP_assim, double PA_assim,
+                                                    phydro_canopy_parameters par, double zeta);
+
+void set_forcing_acclim(double TAir, double PAR, double VPD, double CO2, double SWP, double PA,
+                        double& TAir_assim, double& PAR_assim, double& VPD_assim, double& CO2_assim, double& SWP_assim, double& PA_assim,
+                        phydro_canopy_parameters par);
 
 #endif
