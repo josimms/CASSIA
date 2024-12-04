@@ -201,6 +201,10 @@ struct phydro_canopy_parameters {
   double qm;
   double fg; // fg upper canopy gap fraction
   double k_light;
+
+  // Weather
+  double tau_weather;
+  double dt;
 };
 
 /*
