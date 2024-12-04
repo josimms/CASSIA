@@ -336,9 +336,15 @@ Rcpp::List CASSIA_eeo(int start_year,
         double crown_area = 0.132131; // M_PI * 6000 / (4 * 75) * height * diameter;
         zeta = 0.2; // LAI / culm_growth.roots[day-1]; // TODO: is this defined correctly?
 
+        if (day == 0) {
+          parPhydro.dt = 0;
+        } else {
+          parPhydro.dt = 15.2184; // 1/days_per_year;
+        }
+
         photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], PAR_max[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
                                                              CO2[weather_index], Nitrogen[weather_index], PA[weather_index], SWP[weather_index],
-                                                             parPhydro, LAI, crown_area, height, zeta);
+                                                             parPhydro, LAI, crown_area, height, zeta, day);
 
         GPP = photosynthesis_phydro.gpp;
         ET = 0.0; // TODO: is this an output?
