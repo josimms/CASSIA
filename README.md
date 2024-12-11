@@ -73,12 +73,12 @@ It is likely that the values you have chosen for the parameters have caused one 
 
 ### Weather Data
 
-It is hard to make an example file for the weather data needed as all weather data sources are different. Examples of such processes can be found in the files Hyytiala_Weather_Fast.R Hyytiala_Data_Creation.R and ERAS_weather_processing.R - although the data needs to be downloaded by the user first.
+It is hard to make an example file for the weather data needed as all weather data sources are different. Examples of such processes can be found in the files Hyytiala_Weather_Fast.R and ERAS_weather_processing.R - although the data needs to be downloaded by the user first.
 
 The basic process for all of the data is to:
-1. Download the data
-2. Format the data as in the function help files in the units required (?CASSIA)
-3. Bias correct if the data is taken from a different source than the local weather stations. In this code ERA5 is an example of a global database which then has to be bias corrected.
+1. Download the data.
+2. Format the data as in the function help files in the units required (?CASSIA).
+3. Gapfill / Bias correct. If the data is taken from local weather stations you will need to gapfil the results with the closeby stations. If you have taken the result from a global dataset you will then need to bias correct with the local sites. (Gapfill example in Hyyiälä data porcessing and the bias correction in the ERA5 file)
 
 ### Ongoing Projects
 
