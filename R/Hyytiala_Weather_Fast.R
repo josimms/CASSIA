@@ -55,95 +55,85 @@ downloading_data <- function(raw.directory = "/home/josimms/Documents/CASSIA_Cal
 
 
 ###
-# inporting_hyytiala_raw_data_into_list
+# Memory efficient way of getting the dataframe with mean daily values - with max for a few variables
 ###
+whole_weather_process <- function(save,
+                                  raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/",
+                                  output_directory = "/home/josimms/Documents/CASSIA/data") {
 
-inporting_hyytiala_raw_data_into_list <- function(raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/") {
+  variables <- c("RH672", "RH1250", "RHTd", "PAR", "CO2168", "T168", "T336", "Precip",
+                 "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2", "Glob", "Glob67",
+                 "Pamb336", "wpsoil_A", "wpsoil_B", "GPP")
 
-  environmental.variable.list <- list()
-  count = 1
-  for (variable in c("RH672", "RH1250", "RHTd", "PAR",
-                     "CO2168", "T168", "T336", "Precip",
-                     "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2",
-                     "Glob", "Glob67", "Pamb336", "wpsoil_A", "wpsoil_B",
-                     "GPP")) {
-    environmental.variable.list[[count]] <- data.table::rbindlist(lapply(paste0(raw.directory, list.files(raw.directory, variable)), data.table::fread))
-    environmental.variable.list[[count]]$Date <- paste(environmental.variable.list[[count]]$Year,
-                                                       environmental.variable.list[[count]]$Month,
-                                                       environmental.variable.list[[count]]$Day,
-                                                       sep = "-")
-    environmental.variable.list[[count]]$Monthly <- paste(environmental.variable.list[[count]]$Year,
-                                                          environmental.variable.list[[count]]$Month,
-                                                          sep = "-")
-    count = count + 1
+  daily_result <- data.table::data.table(Date = character())
+
+  for (variable in variables) {
+    cat("Processing", variable, "\n")
+
+    # Read and process files for each variable separately
+    files <- list.files(raw.directory, pattern = variable, full.names = TRUE)
+
+    variable_data <- data.table::rbindlist(lapply(files, function(file) {
+      dt <- data.table::fread(file)
+
+      # Simplify column names
+      data.table::setnames(dt, gsub("HYY_META.|HYY_EDDY233.", "", names(dt)))
+
+      # Add Date column
+      dt[, Date := paste(Year, Month, Day, sep = "-")]
+
+      return(dt)
+    }))
+
+    # Calculate daily statistics
+    if (variable %in% c("Glob", "Glob67", "PAR")) {
+      daily_stats <- variable_data[, .(
+        mean = mean(get(variable), na.rm = TRUE),
+        max = max(get(variable), na.rm = TRUE)
+      ), by = Date]
+      data.table::setnames(daily_stats, c("mean", "max"), paste0(variable, c("_mean", "_max")))
+    } else if (variable == "Precip") {
+      daily_stats <- variable_data[, .(sum = sum(get(variable), na.rm = TRUE)), by = Date]
+      data.table::setnames(daily_stats, "sum", paste0(variable, "_sum"))
+    } else {
+      daily_stats <- variable_data[, .(mean = mean(get(variable), na.rm = TRUE)), by = Date]
+      data.table::setnames(daily_stats, "mean", paste0(variable, "_mean"))
+    }
+
+    # Merge with the result
+    daily_result <- merge(daily_result, daily_stats, by = "Date", all = TRUE)
+
+    # Clear memory
+    rm(variable_data, daily_stats)
+    gc()
   }
 
-  return(environmental.variable.list)
-}
+  # Add Year, Month, and Day columns
+  daily_result[, c("Year", "Month", "Day") := data.table::tstrsplit(Date, "-", fixed=TRUE)]
 
-###
-# Simplifying the names!
-###
+  # Convert Year, Month, and Day to numeric for proper sorting
+  daily_result[, ':='(Year = as.numeric(Year),
+                      Month = as.numeric(Month),
+                      Day = as.numeric(Day))]
+  daily_result[, VPD := 10 * bigleaf::rH.to.VPD(0.01*RH672_mean, T336_mean)]
 
-simplifying_names <- function(environmental.variable.list) {
-  names(environmental.variable.list) <- gsub("HYY_META.", "", names(environmental.variable.list))
-  names(environmental.variable.list) <- gsub("HYY_EDDY233.", "", names(environmental.variable.list))
-  return(environmental.variable.list)
-}
+  # Add Monthly column
+  daily_result[, Monthly := paste(Year, sprintf("%02d", Month), sep = "-")]
 
-###
-# Generating mean values
-###
+  # Sort the data by date
+  data.table::setorder(daily_result, Year, Month, Day)
 
-generating_mean_values_daily <- function(environmental.variable.list) {
-  RH672_out <- environmental.variable.list[["RH672"]][, RH672_mean := mean(RH672, na.rm = T), by = Date]
-  RH1250_out <- environmental.variable.list[["RH1250"]][, RH1250_mean := mean(RH1250, na.rm = T), by = Date]
-  RHTd_out <- environmental.variable.list[["RHTd"]][, RHTd_mean := mean(RHTd, na.rm = T), by = Date]
-  CO2168_out <- environmental.variable.list[["CO2168"]][, CO2168_mean := mean(CO2168, na.rm = T), by = Date]
-  T168_out <- environmental.variable.list[["T168"]][, T168_mean := mean(T168, na.rm = T), by = Date]
-  T336_out <- environmental.variable.list[["T336"]][, T336_mean := mean(T336, na.rm = T), by = Date]
-  wpsoil_A_out <- environmental.variable.list[["wpsoil_A"]][, wpsoil_A_mean := mean(wpsoil_A, na.rm = T), by = Date]
-  wpsoil_B_out <- environmental.variable.list[["wpsoil_B"]][, wpsoil_B_mean := mean(wpsoil_B, na.rm = T), by = Date]
-  GPP_out <- environmental.variable.list[["GPP"]][, GPP_mean := mean(GPP, na.rm = T), by = Date]
-  Glob_out <- environmental.variable.list[["Glob"]][, Glob_mean := mean(Glob, na.rm = T), by = Date]
-  Glob67_out <- environmental.variable.list[["Glob67"]][, Glob67_mean := mean(Glob67, na.rm = T), by = Date]
-  PAR_out <- environmental.variable.list[["PAR"]][, PAR_mean := mean(PAR, na.rm = T), by = Date]
-  # Max
-  Glob_max <- environmental.variable.list[["Glob"]][, Glob_max := max(Glob, na.rm = T), by = Date]
-  Glob67_max <- environmental.variable.list[["Glob67"]][, Glob67_max := max(Glob67, na.rm = T), by = Date]
-  # Sum
-  Precip_out <- environmental.variable.list[["Precip"]][, Precip_sum := sum(Precip, na.rm = T), by = Date]
+  # Reorder columns
+  data.table::setcolorder(daily_result, c("Year", "Month", "Day", "Date", "Monthly"))
 
-  ## Make into list
-  daily.list <- list(RH672_out, RH1250_out, RHTd_out, CO2168_out, T168_out, T336_out,
-                     wpsoil_A_out, wpsoil_B_out, GPP_out, Glob_out, Glob67_out, Glob_max, Glob67_max,
-                     Precip_out)
-  return(daily.list)
-}
+  # Save the result
+  if (save) {
+    data.table::fwrite(daily_result, file.path(output_directory, "daily_dataframe.csv"))
 
-generating_mean_values_monthly <- function(environmental.variable.list) {
-  out <- environmental.variable.list[, mean_value := mean(7, na.rm = T), by = 9]
-  return(out)
-}
+    cat("Processing complete. Results saved to", file.path(output_directory, "daily_dataframe.csv"), "\n")
+  }
 
-generating_max_values_monthly <- function(environmental.variable.list) {
-  out <- environmental.variable.list[, max_value := max(7, na.rm = T), by = 9]
-  return(out)
-}
-
-generating_sum_values_monthly <- function(environmental.variable.list) {
-  out <- environmental.variable.list[, sum_value := sum(7, na.rm = T), by = 9]
-  return(out)
-}
-
-###
-# Compiling the mounthly and daily values
-###
-
-daily_list <- function(environmental.variable.list) {
-  test <- lapply(environmental.variable.list, generating_mean_values_daily)
-
-  return(environmental.variable.list)
+  return(daily_result)
 }
 
 ###
@@ -152,30 +142,42 @@ daily_list <- function(environmental.variable.list) {
 
 raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/",
                                           data.direct <- "/home/josimms/Documents/CASSIA/data/") {
+  warning("This is originially ment for Joanna's own data processing. Thought that by making this function public it would help understadning of the weather processing. However it could be that paths used here don't work on your computer. If so contact Joanna!")
 
-  ## Big files only run if really really nesicary!
+  ## Big files only run if really really necessary!
   downloading_data()
 
-  ### READING FILES
-  environmental.variable.list <- inporting_hyytiala_raw_data_into_list()
+  ### READING FILES AND MAKING MEAN, SUM AND MAX VALUES AS PER VARIABLE
+  daily.dataframe <- whole_weather_process(F)
 
-  ### RENAMING VARIABLE NAMES
-  environmental.variable.list <- mclapply(environmental.variable.list, simplifying_names, mc.cores = 10)
-
-  names(environmental.variable.list) <- c("RH672", "RH1250", "RHTd", "PAR",
-                                          "CO2168", "T168", "T336", "Precip",
-                                          "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2",
-                                          "Glob", "Glob67", "PAR", "Pamb336", "wpsoil_A", "wpsoil_B",
-                                          "GPP")
-  ### GETTING DAILY VALUES
-  daily.list <- generating_mean_values_daily(environmental.variable.list)
-  daily.dataframe <- rbinddatatable(daily.list)
-
-  ### saving dataframe!
+  ### saving dataframe raw!
   fwrite(daily.dataframe, paste0(data.direct, "daily.dataframe.hyytiala.csv"))
 
-  ### GETTING MONTHLY VALUES
-  monthly.dataframe # TODO: monthly values generate
-  fwrite(monthly.dataframe, paste0(data.direct, "monthly.dataframe.hyytiala.csv"))
+  ### Gapfill TODO
+  # daily.dataframe$RH672_mean <-
+
+
+  ### TODO Create for different photosynthesis inputs
+
+  ### Import alternative data to check the similarity
+
+  years <- c(2015, 2016, 2017, 2018)
+  # Create a list to store the data frames
+  weather_list <- lapply(years, function(year) {
+    read.csv(file = paste0("/home/josimms/Documents/CASSIA/data/weather_original_", year, ".csv"),
+             header = TRUE,
+             sep = ",")
+  })
+  # Combine all data frames into a single data frame
+  weather_original <- do.call(rbind, weather_list)
+
+  ### Plot
+  par(mfrow = c(2, 3))
+  plot(weather_original$T, daily.dataframe$T168_mean[daily.dataframe$Year %in% years], main = "Temperature 'C", xlab = "", ylab = "")
+  plot(weather_original$TSA, daily.dataframe$tsoil_5_mean[daily.dataframe$Year %in% years], main = "Temperature Soil A 'C", xlab = "", ylab = "")
+  plot(weather_original$TSB, daily.dataframe$tsoil_10_mean[daily.dataframe$Year %in% years], main = "Temperature Soil A 'C", xlab = "", ylab = "")
+  # TODO: soil moisture
+  plot(weather_original$MB, daily.dataframe$wsoil_B1_mean[daily.dataframe$Year %in% years], main = "Soil Moisture ??", xlab = "", ylab = "")
+  plot(weather_original$Rain, daily.dataframe$Precip_sum[daily.dataframe$Year %in% years], main = "Precipitation mm", xlab = "", ylab = "")
 
 }
