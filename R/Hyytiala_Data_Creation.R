@@ -1,17 +1,10 @@
 #' @export
-Hyytiala_Data_Creation <- function(raw.directory,
+Hyytiala_Data_Creation <- function(raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/",
                                    year_start,
                                    year_end,
                                    download = F,
                                    clean_data = F,
                                    save = T) {
-
-  raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/"
-  year_start = 1995
-  year_end = 2023
-  download = T
-  clean_data = T
-  save = T
 
   ####
   # Download the data from the SMEAR database
@@ -69,11 +62,14 @@ Hyytiala_Data_Creation <- function(raw.directory,
     Glob67$Date <- as.Date(paste(Glob67$Year, Glob67$Month, Glob67$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
     CO2168$Date <- as.Date(paste(CO2168$Year, CO2168$Month, CO2168$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
 
+    # Join  the RH together
     RH = merge(RH1250, RHTd, by = c("Year", "Month", "Day", "Hour", "Minute", "Second"), all = T)
+    # Make the date a date and then order the rows based on this date value
     RH$Date = as.POSIXct(paste(paste(RH$Year, RH$Month, RH$Day, sep = "-"), paste(RH$Hour, RH$Minute, sep = ":")),
                          format = "%Y-%m-%d %H:%M", tz = "BST")
     RH <- RH[order(RH$Date),]
 
+    ### Join all of the columns together
     all_data <- as.data.frame(cbind(RH672$HYY_META.RH672, RH$HYY_META.RH1250, RH$HYY_META.RHTd,
                                     PAR$HYY_META.PAR, CO2168$HYY_META.CO2168,
                                     T336$HYY_META.T336, T168$HYY_META.T168,
@@ -126,14 +122,14 @@ Hyytiala_Data_Creation <- function(raw.directory,
     all.daily.max$Glob_max = bigleaf::Rg.to.PPFD(all.daily.max$HYY_META.Glob)
     all.daily.max$Glob67_max = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob67~Date, data = Glob67, max, na.rm = T, na.action = NULL)$HYY_META.Glob67)
 
-    install.packages("ProfoundData")
-
+    # Weather from Hyytiälä used for the original CASSIA runs - new weather tested against these old files to make sure that they are consistent
     weather_original_2015 = read.csv(file = "/home/josimms/Documents/CASSIA/data/weather_original_2015.csv", header = T, sep = ",")
     weather_original_2016 = read.csv(file = "/home/josimms/Documents/CASSIA/data/weather_original_2016.csv", header = T, sep = ",")
     weather_original_2017 = read.csv(file = "/home/josimms/Documents/CASSIA/data/weather_original_2017.csv", header = T, sep = ",")
     weather_original_2018 = read.csv(file = "/home/josimms/Documents/CASSIA/data/weather_original_2018.csv", header = T, sep = ",")
     weather_original = rbind(rbind(rbind(weather_original_2015, weather_original_2016), weather_original_2017), weather_original_2018)
 
+    ### Plot the data to make sure it makes sense
     par(mfrow = c(3, 4))
     # TODO: this should be below as data_format is definied later!
     plot(all.daily.1$T336[substring(all.daily.1$Date, 1, 4) %in% c(2015:2018)], weather_original$T, ylab = "From Pauliiina", xlab = "My Data", main = "Temperature")
@@ -169,6 +165,7 @@ Hyytiala_Data_Creation <- function(raw.directory,
     plot(all.daily.2$tsoil_10[substring(all.daily.2$Date, 1, 4) %in% c(2015:2018)] - weather_original$TSB, ylab = "From Pauliiina", xlab = "My Data")
 
     # PAR data sorting
+    # As there are missing values and we aim to have an aaverage we need to make the average for the seconds that are missing per day
     PAR$Missing <-is.nan(PAR$HYY_META.PAR)
     Glob$MissingGlob <-is.nan(Glob$HYY_META.Glob)
     Glob$MissingGlob67 <-is.nan(Glob67$HYY_META.Glob67)

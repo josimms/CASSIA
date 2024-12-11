@@ -150,7 +150,8 @@ daily_list <- function(environmental.variable.list) {
 # Final process!
 ###
 
-raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/") {
+raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/",
+                                          data.direct <- "/home/josimms/Documents/CASSIA/data/") {
 
   ## Big files only run if really really nesicary!
   downloading_data()
@@ -171,7 +172,6 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
   daily.dataframe <- rbinddatatable(daily.list)
 
   ### saving dataframe!
-  data.direct <- "/home/josimms/Documents/CASSIA/data/"
   fwrite(daily.dataframe, paste0(data.direct, "daily.dataframe.hyytiala.csv"))
 
   ### GETTING MONTHLY VALUES
