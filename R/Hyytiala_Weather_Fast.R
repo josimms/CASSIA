@@ -107,6 +107,7 @@ generating_mean_values_daily <- function(environmental.variable.list) {
   GPP_out <- environmental.variable.list[["GPP"]][, GPP_mean := mean(GPP, na.rm = T), by = Date]
   Glob_out <- environmental.variable.list[["Glob"]][, Glob_mean := mean(Glob, na.rm = T), by = Date]
   Glob67_out <- environmental.variable.list[["Glob67"]][, Glob67_mean := mean(Glob67, na.rm = T), by = Date]
+  PAR_out <- environmental.variable.list[["PAR"]][, PAR_mean := mean(PAR, na.rm = T), by = Date]
   # Max
   Glob_max <- environmental.variable.list[["Glob"]][, Glob_max := max(Glob, na.rm = T), by = Date]
   Glob67_max <- environmental.variable.list[["Glob67"]][, Glob67_max := max(Glob67, na.rm = T), by = Date]
@@ -163,7 +164,7 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
   names(environmental.variable.list) <- c("RH672", "RH1250", "RHTd", "PAR",
                                           "CO2168", "T168", "T336", "Precip",
                                           "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2",
-                                          "Glob", "Glob67", "Pamb336", "wpsoil_A", "wpsoil_B",
+                                          "Glob", "Glob67", "PAR", "Pamb336", "wpsoil_A", "wpsoil_B",
                                           "GPP")
   ### GETTING DAILY VALUES
   daily.list <- generating_mean_values_daily(environmental.variable.list)
