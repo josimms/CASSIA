@@ -6,113 +6,13 @@ Hyytiala_Data_Creation <- function(raw.directory = "/home/josimms/Documents/CASS
                                    clean_data = F,
                                    save = T) {
 
-  ####
-  # Download the data from the SMEAR database
-  ####
-
-  if (download) {
-    http.origin = "https://smear-backend.rahtiapp.fi/search/timeseries/csv?tablevariable=HYY_"
-    for (variable in c(paste0("META.", c("RH672", "RH1250", "RHTd", "PAR", "CO2168", "T168", "T336", "Precip", "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2", "Glob", "Glob67", "Pamb336", "wpsoil_A", "wpsoil_B")), "EDDY233.GPP", "EDDY233.NPP")[16:17]) {
-      from = "&from="
-      year1 = seq(year_start, year_end, by = 2)
-      to = "-01-01T00%3A00%3A00.000&to="
-      year2 = seq(year_start+1, year_end, by = 2)
-      if (length(year2) != length(year1)) {year2 <- c(year2, year_end)}
-      end = "-12-31T23%3A59%3A59.999&quality=ANY&aggregation=NONE&interval=1"
-
-      files = as.list(paste0(http.origin, variable, from, year1, to, year2, end))
-      imported_file = as.list(paste0(raw.directory, variable, from, year1, "to", year2))
-
-      mapply(download.file, files, imported_file)
-    }
-  }
 
   ####
   # Clean the data with other Hyytiala data
   ####
 
   if (clean_data) {
-    ####
-    # Read the data
-    #
-    # NOTE! Don't run if no new data downloaded!
-    ####
-
-    system.time(dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RH672")), read.csv, dec = ".")))
-
-    RH672 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RH672")), read.csv, dec = "."))
-    RH1250 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RH1250")), read.csv, dec = "."))
-    RHTd <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "RHTd")), read.csv, dec = "."))
-    PAR <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "PAR")), read.csv, dec = "."))
-    CO2168 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "CO2168")), read.csv, dec = "."))
-    T336 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "T336")), read.csv, dec = "."))
-    T168 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "T168")), read.csv, dec = "."))
-    Precip <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "Precip")), read.csv, dec = "."))
-    tsoil_5 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "tsoil_5")), read.csv, dec = "."))
-    tsoil_10 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "tsoil_10")), read.csv, dec = "."))
-    wsoil_B1 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "wsoil_B1")), read.csv, dec = "."))
-    wsoil_B2 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "wsoil_B2")), read.csv, dec = "."))
-    wpsoil_A <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "wpsoil_A")), read.csv, dec = "."))
-    wpsoil_B <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "wpsoil_B")), read.csv, dec = "."))
-    GPP <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "GPP")), read.csv, dec = "."))
-    GPP$Date <- as.Date(paste(GPP$Year, GPP$Month, GPP$Day, sep = "-"), "%Y-%m-%e")
-    Glob <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "Glob&")), read.csv, dec = "."))
-    Glob$Date <- as.Date(paste(Glob$Year, Glob$Month, Glob$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
-    Glob67 <- dplyr::bind_rows(lapply(paste0(raw.directory, list.files(raw.directory, "Glob67")), read.csv, dec = "."))
-    Glob67$Date <- as.Date(paste(Glob67$Year, Glob67$Month, Glob67$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
-    CO2168$Date <- as.Date(paste(CO2168$Year, CO2168$Month, CO2168$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
-
-    # Join  the RH together
-    RH = merge(RH1250, RHTd, by = c("Year", "Month", "Day", "Hour", "Minute", "Second"), all = T)
-    # Make the date a date and then order the rows based on this date value
-    RH$Date = as.POSIXct(paste(paste(RH$Year, RH$Month, RH$Day, sep = "-"), paste(RH$Hour, RH$Minute, sep = ":")),
-                         format = "%Y-%m-%d %H:%M", tz = "BST")
-    RH <- RH[order(RH$Date),]
-
-    ### Join all of the columns together
-    all_data <- as.data.frame(cbind(RH672$HYY_META.RH672, RH$HYY_META.RH1250, RH$HYY_META.RHTd,
-                                    PAR$HYY_META.PAR, CO2168$HYY_META.CO2168,
-                                    T336$HYY_META.T336, T168$HYY_META.T168,
-                                    Precip$HYY_META.Precip,
-                                    tsoil_5$HYY_META.tsoil_5, tsoil_10$HYY_META.tsoil_10,
-                                    wsoil_B1$HYY_META.wsoil_B1, wsoil_B2$HYY_META.wsoil_B2))
-    names(all_data) <- c("RH672", "RH1250", "RHTd", "PAR", "CO2168", "T336", "T168",
-                         "Precip", "tsoil_5", "tsoil_10", "wsoil_B1", "wsoil_B2")
-    all_data$Date <- as.Date(paste(RH672$Year, RH672$Month, RH672$Day, sep = "-"), format = "%Y-%m-%d", tz = "BST")
-    all_data$Date_Time <- as.POSIXct(paste(RH672$Year, RH672$Month, RH672$Day, RH672$Hour, RH672$Minute, RH672$Second, sep = "-"), format = "%Y-%m-%d-%H-%M-%S", tz = "BST")
-
-    wpsoil_A$Date_Time <- as.POSIXct(paste(wpsoil_A$Year, wpsoil_A$Month, wpsoil_A$Day, wpsoil_A$Hour, wpsoil_A$Minute, wpsoil_A$Second, sep = "-"), format = "%Y-%m-%d-%H-%M-%S", tz = "BST")
-    wpsoil_B$Date_Time <- as.POSIXct(paste(wpsoil_B$Year, wpsoil_B$Month, wpsoil_B$Day, wpsoil_B$Hour, wpsoil_B$Minute, wpsoil_B$Second, sep = "-"), format = "%Y-%m-%d-%H-%M-%S", tz = "BST")
-
-    all_data <- merge(all_data, wpsoil_A, all = T)
-    all_data <- merge(all_data, wpsoil_B, all = T)
-
-    ### Save data
-    data_storage <- "/home/josimms/Documents/Austria/Plant-FATE/tests/"
-    # TODO: maybe make this in the CASSIA package at some point!
-    write.csv(all_data[1:(nrow(all_data)/2),], file = paste0(data_storage, "all_data.csv"))
-    write.csv(all_data[(nrow(all_data)/2+1):nrow(all_data),], file = paste0(data_storage, "all_data_2.csv"))
-    # LAST RUN 01.07.2024
-      # Don't need to run if you haven't downloaded new data
-
-    ### Read data
-    data_storage <- "/home/josimms/Documents/Austria/Plant-FATE/tests/"
-    all_data_1 <- read.csv(paste0(data_storage, "all_data.csv"))
-    all_data_2 <- read.csv(paste0(data_storage, "all_data_2.csv"))
-    all_data <- rbind(all_data_1, all_data_2)
-    names(all_data) <- gsub("HYY_META.", "", names(all_data))
-
-    # W m⁻²
-    # Make into daily values!
-    all.daily = aggregate(RH672 ~ Date, data = all_data, mean, na.rm = T)
-    all.daily.1 = aggregate(cbind(RH1250, RHTd, CO2168, T336, T168) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
-    all.daily.2 = aggregate(cbind(tsoil_5, tsoil_10, wsoil_B1, wsoil_B2) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
-    # µmol m⁻² s⁻¹
-    all.daily.3 = aggregate(HYY_EDDY233.GPP ~ Date, data = GPP, mean, na.rm = T, na.action = NULL)
-    all.daily.4 = aggregate(cbind(wpsoil_A, wpsoil_B) ~ Date, data = all_data, mean, na.rm = T, na.action = NULL)
-    all.daily.sum = aggregate(cbind(PAR, Precip) ~ Date, data = all_data, sum, na.rm = F, na.action = NULL)
     # Here the data looks strange for 2017-2018 two years, so made into NA values
-    all.daily.sum$Precip[lubridate::year(all.daily.sum$Date) %in% 2017:2018] <- NA
     all.daily.sum$Glob = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob~Date, data = Glob, sum, na.rm = T, na.action = NULL)$HYY_META.Glob)
     all.daily.sum$Glob67 = bigleaf::Rg.to.PPFD(aggregate(HYY_META.Glob67~Date, data = Glob67, sum, na.rm = T, na.action = NULL)$HYY_META.Glob67)
     all.daily.mean = aggregate(HYY_META.Glob~Date, data = Glob, mean, na.rm = T, na.action = NULL)
