@@ -60,7 +60,7 @@ CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", ratios = ra
 
 If you are using the model in Hyytiälä or Väriö then the model is calibrated. If not the model is not yet calibrated for your site. This means that you need to calibrate the model! To do this look at the markdown files for advice.
 
-**markdown files cover using the model again, also sensitivity analysis and weather processing**
+**markdown files cover using the model again and sensitivity analysis**
 
 Sidenote: If you have an error along the lines of 
 
@@ -70,6 +70,15 @@ Error in if GENERIC ARGUMENT missing value where TRUE/FALSE needed
 It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report then send joanna.x.simms@helsinki.fi an email.
 
 (Code working as of 19th Nov 2024 - contact Joanna if not working)
+
+### Weather Data
+
+It is hard to make an example file for the weather data needed as all weather data sources are different. Examples of such processes can be found in the files Hyytiala_Weather_Fast.R Hyytiala_Data_Creation.R and ERAS_weather_processing.R - although the data needs to be downloaded by the user first.
+
+The basic process for all of the data is to:
+1. Download the data
+2. Format the data as in the function help files in the units required (?CASSIA)
+3. Bias correct if the data is taken from a different source than the local weather stations. In this code ERA5 is an example of a global database which then has to be bias corrected.
 
 ### Ongoing Projects
 
