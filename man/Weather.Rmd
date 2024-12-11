@@ -1,6 +1,0 @@
-# Weather Data
-
-```{r, echo = FALSE}
-library(CASSIA)
-```
-
