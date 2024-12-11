@@ -51,13 +51,16 @@ plot_data <- function(data, title_prefix, monthly) {
 ###
 
 ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data",
-                            path_test = "/home/josimms/Documents/Austria/Plant-FATE/tests/data") {
+                            path_test = "/home/josimms/Documents/Austria/Plant-FATE/tests/data",
+                            raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/") {
+  # TODO: update these with the new files
   variables <- c('t2m', 'ssrd', 'swvl1', 'swvl2')
 
   # Pre-allocate lists
   nc_data <- vector("list", length(c(variables, "d2m")))
   names(nc_data) <- c(variables, "d2m")
 
+  # Import the files
   nc_files <- list.files(path = path_nc, pattern = "download.nc", full.names = TRUE)
   nc_files_td <- list.files(path = path_nc, pattern = "download_td", full.names = TRUE)
 
@@ -65,6 +68,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   lon_target <- 24.29477
   lat_target <- 61.84741
 
+  # Extract the data for the right location in the files
   dataset_cds_raw <- list()
   for (i in 1:length(nc_files)) {
     nc <- ncdf4::nc_open(nc_files[i])
@@ -107,10 +111,11 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
     print(nrow(dataset_cds_raw_year))
   }
 
+  # Make this list into a datatable
   dataset_cds_raw_all <- data.table::rbindlist(dataset_cds_raw)
 
+  # Use the VPD function above and format the dates so monthly and daily averages can be made
   dataset_cds_raw_all[, VPD := calculate_VPD(Temp_Dew, Temp)] # hPa
-  # dataset_cds_raw_all$VPD[dataset_cds_raw_all$VPD > 3]
   dataset_cds_raw_all[, YM := format(date, "%Y-%m")]
   dataset_cds_raw_all[, YMD := format(date, "%Y-%m-%d")]
   dataset_cds_raw_all[, Year := as.numeric(format(date, "%Y"))]
@@ -124,7 +129,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   daily_dataset <- dataset_cds_raw_all[, lapply(.SD, mean), by = YMD, .SDcols = -c("YM", "date")]
   daily_dataset[, PPFD_max := dataset_cds_raw_all[, .(PPFD_max = max(PPFD)), by = YMD]$PPFD_max]
 
-  # Save datasets
+  # Save datasets for only the ERA5 data
   data.table::fwrite(monthy_dataset, file = file.path(path_test, "montly_dataset.csv"))
   data.table::fwrite(daily_dataset, file = file.path(path_test, "daily_dataset.csv"))
 
@@ -132,7 +137,10 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # Generate the weather file in the right format
   ####
 
-  raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/"
+  # Generate a soil water function to make up for the lack of data for the soil water
+    # This baseline is from Hyyitälä data
+
+    # Read the files, make into a dataset not a list then add the MD date aggregation to form a baseline
   soil_water_potential_list <- list()
   count = 1
   for (var in c("wpsoil_A", "wpsoil_B", "GPP")) {
@@ -143,7 +151,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   soil_water_potential[, MD := paste(soil_water_potential$Month,
                                      soil_water_potential$Day, sep = "-")]
-  # Gapfil
+  # Gapfil one level with the other level
   soil_water_potential$HYY_META.wpsoil_B[is.na(soil_water_potential$HYY_META.wpsoil_B)] = soil_water_potential$HYY_META.wpsoil_A[is.na(soil_water_potential$HYY_META.wpsoil_B)] -
     mean(soil_water_potential$HYY_META.wpsoil_A, na.rm = T) +
     mean(soil_water_potential$HYY_META.wpsoil_B, na.rm = T)
@@ -246,13 +254,13 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   cols = c("Mean_Temp", "Mean_VPD", "Mean_PPFD", "Mean_PPFD_max")
   error_daily = Hyytiala_daily[,cols] - daily_means[,cols]
 
-  # Preles
+  # Preles - As preles data needs to be in different units etc.
 
   preles_daily_dataset <- daily_dataset
   preles_daily_dataset$VPD <- 10 * daily_dataset$VPD
   preles_daily_dataset$co2 <- 380
   preles_daily_dataset$fAPAR <- 0.7
-  preles_daily_dataset$Precip <- 0.2 # TODO: read value!
+  preles_daily_dataset$Precip <- 0.2 # TODO: real value!
 
   soil_water_potential_daily$YMD <- paste(soil_water_potential_daily$Year, soil_water_potential_daily$Month, soil_water_potential_daily$Day, sep = "-")
   preles_daily_dataset <- merge(preles_daily_dataset,
