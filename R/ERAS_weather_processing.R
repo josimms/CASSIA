@@ -38,7 +38,7 @@ plot_data <- function(data, title_prefix, monthly) {
                                        swvl2 = "-kPa",
                                        VPD = "hPa",
                                        SWP = "- Ma",
-                                       co2 = "ppm")) # TODO: check units
+                                       co2 = "ppm"))
     title(sub = sprintf("Percentage missing: %.2f%%", 100 * sum(is.na(data[[var]])) / nrow(data)))
   }
   plot(data$PPFD, data$PPFD_max, main = "Global: Mean vs Max", xlab = "Mean", ylab = "Max")
@@ -67,47 +67,47 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   dataset_cds_raw <- list()
   for (i in 1:length(nc_files)) {
-    nc <- nc_open(nc_files[i])
-    nc_td <- nc_open(nc_files_td[i])
+    nc <- ncdf4::nc_open(nc_files[i])
+    nc_td <- ncdf4::nc_open(nc_files_td[i])
 
-    lon <- ncvar_get(nc, "longitude")
-    lat <- ncvar_get(nc, "latitude")
+    lon <- ncdf4::ncvar_get(nc, "longitude")
+    lat <- ncdf4::ncvar_get(nc, "latitude")
     lon_index <- which.min(abs(lon - lon_target))
     lat_index <- which.min(abs(lat - lat_target))
 
-    dates <- ncvar_get(nc, nc$dim$time)
+    dates <- ncdf4::ncvar_get(nc, nc$dim$time)
 
     for (var in variables) {
-      nc_data[[var]] <- ncvar_get(nc, varid = var,
-                                  start = c(lon_index, lat_index, 1),
-                                  count = c(1, 1, -1))
+      nc_data[[var]] <- ncdf4::ncvar_get(nc, varid = var,
+                                         start = c(lon_index, lat_index, 1),
+                                         count = c(1, 1, -1))
       print(length(nc_data[[var]]))
 
     }
-    nc_data[["d2m"]] <- ncvar_get(nc_td, varid = "d2m",
-                                  start = c(lon_index, lat_index, 1),
-                                  count = c(1, 1, -1))
+    nc_data[["d2m"]] <- ncdf4::ncvar_get(nc_td, varid = "d2m",
+                                         start = c(lon_index, lat_index, 1),
+                                         count = c(1, 1, -1))
     print(length(nc_data[["d2m"]]))
 
-    nc_close(nc)
-    nc_close(nc_td)
+    ncdf4::nc_close(nc)
+    ncdf4::nc_close(nc_td)
 
     # Create data.table
-    dataset_cds_raw_year <- data.table(
+    dataset_cds_raw_year <- data.table::data.table(
       Temp = nc_data$t2m  - 273.15, # 'C
       PPFD = bigleaf::Rg.to.PPFD(nc_data$ssrd/(60*60)), # W m-2 to umol m-2 s-1, PPFD (daily 24-hr mean)
+      # TODO: UNIT CHANGE
+      PAR = 0.000001 * 86400 * bigleaf::Rg.to.PPFD(nc_data$ssrd/(60*60)), # W m-2 to sum umol m-2 day-1
       swvl1 = nc_data$swvl1, # m m-2
       swvl2 = nc_data$swvl2, # m m-2
       Temp_Dew = nc_data$d2m  - 273.15, # 'C
       date = as.POSIXct(dates*3600, origin = "1900-01-01", tz = "GMT")
-
-      # TODO: there are too many rows!
     )
     dataset_cds_raw[[i]] <- dataset_cds_raw_year
     print(nrow(dataset_cds_raw_year))
   }
 
-  dataset_cds_raw_all <- rbindlist(dataset_cds_raw)
+  dataset_cds_raw_all <- data.table::rbindlist(dataset_cds_raw)
 
   dataset_cds_raw_all[, VPD := calculate_VPD(Temp_Dew, Temp)] # hPa
   # dataset_cds_raw_all$VPD[dataset_cds_raw_all$VPD > 3]
@@ -125,8 +125,8 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   daily_dataset[, PPFD_max := dataset_cds_raw_all[, .(PPFD_max = max(PPFD)), by = YMD]$PPFD_max]
 
   # Save datasets
-  fwrite(monthy_dataset, file = file.path(path_test, "montly_dataset.csv"))
-  fwrite(daily_dataset, file = file.path(path_test, "daily_dataset.csv"))
+  data.table::fwrite(monthy_dataset, file = file.path(path_test, "montly_dataset.csv"))
+  data.table::fwrite(daily_dataset, file = file.path(path_test, "daily_dataset.csv"))
 
   ####
   # Generate the weather file in the right format
@@ -150,6 +150,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   # Monthly aggregation
   soil_water_potential[, YM := paste(soil_water_potential$Year, sprintf("%02d", soil_water_potential$Month), sep = "-")]
+  soil_water_potential[, YMD := paste(soil_water_potential$Year, soil_water_potential$Month, soil_water_potential$Day, sep = "-")]
   gpp <- soil_water_potential[, lapply(.SD, mean, na.rm = T), by = YM, .SDcols = -c("MD")]
   names(gpp) <- gsub("HYY_EDDY233.", "", names(gpp))
 
@@ -160,21 +161,41 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   soil_water_potential_daily <- soil_water_potential[, lapply(.SD, mean, na.rm = T), by = MD,  .SDcols = -c("YM")]
 
   # Load the data
-  Hyytiala <- fread("/home/josimms/Documents/Austria/Plant-FATE/tests/data/daily_dataframe.csv")
+  Hyytiala <- data.table::fread("/home/josimms/Documents/Austria/Plant-FATE/tests/data/daily_dataframe.csv")
 
   # Extract year and month, and calculate the monthly max Glob for each year
+  library(dplyr)
   Hyytiala_monthly <- Hyytiala %>%
     group_by(Year, Month) %>%
-    summarise(Mean_Temp = mean(T336_mean, na.rm = T),
-              Mean_VPD = mean(VPD, na.rm = T),
-              Mean_PPFD = mean(PAR_mean, na.rm = T),
-              Mean_PPFD_max = mean(PAR_max, na.rm = T)) %>%
+    summarise(Mean_Temp = mean(T336_mean, na.rm = T), # 'C
+              Mean_VPD = mean(VPD, na.rm = T), # kPa
+              Mean_PPFD = mean(PAR_mean, na.rm = T), # µmol m⁻² s⁻¹
+              Mean_PPFD_max = mean(PAR_max, na.rm = T)) %>% # max µmol m⁻² s⁻¹
     mutate_all(~replace(., is.infinite(.), NA)) %>%
     group_by(Month) %>%
-    summarise(Mean_Temp = mean(Mean_Temp, na.rm = TRUE),
-              Mean_VPD = mean(Mean_VPD, na.rm = TRUE),
-              Mean_PPFD = mean(Mean_PPFD, na.rm = TRUE),
-              Mean_PPFD_max = mean(Mean_PPFD_max, na.rm = TRUE))
+    summarise(Mean_Temp = mean(Mean_Temp, na.rm = TRUE), # 'C
+              Mean_VPD = mean(Mean_VPD, na.rm = TRUE), # kPa
+              Mean_PPFD = mean(Mean_PPFD, na.rm = TRUE), # µmol m⁻² s⁻¹
+              Mean_PPFD_max = mean(Mean_PPFD_max, na.rm = TRUE)) # max µmol m⁻² s⁻¹
+
+  Hyytiala_daily <- Hyytiala %>%
+    group_by(Year, Month, Day) %>%
+    summarise(Mean_Temp = mean(T336_mean, na.rm = T), # 'C
+              Mean_VPD = mean(VPD, na.rm = T), # kPa
+              Mean_PAR = mean(PAR_mean, na.rm = T), # µmol m⁻² s⁻¹
+              Mean_PPFD = mean(PAR_mean, na.rm = T), # max µmol m⁻² s⁻¹
+              Mean_PPFD_max = mean(PAR_max, na.rm = T), # max µmol m⁻² s⁻¹
+              Mean_Precip = mean(Precip_sum, na.rm = T)) %>%
+    mutate_all(~replace(., is.infinite(.), NA)) %>%
+    group_by(Day) %>%
+    summarise(Mean_Temp = mean(Mean_Temp, na.rm = TRUE), # 'C
+              Mean_VPD = mean(Mean_VPD, na.rm = TRUE), # kPa
+              Mean_PAR = mean(Mean_PAR, na.rm = T), # µmol m⁻² s⁻¹
+              Mean_PPFD = mean(Mean_PPFD, na.rm = TRUE), # µmol m⁻² s⁻¹
+              Mean_PPFD_max = mean(Mean_PPFD_max, na.rm = TRUE), # max µmol m⁻² s⁻¹
+              Mean_Precip = mean(Mean_Precip, na.rm = T))
+
+  # Monthly
 
   plantfate_monthy_dataset <- monthy_dataset
   plantfate_monthy_dataset$co2 <- 380 # ppm TODO: if time get the values from Hyytiala like in the SWP
@@ -198,31 +219,80 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   cols = c("Mean_Temp", "Mean_VPD", "Mean_PPFD", "Mean_PPFD_max")
   error = Hyytiala_monthly[,cols] - monthly_means[,cols]
 
+  ## Daily
+
+  plantfate_daily_dataset <- daily_dataset
+  plantfate_daily_dataset$co2 <- 380
+  plantfate_daily_dataset$SWP <- -0.001 * rep(soil_water_potential_daily$HYY_META.wpsoil_B,
+                                              length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$Decimal_year <- seq(plantfate_daily_dataset$Year[1],
+                                              plantfate_daily_dataset$Year[nrow(plantfate_daily_dataset)],
+                                              length.out = nrow(plantfate_daily_dataset))
+  soil_water_potential_daily$YMD <- paste(soil_water_potential_daily$Year, soil_water_potential_daily$Month, soil_water_potential_daily$Day, sep = "-")
+  plantfate_daily_dataset <- merge(plantfate_daily_dataset,
+                                   soil_water_potential_daily[soil_water_potential_daily$Year < plantfate_daily_dataset$Year[nrow(plantfate_daily_dataset)],c("YMD", "HYY_EDDY233.GPP")],
+                                   by = "YMD",
+                                   all.x = T)
+
+  plantfate_daily_dataset$Day <- substring(plantfate_daily_dataset$YMD, 9, 10)
+
+  daily_means <- plantfate_daily_dataset %>%
+    group_by(Day) %>%
+    summarise(Mean_Temp = mean(Temp, na.rm = TRUE),
+              Mean_VPD = mean(VPD, na.rm = TRUE),
+              Mean_PPFD = mean(PPFD, na.rm = TRUE),
+              Mean_PPFD_max = mean(PPFD_max, na.rm = TRUE))
+
+  cols = c("Mean_Temp", "Mean_VPD", "Mean_PPFD", "Mean_PPFD_max")
+  error_daily = Hyytiala_daily[,cols] - daily_means[,cols]
+
+  # Preles
+
+  preles_daily_dataset <- daily_dataset
+  preles_daily_dataset$VPD <- 10 * daily_dataset$VPD
+  preles_daily_dataset$co2 <- 380
+  preles_daily_dataset$fAPAR <- 0.7
+  preles_daily_dataset$Precip <- 0.2 # TODO: read value!
+
+  soil_water_potential_daily$YMD <- paste(soil_water_potential_daily$Year, soil_water_potential_daily$Month, soil_water_potential_daily$Day, sep = "-")
+  preles_daily_dataset <- merge(preles_daily_dataset,
+                                   soil_water_potential_daily[soil_water_potential_daily$Year < preles_daily_dataset$Year[nrow(preles_daily_dataset)],c("YMD", "HYY_EDDY233.GPP")],
+                                   by = "YMD",
+                                   all.x = T)
+
+  preles_daily_dataset$Day <- substring(preles_daily_dataset$YMD, 9, 10)
+
+  daily_means_preles <- preles_daily_dataset %>%
+    group_by(Day) %>%
+    summarise(Mean_Temp = mean(Temp, na.rm = TRUE),
+              Mean_VPD = mean(VPD, na.rm = TRUE),
+              Mean_PAR = mean(PAR, na.rm = TRUE),
+              Mean_Precip = mean(Precip, na.rm = TRUE))
+
+  cols = c("Mean_Temp", "Mean_VPD", "Mean_PAR", "Mean_Precip")
+  error_daily_preles = Hyytiala_daily[,cols] - daily_means_preles[,cols]
+
   ### Bias correct
   plantfate_monthy_dataset$Temp = plantfate_monthy_dataset$Temp + rep(error$Mean_Temp, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$VPD = plantfate_monthy_dataset$VPD + rep(error$Mean_VPD, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$PPFD = plantfate_monthy_dataset$PPFD + rep(error$Mean_PPFD, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$PPFD_max = plantfate_monthy_dataset$PPFD_max + rep(error$Mean_PPFD_max, length.out = nrow(plantfate_monthy_dataset))
 
-  fwrite(plantfate_monthy_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP", "GPP")],
+  data.table::fwrite(plantfate_monthy_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP", "GPP")],
          file = file.path(path_test, "ERAS_Monthly.csv"))
 
-  plantfate_daily_dataset <- daily_dataset
-  plantfate_daily_dataset$co2 <- 380
-  plantfate_daily_dataset$SWP <- - 0.001 * rep(soil_water_potential_daily$HYY_META.wpsoil_B,
-                                               length.out = nrow(plantfate_daily_dataset)) # Soil water potential kPa to - MPa
-  plantfate_daily_dataset$Decimal_year <- seq(plantfate_daily_dataset$Year[1],
-                                              plantfate_daily_dataset$Year[nrow(plantfate_daily_dataset)],
-                                              length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$Temp = plantfate_daily_dataset$Temp + rep(error_daily$Mean_Temp, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$VPD = plantfate_daily_dataset$VPD + rep(error_daily$Mean_VPD, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$PPFD = plantfate_daily_dataset$PPFD + rep(error_daily$Mean_PPFD, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$PPFD_max = plantfate_daily_dataset$PPFD_max + rep(error_daily$Mean_PPFD_max, length.out = nrow(plantfate_daily_dataset))
 
-  # TODO: Bias correct!
-  plantfate_daily_dataset$Temp = plantfate_daily_dataset$Temp
-  plantfate_daily_dataset$VPD = plantfate_daily_dataset$VPD
-  plantfate_daily_dataset$PPFD = plantfate_daily_dataset$PPFD
-  plantfate_daily_dataset$PPFD_max = plantfate_daily_dataset$PPFD_max
+  data.table::fwrite(plantfate_daily_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP")],
+                     file = file.path(path_test, "ERAS_dataset_plantfate.csv"))
 
-  fwrite(plantfate_daily_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP")],
-         file = file.path(path_test, "ERAS_dataset.csv"))
+
+
+  data.table::fwrite(preles_daily_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP")],
+                     file = file.path(path_test, "ERAS_dataset_preles.csv"))
 
   ####
   # Plot monthly and daily data
