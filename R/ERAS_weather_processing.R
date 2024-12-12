@@ -169,6 +169,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   soil_water_potential_daily <- soil_water_potential[, lapply(.SD, mean, na.rm = T), by = MD,  .SDcols = -c("YM")]
 
   # Load the data
+  # TODO: replace with the new dataset!
   Hyytiala <- data.table::fread("/home/josimms/Documents/Austria/Plant-FATE/tests/data/daily_dataframe.csv")
 
   # Extract year and month, and calculate the monthly max Glob for each year
