@@ -212,17 +212,18 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
 
   # Make a water baseline temperarily
 
-  MB_baseline <- variables.used %>%
+  NA_baselines <- variables.used %>%
     group_by(Year, Month, Day) %>%
-    summarise(MB_mean = mean(wsoil_B1_mean, na.rm = T)) %>% # ??
+    summarise(MB_mean = mean(wsoil_B1_mean, na.rm = T),
+              Rain_mean = mean(Precip_mean, na.rm = T)) %>% # ??
     mutate_all(~replace(., is.infinite(.), NA)) %>%
     group_by(Day) %>%
-    summarise(MB_mean = mean(MB_mean, na.rm = TRUE))
+    summarise(MB_mean = mean(MB_mean, na.rm = TRUE),
+              Rain_mean = mean(Rain_mean, na.rm = TRUE))
 
   ### Different photosynthesis models
 
   ## phydro
-  # TODO: Dates!
   phydro <- variables.used[,c("Year", "Month", "T336_mean", "VPD", "PAR_mean", "Glob_max", "wpsoil_A_mean", "tsoil_5_mean", "tsoil_10_mean", "wsoil_B1_mean", "Precip_mean")]
   names(phydro)[c(3:7)] <- c("T", "VPD", "PAR", "PAR_max", "SWP")
   # Unit chnages
@@ -247,8 +248,10 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
 
 
   # Temporary MB baseline added for graphs
-  MB_baseline_vector <- rep(MB_baseline$MB_mean, length.out = nrow(phydro))
-  phydro$MB[is.na(phydro$MB)] <- MB_baseline_vector[is.na(phydro$MB)]
+  MB_baseline_vector <- rep(NA_baselines$MB_mean, length.out = nrow(phydro))
+  rain_baseline_vector <- rep(NA_baselines$Rain_mean, length.out = nrow(phydro))
+  phydro$MB[is.na(phydro$MB)] <- NA_baseline_vector[is.na(phydro$MB)]
+  phydro$Rain[is.na(phydro$Rain)] <- NA_baseline_vector[is.na(phydro$Rain)]
 
   # Plot the results
   par(mfrow = c(3, 3))
@@ -286,8 +289,10 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
   preles$dates <- seq(as.Date("2018-01-01"),
                       as.Date("2023-12-31"), by = "day")
 
-  MB_baseline_vector <- rep(MB_baseline$MB_mean, length.out = nrow(preles))
-  preles$MB[is.na(preles$MB)] <- MB_baseline_vector[is.na(preles$MB)]
+  MB_baseline_vector <- rep(NA_baselines$MB_mean, length.out = nrow(preles))
+  rain_baseline_vector <- rep(NA_baselines$Rain_mean, length.out = nrow(preles))
+  preles$MB[is.na(preles$MB)] <- NA_baseline_vector[is.na(preles$MB)]
+  preles$Rain[is.na(preles$Rain)] <- NA_baseline_vector[is.na(preles$Rain)]
 
   par(mfrow = c(3, 3))
   plot(preles$T, xlab = "", ylab = "", main = "Temperature, 'C")
