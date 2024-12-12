@@ -154,6 +154,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   plot_weather_variables(processed_data$weather_original, processed_data$dates)
 
+  ##################
+  # PHOTOSYNTHESIS MODELS
+  ##################
+
   ###
   # Preles CASSIA against PRELES original
   ###
@@ -267,13 +271,11 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   points(preles_original$SW, CASSIA_preles_Xianglin$Preles$SoilWater, col = "green")
   points(preles_original$SW, CASSIA_preles_ecoevolutionary_Xianglin$Preles$SoilWater, col = "yellow")
   legend("topleft", c("Original", "Preles Wrapper", "Preles in CASSIA", "Xianglin fAPAR"), col = c("black", "blue", "purple", "green"),
-         pch = c(1, 1, 1), bty = "n")
+         pch = c(2, 2, 2), bty = "n")
 
-  ###
-  # Plotting the results
-  #
-  # NO SOIL
-  ###
+  ##
+  # Preles against original SPP CASSIA output
+  ##
 
   processed_data <- process_weather_data(settings_basic$photosynthesis_as_input)
   soil_processes = FALSE
@@ -294,21 +296,21 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
 
-  ### PRELES
-
-  par(mfrow = c(3, 1))
-  plot(CASSIA_preles$Preles$GPP)
-  points(CASSIA_new_output$Preles, col = "blue")
+  par(mfrow = c(2, 1))
+  plot(CASSIA_new_output$Preles$GPP, col = "blue")
+  points(CASSIA_preles$Preles$GPP, col = "black")
 
   plot_comparison(CASSIA_preles, variables_new,
                   Hyde_daily_original_plot, variables_original, soil_processes)
 
-  ### Phydro
+  ##
+  # Phydro
+  ##
 
   weather_Amazon <- read.delim("~/Documents/Austria/Plant-FATE/tests/data/MetData_AmzFACE_Monthly_2000_2015_PlantFATE_new.csv", sep = ",")
   weather_Amazon$VPD <- 100 * weather_Amazon$VPD # Pa
   weather_Amazon$PAR <- weather_Amazon$PAR # umol m-2 s-1
-  weather_Amazon$SWP <- - weather_Amazon$SWP # umol m-2 s-1
+  weather_Amazon$SWP <- - weather_Amazon$SWP
   # NOTE! Dates are absolutely not right! Just to see if the photosynthesis would work!
   weather_Amazon$dates <- seq(as.Date("1960-01-01"), as.Date("1960-07-10"), by = "day")
   names(weather_Amazon) <- c("Year", "Month", "Decimal_year", "T", "VPD", "PAR", "PAR_max", "SWP", "dates")
@@ -368,6 +370,59 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                                               ecoevolutionary = TRUE)
 
   plot(CASSIA_phydro_ecoevolutionary$Preles$GPP)
+
+  ##
+  # Running photosynthesis models with the same weather
+  ##
+
+  # TODO: redo with the ERA5 data!
+
+  data.direct = "./data/"
+  phydro <- data.table::fread(paste0(data.direct, "phydro_smear_CASSIA_ready.csv"))
+  preles <- data.table::fread(paste0(data.direct, "preles_smear_CASSIA_ready.csv"))
+
+  smear_preles <- CASSIA_cpp(weather = preles,
+                             site = "Hyde",
+                             pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                             parameters = parameters_all$parameters_test,
+                             common = common_p,
+                             ratios = ratios_p,
+                             sperling = parameters_all$sperling_test,
+                             needle_mass_in = parameters_all$needle_mass_in,
+                             Throughfall = parameters_all$Throughfall,
+                             photosynthesis_as_input = FALSE,
+                             ecoevolutionary = FALSE)
+
+  smear_phydro <- CASSIA_cpp(weather = phydro,
+                             site = "Hyde",
+                             pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                             parameters = parameters_all$parameters_test,
+                             common = common_p,
+                             ratios = ratios_p,
+                             sperling = parameters_all$sperling_test,
+                             needle_mass_in = parameters_all$needle_mass_in,
+                             Throughfall = parameters_all$Throughfall,
+                             photosynthesis_as_input = FALSE,
+                             ecoevolutionary = TRUE)
+
+  par(mfrow = c(3, 1))
+  plot(smear_phydro$Preles$GPP, xlab = "Days since 2017-01-01", ylab = "Photosynthesis")
+  points(smear_preles$Preles$GPP, col = "blue")
+  points()
+
+  plot(smear_phydro$Growth$height, xlab = "Days since 2017-01-01", ylab = "Height, m")
+  points(smear_preles$Preles$height, col = "blue")
+
+  plot(smear_phydro$Growth$roots, xlab = "Days since 2017-01-01", ylab = "Height, kg C")
+  points(smear_preles$Preles$roots, col = "blue")
+
+
+
+
+  ###
+  # Sugar model
+  ###
+
 
   ### SUGAR NO SOIL
 
