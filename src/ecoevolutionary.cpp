@@ -37,7 +37,6 @@ Rcpp::List CASSIA_eeo(int start_year,
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
   parameters_soil parameters_in = parameters_initalise_test(parameters_R);
   phydro_canopy_parameters parPhydro = parPhydro_initalise(pPhydro);
-  print_phydro_parameters(parPhydro);
   // As C_fungal: 50:50 mantle and ERM, Meyer 2010
   // parameters_in.mantle_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
   // parameters_in.ERM_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
@@ -315,6 +314,8 @@ Rcpp::List CASSIA_eeo(int start_year,
         }
 
         if (final_year%2!=0) {
+          print_phydro_parameters(parPhydro);
+
           photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], PAR_max[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
                                                                CO2[weather_index], Nitrogen[weather_index], PA[weather_index], SWP[weather_index],
                                                                parPhydro, LAI, crown_area, height, zeta, day);
