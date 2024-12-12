@@ -174,7 +174,7 @@ fill_missing_values <- function(data, pairs) {
 ###
 
 raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documents/CASSIA_Calibration/Raw_Data/hyytiala_weather/",
-                                          data.direct <- "/home/josimms/Documents/CASSIA/data/") {
+                                          data.direct = "/home/josimms/Documents/CASSIA/data/") {
   library(dplyr)
   warning("This is originially ment for Joanna's own data processing. Thought that by making this function public it would help understadning of the weather processing. However it could be that paths used here don't work on your computer. If so contact Joanna!")
 
