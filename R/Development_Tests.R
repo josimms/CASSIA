@@ -390,8 +390,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                              sperling = parameters_all$sperling_test,
                              needle_mass_in = parameters_all$needle_mass_in,
                              Throughfall = parameters_all$Throughfall,
-                             photosynthesis_as_input = FALSE,
-                             ecoevolutionary = FALSE)
+                             photosynthesis_as_input = FALSE)
 
   smear_phydro <- CASSIA_cpp(weather = phydro,
                              site = "Hyde",
@@ -408,7 +407,6 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   par(mfrow = c(3, 1))
   plot(smear_phydro$Preles$GPP, xlab = "Days since 2017-01-01", ylab = "Photosynthesis")
   points(smear_preles$Preles$GPP, col = "blue")
-  points()
 
   plot(smear_phydro$Growth$height, xlab = "Days since 2017-01-01", ylab = "Height, m")
   points(smear_preles$Preles$height, col = "blue")
@@ -416,8 +414,8 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   plot(smear_phydro$Growth$roots, xlab = "Days since 2017-01-01", ylab = "Height, kg C")
   points(smear_preles$Preles$roots, col = "blue")
 
-
-
+  plot(smear_phydro$Growth$ring_width, xlab = "Days since 2017-01-01", ylab = "Diameter, mm")
+  points(smear_preles$Preles$height, col = "blue")
 
   ###
   # Sugar model
