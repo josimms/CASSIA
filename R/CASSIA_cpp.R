@@ -37,6 +37,9 @@ CASSIA_cpp <- function(
               160.0, 0.0, 0.0, 20.0,
               -999.9, -999.9, -999.9,
               1/0.012, 0.0),
+    phydro = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
+               0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
+               15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)),
 
     #####
     ## Default values of the set up
@@ -161,7 +164,7 @@ CASSIA_cpp <- function(
                        updated_settings)
   } else if (ecoevolutionary) {
     out <- CASSIA_eeo(start_year, end_year, weather, GPP_ref_in,
-                      pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, # site,
+                      pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, phydro,# site,
                       needle_mass_in,
                       Throughfall, trenching_year,
                       updated_settings)

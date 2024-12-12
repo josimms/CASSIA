@@ -412,6 +412,10 @@ p4 make_p4(std::vector<double> input);
 p5 make_p5(std::vector<double> input);
 p7 make_p7(std::vector<double> input);
 
+phydro_canopy_parameters parPhydro_initalise(std::vector<double> phydro_params);
+
+void print_phydro_parameters(const phydro_canopy_parameters& params);
+
 /*
  * Ring Width
  */

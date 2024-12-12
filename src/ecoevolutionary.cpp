@@ -13,6 +13,7 @@ Rcpp::List CASSIA_eeo(int start_year,
                        Rcpp::DataFrame pCASSIA_ratios,
                        Rcpp::DataFrame pCASSIA_sperling,
                        std::vector<double> parameters_R,
+                       std::vector<double> pPhydro,
 
                        double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                        double Throughfall,
@@ -35,11 +36,11 @@ Rcpp::List CASSIA_eeo(int start_year,
   CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
   parameters_soil parameters_in = parameters_initalise_test(parameters_R);
+  phydro_canopy_parameters parPhydro = parPhydro_initalise(pPhydro);
+  print_phydro_parameters(parPhydro);
   // As C_fungal: 50:50 mantle and ERM, Meyer 2010
   // parameters_in.mantle_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
   // parameters_in.ERM_mass = MYTCOFON_out.C_fungal/2; // Meyer 2010
-
-  phydro_canopy_parameters phydro_parameters; // TODO: make this into the inputs
 
   Settings boolsettings = parseSettings(settings);
 
@@ -123,7 +124,8 @@ Rcpp::List CASSIA_eeo(int start_year,
   growth_vector culm_growth;
   PlantAssimilationResult phydro_assimilation;
   culm_growth.height.push_back(parameters.h0);
-  culm_growth.roots.push_back(0.1); // TODO: what is the initialisation here? Surely there is a value for this!
+  culm_growth.diameter.push_back(parameters.D0);
+  culm_growth.roots.push_back(15); // TODO: what is the initialisation here? Surely there is a value for this!
   culm_growth.needles.push_back(repola_values.needle_mass);
   biomass_vector biomass_output;
 
@@ -281,7 +283,8 @@ Rcpp::List CASSIA_eeo(int start_year,
           photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
                                       VPD[weather_index], CO2[weather_index], fAPAR_used,
                                       parSite, parGPP, parET, parSnowRain, parWater, 0.0);
-          photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
+          photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000; // TODO: rethink this with the canopy defined!
+
           photosynthesis_output.GPP.push_back(photosynthesis.GPP);
           photosynthesis_output.ET.push_back(photosynthesis.ET);
           photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
@@ -296,60 +299,38 @@ Rcpp::List CASSIA_eeo(int start_year,
           SoilWater = photosynthesis_output.SoilWater[day];
         }
       } else {
-        // NOTE: the values are taken from p_test_v2.ini
-        phydro_canopy_parameters parPhydro;
-        parPhydro.alpha = 0.1008;           // Cost of maintaining photosynthetic capacity (Ref: Joshi et al 2022, removed shrubs and gymnosperms)
-        parPhydro.gamma = 1.1875;           // Cost of maintaining hydraulic pathway  (Ref: Joshi et al 2022, removed shrubs and gymnosperms)
-        parPhydro.infra_translation = 5;    // Translation from biomass area ratio to Ib
-        parPhydro.kphio = 0.055; // 0.087            // Quantum yield efficiency
-        parPhydro.rd = 0.011; // 0.015              // ratio of leaf dark respiration rate to vcmax [-]  (Ref: 0.011 in Farquhar et al 1980, 0.015 in Collatz et al 1991)
-        parPhydro.a_jmax = 50; // TODO: 800 or 50?
-
-        parPhydro.k_light = 0.5;
-
-        // Note the p50_leaf was commented and this was the value p50_xylem -2.29 was there
-        parPhydro.p50_leaf = -0.748637;          // Leaf P50 [MPa]
-        parPhydro.K_leaf = 5e-17;         // Leaf conductance [m]  ---> ** Calibrated to gs **
-        parPhydro.b_leaf = 1;               // Shape parameter of xylem vulnerabilty curve [-]
-        parPhydro.cbio = 2.45e-2;           // kg biomass per mol CO2 = 12.011 gC / mol CO2 * 1e-3 kgC/gC * 2.04 kg biomass/kg
-        // TODO: replace with a boreal shape
-        parPhydro.m = 1.5;                  // crown shape smoothness
-        parPhydro.n = 3;                    // crown top-heaviness
-        parPhydro.fg = 0.1;                 // upper canopy gap fraction
-        // qm defined in plant_architecture
-        parPhydro.qm = parPhydro.m * parPhydro.n * pow((parPhydro.n - 1) / (parPhydro.m * parPhydro.n - 1), 1 - 1 / parPhydro.n) * pow((parPhydro.m - 1) * parPhydro.n / (parPhydro.m * parPhydro.n - 1), parPhydro.m - 1);
-        // zm_H defined in plant_architecture
-        parPhydro.zm_H = pow((parPhydro.n - 1) / (parPhydro.m * parPhydro.n - 1), 1 / parPhydro.n);
-
-        // This value is random, although 15 is one of the values from PlantFate
-        parPhydro.z_star = {15, 10, 5, 0};
-        parPhydro.canopy_openness = {1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)};
-
         parPhydro.tau_weather = 7;
 
-        double height = 1.48766;
-        // culm_growth.height[day-1]
-        double diameter = 0.01;
+        double height = culm_growth.height[day];
+        double diameter = culm_growth.diameter[day]; // todo: units
 
-        // TODO: need to generate this value from CASSIA trying to check the code first!
         // TODO: something wrong here!
-        double crown_area = 0.132131; // M_PI * 6000 / (4 * 75) * height * diameter;
-        zeta = 0.2; // LAI / culm_growth.roots[day-1]; // TODO: is this defined correctly?
+        double crown_area = M_PI * 6000 / (4 * 75) * height * diameter;
+        zeta = LAI / culm_growth.roots[day];
 
         if (day == 0) {
           parPhydro.dt = 0;
         } else {
-          parPhydro.dt = 15.2184; // 1/days_per_year;
+          parPhydro.dt = 1/days_per_year;
         }
 
-        photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], PAR_max[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
-                                                             CO2[weather_index], Nitrogen[weather_index], PA[weather_index], SWP[weather_index],
-                                                             parPhydro, LAI, crown_area, height, zeta, day);
+        if (final_year%2!=0) {
+          photosynthesis_phydro = calc_plant_assimilation_rate(PAR[weather_index], PAR_max[weather_index], TAir[weather_index], VPD[weather_index], Precip[weather_index],
+                                                               CO2[weather_index], Nitrogen[weather_index], PA[weather_index], SWP[weather_index],
+                                                               parPhydro, LAI, crown_area, height, zeta, day);
+          photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
 
-        GPP = photosynthesis_phydro.gpp;
-        ET = 0.0; // TODO: is this an output?
-        SoilWater = 0.0; // TODO: is this an output?
-
+          photosynthesis_output.GPP.push_back(photosynthesis_phydro.gpp);
+          photosynthesis_output.ET.push_back(0.0);
+          photosynthesis_output.SoilWater.push_back(0.0);
+          GPP = photosynthesis_output.GPP[weather_index];
+          ET = photosynthesis_output.ET[weather_index];
+          SoilWater = photosynthesis_output.SoilWater[weather_index];
+        } else {
+          GPP = photosynthesis_output.GPP[day];
+          ET = photosynthesis_output.ET[day];
+          SoilWater = photosynthesis_output.SoilWater[day];
+        }
       }
 
       if (day == 0) {
@@ -448,14 +429,19 @@ Rcpp::List CASSIA_eeo(int start_year,
       previous_ring_width = ring_width;
 
       // Cumulative values
-      // TODO: what should be the logic here?
-      if (final_year%2==0) {
+      if (day == 0) {
+        // TODO: THIS ASSUMES NO GROWTH BETWEEN YEARS
+        culm_growth.height.push_back(parameters.h0 + actual_growth_out.height);
+        culm_growth.roots.push_back(15 + actual_growth_out.diameter); // TODO: what is the initialisation here? Surely there is a value for this!
+        culm_growth.needles.push_back(repola_values.needle_mass + actual_growth_out.needles);
+        culm_growth.diameter.push_back(parameters.D0 + actual_growth_out.wall);
+      } else {
         culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
         culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
         culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
+        culm_growth.diameter.push_back(culm_growth.diameter[day-1] + actual_growth_out.wall);
       }
-
-      // std::cout << "\n";
+      std::cout << "\n";
 
       /*
        * MYCOFON

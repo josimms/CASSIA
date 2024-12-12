@@ -377,6 +377,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
 
   # TODO: redo with the ERA5 data!
 
+  new_parameters <- rep(0.5, 27)  # Example new parameters
+  calibration = F
+  parameters_all <- initialize_parameters(calibration, new_parameters)
+
   data.direct = "./data/"
   phydro <- data.table::fread(paste0(data.direct, "phydro_smear_CASSIA_ready.csv"))
   preles <- data.table::fread(paste0(data.direct, "preles_smear_CASSIA_ready.csv"))
@@ -392,6 +396,10 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                              Throughfall = parameters_all$Throughfall,
                              photosynthesis_as_input = FALSE)
 
+  phydro_parameters_in = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
+                           0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
+                           15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5))
+
   smear_phydro <- CASSIA_cpp(weather = phydro,
                              site = "Hyde",
                              pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
@@ -400,21 +408,22 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                              ratios = ratios_p,
                              sperling = parameters_all$sperling_test,
                              needle_mass_in = parameters_all$needle_mass_in,
+                             phydro = phydro_parameters_in,
                              Throughfall = parameters_all$Throughfall,
                              photosynthesis_as_input = FALSE,
                              ecoevolutionary = TRUE)
 
   par(mfrow = c(2, 2))
-  plot(smear_preles$Preles$GPP, xlab = "Days since 2017-01-01", ylab = "Photosynthesis", col = "blue")
-  plot(smear_phydro$Preles$GPP, col = "green")
+  plot(smear_preles$Preles$GPP, xlab = "Days since 2018-01-01", ylab = "Photosynthesis", col = "blue")
+  points(smear_phydro$Preles$GPP, col = "green")
 
-  plot(smear_preles$Growth$height_growth, xlab = "Days since 2017-01-01", ylab = "Height, m", col = "blue")
+  plot(smear_preles$Growth$height_growth, xlab = "Days since 2018-01-01", ylab = "Height, m", col = "blue")
   points(smear_phydro$Growth$height_growth, col = "green")
 
-  plot(smear_preles$Growth$root_growth, xlab = "Days since 2017-01-01", ylab = "Height, kg C", col = "blue")
+  plot(smear_preles$Growth$root_growth, xlab = "Days since 2018-01-01", ylab = "Height, kg C", col = "blue")
   points(smear_phydro$Growth$root_growth, col = "green")
 
-  plot(smear_preles$Growth$ring_width, xlab = "Days since 2017-01-01", ylab = "Diameter, mm", col = "blue")
+  plot(smear_preles$Growth$ring_width, xlab = "Days since 2018-01-01", ylab = "Diameter, mm", col = "blue")
   points(smear_phydro$Growth$ring_width, col = "green")
 
   ###
