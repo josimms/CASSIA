@@ -38,7 +38,7 @@ update_model_settings <- function(settings) {
   return(settings)
 }
 
-validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
+validate_weather_data <- function(weather, photosynthesis_as_input, ecoevolutionary) {
   # Function to generate warning messages
   check_values <- function(column, min_val, max_val) {
     if (any(column < min_val | column > max_val, na.rm = TRUE)) {
@@ -72,14 +72,13 @@ validate_weather_data <- function(weather, PRELES_GPP, ecoevolutionary) {
   }
 
   # Check if weather data has the required columns
-  if (PRELES_GPP) {
-    required_columns <- c("dates", "T", "P", "TSA", "TSB", "MB", "Rain", "PAR", "VPD", "CO2", "fAPAR")
+  if (!photosynthesis_as_input) {
+    required_columns <- c("dates", "T", "TSA", "TSB", "MB", "Rain", "PAR", "VPD", "CO2", "fAPAR")
     if (!all(required_columns %in% names(weather))) {
       stop(paste("Incomplete weather data - incorrect variables, or named incorrectly. Check columns", which(all(required_columns %in% names(weather)))))
     }
 
     check_na(weather$T)
-    check_na(weather$P)
     check_na(weather$TSA)
     check_na(weather$TSB)
     check_na(weather$MB)
