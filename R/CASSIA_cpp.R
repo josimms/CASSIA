@@ -24,10 +24,10 @@ CASSIA_cpp <- function(
     tau.t.xylem.sh = 3,
     tau.t.xylem.st = 3,
 
-    ratios = ratios_p, # "./data/ratio.csv",
+    ratios = ratios_p,
     parameters = parameters_p,
     parameters_R_in = parameters_R,
-    common = common_p,  # "./data/common.csv",
+    common = common_p,
     sperling = sperling_p,
     repo = repo_p,
     pPREL = c(413.0, 0.450, 0.118, 3.0,
@@ -140,7 +140,7 @@ CASSIA_cpp <- function(
   updated_settings <- update_model_settings(settings)
 
   # Is the weather data correct?
-  validate_weather_data(weather, updated_settings$PRELES_GPP, updated_settings$ecoevolutionary)
+  validate_weather_data(weather, updated_settings$photosynthesis_as_input, updated_settings$ecoevolutionary)
 
   #####
   ## Model conditions derived from model inputs
