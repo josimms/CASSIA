@@ -210,6 +210,15 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
   variables.used <- zoo::na.approx(all.gapfill[,c("Year", "Month", "Day", "T336_mean", "VPD", "Glob_mean", "Glob_max", "wpsoil_A_mean", "PAR_mean", "Precip_sum", "Precip_mean", "tsoil_5_mean", "tsoil_10_mean", "wsoil_B1_mean")], maxgap = 7, na.rm = F)
   variables.used <- data.table::data.table(variables.used)
 
+  # Make a water baseline temperarily
+
+  MB_baseline <- variables.used %>%
+    group_by(Year, Month, Day) %>%
+    summarise(MB_mean = mean(wsoil_B1_mean, na.rm = T)) %>% # ??
+    mutate_all(~replace(., is.infinite(.), NA)) %>%
+    group_by(Day) %>%
+    summarise(MB_mean = mean(MB_mean, na.rm = TRUE))
+
   ### Different photosynthesis models
 
   ## phydro
@@ -236,6 +245,10 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
                              phydro$Year[nrow(phydro)],
                              length.out = nrow(phydro))
 
+
+  # Temporary MB baseline added for graphs
+  MB_baseline_vector <- rep(MB_baseline$MB_mean, length.out = nrow(phydro))
+  phydro$MB[is.na(phydro$MB)] <- MB_baseline_vector[is.na(phydro$MB)]
 
   # Plot the results
   par(mfrow = c(3, 3))
@@ -272,6 +285,9 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
   preles <- preles[preles$Year >= 2018]
   preles$dates <- seq(as.Date("2018-01-01"),
                       as.Date("2023-12-31"), by = "day")
+
+  MB_baseline_vector <- rep(MB_baseline$MB_mean, length.out = nrow(preles))
+  preles$MB[is.na(preles$MB)] <- MB_baseline_vector[is.na(preles$MB)]
 
   par(mfrow = c(3, 3))
   plot(preles$T, xlab = "", ylab = "", main = "Temperature, 'C")
