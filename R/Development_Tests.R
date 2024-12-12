@@ -404,18 +404,18 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                              photosynthesis_as_input = FALSE,
                              ecoevolutionary = TRUE)
 
-  par(mfrow = c(3, 1))
-  plot(smear_phydro$Preles$GPP, xlab = "Days since 2017-01-01", ylab = "Photosynthesis")
-  points(smear_preles$Preles$GPP, col = "blue")
+  par(mfrow = c(2, 2))
+  plot(smear_preles$Preles$GPP, xlab = "Days since 2017-01-01", ylab = "Photosynthesis", col = "blue")
+  plot(smear_phydro$Preles$GPP, col = "green")
 
-  plot(smear_phydro$Growth$height_growth, xlab = "Days since 2017-01-01", ylab = "Height, m")
-  points(smear_preles$Growth$height_growth, col = "blue")
+  plot(smear_preles$Growth$height_growth, xlab = "Days since 2017-01-01", ylab = "Height, m", col = "blue")
+  points(smear_phydro$Growth$height_growth, col = "green")
 
-  plot(smear_phydro$Growth$root_growth, xlab = "Days since 2017-01-01", ylab = "Height, kg C")
-  points(smear_preles$Growth$root_growth, col = "blue")
+  plot(smear_preles$Growth$root_growth, xlab = "Days since 2017-01-01", ylab = "Height, kg C", col = "blue")
+  points(smear_phydro$Growth$root_growth, col = "green")
 
-  plot(smear_phydro$Growth$ring_width, xlab = "Days since 2017-01-01", ylab = "Diameter, mm")
-  points(smear_preles$Growth$ring_width, col = "blue")
+  plot(smear_preles$Growth$ring_width, xlab = "Days since 2017-01-01", ylab = "Diameter, mm", col = "blue")
+  points(smear_phydro$Growth$ring_width, col = "green")
 
   ###
   # Sugar model
