@@ -408,14 +408,14 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   plot(smear_phydro$Preles$GPP, xlab = "Days since 2017-01-01", ylab = "Photosynthesis")
   points(smear_preles$Preles$GPP, col = "blue")
 
-  plot(smear_phydro$Growth$height, xlab = "Days since 2017-01-01", ylab = "Height, m")
-  points(smear_preles$Preles$height, col = "blue")
+  plot(smear_phydro$Growth$height_growth, xlab = "Days since 2017-01-01", ylab = "Height, m")
+  points(smear_preles$Growth$height_growth, col = "blue")
 
-  plot(smear_phydro$Growth$roots, xlab = "Days since 2017-01-01", ylab = "Height, kg C")
-  points(smear_preles$Preles$roots, col = "blue")
+  plot(smear_phydro$Growth$root_growth, xlab = "Days since 2017-01-01", ylab = "Height, kg C")
+  points(smear_preles$Growth$root_growth, col = "blue")
 
   plot(smear_phydro$Growth$ring_width, xlab = "Days since 2017-01-01", ylab = "Diameter, mm")
-  points(smear_preles$Preles$height, col = "blue")
+  points(smear_preles$Growth$ring_width, col = "blue")
 
   ###
   # Sugar model
