@@ -396,6 +396,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
                              Throughfall = parameters_all$Throughfall,
                              photosynthesis_as_input = FALSE)
 
+  # TODO: add into the parameters all formulation
   phydro_parameters_in = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
                            0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
                            15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5))
