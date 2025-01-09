@@ -126,13 +126,15 @@ load_data <- function(data_directory = "~/Documents/CASSIA_Calibration/Processed
   load(paste0(direct, "obs.vec.og.RData"))
 
   korhonen_mineral_N <- read.csv(paste0(direct, "korhonen_mineral_N.csv"))
-  keskiarvot_kaittelyttain_vuot <- read.delim(paste0(direct, "keskiarvot_kasittelyttain_vuot_2013_2015.txt"))
-
-  nitorgen_balance <- read.csv(paste0(direct, "ecosystem_balence_N.csv"))
+  keskiarvot_kaittelyttain_vuot <- as.data.frame(t(read.table(paste0(direct, "keskiarvot_kasittelyttain_vuot_2013_2015.txt"), sep = " ", row.names = 1)))
+  keskiarvot_kaittelyttain_vuot$date <- as.Date(keskiarvot_kaittelyttain_vuot$date, format = "%Y-%m-%d")
+  keskiarvot_kaittelyttain_vuot[,-1] <- lapply(keskiarvot_kaittelyttain_vuot[,-1], as.numeric)
+  nitorgen_balance <- readxl::read_excel(paste0(direct, "Ecosystem_nitrogen_excel.xlsx"))
 
   # Reading core drilling data files
   core_drilling_files <- list.files(direct, pattern = "Core Drilling")
   core_drilling_list <- lapply(paste0(direct, core_drilling_files), read.delim)
+  names(core_drilling_list) <- gsub(" ", "_", gsub(".txt", "", core_drilling_files))
 
   # Print information about loaded data
   cat("Data loaded successfully.\n")
