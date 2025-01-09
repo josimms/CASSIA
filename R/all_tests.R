@@ -243,6 +243,12 @@ initialize_parameters <- function(calibration = FALSE, new_parameters = NULL) {
 plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_original_plot, variables_original, soil_processes = FALSE) {
   par(mfrow = c(3, 3))
 
+  if (nrow(CASSIA_new_output[[1]]) == 1461) {
+    CASSIA_new_output[[1]] <- CASSIA_new_output[[1]][-731, ]
+    CASSIA_new_output[[2]] <- CASSIA_new_output[[2]][-731, ]
+    CASSIA_new_output[[3]] <- CASSIA_new_output[[3]][-731, ]
+  }
+
   dates = as.Date(strptime(paste(CASSIA_new_output$Growth$year, CASSIA_new_output$Growth$day), format = "%Y %j"))
   dates_original = as.Date(strptime(paste(Hyde_daily_original_plot$year, Hyde_daily_original_plot$day), format = "%Y %j"))
 
@@ -255,12 +261,12 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
 
       # Plot New against Old
       plot(Hyde_daily_original_plot[, variables_original[var]],
-           CASSIA_new_output$Growth[, variables_new[var]][-731],
+           CASSIA_new_output$Growth[, variables_new[var]],
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
 
       # Plot Residuals
-      plot(dates_original, Hyde_daily_original_plot[, variables_original[var]] - CASSIA_new_output$Growth[, variables_new[var]][-731],
+      plot(dates_original, Hyde_daily_original_plot[, variables_original[var]] - CASSIA_new_output$Growth[, variables_new[var]],
            main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
 
     } else {
@@ -271,12 +277,12 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
 
       # Plot New against Old
       plot(Hyde_daily_original_plot$P / (10000/1000) * 1010,
-           CASSIA_new_output$Preles[, variables_new[var]][-731],
+           CASSIA_new_output$Preles[, variables_new[var]],
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
 
       # Plot Residuals
-      plot(dates_original, Hyde_daily_original_plot$P / (10000/1000) * 1010 - CASSIA_new_output$Preles[, variables_new[var]][-731],
+      plot(dates_original, Hyde_daily_original_plot$P / (10000/1000) * 1010 - CASSIA_new_output$Preles[, variables_new[var]],
            main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
       legend("topright", c("C++ Model", "Original R Model"), col = c("black", "blue"), bty = "n", lty = 1, cex = 0.75)
     }
