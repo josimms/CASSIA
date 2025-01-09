@@ -153,12 +153,12 @@ Rcpp::List CASSIA_yearly(int start_year,
     double equilibrium_temperature = (TAir[244] + TAir[245] + TAir[246] + TAir[247] + TAir[248] + TAir[249] + TAir[250] + TAir[251]) / 7 + 3;
 
     // B0, D00 and h00
-    double B0 = M_PI/4 * pow(parameters.D0, 2);
+    double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
     double D00 = parameters.D0;
     double h00 = parameters.h0;
     if (boolsettings.xylogensis_option) {
       double LH0 = parameters.h_increment / (0.5 * parameters.sHc);
-      double LN0 = parameters.n_length / (0.5 * parameters.sNc);
+      double LN0 = parameters.n_length / (0.5 * parameters.sNc); // TODO: check the 2.64 which is in CASSIA_soil
       double LR0 = 2.0 * parameters.m_R_tot / parameters.sRc; // TODO: check if these parameters are updated somewhere
     }
 
@@ -179,7 +179,7 @@ Rcpp::List CASSIA_yearly(int start_year,
     needle_cohorts needles_cohorts;
     if (year > start_year) {
       // TODO: parameters, add the year 5
-      needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3;
+      needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3.0;
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
     }
@@ -207,6 +207,7 @@ Rcpp::List CASSIA_yearly(int start_year,
      * DAYS LOOP
      */
     int weather_index;
+    photosynthesis_out photosynthesis_old;
     for (int day = 0; day < days_per_year; day++) {
       // std::cout << "Year " << year << " Day " << day;
 
@@ -376,12 +377,9 @@ Rcpp::List CASSIA_yearly(int start_year,
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
 
-      // std::cout << "\n";
-
       /*
        * Output
        */
-
       HH = potential_growth.previous_values.HH;
       needles_last = potential_growth.needles;
       potenital_growth_use.push_back(potential_growth.use);
