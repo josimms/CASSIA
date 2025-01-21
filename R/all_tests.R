@@ -659,3 +659,52 @@ plot_total_ecosystem_respiration <- function(CASSIA_new_output_not_trenching, CA
          lwd = 2,
          bty = "n")
 }
+
+#####
+#
+#####
+
+soil_against_yearly <- function(CASSIA_new_output_no_tests, CASSIA_new_output_trenching, CASSIA_new_output_not_trenching) {
+  par(mfrow = c(3, 3))
+  for (i in 1:ncol(CASSIA_new_output_no_tests$Sugar)) {
+    plot(CASSIA_new_output_no_tests$Sugar[,i],
+         main = names(CASSIA_new_output_no_tests$Sugar)[i],
+         ylab = names(CASSIA_new_output_no_tests$Sugar)[i],
+         xlab = "Dates")
+    points(CASSIA_new_output_trenching$Sugar[,i], col = "blue")
+    points(CASSIA_new_output_not_trenching$Sugar[,i], col = "red")
+    legend("bottomleft", c("Original", "Trenched", "Not Trenched"), col = c("black", "blue", "red"), pch = c(1, 1, 1), bty = "n")
+
+    plot(CASSIA_new_output_no_tests$Sugar[,i], CASSIA_new_output_trenching$Sugar[,i], col = "blue",
+         main = "Original against Trenched", ylab = "(Not) Trenched", xlab = "Original")
+    points(CASSIA_new_output_no_tests$Sugar[,i], CASSIA_new_output_not_trenching$Sugar[,i], col = "red",
+           main = "Original against Not Trenched")
+
+    plot(CASSIA_new_output_no_tests$Sugar[,i] - CASSIA_new_output_trenching$Sugar[,i], col = "blue",
+         main = "Original - Trenched", ylab = "Difference", xlab = "Dates")
+    points(CASSIA_new_output_no_tests$Sugar[,i] - CASSIA_new_output_not_trenching$Sugar[,i], col = "red",
+           main = "Original - Not Trenched")
+  }
+
+  for (i in 1:ncol(CASSIA_new_output_no_tests$Growth)) {
+    plot(CASSIA_new_output_no_tests$Growth[,i],
+         main = names(CASSIA_new_output_no_tests$Growth)[i],
+         ylab = names(CASSIA_new_output_no_tests$Growth)[i],
+         xlab = "Dates")
+    points(CASSIA_new_output_trenching$Growth[,i], col = "blue")
+    points(CASSIA_new_output_not_trenching$Growth[,i], col = "red")
+    legend("bottomleft", c("Original", "Trenched", "Not Trenched"), col = c("black", "blue", "red"), pch = c(1, 1, 1), bty = "n")
+
+    plot(CASSIA_new_output_no_tests$Growth[,i], CASSIA_new_output_trenching$Growth[,i], col = "blue",
+         main = "Original against Trenched", ylab = "(Not) Trenched", xlab = "Original")
+    points(CASSIA_new_output_no_tests$Growth[,i], CASSIA_new_output_not_trenching$Growth[,i], col = "red",
+           main = "Original against Not Trenched")
+
+    plot(CASSIA_new_output_no_tests$Growth[,i] - CASSIA_new_output_trenching$Growth[,i], col = "blue",
+         main = "Original - Trenched", ylab = "Difference", xlab = "Dates")
+    points(CASSIA_new_output_no_tests$Growth[,i] - CASSIA_new_output_not_trenching$Growth[,i], col = "red",
+           main = "Original - Not Trenched")
+  }
+}
+
+
