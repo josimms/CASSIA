@@ -311,7 +311,7 @@ Rcpp::List CASSIA_soil(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
-      GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
+      // GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
       growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
