@@ -348,15 +348,6 @@ Rcpp::List CASSIA_yearly(int start_year,
       tree_alive = sugar_model_out.previous_values.tree_alive;
 
       /*
-       if (sugar_values_for_next_iteration.sugar.needles < 0 || sugar_values_for_next_iteration.sugar.phloem < 0 ||
-       sugar_values_for_next_iteration.sugar.xylem_sh < 0 || sugar_values_for_next_iteration.sugar.xylem_st < 0 ||
-       sugar_values_for_next_iteration.sugar.roots < 0) {
-       std::cout << "SUGAR IS NEGATIVE, STOP SIMULATION!\n";
-       return(Rcpp::DataFrame::create(0));
-       }
-       */
-
-      /*
        * Actual growth
        */
 
