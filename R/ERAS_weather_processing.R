@@ -119,7 +119,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
       PPFD = bigleaf::Rg.to.PPFD(nc_data$ssrd/(60*60)), # W m-2 to umol m-2 s-1, PPFD (daily 24-hr mean)
       Temp_Soil_1 = nc_data$stl1 - 273.15, # 'C
       Temp_Soil_2 = nc_data$stl2 - 273.15, # 'C
-      TotGlob = nc_data$ssrd/(60*60), # W m-2 # TODO: units
+      TotGlob = nc_data$ssrd/(60*60), # W m-2
       PAR_preles = 0.000001 * 86400 * bigleaf::Rg.to.PPFD(nc_data$ssrd/(60*60)), # W m-2 to sum umol m-2 day-1
       swvl1 = nc_data$swvl1, # m**3 m**-3
       swvl2 = nc_data$swvl2, # m**3 m**-3
@@ -329,7 +329,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   # CO2:                6, ppm
   # TotGlobal:          7, W m-2 (TotGlob)                      [Glob_mean]
-  # TotPAR:             8, umol m-2 s-1 (PPFD)                  [PAR_mean] # TODO: check units
+  # TotPAR:             8, umol m-2 s-1 (PPFD)                  [PAR_mean]
   # TAir:               9, 'C (Temp)                            [Mean_Temp]
   # Precip:             10, mm (Precip)                         [Mean_Precip]
   # Press:              11, kPa (Not here)                      [Mean_Press] ?? TODO: should I make a baseine as for the water potential?
@@ -358,7 +358,6 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
               Mean_STemp = mean(Temp_Soil_1, na.rm = TRUE),
               Mean_SWC = mean(swvl1, na.rm = TRUE))
 
-  # TODO: Mean SWC is wrong units
   cols <- c("Mean_Glob", "Mean_PPFD", "Mean_Temp", "Mean_Precip", "Mean_VPD", "Mean_RH", "Mean_STemp", "Mean_SWC")
   error_spp_daily = Hyytiala_daily[,cols] - daily_means_spp[,cols]
 
@@ -402,7 +401,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   # CO2:                6, ppm
   # TotGlobal:          7, W m-2 (TotGlob)                      [Mean_Glob]
-  # TotPAR:             8, umol m-2 s-1 (PPFD)                  [Mean_PPFD] # TODO: check units
+  # TotPAR:             8, umol m-2 s-1 (PPFD)                  [Mean_PPFD]
   # TAir:               9, 'C (Temp)                            [Mean_Temp]
   # Precip:             10, mm (Precip)                         [Mean_Precip]
   # Press:              11, kPa (Not here)                      [Mean_Press] ?? TODO: should I make a baseine as for the water potential?
@@ -424,6 +423,14 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
                      file = file.path(path_test, "ERAS_dataset_spp.csv"))
   data.table::fwrite(spp_daily_dataset[,c("Year", "Month", "Day", "co2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
                      file = file.path("./data/ERAS_dataset_spp.csv"))
+
+  ## Create the weather input files for SPP
+  spp_model_directory <- "~/Documents/SPP/"
+
+  for (year in 1960:2022) {
+    data.table::fwrite(spp_daily_dataset[spp_daily_dataset$Year == year,c("Year", "Month", "Day", "co2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
+                       file = paste0(spp_model_directory, "HydeWeather", year, ".txt"))
+  }
 
   # TODO: create them in the format that is needed to run the model?
 
