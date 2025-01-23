@@ -95,15 +95,6 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     stop("Photosynthesis in not the same as photosynthesis out, when using_spp_photosynthesis is TRUE")
   }
 
-  ###
-  # Installing the model from github
-  ###
-
-  testing_remote = FALSE
-  if (testing_remote) {
-    devtools::install_github("josimms/CASSIA@adding_externals", force = TRUE)
-  }
-
   ##################
   # PHOTOSYNTHESIS MODELS
   ##################
