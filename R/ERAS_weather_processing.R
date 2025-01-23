@@ -206,7 +206,8 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   Hyytiala_daily <- Hyytiala %>%
     group_by(Year, Month, Day) %>%
     summarise(Mean_Temp = mean(T336_mean, na.rm = T), # 'C
-              Mean_STemp = mean(tsoil_5_mean, na.rm = T), # 'C
+              Mean_TSoil = mean(tsoil_5_mean, na.rm = T), # 'C
+              Mean_TSoil_2 = mean(tsoil_10_mean, na.rm = T), # 'C
               Mean_VPD = mean(VPD, na.rm = T), # hPa
               Mean_RH = mean(RH672_mean, na.rm = T), # %
               Mean_SWC = mean(wsoil_B1_mean, na.rm = T), # m³ m⁻³
@@ -218,7 +219,8 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
     mutate_all(~replace(., is.infinite(.), NA)) %>%
     group_by(Month, Day) %>%
     summarise(Mean_Temp = mean(Mean_Temp, na.rm = TRUE), # 'C
-              Mean_STemp = mean(Mean_STemp, na.rm = T), # 'C
+              Mean_TSoil = mean(Mean_TSoil, na.rm = T), # 'C
+              Mean_TSoil_2 = mean(Mean_TSoil_2, na.rm = T), # 'C
               Mean_VPD = mean(Mean_VPD, na.rm = TRUE), # hPa
               Mean_RH = mean(Mean_RH, na.rm = T), # %
               Mean_SWC = mean(Mean_SWC, na.rm = T), # m³ m⁻³
@@ -236,19 +238,23 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
     group_by(Year, Month, Day) %>%
     summarise(Mean_Temp = mean(T, na.rm = T), # 'C
               Mean_VPD = mean(VPD, na.rm = T), # kPa
-              Mean_PAR = mean(PAR, na.rm = T), # µmol m⁻² s⁻¹
-              Mean_Precip = mean(Rain, na.rm = T)) %>% # mm
+              Mean_PAR = mean(PAR, na.rm = T), # sum µmol m⁻² day-1
+              Mean_Precip = mean(Rain, na.rm = T), # mm
+              Mean_TSoil = mean(TSA, na.rm = T), # 'C
+              Mean_TSoil_2 = mean(TSB, na.rm = T)) %>% # 'C
     mutate_all(~replace(., is.infinite(.), NA)) %>%
     group_by(Month, Day) %>%
     summarise(Mean_Temp = mean(Mean_Temp, na.rm = TRUE), # 'C
               Mean_VPD = mean(Mean_VPD, na.rm = TRUE), # kPa
-              Mean_PAR = mean(Mean_PAR, na.rm = T), # µmol m⁻² s⁻¹
-              Mean_Precip = mean(Mean_Precip, na.rm = T)) # mm
+              Mean_PAR = mean(Mean_PAR, na.rm = T), # sum µmol m⁻² day-1
+              Mean_Precip = mean(Mean_Precip, na.rm = T), # mm
+              Mean_TSoil = mean(Mean_TSoil, na.rm = T), # 'C
+              Mean_TSoil_2 = mean(Mean_TSoil_2, na.rm = T)) # 'C
 
   # Monthly
 
   plantfate_monthy_dataset <- monthy_dataset
-  plantfate_monthy_dataset$co2 <- 380 # ppm TODO: if time get the values from Hyytiala like in the SWP
+  plantfate_monthy_dataset$CO2 <- 380 # ppm TODO: if time get the values from Hyytiala like in the SWP
   plantfate_monthy_dataset$SWP <- - 0.001 * rep(soil_water_potential_montly$HYY_META.wpsoil_B,
                                                 length.out = nrow(plantfate_monthy_dataset)) # Soil water potential kPa to - MPa
   plantfate_monthy_dataset$Decimal_year <- seq(plantfate_monthy_dataset$Year[1],
@@ -272,7 +278,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   ## Daily
 
   plantfate_daily_dataset <- daily_dataset
-  plantfate_daily_dataset$co2 <- 380
+  plantfate_daily_dataset$CO2 <- 380
   plantfate_daily_dataset$SWP <- -0.001 * rep(soil_water_potential_daily$HYY_META.wpsoil_B,
                                               length.out = nrow(plantfate_daily_dataset))
   plantfate_daily_dataset$Decimal_year <- seq(plantfate_daily_dataset$Year[1],
@@ -292,16 +298,20 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
     summarise(Mean_Temp = mean(Temp, na.rm = TRUE),
               Mean_VPD = mean(VPD, na.rm = TRUE),
               Mean_PPFD = mean(PPFD, na.rm = TRUE),
-              Mean_PPFD_max = mean(PPFD_max, na.rm = TRUE))
+              Mean_PPFD_max = mean(PPFD_max, na.rm = TRUE),
+              Mean_TSoil = mean(Temp_Soil_1, na.rm = TRUE),
+              Mean_TSoil_2 = mean(Temp_Soil_2, na.rm = TRUE),
+              Mean_SWC = mean(swvl1, na.rm = TRUE),
+              Mean_Precip = mean(Precip, na.rm = TRUE))
 
-  cols = c("Mean_Temp", "Mean_VPD", "Mean_PPFD", "Mean_PPFD_max")
+  cols = c("Mean_Temp", "Mean_VPD", "Mean_PPFD", "Mean_PPFD_max", "Mean_TSoil", "Mean_TSoil_2", "Mean_SWC", "Mean_Precip")
   error_daily = Hyytiala_daily[,cols] - daily_means[,cols]
 
   # Preles - As preles data needs to be in different units etc.
 
   preles_daily_dataset <- daily_dataset
   preles_daily_dataset$VPD <- 10 * daily_dataset$VPD # kPa
-  preles_daily_dataset$co2 <- 380
+  preles_daily_dataset$CO2 <- 380
   preles_daily_dataset$fAPAR <- 0.7
   preles_daily_dataset$Precip <- daily_dataset$Precip # mm
 
@@ -318,10 +328,13 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
     summarise(Mean_Temp = mean(Temp, na.rm = TRUE),
               Mean_VPD = mean(VPD, na.rm = TRUE),
               Mean_PAR = mean(PAR_preles, na.rm = TRUE),
-              Mean_Precip = mean(Precip, na.rm = TRUE))
+              Mean_Precip = mean(Precip, na.rm = TRUE),
+              Mean_TSoil = mean(Temp_Soil_1, na.rm = TRUE),
+              Mean_TSoil_2 = mean(Temp_Soil_2, na.rm = TRUE),
+              Mean_SWC = mean(swvl1, na.rm = TRUE))
 
-  cols = c("Mean_Temp", "Mean_VPD", "Mean_PAR", "Mean_Precip")
-  error_daily_preles = Hyytiala_daily_prebas[,cols] - daily_means_preles[,cols]
+  cols = c("Mean_Temp", "Mean_VPD", "Mean_PAR", "Mean_Precip", "Mean_TSoil", "Mean_TSoil_2", "Mean_SWC")
+  error_daily_preles = cbind(Hyytiala_daily_prebas[,cols[-7]], Hyytiala_daily$Mean_SWC) - daily_means_preles[,cols]
 
   # SPP
 
@@ -335,13 +348,13 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # Press:              11, kPa (Not here)                      [Mean_Press] ?? TODO: should I make a baseine as for the water potential?
   # VPD:                12, kPa (VPD but in hPa)                [Mean_VPD]
   # RH:                 13, % (RH 100 * decimal percentage)     [Mean_RH]
-  # TSoil               'C (Temp_Soil_1)                        [Mean_STemp]
+  # TSoil               'C (Temp_Soil_1)                        [Mean_TSoil]
   # H2O                 ppth / mol m-3                          [Mean_SWC]
 
   spp_daily_dataset <- daily_dataset
   spp_daily_dataset$VPD <- 10 * daily_dataset$VPD
   spp_daily_dataset$RH <- 100 * daily_dataset$RH
-  spp_daily_dataset$co2 <- 380 # TODO: real value?
+  spp_daily_dataset$CO2 <- 380 # TODO: real value?
   spp_daily_dataset$Press <- 1000 # TODO: real value?
   spp_daily_dataset$swvl1 <- daily_dataset$swvl1 # Although it say that m3 m-3 to mol m-3, the values look like they are the same as Hyytiälä without the correction
 
@@ -357,15 +370,17 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
               Mean_Precip = mean(Precip, na.rm = TRUE),
               Mean_VPD = mean(10 * VPD, na.rm = TRUE),
               Mean_RH = mean(RH, na.rm = TRUE),
-              Mean_STemp = mean(Temp_Soil_1, na.rm = TRUE),
+              Mean_TSoil = mean(Temp_Soil_1, na.rm = TRUE),
               Mean_SWC = mean(swvl1, na.rm = TRUE))
 
-  cols <- c("Mean_Glob", "Mean_PPFD", "Mean_Temp", "Mean_Precip", "Mean_VPD", "Mean_RH", "Mean_STemp", "Mean_SWC")
+  cols <- c("Mean_Glob", "Mean_PPFD", "Mean_Temp", "Mean_Precip", "Mean_VPD", "Mean_RH", "Mean_TSoil", "Mean_SWC")
   error_spp_daily = Hyytiala_daily[,cols] - daily_means_spp[,cols]
 
   ### Bias correct
 
   # PlantFATE Monthly
+
+  # needed for phydro
   plantfate_monthy_dataset$Temp = plantfate_monthy_dataset$Temp + rep(error$Mean_Temp, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$VPD = plantfate_monthy_dataset$VPD + rep(error$Mean_VPD, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$PPFD = plantfate_monthy_dataset$PPFD + rep(error$Mean_PPFD, length.out = nrow(plantfate_monthy_dataset))
@@ -382,22 +397,46 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   plantfate_daily_dataset$VPD = plantfate_daily_dataset$VPD + rep(error_daily$Mean_VPD, length.out = nrow(plantfate_daily_dataset))
   plantfate_daily_dataset$PPFD = plantfate_daily_dataset$PPFD + rep(error_daily$Mean_PPFD, length.out = nrow(plantfate_daily_dataset))
   plantfate_daily_dataset$PPFD_max = plantfate_daily_dataset$PPFD_max + rep(error_daily$Mean_PPFD_max, length.out = nrow(plantfate_daily_dataset))
+  # CASSIA
+  plantfate_daily_dataset$Temp_Soil_1 = plantfate_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_Temp, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$Temp_Soil_2 = plantfate_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_VPD, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$Precip = plantfate_daily_dataset$Precip + rep(error_daily$Mean_PPFD, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$swvl1 = plantfate_daily_dataset$swvl1 + rep(error_daily$Mean_PPFD_max, length.out = nrow(plantfate_daily_dataset))
 
   data.table::fwrite(plantfate_daily_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP")],
                      file = file.path(path_test, "ERAS_dataset_plantfate.csv"))
   data.table::fwrite(plantfate_daily_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP")],
                      file = file.path("./data/ERAS_dataset_plantfate.csv"))
 
+  ERA5_CASSIA_phydro <- plantfate_daily_dataset[,c("YMD", "Temp", "Precip", "PPFD", "Temp_Soil_1", "Temp_Soil_2", "swvl1", "VPD", "PPFD_max", "CO2", "SWP")]
+  names(ERAS_CASSIA_phydro) <- c("date", "T", "Rain", "PPFD", "TSA", "TSB", "MB", "VPD", "PPFD_max", "CO2", "SWP")
+
+  data.table::fwrite(ERA5_CASSIA_phydro,
+                     file = file.path("./data/ERA5_CASSIA_phydro.csv"))
+
+
+
   # Preles
   preles_daily_dataset$Temp <- preles_daily_dataset$Temp + rep(error_daily_preles$Mean_Temp, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$VPD <- preles_daily_dataset$VPD + rep(error_daily_preles$Mean_VPD, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$PAR <- preles_daily_dataset$PAR + rep(error_daily_preles$Mean_PAR, length.out = nrow(preles_daily_dataset))
-  preles_daily_dataset$Temp <- preles_daily_dataset$Temp + rep(error_daily_preles$Mean_Temp, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$Precip <- preles_daily_dataset$Precip + rep(error_daily_preles$Mean_Precip, length.out = nrow(preles_daily_dataset))
+  # CASSIA
+  preles_daily_dataset$Temp_Soil_1 = preles_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_Temp, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$Temp_Soil_2 = preles_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_VPD, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$Precip = preles_daily_dataset$Precip + rep(error_daily$Mean_PPFD, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$swvl1 = preles_daily_dataset$swvl1 + rep(error_daily$Mean_PPFD_max, length.out = nrow(preles_daily_dataset))
 
-  data.table::fwrite(preles_daily_dataset[,c("Temp", "VPD", "PAR", "Precip", "co2")],
+  data.table::fwrite(preles_daily_dataset[,c("Temp", "VPD", "PAR", "Precip", "CO2")],
                      file = file.path(path_test, "ERAS_dataset_preles.csv"))
-  data.table::fwrite(preles_daily_dataset[,c("Temp", "VPD", "PAR", "Precip", "co2")],
+  data.table::fwrite(preles_daily_dataset[,c("Temp", "VPD", "PAR", "Precip", "CO2")],
                      file = file.path("./data/ERAS_dataset_preles.csv"))
+
+  ERA5_CASSIA_preles <- preles_daily_dataset[,c("YMD", "Temp", "VPD", "PAR", "Precip", "CO2", "fAPAR", "Temp_Soil_1", "Temp_Soil_2", "swvl1")]
+  names(ERA5_CASSIA_preles) <- c("date", "T", "VPD", "PAR", "Rain", "CO2", "fAPAR", "TSA", "TSB", "MB")
+
+  data.table::fwrite(ERA5_CASSIA_preles,
+                     file = file.path("./data/ERA5_CASSIA_preles.csv"))
 
   # SPP
 
@@ -409,7 +448,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # Press:              11, kPa (Not here)                      [Mean_Press] ?? TODO: should I make a baseine as for the water potential?
   # VPD:                12, kPa (VPD but in hPa)                [Mean_VPD]
   # RH:                 13, % (RH 100 * decimal percentage)     [Mean_RH]
-  # TSoil               'C (Temp_Soil_1)                        [Mean_STemp]
+  # TSoil               'C (Temp_Soil_1)                        [Mean_TSoil]
   # H2O                 ppth / mol m-3 (swvl1)                  [Mean_SWC]
 
   spp_daily_dataset$TotGlob <- spp_daily_dataset$TotGlob + rep(error_spp_daily$Mean_Glob, length.out = nrow(spp_daily_dataset))
@@ -418,19 +457,19 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   spp_daily_dataset$Precip <- spp_daily_dataset$Precip + rep(error_spp_daily$Mean_Precip, length.out = nrow(spp_daily_dataset))
   spp_daily_dataset$VPD <- spp_daily_dataset$VPD + rep(error_spp_daily$Mean_VPD, length.out = nrow(spp_daily_dataset))
   spp_daily_dataset$RH <- spp_daily_dataset$RH + rep(error_spp_daily$Mean_RH, length.out = nrow(spp_daily_dataset))
-  spp_daily_dataset$Temp_Soil_1 <- spp_daily_dataset$Temp_Soil_1 + rep(error_spp_daily$Mean_STemp, length.out = nrow(spp_daily_dataset))
+  spp_daily_dataset$Temp_Soil_1 <- spp_daily_dataset$Temp_Soil_1 + rep(error_spp_daily$Mean_TSoil, length.out = nrow(spp_daily_dataset))
   spp_daily_dataset$swvl1 <- spp_daily_dataset$swvl1 + rep(error_spp_daily$Mean_SWC, length.out = nrow(spp_daily_dataset))
 
-  data.table::fwrite(spp_daily_dataset[,c("Year", "Month", "Day", "co2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
+  data.table::fwrite(spp_daily_dataset[,c("Year", "Month", "Day", "CO2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
                      file = file.path(path_test, "ERAS_dataset_spp.csv"))
-  data.table::fwrite(spp_daily_dataset[,c("Year", "Month", "Day", "co2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
+  data.table::fwrite(spp_daily_dataset[,c("Year", "Month", "Day", "CO2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
                      file = file.path("./data/ERAS_dataset_spp.csv"))
 
   ## Create the weather input files for SPP
   spp_model_directory <- "~/Documents/SPP/HydeData/"
 
   for (year in 1960:2022) {
-    data.table::fwrite(spp_daily_dataset[spp_daily_dataset$Year == year,c("Year", "Month", "Day", "Hour", "Minute", "co2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
+    data.table::fwrite(spp_daily_dataset[spp_daily_dataset$Year == year,c("Year", "Month", "Day", "Hour", "Minute", "CO2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
                        file = paste0(spp_model_directory, "HydeWeather", year, ".txt"), col.names = FALSE, sep = " ")
   }
 
@@ -442,3 +481,4 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   return(paste("Your code is done - check the generated files in", path_test))
 }
+
