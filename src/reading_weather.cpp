@@ -40,6 +40,7 @@ weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool 
    */
 
   // Print the first three values of each vector
+  /*
   std::cout << "First three values of weather variables:" << std::endl;
 
   auto printFirstThree = [](const std::string& name, const std::vector<double>& values) {
@@ -72,6 +73,7 @@ weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool 
     printFirstThree("PA", weatherVariables.PA);
     printFirstThree("SWP", weatherVariables.SWP);
   }
+   */
 
   return weatherVariables;
 }
