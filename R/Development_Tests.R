@@ -3,50 +3,6 @@
 ######
 
 all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes, jussi_data) {
-  ###
-  # Settings and parameters
-  ###
-  settings_basic = list(
-    storage_reset = TRUE,			# storage.reset<-TRUE=Same initial storage each year, storage.reset<-False, The storage on the last day of year X is  postponded to the first day of the year X+1
-    storage_grows = FALSE,			# TRUE if the critical storage level increases with tree size.
-
-    LN_estim = TRUE,				# LN depends on the GPP during previous july-august
-    mN_varies = TRUE,				# needle mass (in maintenance respiration) is 2/3 of the total during period 1.10 - 31.5.
-
-    LD_estim = TRUE,				# LD depends on the GPP during March-August
-    sD_estim_T_count = FALSE,			# sD depends on the number of days when g in growing window - analogue to needles
-
-    LH_estim = TRUE,
-
-    trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
-    growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
-    needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
-
-    phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
-
-    mycorrhiza = TRUE, 			# If allocation to mychorrhiza is taken into account
-    root_as_Ding = TRUE,
-
-    sperling_model = FALSE,       # Dynamic sugar model using Sperling's enzyme dynamics
-    myco_model = FALSE,           # Joanna's mycomodel development!
-    xylogenesis = FALSE,
-
-    PRELES_GPP = FALSE,
-    environment_effect_xylogenesis = FALSE,
-
-    photosynthesis_as_input = TRUE,
-
-    photoparameters = 3,
-    temp_rise = FALSE,
-    drought = FALSE,
-    Rm_acclimation = TRUE,
-
-    CASSIA_graphs = TRUE,
-    tests = TRUE,
-
-    etmodel = F,
-    LOGFLAG = F
-  )
 
   ### WEATHER
   processed_data <- process_weather_data(settings_basic$photosynthesis_as_input)
@@ -147,12 +103,6 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   if (testing_remote) {
     devtools::install_github("josimms/CASSIA@adding_externals", force = TRUE)
   }
-
-  ###
-  # Weather Data Plots
-  ###
-
-  plot_weather_variables(processed_data$weather_original, processed_data$dates)
 
   ##################
   # PHOTOSYNTHESIS MODELS
