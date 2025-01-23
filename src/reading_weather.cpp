@@ -26,8 +26,8 @@ weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool 
   }
 
   if (phydro) {
-    weatherVariables.PAR = Rcpp::as<std::vector<double>>(weather["PAR"]);
-    weatherVariables.PAR_max = Rcpp::as<std::vector<double>>(weather["PAR_max"]);
+    weatherVariables.PAR = Rcpp::as<std::vector<double>>(weather["PPFD"]);
+    weatherVariables.PAR_max = Rcpp::as<std::vector<double>>(weather["PPFD_max"]);
     weatherVariables.VPD = Rcpp::as<std::vector<double>>(weather["VPD"]);
     weatherVariables.CO2 = Rcpp::as<std::vector<double>>(weather["CO2"]);
     weatherVariables.Nitrogen = Rcpp::as<std::vector<double>>(weather["Nitrogen"]);
