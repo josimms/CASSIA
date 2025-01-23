@@ -51,8 +51,7 @@ process_weather_data <- function(using_spp_photosynthesis) {
 
   # Read and combine weather data from 2015 to 2018
   weather_original <- read_and_combine_weather_data(2015, 2018)
-  weather_original$dates <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
-  names(weather_original)[1] <- "date"
+  weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
 
   names(data_format)[1] <- "dates"
 
@@ -62,7 +61,9 @@ process_weather_data <- function(using_spp_photosynthesis) {
     PAR = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "PAR"],
     VPD = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "VPD"],
     CO2 = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "CO2"],
-    fAPAR = rep(0.7, nrow(weather_original))
+    fAPAR = rep(0.7, nrow(weather_original)),
+    PA = rep(1000, nrow(weather_original)),
+    SWP = rep(0.5, nrow(weather_original))
   )
 
   # Combine weather data with extra columns and remove specific rows
@@ -293,9 +294,10 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
 # Weather variables
 #####
 
-plot_weather_variables <- function(weather_original, dates) {
-  par(mfrow = c(3, 3))
+plot_weather_variables <- function(weather_original) {
+  par(mfrow = c(2, 3))
   not_dates = !(names(weather_original) %in% c("dates", "Date", "date", "X"))
+  dates = weather_original$date
   for (clim in which(not_dates)) {
     plot(dates, weather_original[,clim],
          main = names(weather_original)[clim],
