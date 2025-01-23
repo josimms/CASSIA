@@ -48,17 +48,7 @@ Rcpp::List CASSIA_yearly(int start_year,
    * Weather input made into vectors
    */
 
-  std::vector<double> PAR = weather["PAR"];
-  std::vector<double> VPD = weather["VPD"];
-  std::vector<double> fAPAR = weather["fAPAR"];
-  std::vector<double> Nitrogen = weather["Nitrogen"];
-  std::vector<double> Photosynthesis_IN = weather["P"];
-  std::vector<double> TAir = weather["T"];
-  std::vector<double> TSoil_A = weather["TSA"];
-  std::vector<double> TSoil_B = weather["TSB"];
-  std::vector<double> Soil_Moisture = weather["MB"];
-  std::vector<double> Precip  = weather["Rain"];
-  std::vector<double> CO2 = weather["CO2"];
+  weather_all climate = readWeatherVariables(weather, boolsettings.photosynthesis_as_input, boolsettings.preles, boolsettings.phydro);
 
   /*
    * Structures set up
@@ -133,6 +123,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   int final_year = 1;
   int days_gone = 0;
+
   for (int year : years_for_runs)  {
     /*
      * Daily output
@@ -150,7 +141,8 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     // Temperature equilibrium for the sugar model
     //	# Compute initial Te by the mean temperature for the first week of # Semptemver plus 3C (for the exponential nature of the curves), original was October
-    double equilibrium_temperature = (TAir[244] + TAir[245] + TAir[246] + TAir[247] + TAir[248] + TAir[249] + TAir[250] + TAir[251]) / 7 + 3;
+    double equilibrium_temperature = (climate.TAir[244] + climate.TAir[245] + climate.TAir[246] + climate.TAir[247] + climate.TAir[248] + climate.TAir[249] + climate.TAir[250] + climate.TAir[251]) / 7 + 3;
+
 
     // B0, D00 and h00
     double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
@@ -235,26 +227,28 @@ Rcpp::List CASSIA_yearly(int start_year,
           LAI_within_year = LAI;
         }
         fAPAR_used = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
+      } else if (!boolsettings.photosynthesis_as_input & !boolsettings.fAPAR_Tian & boolsettings.preles) {
+        fAPAR_used = climate.fAPAR[weather_index];
       } else {
-        fAPAR_used = fAPAR[weather_index];
+        fAPAR_used = 0.0;
       }
 
       double photosynthesis_per_stem, GPP, ET, SoilWater;
       if (boolsettings.photosynthesis_as_input) {
-        GPP = photosynthesis.GPP = Photosynthesis_IN[weather_index];
+        GPP = photosynthesis.GPP = climate.Photosynthesis_IN[weather_index];
         ET = photosynthesis.ET = 0.0;
         SoilWater = photosynthesis.SoilWater = 0.0;
-        photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
+        photosynthesis_per_stem = climate.Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
 
         if (final_year%2!=0) {
           photosynthesis_output.GPP.push_back(photosynthesis.GPP);
           photosynthesis_output.ET.push_back(photosynthesis.ET);
           photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
         }
-      } else {
+      } else if (boolsettings.preles) {
         if (final_year%2!=0) {
-          photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
-                                      VPD[weather_index], CO2[weather_index], fAPAR_used,
+          photosynthesis = preles_cpp(weather_index, climate.PAR[weather_index], climate.TAir[weather_index], climate.Precip[weather_index],
+                                      climate.VPD[weather_index], climate.CO2[weather_index], fAPAR_used,
                                       parSite, parGPP, parET, parSnowRain, parWater, 0.0);
           photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
           photosynthesis_output.GPP.push_back(photosynthesis.GPP);
@@ -270,6 +264,8 @@ Rcpp::List CASSIA_yearly(int start_year,
           ET = photosynthesis_output.ET[day];
           SoilWater = photosynthesis_output.SoilWater[day];
         }
+      } else {
+        std::cout << "There is no photosynthesis model chosen!\n";
       }
 
 
@@ -289,7 +285,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
-      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, climate.TAir[weather_index], climate.TSoil_A[weather_index], climate.TSoil_B[weather_index], climate.Soil_Moisture[weather_index], GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
@@ -315,7 +311,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
-                                         TAir[weather_index], TSoil_A[weather_index],
+                                         climate.TAir[weather_index], climate.TSoil_A[weather_index],
                                          boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
                                          // parameters that I am not sure about
                                          B0);
@@ -324,7 +320,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        * Sugar
        */
 
-      carbo_balance sugar_model_out = sugar_model(year, day, TAir[weather_index],
+      carbo_balance sugar_model_out = sugar_model(year, day, climate.TAir[weather_index],
                                                   photosynthesis_per_stem,
                                                   common, parameters,
                                                   D00,
