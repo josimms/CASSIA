@@ -400,8 +400,8 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # CASSIA
   plantfate_daily_dataset$Temp_Soil_1 = plantfate_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_Temp, length.out = nrow(plantfate_daily_dataset))
   plantfate_daily_dataset$Temp_Soil_2 = plantfate_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_VPD, length.out = nrow(plantfate_daily_dataset))
-  plantfate_daily_dataset$Precip = plantfate_daily_dataset$Precip + rep(error_daily$Mean_PPFD, length.out = nrow(plantfate_daily_dataset))
-  plantfate_daily_dataset$swvl1 = plantfate_daily_dataset$swvl1 + rep(error_daily$Mean_PPFD_max, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$Precip = plantfate_daily_dataset$Precip + rep(error_daily$Mean_Precip, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$swvl1 = plantfate_daily_dataset$swvl1 + rep(error_daily$Mean_SWC, length.out = nrow(plantfate_daily_dataset))
 
   data.table::fwrite(plantfate_daily_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max", "SWP")],
                      file = file.path(path_test, "ERAS_dataset_plantfate.csv"))
@@ -420,12 +420,13 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   preles_daily_dataset$Temp <- preles_daily_dataset$Temp + rep(error_daily_preles$Mean_Temp, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$VPD <- preles_daily_dataset$VPD + rep(error_daily_preles$Mean_VPD, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$PAR <- preles_daily_dataset$PAR + rep(error_daily_preles$Mean_PAR, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$PAR[preles_daily_dataset$PAR < 0] <- 0
   preles_daily_dataset$Precip <- preles_daily_dataset$Precip + rep(error_daily_preles$Mean_Precip, length.out = nrow(preles_daily_dataset))
   # CASSIA
   preles_daily_dataset$Temp_Soil_1 = preles_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_Temp, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$Temp_Soil_2 = preles_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_VPD, length.out = nrow(preles_daily_dataset))
-  preles_daily_dataset$Precip = preles_daily_dataset$Precip + rep(error_daily$Mean_PPFD, length.out = nrow(preles_daily_dataset))
-  preles_daily_dataset$swvl1 = preles_daily_dataset$swvl1 + rep(error_daily$Mean_PPFD_max, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$Precip = preles_daily_dataset$Precip + rep(error_daily$Mean_Precip, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$swvl1 = preles_daily_dataset$swvl1 + rep(error_daily$Mean_SWC, length.out = nrow(preles_daily_dataset))
 
   data.table::fwrite(preles_daily_dataset[,c("Temp", "VPD", "PAR", "Precip", "CO2")],
                      file = file.path(path_test, "ERAS_dataset_preles.csv"))
