@@ -37,7 +37,7 @@ CASSIA_cpp <- function(
               160.0, 0.0, 0.0, 20.0,
               -999.9, -999.9, -999.9,
               1/0.012, 0.0),
-    phydro = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
+    phydro_param = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
                0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
                15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)),
 
@@ -69,7 +69,6 @@ CASSIA_cpp <- function(
     myco_model = FALSE,           # Joanna's mycomodel development!
     xylogenesis = FALSE,
 
-    PRELES_GPP = FALSE,
     environment_effect_xylogenesis = FALSE,
 
     photosynthesis_as_input = TRUE,
@@ -95,6 +94,9 @@ CASSIA_cpp <- function(
     soil = FALSE,
     ecoevolutionary = FALSE,
     fAPAR_Tian = FALSE,
+
+    phydro = FALSE,
+    preles = FALSE,
 
     tests = FALSE) {
 
@@ -123,7 +125,6 @@ CASSIA_cpp <- function(
     "sperling_model" = sperling_model,
     "myco_model" = myco_model,
     "xylogenesis" = xylogenesis,
-    "PRELES_GPP" = PRELES_GPP,
     "environment_effect_xylogenesis" = environment_effect_xylogenesis,
     "photosynthesis_as_input" = photosynthesis_as_input,
     "photoparameters" = photoparameters,
@@ -135,7 +136,9 @@ CASSIA_cpp <- function(
     "etmodel" = etmodel,
     "LOGFLAG" = LOGFLAG,
     "ecoevolutionary" = ecoevolutionary,
-    "fAPAR_Tian" = fAPAR_Tian
+    "fAPAR_Tian" = fAPAR_Tian,
+    "preles" = preles,
+    "phydro" = phydro
   )
 
   # Are the model settings valid?
@@ -143,15 +146,23 @@ CASSIA_cpp <- function(
   updated_settings <- update_model_settings(settings)
 
   # Is the weather data correct?
-  validate_weather_data(weather, updated_settings$photosynthesis_as_input, updated_settings$ecoevolutionary)
+  if (sum(c(photosynthesis_as_input, preles, phydro)) > 1) {
+    stop("Only one of the photosynthesis models can be use at a time.")
+  }
+
+  if (sum(c(photosynthesis_as_input, preles, phydro)) < 1) {
+    stop("No photosynthesis model is selected.")
+  }
+
+  # TODO: add the weather tests again
 
   #####
   ## Model conditions derived from model inputs
   #####
   # years from weather data
-  date_range = as.numeric(substring(weather$dates[c(1, nrow(weather))], 1, 4))
+  date_range = as.numeric(substring(weather$date[c(1, nrow(weather))], 1, 4))
   if (sum(date_range %in% 0:2500) < 2) {
-    stop("Dates are not between 0 and 2500. Is the column called dates?")
+    stop("Dates are not between 0 and 2500. Is the column called date?")
   }
   start_year <- date_range[1]
   end_year <- date_range[2]
@@ -164,7 +175,7 @@ CASSIA_cpp <- function(
                        updated_settings)
   } else if (ecoevolutionary) {
     out <- CASSIA_eeo(start_year, end_year, weather, GPP_ref_in,
-                      pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, phydro,# site,
+                      pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, phydro_param, # site,
                       needle_mass_in,
                       Throughfall, trenching_year,
                       updated_settings)
