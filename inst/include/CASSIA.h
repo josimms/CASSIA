@@ -16,6 +16,8 @@
 #include <prelesglobals.h>
 #include <vector>
 #include <phydro.h>
+#include <map>
+#include <string>
 
 #ifndef CASSIA_H
 #define CASSIA_H
@@ -467,10 +469,10 @@ struct Settings {
   bool myco_model;
   bool xylogensis_option;
 
-  bool PRELES_GPP;
   bool environmental_effect_xylogenesis;
 
   bool photosynthesis_as_input;
+  bool preles;
   bool phydro;
   bool fAPAR_Tian;
 
@@ -509,5 +511,31 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
 void set_forcing_acclim(double TAir, double PAR, double VPD, double CO2, double SWP, double PA,
                         double& TAir_assim, double& PAR_assim, double& VPD_assim, double& CO2_assim, double& SWP_assim, double& PA_assim,
                         phydro_canopy_parameters par);
+
+#endif
+
+
+#ifndef READ_WEATHER_VARIABLES_H
+#define READ_WEATHER_VARIABLES_H
+
+
+struct weather_all {
+  std::vector<double> TAir;
+  std::vector<double> TSoil_A;
+  std::vector<double> TSoil_B;
+  std::vector<double> Soil_Moisture;
+  std::vector<double> Precip;
+  std::vector<double> Photosynthesis_IN;
+  std::vector<double> Nitrogen;
+  std::vector<double> PAR;
+  std::vector<double> CO2;
+  std::vector<double> VPD;
+  std::vector<double> fAPAR;
+  std::vector<double> PAR_max;
+  std::vector<double> PA;
+  std::vector<double> SWP;
+};
+
+weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool preles, bool phydro);
 
 #endif
