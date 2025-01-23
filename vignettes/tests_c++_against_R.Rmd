@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Note: here I compare the values against the original weather data that came with CASSIA originally.
 
+# TODO: add fAPAR_Tian
+
 ```{r cars}
 settings_basic = list(
     storage_reset = TRUE,			# storage.reset<-TRUE=Same initial storage each year, storage.reset<-False, The storage on the last day of year X is  postponded to the first day of the year X+1
@@ -39,7 +41,8 @@ settings_basic = list(
     myco_model = FALSE,           # Joanna's mycomodel development!
     xylogenesis = FALSE,
 
-    PRELES_GPP = FALSE,
+    phydro = FALSE,
+    preles = FALSE,
     environment_effect_xylogenesis = FALSE,
 
     photosynthesis_as_input = TRUE,
@@ -69,5 +72,7 @@ plot_weather_variables(weather_original)
 ## Compare against the original data
 
 ```{r}
+
+CASSIA_cpp(weather_original, "Hyde")
 
 ```
