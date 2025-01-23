@@ -274,7 +274,7 @@ Rcpp::List CASSIA_soil(int start_year,
           photosynthesis_output.ET.push_back(photosynthesis.ET);
           photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
         }
-      } else {
+      } else if (boolsettings.preles) {
         if (final_year%2!=0) {
           photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
                                       VPD[weather_index], CO2[weather_index], fAPAR_used,
@@ -293,6 +293,10 @@ Rcpp::List CASSIA_soil(int start_year,
           ET = photosynthesis_output.ET[day];
           SoilWater = photosynthesis_output.SoilWater[day];
         }
+      } else if (boolsettings.phydro) {
+        std::cout << "Not yet installed for the soil verion" << "\n";
+      } else {
+        std::cout << "No photosynthesis model chosen\n";
       }
 
       if (day == 0) {

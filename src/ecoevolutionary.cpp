@@ -58,7 +58,6 @@ Rcpp::List CASSIA_eeo(int start_year,
   std::vector<double> Soil_Moisture = weather["MB"];
   std::vector<double> Precip  = weather["Rain"];
   std::vector<double> CO2 = weather["CO2"];
-  // TODO: make the PA value input or remove it from the code!
   std::vector<double> PA = weather["PA"];
   std::vector<double> SWP = weather["SWP"];
   std::vector<double> PAR_max = weather["PAR_max"];
@@ -277,7 +276,7 @@ Rcpp::List CASSIA_eeo(int start_year,
           photosynthesis_output.ET.push_back(photosynthesis.ET);
           photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
         }
-      } else if (boolsettings.PRELES_GPP) {
+      } else if (boolsettings.preles) {
         if (final_year%2!=0) {
           photosynthesis = preles_cpp(weather_index, PAR[weather_index], TAir[weather_index], Precip[weather_index],
                                       VPD[weather_index], CO2[weather_index], fAPAR_used,
@@ -297,7 +296,7 @@ Rcpp::List CASSIA_eeo(int start_year,
           ET = photosynthesis_output.ET[day];
           SoilWater = photosynthesis_output.SoilWater[day];
         }
-      } else {
+      } else if (boolsettings.phydro) {
         parPhydro.tau_weather = 7;
 
         double height = culm_growth.height[day];
@@ -332,6 +331,8 @@ Rcpp::List CASSIA_eeo(int start_year,
           ET = photosynthesis_output.ET[day];
           SoilWater = photosynthesis_output.SoilWater[day];
         }
+      } else {
+        std::cout << "No photosynthesis model selected!" << "\n";
       }
 
       if (day == 0) {
