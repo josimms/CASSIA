@@ -15,15 +15,13 @@ library(CASSIA)
 The model has automatic settings which produces the results as in the 2015 paper in Hyytiälä. The parameters and input weather for Hyytiälä are automatically included in the package.
 
 ```{r}
-# import the package
-library(CASSIA)
-
 # Get the weather data
-photosynthesis_as_input = TRUE
-processed_data = process_weather_data(photosynthesis_as_input)
+weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
+# TODO: change the path to your path. Data is found in ./data in the package
+weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
 
 # Run the model
-out = CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
+out = CASSIA_cpp(weather = weather_original, site = "Hyde")
 ```
 
 The model has a list datasets for the output. These are for the growth, sugar model and preles (photosynthesis model) respectively.
@@ -39,7 +37,7 @@ The other settings of the model an be accessed by the function argument switches
 The following example means that the trees growth, so that the model uses the previous year's growth as the initial conditions for the next year.
 
 ```{r}
-out2 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", LN_estim = TRUE)
+out2 = CASSIA_cpp(weather_original, site = "Hyde", LN_estim = TRUE)
 
 # To ccheck the possible options
 ?CASSIA
@@ -50,16 +48,29 @@ To change the parameters they must be in a table form as the preloaded ratios_p,
 The meaning of the parameters can be found in the CASSIA instruction booklet.
 
 ```{r}
-parameters_updated <- parameters_p
+parameters_updated <- parameters_p # This step is important so the default values aren't overwritten
 parameters_updated[c("root.lifetime	"),c("Hyde")] <- 2
 
-out3 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", parameters = parameters_updated) # TODO: make this work
+out3 = CASSIA_cpp(weather_original, site = "Hyde", parameters = parameters_updated)
 ```
 
-Finally, the weather data should be considered. Due to the linking with different photosynthesis models the weather needed in the model currently takes two forms. One for the basic model which includes the photosynthesis values as an input and the other the environmental variables needed for the PRELES model.
+Finally, the weather data should be considered. Due to the linking with different photosynthesis models the weather needed in the model currently takes three forms.
 
-Due to the current definition of the model the weather data should be in the same format as the default Hyyyiälä data even if the PRELES model is not used to calculate the photosynthesis input. However the values in these columns can just be NA values.
+The data needed per dataset is listed below with the units and examples of this data for Hyyitälä is included in the package and are printed below.
+
+Note the toggles can be a bit confusing for the weather.
+
+| Model    | Explanation                                                                    | photosynthesis_as_input | preles | phydro | fAPAR_Tian |
+|----------|--------------------------------------------------------------------------------|--------------------------|--------|--------|------------|
+| SPP      | SPP isn't calculated within the model so could be replaced with another input | TRUE                     | FALSE  | FALSE  | FALSE      |
+| Preles   | Preles is calculated within the model but the leaf area can be changed         | FALSE                    | TRUE   | FALSE  | FALSE or TRUE |
+| Phydro   | Phydro is calculated within the model per leaf area                            | FALSE                    | FALSE  | TRUE   | FALSE      |
+
 
 ```{r}
-head(processed_data$weather_original)
+head(weather_original)
+
+# TODO: add the preles data
+
+# TODO: add the phydro data
 ```
