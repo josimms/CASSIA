@@ -1,0 +1,40 @@
+---
+title: "sugar_model_comparison"
+author: "Joanna"
+date: "2025-01-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Basic
+
+```{r cars}
+CASSIA_new_output_sugar = CASSIA_cpp(weather = processed_data$weather_original,
+                                       site = "Hyde",
+                                       pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                       parameters = parameters_all$parameters_test,
+                                       common = common_p,
+                                       ratios = ratios_p,
+                                       sperling = parameters_all$sperling_test,
+                                       needle_mass_in = parameters_all$needle_mass_in,
+                                       Throughfall = parameters_all$Throughfall,
+                                       sperling_model = T)
+
+  plot_comparison(CASSIA_new_output_sugar, variables_new,
+                  Hyde_daily_original_plot, variables_original, soil_processes)
+
+  plot_sugar_starch_comparison(CASSIA_new_output_sugar, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
