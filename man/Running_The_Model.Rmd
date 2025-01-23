@@ -58,6 +58,22 @@ Finally, the weather data should be considered. Due to the linking with differen
 
 The data needed per dataset is listed below with the units and examples of this data for Hyyitälä is included in the package and are printed below.
 
+| Model | Variable | Units Transformed |
+|-------|----------|------------------|
+| PRELES | PAR | sum µmol per day |
+| PRELES, CASSIA | Temperature | °C |
+| PRELES, CASSIA | Precipitation | mm |
+| PRELES | VPD | kPa |
+| PRELES | Relative Humidity | % |
+| CASSIA | Soil Temperature | °C |
+| CASSIA | Soil water content | mol m-3 |
+| phydro | Surface solar radiation downwards | umol m-2 s-1 |
+| phydro | VPD | hPa |
+| phydro | PPFD | umol m-2 s-1 |
+| phydro | PPFD Max | umol m-2 s-1 |
+| phydro | Soil Water Potential | - MPa |
+| phydro | GPP | µmol m⁻² s⁻¹ |
+
 Note the toggles can be a bit confusing for the weather.
 
 | Model    | Explanation                                                                    | photosynthesis_as_input | preles | phydro | fAPAR_Tian |
