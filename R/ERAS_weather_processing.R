@@ -345,7 +345,9 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   spp_daily_dataset$Press <- 1000 # TODO: real value?
   spp_daily_dataset$swvl1 <- daily_dataset$swvl1 # Although it say that m3 m-3 to mol m-3, the values look like they are the same as Hyytiälä without the correction
 
-  spp_daily_dataset$Day <- substring(spp_daily_dataset$YMD, 9, 10)
+  spp_daily_dataset$Day <- as.numeric(substring(spp_daily_dataset$YMD, 9, 10))
+  spp_daily_dataset[, Hour := 12]
+  spp_daily_dataset[, Minute := 0]
 
   daily_means_spp <- spp_daily_dataset %>%
     group_by(Month, Day) %>%
@@ -425,14 +427,12 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
                      file = file.path("./data/ERAS_dataset_spp.csv"))
 
   ## Create the weather input files for SPP
-  spp_model_directory <- "~/Documents/SPP/"
+  spp_model_directory <- "~/Documents/SPP/HydeData/"
 
   for (year in 1960:2022) {
-    data.table::fwrite(spp_daily_dataset[spp_daily_dataset$Year == year,c("Year", "Month", "Day", "co2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
-                       file = paste0(spp_model_directory, "HydeWeather", year, ".txt"))
+    data.table::fwrite(spp_daily_dataset[spp_daily_dataset$Year == year,c("Year", "Month", "Day", "Hour", "Minute", "co2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
+                       file = paste0(spp_model_directory, "HydeWeather", year, ".txt"), col.names = FALSE, sep = " ")
   }
-
-  # TODO: create them in the format that is needed to run the model?
 
   ####
   # Plot monthly and daily data
