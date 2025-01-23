@@ -624,6 +624,7 @@ Rcpp::List CASSIA_eeo(int start_year,
         actual_growth_output.roots.push_back(actual_growth_out.roots);
         actual_growth_output.diameter.push_back(actual_growth_out.wall);
         actual_growth_output.bud.push_back(actual_growth_out.bud);
+        actual_growth_output.ring_width.push_back(ring_width.tot_mm);
 
         sugar_values_output.sugar.push_back(sugar_values_for_next_iteration.sugar.needles +
           sugar_values_for_next_iteration.sugar.phloem +
@@ -789,7 +790,7 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                Rcpp::_["respiration_growth"] = respiration_output.growth,
                                                Rcpp::_["respiration_maintenance"] = respiration_output.maintenance,
                                                Rcpp::_["Microbe_respiration"] = soil_output.Microbe_respiration,
-                                               Rcpp::_["ring_width"] = 0.0); // TODO: where is the ring width?
+                                               Rcpp::_["ring_width"] = actual_growth_output.ring_width);
   Rcpp::DataFrame df2 = Rcpp::DataFrame::create(Rcpp::_["sugar"] = sugar_values_output.sugar,
                                                 Rcpp::_["starch"] = sugar_values_output.starch,
                                                 Rcpp::_["starch_needles"] = sugar_values_output.starch_needles,
