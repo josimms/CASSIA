@@ -80,6 +80,8 @@ The basic process for all of the data is to:
 2. Format the data as in the function help files in the units required (?CASSIA).
 3. Gapfill / Bias correct. If the data is taken from local weather stations you will need to gapfill the results with the closely stations. If you have taken the result from a global data set you will then need to bias correct with the local sites. (Gapfill example in Hyyiälä data porcessing and the bias correction in the ERA5 file)
 
+More information can be found in Running_The_Model.Rmd
+
 ### Ongoing Projects
 
 #### Parameterisation for the CASSIA Lehtosuo site
