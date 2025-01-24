@@ -104,7 +104,7 @@ points(preles_original$ET, CASSIA_preles$Preles$ET, col = "purple")
 points(preles_original$ET, CASSIA_preles_soil$Preles$ET, col = "green")
 points(preles_original$ET, CASSIA_preles_ecoevolutionary$Preles$ET, col = "orange")
 
-plot(preles_original$ET - preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
+plot(preles_original$ET - preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA", col = "blue")
 points(preles_original$ET - CASSIA_preles$Preles$ET, col = "purple")
 points(preles_original$ET - CASSIA_preles_soil$Preles$ET, col = "green")
 points(preles_original$ET - CASSIA_preles_ecoevolutionary$Preles$ET, col = "orange")
