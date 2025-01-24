@@ -11,40 +11,55 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Run the models
 
-# TODO: inpoting the data and running the models
+```{r}
+weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
+weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+
+CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
+
+weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
+
+CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
+                            site = "Hyde",
+                            pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                            parameters = parameters_all$parameters_test,
+                            common = common_p,
+                            ratios = ratios_p,
+                            sperling = parameters_all$sperling_test,
+                            needle_mass_in = parameters_all$needle_mass_in,
+                            Throughfall = parameters_all$Throughfall,
+                            photosynthesis_as_input = FALSE,
+                            preles = TRUE)
+
+```
 
 ```{r}
-processed_data <- process_weather_data(settings_basic$photosynthesis_as_input)
-  soil_processes = FALSE
-
-  CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
-                                 site = "Hyde",
-                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                 parameters = parameters_all$parameters_test,
-                                 common = common_p,
-                                 ratios = ratios_p,
-                                 sperling = parameters_all$sperling_test,
-                                 needle_mass_in = parameters_all$needle_mass_in,
-                                 Throughfall = parameters_all$Throughfall,
-                                 tests = settings_basic$tests)
-
+par(mfrow = c(2, 2))
+plot(CASSIA_preles$Growth$root_growth, ylab = "Root Growth", xlab = "Time")
+plot(CASSIA_preles$Growth$respiration_growth + CASSIA_preles$Growth$respiration_maintenance, ylab = "Respiration", xlab = "Time")
+plot(CASSIA_preles$Growth$diameter_growth, ylab = "Diameter Growth", xlab = "Time")
+plot(CASSIA_preles$Preles$GPP, ylab = "GPP", xlab = "Time")
 ```
 
 ## Preles against SPP (short term)
 
 ```{r cars}
 
-  plot_comparison(CASSIA_new_output, variables_new,
-                  Hyde_daily_original_plot, variables_original, soil_processes)
+plot_comparison(CASSIA_spp, variables_new,
+                Hyde_daily_original_plot, variables_original, soil_processes)
 
-  plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
 
-  par(mfrow = c(2, 1))
-  plot(CASSIA_new_output$Preles$GPP, col = "blue")
-  points(CASSIA_preles$Preles$GPP, col = "black")
+plot(CASSIA_spp$Preles$GPP, col = "blue")
+points(CASSIA_preles$Preles$GPP, col = "black")
+# 2019 check the 
 
-  plot_comparison(CASSIA_preles, variables_new,
-                  Hyde_daily_original_plot, variables_original, soil_processes)
+# TODO: make this work!
+CASSIA_preles_plot <- CASSIA_preles
+CASSIA_preles_plot$Growth <- CASSIA_preles$Growth[CASSIA_preles$Growth$year %in% 2015:2017,]
+
+plot_comparison(CASSIA_preles_plot, variables_new,
+                Hyde_daily_original_plot, variables_original, FALSE)
 ```
 
 ## Preles and Phydro long term
