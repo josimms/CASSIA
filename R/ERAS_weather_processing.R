@@ -85,8 +85,8 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
     nc_accum <- ncdf4::nc_open(nc_files_accum[i]) # ssrd, tp
     nc_inst <- ncdf4::nc_open(nc_files_inst[i]) # others
 
-    lon <- ncdf4::ncvar_get(nc, "longitude")
-    lat <- ncdf4::ncvar_get(nc, "latitude")
+    lon <- ncdf4::ncvar_get(nc_accum, "longitude")
+    lat <- ncdf4::ncvar_get(nc_accum, "latitude")
     lon_index <- which.min(abs(lon - lon_target))
     lat_index <- which.min(abs(lat - lat_target))
 
@@ -138,6 +138,9 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   dataset_cds_raw_all[, YMD := format(date, "%Y-%m-%d")]
   dataset_cds_raw_all[, Year := as.numeric(format(date, "%Y"))]
   dataset_cds_raw_all[, Month := as.numeric(format(date, "%m"))]
+  dataset_cds_raw_all[, Day := as.numeric(format(date, "%d"))]
+  dataset_cds_raw_all[, Hour := as.numeric(format(date, "%H"))]
+  dataset_cds_raw_all[, Minute := as.numeric(format(date, "%M"))]
 
   # Monthly aggregation
   monthy_dataset <- dataset_cds_raw_all[, lapply(.SD, mean), by = YM, .SDcols = -c("YMD", "date")]
@@ -146,6 +149,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # Daily aggregation
   daily_dataset <- dataset_cds_raw_all[, lapply(.SD, mean), by = YMD, .SDcols = -c("YM", "date")]
   daily_dataset[, PPFD_max := dataset_cds_raw_all[, .(PPFD_max = max(PPFD)), by = YMD]$PPFD_max]
+  daily_dataset[, Precip_sum := dataset_cds_raw_all[, .(Precip_sum = sum(Precip)), by = YMD]$Precip_sum]
 
   # Save datasets for only the ERA5 data
   data.table::fwrite(monthy_dataset, file = file.path(path_test, "montly_dataset.csv"))
@@ -251,6 +255,40 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
               Mean_TSoil = mean(Mean_TSoil, na.rm = T), # 'C
               Mean_TSoil_2 = mean(Mean_TSoil_2, na.rm = T)) # 'C
 
+
+  # CO2:                6, ppm
+  # TotGlobal:          7, W m-2 (TotGlob)                      [Glob_mean]
+  # TotPAR:             8, umol m-2 s-1 (PPFD)                  [PAR_mean]
+  # TAir:               9, 'C (Temp)                            [Mean_Temp]
+  # Precip:             10, mm (Precip)                         [Mean_Precip]
+  # Press:              11, kPa (Not here)                      [Mean_Press] ?? TODO: should I make a baseine as for the water potential?
+  # VPD:                12, kPa (VPD but in hPa)                [Mean_VPD]
+  # RH:                 13, % (RH 100 * decimal percentage)     [Mean_RH]
+  # TSoil               'C (Temp_Soil_1)                        [Mean_TSoil]
+  # H2O                 ppth / mol m-3                          [Mean_SWC]
+
+  Hyytiala_hour <- data.table::fread("./data/hourly_dataframe.csv")
+  Hyytiala_hourly <- Hyytiala_hour %>%
+    group_by(Year, Month, Day, Hour) %>%
+    summarise(Mean_Temp = mean(T336_mean, na.rm = T), # 'C
+              Mean_TSoil = mean(tsoil_5_mean, na.rm = T), # 'C
+              Mean_VPD = mean(VPD, na.rm = T), # hPa
+              Mean_RH = mean(RH672_mean, na.rm = T), # %
+              Mean_SWC = mean(wsoil_B1_mean, na.rm = T), # m³ m⁻³
+              Mean_PPFD = mean(PAR_mean, na.rm = T), # max µmol m⁻² s⁻¹
+              Mean_Glob = mean(Glob_mean, na.rm = T), # W m⁻²
+              Mean_Precip = mean(Precip_sum, na.rm = T)) %>% # mm
+    mutate_all(~replace(., is.infinite(.), NA)) %>%
+    group_by(Month, Day) %>%
+    summarise(Mean_Temp = mean(Mean_Temp, na.rm = TRUE), # 'C
+              Mean_TSoil = mean(Mean_TSoil, na.rm = T), # 'C
+              Mean_VPD = mean(Mean_VPD, na.rm = TRUE), # hPa
+              Mean_RH = mean(Mean_RH, na.rm = T), # %
+              Mean_SWC = mean(Mean_SWC, na.rm = T), # m³ m⁻³
+              Mean_PPFD = mean(Mean_PPFD, na.rm = TRUE), # µmol m⁻² s⁻¹
+              Mean_Glob = mean(Mean_Glob, na.rm = T), # W m⁻²
+              Mean_Precip = mean(Mean_Precip, na.rm = T)) # mm
+
   # Monthly
 
   plantfate_monthy_dataset <- monthy_dataset
@@ -302,7 +340,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
               Mean_TSoil = mean(Temp_Soil_1, na.rm = TRUE),
               Mean_TSoil_2 = mean(Temp_Soil_2, na.rm = TRUE),
               Mean_SWC = mean(swvl1, na.rm = TRUE),
-              Mean_Precip = mean(Precip, na.rm = TRUE))
+              Mean_Precip = mean(Precip_sum, na.rm = TRUE))
 
   cols = c("Mean_Temp", "Mean_VPD", "Mean_PPFD", "Mean_PPFD_max", "Mean_TSoil", "Mean_TSoil_2", "Mean_SWC", "Mean_Precip")
   error_daily = Hyytiala_daily[,cols] - daily_means[,cols]
@@ -313,7 +351,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   preles_daily_dataset$VPD <- 10 * daily_dataset$VPD # kPa
   preles_daily_dataset$CO2 <- 380
   preles_daily_dataset$fAPAR <- 0.7
-  preles_daily_dataset$Precip <- daily_dataset$Precip # mm
+  preles_daily_dataset$Precip <- daily_dataset$Precip_sum # mm
 
   soil_water_potential_daily$YMD <- paste(soil_water_potential_daily$Year, soil_water_potential_daily$Month, soil_water_potential_daily$Day, sep = "-")
   preles_daily_dataset <- merge(preles_daily_dataset,
@@ -351,17 +389,14 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # TSoil               'C (Temp_Soil_1)                        [Mean_TSoil]
   # H2O                 ppth / mol m-3                          [Mean_SWC]
 
-  spp_daily_dataset <- daily_dataset
-  spp_daily_dataset$VPD <- 10 * daily_dataset$VPD
-  spp_daily_dataset$RH <- 100 * daily_dataset$RH
+  spp_daily_dataset <- dataset_cds_raw_all
+  spp_daily_dataset$VPD <- 10 * dataset_cds_raw_all$VPD
+  spp_daily_dataset$RH <- 100 * dataset_cds_raw_all$RH
   spp_daily_dataset$CO2 <- 380 # TODO: real value?
   spp_daily_dataset$Press <- 1000 # TODO: real value?
-  spp_daily_dataset$swvl1 <- daily_dataset$swvl1 # Although it say that m3 m-3 to mol m-3, the values look like they are the same as Hyytiälä without the correction
+  spp_daily_dataset$swvl1 <- dataset_cds_raw_all$swvl1 # Although it say that m3 m-3 to mol m-3, the values look like they are the same as Hyytiälä without the correction
 
-  spp_daily_dataset$Day <- as.numeric(substring(spp_daily_dataset$YMD, 9, 10))
-  spp_daily_dataset[, Hour := 12]
-  spp_daily_dataset[, Minute := 0]
-
+  ## TODO: this should be per hour now!
   daily_means_spp <- spp_daily_dataset %>%
     group_by(Month, Day) %>%
     summarise(Mean_Glob = mean(TotGlob, na.rm = TRUE),
@@ -374,7 +409,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
               Mean_SWC = mean(swvl1, na.rm = TRUE))
 
   cols <- c("Mean_Glob", "Mean_PPFD", "Mean_Temp", "Mean_Precip", "Mean_VPD", "Mean_RH", "Mean_TSoil", "Mean_SWC")
-  error_spp_daily = Hyytiala_daily[,cols] - daily_means_spp[,cols]
+  error_spp_daily = Hyytiala_hourly[,cols] - daily_means_spp[,cols]
 
   ### Bias correct
 
