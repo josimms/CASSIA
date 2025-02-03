@@ -7,34 +7,35 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+new_parameters <- rep(0.5, 27)  # Example new parameters
+calibration = F
+parameters_all <- initialize_parameters(calibration, new_parameters)
+
+weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
+weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+
+data_directory <- "~/Documents/CASSIA_Calibration/Processed_Data/"
+loaded_data <- load_data(data_directory)
 ```
 
 ## Basic
 
 ```{r cars}
-CASSIA_new_output_sugar = CASSIA_cpp(weather = processed_data$weather_original,
-                                       site = "Hyde",
-                                       pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                       parameters = parameters_all$parameters_test,
-                                       common = common_p,
-                                       ratios = ratios_p,
-                                       sperling = parameters_all$sperling_test,
-                                       needle_mass_in = parameters_all$needle_mass_in,
-                                       Throughfall = parameters_all$Throughfall,
-                                       sperling_model = T)
+CASSIA_new_output_sugar = CASSIA_cpp(weather = weather_original,
+                                     site = "Hyde",
+                                     pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                     parameters = parameters_all$parameters_test,
+                                     common = common_p,
+                                     ratios = ratios_p,
+                                     sperling = sperling_p,
+                                     Throughfall = 1,
+                                     sperling_model = T,
+                                     mycorrhiza = F)
 
-  plot_comparison(CASSIA_new_output_sugar, variables_new,
-                  Hyde_daily_original_plot, variables_original, soil_processes)
+plot_comparison(CASSIA_new_output_sugar, variables_new,
+                Hyde_daily_original_plot, variables_original, soil_processes)
 
-  plot_sugar_starch_comparison(CASSIA_new_output_sugar, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+plot_sugar_starch_comparison(CASSIA_new_output_sugar, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

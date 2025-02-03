@@ -12,6 +12,13 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Run the models
 
 ```{r}
+new_parameters <- rep(0.5, 27)  # Example new parameters
+calibration = F
+parameters_all <- initialize_parameters(calibration, new_parameters)
+
+data_directory <- "~/Documents/CASSIA_Calibration/Processed_Data/"
+loaded_data <- load_data(data_directory)
+
 weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
 weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
 
@@ -34,32 +41,40 @@ CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
 ```
 
 ```{r}
+date_sim <- as.Date(CASSIA_preles$Growth$day-1, origin = paste0(CASSIA_preles$Growth$year, "-01-01"))
 par(mfrow = c(2, 2))
-plot(CASSIA_preles$Growth$root_growth, ylab = "Root Growth", xlab = "Time")
-plot(CASSIA_preles$Growth$respiration_growth + CASSIA_preles$Growth$respiration_maintenance, ylab = "Respiration", xlab = "Time")
-plot(CASSIA_preles$Growth$diameter_growth, ylab = "Diameter Growth", xlab = "Time")
-plot(CASSIA_preles$Preles$GPP, ylab = "GPP", xlab = "Time")
+plot(date_sim, CASSIA_preles$Growth$root_growth, ylab = "Root Growth", xlab = "Time")
+plot(date_sim, CASSIA_preles$Growth$respiration_growth + CASSIA_preles$Growth$respiration_maintenance, ylab = "Respiration", xlab = "Time")
+plot(date_sim, CASSIA_preles$Growth$diameter_growth, ylab = "Diameter Growth", xlab = "Time")
+plot(date_sim, CASSIA_preles$Preles$GPP, ylab = "GPP", xlab = "Time")
 ```
+
 
 ## Preles against SPP (short term)
 
 ```{r cars}
+Hyde_daily_original_plot <- Hyde_daily_original
+variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
+variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
 plot_comparison(CASSIA_spp, variables_new,
                 Hyde_daily_original_plot, variables_original, soil_processes)
 
-plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
 
-plot(CASSIA_spp$Preles$GPP, col = "blue")
-points(CASSIA_preles$Preles$GPP, col = "black")
-# 2019 check the 
+plot(CASSIA_spp$Preles$GPP[CASSIA_spp$Growth$year %in% 2015:2017], col = "blue", ylab = "Photosynthesis")
+points(CASSIA_preles$Preles$GPP[CASSIA_preles$Growth$year %in% 2015:2017], col = "black")
 
-# TODO: make this work!
 CASSIA_preles_plot <- CASSIA_preles
-CASSIA_preles_plot$Growth <- CASSIA_preles$Growth[CASSIA_preles$Growth$year %in% 2015:2017,]
+dates <- which(CASSIA_preles$Growth$year %in% 2015:2018)
+CASSIA_preles_plot$Growth <- CASSIA_preles$Growth[dates,]
+CASSIA_preles_plot$Sugar <- CASSIA_preles$Sugar[dates,]
+CASSIA_preles_plot$Preles <- CASSIA_preles$Preles[dates,]
 
 plot_comparison(CASSIA_preles_plot, variables_new,
                 Hyde_daily_original_plot, variables_original, FALSE)
+
+plot_sugar_starch_comparison(CASSIA_preles_plot, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
 ```
 
 ## Preles and Phydro long term
@@ -69,11 +84,12 @@ new_parameters <- rep(0.5, 27)  # Example new parameters
   calibration = F
   parameters_all <- initialize_parameters(calibration, new_parameters)
 
-  data.direct = "./data/"
-  phydro <- data.table::fread(paste0(data.direct, "phydro_smear_CASSIA_ready.csv"))
-  preles <- data.table::fread(paste0(data.direct, "preles_smear_CASSIA_ready.csv"))
+  data.direct = "/home/josimms/Documents/CASSIA/data/"
+  phydro <- data.table::fread(paste0(data.direct, "ERA5_CASSIA_preles.csv"))
+  preles <- data.table::fread(paste0(data.direct, "ERA5_CASSIA_phydro.csv"))
+  names(preles)[1] <- "date"
 
-  smear_preles <- CASSIA_cpp(weather = preles,
+  smear_preles <- CASSIA_cpp(weather = weather_preles,
                              site = "Hyde",
                              pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
                              parameters = parameters_all$parameters_test,
@@ -82,7 +98,8 @@ new_parameters <- rep(0.5, 27)  # Example new parameters
                              sperling = parameters_all$sperling_test,
                              needle_mass_in = parameters_all$needle_mass_in,
                              Throughfall = parameters_all$Throughfall,
-                             photosynthesis_as_input = FALSE)
+                             photosynthesis_as_input = FALSE,
+                             preles = TRUE)
 
   # TODO: add into the parameters all formulation
   phydro_parameters_in = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
@@ -97,10 +114,11 @@ new_parameters <- rep(0.5, 27)  # Example new parameters
                              ratios = ratios_p,
                              sperling = parameters_all$sperling_test,
                              needle_mass_in = parameters_all$needle_mass_in,
-                             phydro = phydro_parameters_in,
+                             phydro_param = phydro_parameters_in,
                              Throughfall = parameters_all$Throughfall,
                              photosynthesis_as_input = FALSE,
-                             ecoevolutionary = TRUE)
+                             ecoevolutionary = TRUE,
+                             phydro = TRUE)
 
   par(mfrow = c(3, 1))
   plot(smear_preles$Preles$GPP, xlab = "Days since 2018-01-01", ylab = "Photosynthesis", col = "blue")
