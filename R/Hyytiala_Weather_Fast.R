@@ -66,6 +66,7 @@ whole_weather_process <- function(save,
                  "Pamb336", "wpsoil_A", "wpsoil_B", "GPP")
 
   daily_result <- data.table::data.table(Date = character())
+  hourly_result <- data.table::data.table(YMDH = character())
 
   for (variable in variables) {
     cat("Processing", variable, "\n")
@@ -81,9 +82,12 @@ whole_weather_process <- function(save,
 
       # Add Date column
       dt[, Date := paste(Year, Month, Day, sep = "-")]
+      dt[, YMDH := paste(Year, Month, Day, Hour, sep = "-")]
 
       return(dt)
     }))
+
+    variable_data_YMDH <- variable_data[, .SD, .SDcols = c("YMDH", variable)]
 
     # Calculate daily statistics
     if (variable %in% c("Glob", "Glob67", "PAR")) {
@@ -92,33 +96,54 @@ whole_weather_process <- function(save,
         max = max(get(variable), na.rm = TRUE)
       ), by = Date]
       data.table::setnames(daily_stats, c("mean", "max"), paste0(variable, c("_mean", "_max")))
+      hourly_stats <- variable_data[, .(
+        mean = mean(get(variable), na.rm = TRUE),
+        max = max(get(variable), na.rm = TRUE)
+      ), by = YMDH]
+      data.table::setnames(hourly_stats, c("mean", "max"), paste0(variable, c("_mean", "_max")))
     } else if (variable == "Precip") {
       daily_stats <- variable_data[, .(
         sum = sum(get(variable), na.rm = TRUE),
         mean = mean(get(variable), na.rm = TRUE)
       ), by = Date]
       data.table::setnames(daily_stats, c("sum", "mean"), paste0(variable, c("_sum", "_mean")))
+      hourly_stats <- variable_data[, .(
+        sum = sum(get(variable), na.rm = TRUE),
+        mean = mean(get(variable), na.rm = TRUE)
+      ), by = YMDH]
+      data.table::setnames(hourly_stats, c("sum", "mean"), paste0(variable, c("_sum", "_mean")))
     } else {
       daily_stats <- variable_data[, .(mean = mean(get(variable), na.rm = TRUE)), by = Date]
       data.table::setnames(daily_stats, "mean", paste0(variable, "_mean"))
+      hourly_stats <- variable_data[, .(mean = mean(get(variable), na.rm = TRUE)), by = YMDH]
+      data.table::setnames(hourly_stats, "mean", paste0(variable, "_mean"))
     }
 
     # Merge with the result
     daily_result <- merge(daily_result, daily_stats, by = "Date", all = TRUE)
+    hourly_result <- merge(hourly_result, hourly_stats, by = "YMDH", all = TRUE)
 
     # Clear memory
-    rm(variable_data, daily_stats)
+    rm(variable_data, daily_stats, hourly_stats)
     gc()
   }
 
   # Add Year, Month, and Day columns
   daily_result[, c("Year", "Month", "Day") := data.table::tstrsplit(Date, "-", fixed=TRUE)]
+  hourly_result[, c("Year", "Month", "Day", "Hour") := data.table::tstrsplit(YMDH, "-", fixed=TRUE)]
+  hourly_result[, Minute := 0]
+
 
   # Convert Year, Month, and Day to numeric for proper sorting
   daily_result[, ':='(Year = as.numeric(Year),
                       Month = as.numeric(Month),
                       Day = as.numeric(Day))]
   daily_result[, VPD := 10 * bigleaf::rH.to.VPD(0.01*RH672_mean, T336_mean)]
+
+  hourly_result[, ':='(Year = as.numeric(Year),
+                      Month = as.numeric(Month),
+                      Day = as.numeric(Day))]
+  hourly_result[, VPD := 10 * bigleaf::rH.to.VPD(0.01*RH672_mean, T336_mean)]
 
   # Add Monthly column
   daily_result[, Monthly := paste(Year, sprintf("%02d", Month), sep = "-")]
@@ -132,6 +157,7 @@ whole_weather_process <- function(save,
   # Save the result
   if (save) {
     data.table::fwrite(daily_result, file.path(output_directory, "daily_dataframe.csv"))
+    data.table::fwrite(hourly_result, file.path(output_directory, "hourly_dataframe.csv"))
 
     cat("Processing complete. Results saved to", file.path(output_directory, "daily_dataframe.csv"), "\n")
   }
@@ -182,8 +208,10 @@ raw_to_daily_monthly_hyytiala <- function(raw.directory = "/home/josimms/Documen
   downloading_data()
 
   ### READING FILES AND MAKING MEAN, SUM AND MAX VALUES AS PER VARIABLE
-  daily.dataframe <- whole_weather_process(F)
+  daily.dataframe <- whole_weather_process(T)
   # Note, as there are missing values in the day rather than create a multiplier for each day based on the missing data, just convert the mean
+
+  plot(daily.dataframe$Precip_mean)
 
   ### saving dataframe raw!
   data.table::fwrite(daily.dataframe, paste0(data.direct, "daily.dataframe.hyytiala.csv"))
