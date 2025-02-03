@@ -444,7 +444,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
                      file = file.path("./data/ERAS_dataset_plantfate.csv"))
 
   ERA5_CASSIA_phydro <- plantfate_daily_dataset[,c("YMD", "Temp", "Precip", "PPFD", "Temp_Soil_1", "Temp_Soil_2", "swvl1", "VPD", "PPFD_max", "CO2", "SWP")]
-  names(ERAS_CASSIA_phydro) <- c("date", "T", "Rain", "PPFD", "TSA", "TSB", "MB", "VPD", "PPFD_max", "CO2", "SWP")
+  names(ERA5_CASSIA_phydro) <- c("date", "T", "Rain", "PPFD", "TSA", "TSB", "MB", "VPD", "PPFD_max", "CO2", "SWP")
 
   data.table::fwrite(ERA5_CASSIA_phydro,
                      file = file.path("./data/ERA5_CASSIA_phydro.csv"))
@@ -506,8 +506,26 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   for (year in 1960:2022) {
     data.table::fwrite(spp_daily_dataset[spp_daily_dataset$Year == year,c("Year", "Month", "Day", "Hour", "Minute", "CO2", "TotGlob", "PPFD", "Temp", "Precip", "Press", "VPD", "RH", "Temp_Soil_1", "swvl1")],
-                       file = paste0(spp_model_directory, "HydeWeather", year, ".txt"), col.names = FALSE, sep = " ")
+                       file = paste0(spp_model_directory, "HydeWeather", year, ".txt"), col.names = FALSE, sep = "\t")
   }
+
+  data_in <- data.table::fread("~/Documents/SPP/AntData/AntWeather2015.txt")
+  data.table::fwrite(data_in, "~/Documents/SPP/AntData/AntNewWeather2015.txt", col.names = FALSE, sep = "\t")
+
+
+  par(mfrow = c(3, 3))
+  plot(spp_daily_dataset$CO2, ylab = "CO2")
+  plot(spp_daily_dataset$TotGlob, ylab = "Glob")
+  plot(spp_daily_dataset$PPFD, ylab = "PPFD")
+  plot(spp_daily_dataset$Temp, ylab = "Temp")
+  plot(spp_daily_dataset$Precip, ylab = "Precip")
+  plot(spp_daily_dataset$Press, ylab = "Press")
+  plot(spp_daily_dataset$VPD, ylab = "VPD")
+  plot(spp_daily_dataset$RH, ylab = "RH")
+  plot(spp_daily_dataset$Temp_Soil_1, ylab = "Soil Temp")
+  plot(spp_daily_dataset$swvl1, ylab = "Soil Water Volume")
+
+
 
   ####
   # Plot monthly and daily data
