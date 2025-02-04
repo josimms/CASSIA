@@ -64,8 +64,9 @@ plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$orig
 
 weather_preles_smear <- data.table::fread("~/Documents/CASSIA/data/preles_smear_CASSIA_ready.csv")
 plot(CASSIA_spp$Preles$GPP[CASSIA_spp$Growth$year %in% 2015:2018], col = "blue", ylab = "Photosynthesis")
-points(CASSIA_preles$Preles$GPP[CASSIA_preles$Growth$year %in% 2015:2018], col = "black")
-points(weather_preles_smear, col = "darkgreen")
+points(CASSIA_preles$Preles$GPP, col = "black")
+
+plot(CASSIA_preles$Preles$GPP, col = "black")
 
 CASSIA_preles_plot <- CASSIA_preles
 dates <- which(CASSIA_preles$Growth$year %in% 2015:2018)

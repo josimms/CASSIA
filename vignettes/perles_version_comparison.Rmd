@@ -84,7 +84,7 @@ lines(CASSIA_preles$Preles$GPP, col = "purple")
 lines(CASSIA_preles_soil$Preles$GPP, col = "green")
 lines(CASSIA_preles_ecoevolutionary$Preles$GPP, col = "orange")
 
-ylim = c(0, max(c(preles_CASSIA$GPP, CASSIA_preles_Xianglin$Preles$GPP)))
+ylim = c(0, max(c(preles_original$Preles$GPP, CASSIA_preles$Preles$GPP, preles_CASSIA$GPP, CASSIA_preles_ecoevolutionary$GPP, CASSIA_preles_soil$GPP)))
 plot(preles_original$GPP, preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
 points(preles_original$GPP, CASSIA_preles$Preles$GPP, col = "purple")
 points(preles_original$GPP, CASSIA_preles_soil$Preles$GPP, col = "green")
