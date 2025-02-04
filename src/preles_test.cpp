@@ -12,7 +12,8 @@ photosynthesis_out preles_cpp(int day,
                               p3 ET_par,
                               p4 SnowRain_par,
                               p5 Initials_snow,
-                              double LOGFLAG) {
+                              double LOGFLAG,
+                              int CO2model) {
   // TODO: initialise / make these into values that are inputs as well!
   static double S_state, PhenoS, fD, fW, fEgpp, gpp380;
   static double theta, theta_canopy, theta_snow, Snowmelt;
@@ -48,7 +49,7 @@ photosynthesis_out preles_cpp(int day,
 
   GPPfun(&GPP, &gpp380, I, D, CO2, theta, fAPAR, fS,
          GPP_par, Site_par,  &fD, &fW, &fEgpp,
-         LOGFLAG );
+         LOGFLAG, CO2model);
 
   Snow(T, &P, &theta_snow, SnowRain_par, &Snowmelt);
 
@@ -78,7 +79,7 @@ photosynthesis_out preles_cpp(int day,
                     CO2,
                     LOGFLAG, etmodel,
                     &transp,
-                    &evap, &fWE);
+                    &evap, &fWE, CO2model);
 
   swbalance(&theta, Throughfall, Snowmelt, ET,
             Site_par, &Drainage,
@@ -115,8 +116,8 @@ Rcpp::DataFrame preles_test(Rcpp::DataFrame weather) {
   GPP_par.kappa = -0.102700;
   GPP_par.gamma = 0.036730;
   GPP_par.soilthres = 0.777900;
-  GPP_par.bCO2 = 0.5;
-  GPP_par.xCO2 = -0.364000;
+  GPP_par.bCO2 = 2000;
+  GPP_par.xCO2 = 0.4;
   GPP_par.t0 = -999;
   GPP_par.tcrit = -999;
   GPP_par.tsumcrit = -999;
@@ -142,6 +143,7 @@ Rcpp::DataFrame preles_test(Rcpp::DataFrame weather) {
   Initials_snow.S = 20.0;
 
   double LOGFLAG = 0;
+  int CO2Model = 1;
 
   int days_per_year = PAR.size();
   photosynthesis_out out;
@@ -158,7 +160,7 @@ Rcpp::DataFrame preles_test(Rcpp::DataFrame weather) {
 
     out = preles_cpp(day, I, T, P, D, co2, fapar,
                      Site_par, GPP_par, ET_par, SnowRain_par,
-                     Initials_snow, LOGFLAG);
+                     Initials_snow, LOGFLAG, CO2Model);
 
     out_vector.GPP.push_back(out.GPP);
     out_vector.ET.push_back(out.ET);

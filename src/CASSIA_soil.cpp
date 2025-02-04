@@ -266,7 +266,7 @@ Rcpp::List CASSIA_soil(int start_year,
         if (final_year%2!=0) {
           photosynthesis = preles_cpp(weather_index, climate.PAR[weather_index], climate.TAir[weather_index], climate.Precip[weather_index],
                                       climate.VPD[weather_index], climate.CO2[weather_index], fAPAR_used,
-                                      parSite, parGPP, parET, parSnowRain, parWater, 0.0);
+                                      parSite, parGPP, parET, parSnowRain, parWater, 0.0, 1);
           photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
           photosynthesis_output.GPP.push_back(photosynthesis.GPP);
           photosynthesis_output.ET.push_back(photosynthesis.ET);

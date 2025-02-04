@@ -271,7 +271,8 @@ photosynthesis_out preles_cpp(int day,
                               p3 ET_par,
                               p4 SnowRain_par,
                               p5 Initials_snow,
-                              double LOGFLAG);
+                              double LOGFLAG,
+                              int CO2model);
 
 Rcpp::DataFrame preles_test(Rcpp::DataFrame weather);
 
