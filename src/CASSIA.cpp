@@ -209,14 +209,14 @@ Rcpp::List CASSIA_yearly(int start_year,
        * Weather checks!
        */
 
-      if (day > 0) {
-        if (climate.PAR[day] < -900) climate.PAR[day] = climate.PAR[day-1];
-        if (climate.TAir[day] < -900) climate.TAir[day] = climate.TAir[day-1];
-        if (climate.VPD[day] < 0 || climate.VPD[day] > 6) climate.VPD[day] = climate.VPD[day-1];
-        if (climate.Precip[day] <    0) climate.Precip[day] = climate.Precip[day-1] * 0.3;
+      if (weather_index > 0) {
+        if (climate.PAR[weather_index] < -900) climate.PAR[weather_index] = climate.PAR[weather_index-1];
+        if (climate.TAir[weather_index] < -900) climate.TAir[weather_index] = climate.TAir[weather_index-1];
+        if (climate.VPD[weather_index] < 0 || climate.VPD[weather_index] > 6) climate.VPD[weather_index] = climate.VPD[weather_index-1];
+        if (climate.Precip[weather_index] <    0) climate.Precip[weather_index] = climate.Precip[weather_index-1] * 0.3;
         /* On avg. P+1=0.315*P
          * (in Sodis & Hyde) */
-        if (climate.CO2[day] < 0) climate.CO2[day] = climate.CO2[day-1];
+        if (climate.CO2[weather_index] < 0) climate.CO2[weather_index] = climate.CO2[weather_index-1];
       }
 
       /*
