@@ -151,6 +151,16 @@ Rcpp::DataFrame preles_test(Rcpp::DataFrame weather) {
 
   for (int day = 0; day < days_per_year; day++) {
 
+    if (day > 0) {
+      if (PAR[day] < -900) PAR[day] = PAR[day-1];
+      if (TAir[day] < -900) TAir[day] = TAir[day-1];
+      if (VPD[day] < 0 || VPD[day] > 6) VPD[day] = VPD[day-1];
+      if (Precip[day] <    0) Precip[day] = Precip[day-1] * 0.3;
+      /* On avg. P+1=0.315*P
+       * (in Sodis & Hyde) */
+      if (CO2[day] < 0) CO2[day] = CO2[day-1];
+    }
+
     double I = PAR[day];
     double T = TAir[day];
     double P = Precip[day];
