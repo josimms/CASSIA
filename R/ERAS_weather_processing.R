@@ -460,10 +460,10 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   preles_daily_dataset$PAR <- preles_daily_dataset$PAR + rep(error_daily_preles$Mean_PAR, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$PAR[preles_daily_dataset$PAR < 0] <- 0
   preles_daily_dataset$Precip <- preles_daily_dataset$Precip + rep(error_daily_preles$Mean_Precip, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$Precip[preles_daily_dataset$Precip < 0] <- 0
   # CASSIA
   preles_daily_dataset$Temp_Soil_1 = preles_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_Temp, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$Temp_Soil_2 = preles_daily_dataset$Temp_Soil_1 + rep(error_daily$Mean_VPD, length.out = nrow(preles_daily_dataset))
-  preles_daily_dataset$Precip = preles_daily_dataset$Precip + rep(error_daily$Mean_Precip, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$swvl1 = preles_daily_dataset$swvl1 + rep(error_daily$Mean_SWC, length.out = nrow(preles_daily_dataset))
 
   data.table::fwrite(preles_daily_dataset[,c("Temp", "VPD", "PAR", "Precip", "CO2")],
