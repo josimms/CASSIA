@@ -41,6 +41,16 @@ CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
 ```
 
 ```{r}
+
+height = loaded_data$smearII_data$variable %in% c("dominant_height") | 
+  loaded_data$smearII_data$variable %in% c("pine height BA weighted mean") |
+  loaded_data$smearII_data$variable %in% c("pine height arithmetic mean")
+
+loaded_data$smearII_data[height,]
+
+```
+
+```{r}
 date_sim <- as.Date(CASSIA_preles$Growth$day-1, origin = paste0(CASSIA_preles$Growth$year, "-01-01"))
 par(mfrow = c(2, 2))
 plot(date_sim, CASSIA_preles$Growth$root_growth, ylab = "Root Growth", xlab = "Time")
