@@ -62,7 +62,7 @@ plot(date_sim, CASSIA_preles$Growth$root_growth, ylab = "Root Growth", xlab = "T
 plot(date_sim, CASSIA_preles$Growth$respiration_growth + CASSIA_preles$Growth$respiration_maintenance, ylab = "Respiration", xlab = "Time")
 plot(date_sim, CASSIA_preles$Growth$diameter_growth, ylab = "Diameter Growth", xlab = "Time")
 plot(date_sim, CASSIA_preles$Preles$GPP, ylab = "GPP", xlab = "Time")
-point(smear$GPP_mean, col = "green") # TODO: dates
+points(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x")
 ```
 
 
@@ -78,10 +78,13 @@ plot_comparison(CASSIA_spp, variables_new,
 
 plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
 
+date_sim_2015_2018 <- as.Date(CASSIA_preles$Growth$day[CASSIA_preles$Growth$year %in% 2015:2018]-1, 
+                              origin = paste0(CASSIA_preles$Growth$year[CASSIA_preles$Growth$year %in% 2015:2018], "-01-01"))
 weather_preles_smear <- data.table::fread("~/Documents/CASSIA/data/preles_smear_CASSIA_ready.csv")
-plot(CASSIA_spp$Preles$GPP[CASSIA_spp$Growth$year %in% 2015:2018], col = "blue", ylab = "Photosynthesis")
-points(CASSIA_preles$Preles$GPP, col = "black")
-point(as.Date(smear$Date), smear$GPP_mean, col = "green") # TODO: dates
+plot(date_sim_2015_2018, CASSIA_spp$Preles$GPP[CASSIA_spp$Growth$year %in% 2015:2018], col = "blue", ylab = "Photosynthesis", pch = "x")
+points(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x")
+points(date_sim_2015_2018, CASSIA_preles$Preles$GPP[CASSIA_preles$Growth$year %in% 2015:2018], col = "black", pch = "x")
+
 
 plot(CASSIA_preles$Preles$GPP, col = "black")
 
