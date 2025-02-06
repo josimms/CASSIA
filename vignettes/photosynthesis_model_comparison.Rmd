@@ -9,6 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## Weather comparison
+
+```{r}
+ritika <- data.table::fread("~/Documents/CASSIA_Calibration/Raw_Data/hyy_all_2008_2019.xlsx")
+
+```
+
 ## Run the models
 
 ```{r}
@@ -30,6 +37,12 @@ smear <- data.table::fread("~/Documents/CASSIA/data/daily_dataframe.csv")
 # Models
 
 CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
+plot(CASSIA_spp$Culm_Growth$culm_growth_height)
+
+CASSIA_eco_test <- CASSIA_cpp(weather_preles, "Hyde", tests = TRUE,
+                         ecoevolutionary = T,
+                         photosynthesis_as_input = F,
+                         preles = T)
 
 CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
                             site = "Hyde",
