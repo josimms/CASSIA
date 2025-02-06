@@ -83,6 +83,11 @@ Rcpp::List CASSIA_yearly(int start_year,
   carbo_balance sugar_values_for_next_iteration;
   ring_width_out previous_ring_width;
 
+  double height_next_year = parameters.h0;
+  double roots_next_year = 15;
+  double needles_next_year = repola_values.needle_mass;
+  double diameter_next_year = parameters.D0;
+
   /*
    * Vectors for the outputs
    */
@@ -91,6 +96,8 @@ Rcpp::List CASSIA_yearly(int start_year,
   growth_vector actual_growth_output;
   sugar_values_vector sugar_values_output;
   resp_vector respiration_output;
+  growth_vector culm_growth;
+  growth_vector culm_growth_internal;
   needle_cohorts last_cohorts;
   double last_year_HH;
   double last_year_maxN;
@@ -380,9 +387,78 @@ Rcpp::List CASSIA_yearly(int start_year,
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
 
+
+      /*
+       * Culmative growwth
+       */
+
+      if (final_year%2!=0) {
+        if (day == 0) {
+          if (year == start_year) {
+            culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
+          } else {
+            culm_growth_internal.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          }
+        } else {
+          std::cout << " Weather " << weather_index << " day " << day << " height " << culm_growth_internal.height[weather_index-1] << "\n";
+          culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
+        }
+      } else {
+        if (day == 0) {
+          if (year == start_year) {
+            culm_growth.height.push_back(height_next_year + actual_growth_out.height);
+          } else {
+            culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          }
+        } else {
+          culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+        }
+      }
+
+      /*
+      if (final_year%2!=0) {
+        if (day == 0) {
+          // TODO: this should be the value after two years
+          culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
+          culm_growth_internal.roots.push_back(roots_next_year + actual_growth_out.diameter);
+          culm_growth_internal.needles.push_back(needles_next_year + actual_growth_out.needles);
+          culm_growth_internal.diameter.push_back(diameter_next_year + actual_growth_out.wall);
+        } else {
+          if (day == 1) {
+            std::cout << "Day: " << day << " value day before " << culm_growth_internal.height[weather_index-1] << "\n";
+          }
+          culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
+          culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + actual_growth_out.roots);
+          culm_growth_internal.needles.push_back(culm_growth_internal.needles[weather_index-1] + actual_growth_out.needles);
+          culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + actual_growth_out.wall);
+        }
+      } else {
+        if (day == 0) {
+          culm_growth.height.push_back(height_next_year + actual_growth_out.height);
+          culm_growth.roots.push_back(roots_next_year + actual_growth_out.diameter);
+          culm_growth.needles.push_back(needles_next_year + actual_growth_out.needles);
+          culm_growth.diameter.push_back(diameter_next_year + actual_growth_out.wall);
+        } else if (day == days_per_year-1) {
+          std::cout << "Day: " << day << " height_next_year " << culm_growth.height[weather_index-1] + actual_growth_out.height;
+          height_next_year = culm_growth.height[weather_index-1] + actual_growth_out.height;
+          roots_next_year = culm_growth.roots[weather_index-1] + actual_growth_out.roots;
+          needles_next_year = culm_growth.needles[weather_index-1] + actual_growth_out.needles;
+          diameter_next_year = culm_growth.diameter[weather_index-1] + actual_growth_out.wall;
+        } else {
+          culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
+          culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
+          culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.wall);
+        }
+      }
+
+      */
+
       /*
        * Output
        */
+
+      // TODO: what does this do?
       HH = potential_growth.previous_values.HH;
       needles_last = potential_growth.needles;
       potenital_growth_use.push_back(potential_growth.use);
@@ -467,7 +543,6 @@ Rcpp::List CASSIA_yearly(int start_year,
       parameters.starch_xylem_st0 = sugar_values_for_next_iteration.starch.xylem_st;
     }
 
-    // TODO: need to add the growth of things here!
     final_year = final_year + 1;
   }
 
@@ -513,9 +588,14 @@ Rcpp::List CASSIA_yearly(int start_year,
   Rcpp::DataFrame df3 = Rcpp::DataFrame::create(Rcpp::_["GPP"] = photosynthesis_output.GPP,
                                                 Rcpp::_["ET"] = photosynthesis_output.ET,
                                                 Rcpp::_["SoilWater"] = photosynthesis_output.SoilWater);
+  Rcpp::DataFrame df4 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height);
+                                                //Rcpp::_["culm_growth_roots"] = culm_growth.roots,
+                                                //Rcpp::_["culm_growth_needles"] = culm_growth.needles,
+                                                //Rcpp::_["culm_growth_diameter"] = culm_growth.diameter);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,
-                            Rcpp::_["Preles"] = df3);
+                            Rcpp::_["Preles"] = df3,
+                            Rcpp::_["Culm_Growth"] = df4);
 
 }
