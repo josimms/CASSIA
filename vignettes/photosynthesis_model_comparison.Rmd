@@ -97,14 +97,6 @@ plot_comparison(CASSIA_spp, variables_new,
 
 plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
 
-date_sim_2015_2018 <- as.Date(CASSIA_preles$Growth$day[CASSIA_preles$Growth$year %in% 2015:2018]-1, 
-                              origin = paste0(CASSIA_preles$Growth$year[CASSIA_preles$Growth$year %in% 2015:2018], "-01-01"))
-weather_preles_smear <- data.table::fread("~/Documents/CASSIA/data/preles_smear_CASSIA_ready.csv")
-plot(date_sim_2015_2018, CASSIA_spp$Preles$GPP[CASSIA_spp$Growth$year %in% 2015:2018], col = "blue", ylab = "Photosynthesis", pch = "x")
-points(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x")
-points(date_sim_2015_2018, CASSIA_preles$Preles$GPP[CASSIA_preles$Growth$year %in% 2015:2018], col = "black", pch = "x")
-
-
 plot(CASSIA_preles$Preles$GPP, col = "black")
 
 CASSIA_preles_plot <- CASSIA_preles
@@ -117,6 +109,30 @@ plot_comparison(CASSIA_preles_plot, variables_new,
                 Hyde_daily_original_plot, variables_original, FALSE)
 
 plot_sugar_starch_comparison(CASSIA_preles_plot, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
+```
+
+## Comparing the ERA5 data with preles
+
+```{r}
+date_sim_2015_2018 <- as.Date(CASSIA_preles$Growth$day[CASSIA_preles$Growth$year %in% 2015:2018]-1, 
+                              origin = paste0(CASSIA_preles$Growth$year[CASSIA_preles$Growth$year %in% 2015:2018], "-01-01"))
+weather_preles_smear <- data.table::fread("~/Documents/CASSIA/data/preles_smear_CASSIA_ready.csv")
+
+Ritika_2015_2018 <- data[substring(data$Date, 1, 4) %in% 2015:2018,]
+weather_preles_2015_2018 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 2015:2018,]
+
+preles_par_r <- Rprebasso::PRELES(PAR = Ritika_2015_2018$PAR,
+                                  TAir = Ritika_2015_2018$TA_F,
+                                  VPD = Ritika_2015_2018$VPD_F...8,
+                                  Precip = Ritika_2015_2018$P_F,
+                                  CO2 = rep(410, nrow(Ritika_2015_2018)),
+                                  fAPAR = rep(0.8, nrow(Ritika_2015_2018)))
+
+plot(date_sim_2015_2018, CASSIA_spp$Preles$GPP[CASSIA_spp$Growth$year %in% 2015:2018], col = "blue", ylab = "Photosynthesis", xlab = "Date", pch = "x")
+points(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x")
+points(date_sim_2015_2018, CASSIA_preles$Preles$GPP[CASSIA_preles$Growth$year %in% 2015:2018], col = "black", pch = "x")
+points(date_sim_2015_2018[-1461], preles_par_r$GPP, col = "red", pch = "x")
+
 ```
 
 ## Preles and Phydro long term
