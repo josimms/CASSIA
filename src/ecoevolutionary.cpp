@@ -85,6 +85,11 @@ Rcpp::List CASSIA_eeo(int start_year,
   MYCOFON_function_out MYCOFON_for_next_iteration;
   SYMPHONY_output soil_values_for_next_iteration;
 
+  double height_next_year = parameters.h0;
+  double roots_next_year = 15;
+  double needles_next_year = repola_values.needle_mass;
+  double diameter_next_year = parameters.D0;
+
   /*
    * Vectors for the outputs
    */
@@ -107,12 +112,8 @@ Rcpp::List CASSIA_eeo(int start_year,
   PlantAssimilationResult photosynthesis_phydro;
 
   growth_vector culm_growth;
-  growth_vector start_of_year;
+  growth_vector culm_growth_internal;
   PlantAssimilationResult phydro_assimilation;
-  culm_growth.height.push_back(parameters.h0);
-  culm_growth.diameter.push_back(parameters.D0);
-  culm_growth.roots.push_back(15); // TODO: what is the initialisation here? Surely there is a value for this!
-  culm_growth.needles.push_back(repola_values.needle_mass);
   biomass_vector biomass_output;
 
   MYCOFON_vector MYCOFON_output;
@@ -434,18 +435,48 @@ Rcpp::List CASSIA_eeo(int start_year,
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
 
-      // Cumulative values
-      if (day == 0) {
-        // TODO: this should be the value after two years
-        culm_growth.height.push_back(start_of_year.height[0] + actual_growth_out.height);
-        culm_growth.roots.push_back(start_of_year.roots[0] + actual_growth_out.diameter);  // TODO: root initilisation
-        culm_growth.needles.push_back(start_of_year.needles[0] + actual_growth_out.needles);
-        culm_growth.diameter.push_back(start_of_year.diameter[0] + actual_growth_out.wall);
+      /*
+       * Culmative growwth
+       */
+
+      if (final_year%2!=0) {
+        if (day == 0) {
+          if (year == start_year) {
+            culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
+            culm_growth_internal.diameter.push_back(diameter_next_year + actual_growth_out.diameter);
+            culm_growth_internal.roots.push_back(roots_next_year + actual_growth_out.roots);
+            culm_growth_internal.needles.push_back(needles_next_year + actual_growth_out.needles);
+          } else {
+            culm_growth_internal.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+            culm_growth_internal.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+            culm_growth_internal.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
+            culm_growth_internal.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
+          }
+        } else {
+          culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
+          culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + actual_growth_out.diameter);
+          culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + actual_growth_out.roots);
+          culm_growth_internal.needles.push_back(culm_growth_internal.needles[weather_index-1] + actual_growth_out.needles);
+        }
       } else {
-        culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
-        culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
-        culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
-        culm_growth.diameter.push_back(culm_growth.diameter[day-1] + actual_growth_out.wall);
+        if (day == 0) {
+          if (year == start_year) {
+            culm_growth.height.push_back(height_next_year + actual_growth_out.height);
+            culm_growth.diameter.push_back(diameter_next_year + actual_growth_out.diameter);
+            culm_growth.roots.push_back(roots_next_year + actual_growth_out.roots);
+            culm_growth.needles.push_back(needles_next_year + actual_growth_out.needles);
+          } else {
+            culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+            culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+            culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
+            culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
+          }
+        } else {
+          culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+          culm_growth.roots.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
+        }
       }
 
       /*
@@ -739,11 +770,6 @@ Rcpp::List CASSIA_eeo(int start_year,
           MYCOFON_reset.C_fungal_NonStruct = MYCOFON_for_next_iteration.C_fungal_NonStruct;
           MYCOFON_reset.N_roots_NonStruct = MYCOFON_for_next_iteration.N_roots_NonStruct;
           MYCOFON_reset.N_fungal_NonStruct = MYCOFON_for_next_iteration.N_fungal_NonStruct;
-
-          start_of_year.height[0] = culm_growth.height[weather_index];
-          start_of_year.roots[0] = culm_growth.roots[weather_index];
-          start_of_year.needles[0] = culm_growth.needles[weather_index];
-          start_of_year.diameter[0] = culm_growth.diameter[weather_index];
         }
       }
     }

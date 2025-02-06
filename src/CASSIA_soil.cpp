@@ -86,6 +86,11 @@ Rcpp::List CASSIA_soil(int start_year,
   MYCOFON_function_out MYCOFON_for_next_iteration;
   SYMPHONY_output soil_values_for_next_iteration;
 
+  double height_next_year = parameters.h0;
+  double roots_next_year = 15;
+  double needles_next_year = repola_values.needle_mass;
+  double diameter_next_year = parameters.D0;
+
   /*
    * Vectors for the outputs
    */
@@ -112,10 +117,8 @@ Rcpp::List CASSIA_soil(int start_year,
   photo_out_vector photosynthesis_output;
 
   growth_vector culm_growth;
+  growth_vector culm_growth_internal;
   PlantAssimilationResult phydro_assimilation;
-  culm_growth.height.push_back(parameters.h0);
-  culm_growth.roots.push_back(0.1); // TODO: what is the initialisation here? Surely there is a value for this!
-  culm_growth.needles.push_back(repola_values.needle_mass);
   biomass_vector biomass_output;
 
   /*
@@ -398,10 +401,50 @@ Rcpp::List CASSIA_soil(int start_year,
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
 
-      // Cumulative values
-      culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
-      culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
-      culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
+      /*
+       * Culmative growwth
+       */
+
+      if (final_year%2!=0) {
+        if (day == 0) {
+          if (year == start_year) {
+            culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
+            culm_growth_internal.diameter.push_back(diameter_next_year + actual_growth_out.diameter);
+            culm_growth_internal.roots.push_back(roots_next_year + actual_growth_out.roots);
+            culm_growth_internal.needles.push_back(needles_next_year + actual_growth_out.needles);
+          } else {
+            culm_growth_internal.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+            culm_growth_internal.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+            culm_growth_internal.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
+            culm_growth_internal.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
+          }
+        } else {
+          culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
+          culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + actual_growth_out.diameter);
+          culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + actual_growth_out.roots);
+          culm_growth_internal.needles.push_back(culm_growth_internal.needles[weather_index-1] + actual_growth_out.needles);
+        }
+      } else {
+        if (day == 0) {
+          if (year == start_year) {
+            culm_growth.height.push_back(height_next_year + actual_growth_out.height);
+            culm_growth.diameter.push_back(diameter_next_year + actual_growth_out.diameter);
+            culm_growth.roots.push_back(roots_next_year + actual_growth_out.roots);
+            culm_growth.needles.push_back(needles_next_year + actual_growth_out.needles);
+          } else {
+            culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+            culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+            culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
+            culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
+          }
+        } else {
+          culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+          culm_growth.roots.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
+        }
+      }
+
 
       /*
        * MYCOFON
@@ -829,13 +872,18 @@ Rcpp::List CASSIA_soil(int start_year,
                                                 Rcpp::_["respiration_microbes_FOM"] = respiration_output.microbes_FOM,
                                                 Rcpp::_["respiration_microbes_SOM"] = respiration_output.microbes_SOM,
                                                 Rcpp::_["respiration_mycorrhiza"] = respiration_output.mycorrhiza);
+  Rcpp::DataFrame df7 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height,
+                                                Rcpp::_["culm_growth_roots"] = culm_growth.roots,
+                                                Rcpp::_["culm_growth_needles"] = culm_growth.needles,
+                                                Rcpp::_["culm_growth_diameter"] = culm_growth.diameter);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,
                             Rcpp::_["Soil"] = df3,
                             Rcpp::_["Fungal"] = df4,
                             Rcpp::_["Preles"] = df5,
-                            Rcpp::_["Respiration"] = df6);
+                            Rcpp::_["Respiration"] = df6,
+                            Rcpp::_["Culm_Growth"] = df7);
 
 }
 
