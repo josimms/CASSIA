@@ -355,9 +355,9 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
 
   soil_water_potential_daily$YMD <- paste(soil_water_potential_daily$Year, soil_water_potential_daily$Month, soil_water_potential_daily$Day, sep = "-")
   preles_daily_dataset <- merge(preles_daily_dataset,
-                                   soil_water_potential_daily[soil_water_potential_daily$Year < preles_daily_dataset$Year[nrow(preles_daily_dataset)],c("YMD", "HYY_EDDY233.GPP")],
-                                   by = "YMD",
-                                   all.x = T)
+                                soil_water_potential_daily[soil_water_potential_daily$Year < preles_daily_dataset$Year[nrow(preles_daily_dataset)],c("YMD", "HYY_EDDY233.GPP")],
+                                by = "YMD",
+                                all.x = T)
 
   preles_daily_dataset$Day <- substring(preles_daily_dataset$YMD, 9, 10)
 
@@ -417,6 +417,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # needed for phydro
   plantfate_monthy_dataset$Temp = plantfate_monthy_dataset$Temp + rep(error$Mean_Temp, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$VPD = plantfate_monthy_dataset$VPD + rep(error$Mean_VPD, length.out = nrow(plantfate_monthy_dataset))
+  plantfate_monthy_dataset$VPD[plantfate_monthy_dataset$VPD < 0] = 0
   plantfate_monthy_dataset$PPFD = plantfate_monthy_dataset$PPFD + rep(error$Mean_PPFD, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$PPFD_max = plantfate_monthy_dataset$PPFD_max + rep(error$Mean_PPFD_max, length.out = nrow(plantfate_monthy_dataset))
   plantfate_monthy_dataset$PPFD_max[plantfate_monthy_dataset$PPFD_max < 0] = 0
@@ -430,6 +431,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # PlantFATE Daily
   plantfate_daily_dataset$Temp = plantfate_daily_dataset$Temp + rep(error_daily$Mean_Temp, length.out = nrow(plantfate_daily_dataset))
   plantfate_daily_dataset$VPD = plantfate_daily_dataset$VPD + rep(error_daily$Mean_VPD, length.out = nrow(plantfate_daily_dataset))
+  plantfate_daily_dataset$VPD[plantfate_daily_dataset$VPD < 0] = 0
   plantfate_daily_dataset$PPFD = plantfate_daily_dataset$PPFD + rep(error_daily$Mean_PPFD, length.out = nrow(plantfate_daily_dataset))
   plantfate_daily_dataset$PPFD[plantfate_daily_dataset$PPFD < 0] = 0
   plantfate_daily_dataset$PPFD_max = plantfate_daily_dataset$PPFD_max + rep(error_daily$Mean_PPFD_max, length.out = nrow(plantfate_daily_dataset))
@@ -457,6 +459,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   # Preles
   preles_daily_dataset$Temp <- preles_daily_dataset$Temp + rep(error_daily_preles$Mean_Temp, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$VPD <- preles_daily_dataset$VPD + rep(error_daily_preles$Mean_VPD, length.out = nrow(preles_daily_dataset))
+  preles_daily_dataset$VPD[preles_daily_dataset$VPD < 0] <- 0
   preles_daily_dataset$PAR <- preles_daily_dataset$PAR + rep(error_daily_preles$Mean_PAR, length.out = nrow(preles_daily_dataset))
   preles_daily_dataset$PAR[preles_daily_dataset$PAR < 0] <- 0
   preles_daily_dataset$Precip <- preles_daily_dataset$Precip + rep(error_daily_preles$Mean_Precip, length.out = nrow(preles_daily_dataset))
