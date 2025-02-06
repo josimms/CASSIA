@@ -65,12 +65,17 @@ CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
 ```
 
 ```{r}
+library(data.table)
 
 height = loaded_data$smearII_data$variable %in% c("dominant_height") | 
   loaded_data$smearII_data$variable %in% c("pine height BA weighted mean") |
   loaded_data$smearII_data$variable %in% c("pine height arithmetic mean")
 
-loaded_data$smearII_data[height,]
+height_df <- loaded_data$smearII_data[height,]
+height_result <- height_df[, list(total_amount = sum(amount)), by = date]
+height_result <- height_df[, sum(amount), by = date]
+
+unique(loaded_data$smearII_data$variable)
 
 ```
 
