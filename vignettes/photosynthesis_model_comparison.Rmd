@@ -12,8 +12,20 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Weather comparison
 
 ```{r}
-ritika <- data.table::fread("~/Documents/CASSIA_Calibration/Raw_Data/hyy_all_2008_2019.xlsx")
+data <- data.table::as.data.table(readxl::read_xlsx("~/Documents/CASSIA_Calibration/Raw_Data/hyy_all_2008_2019.xlsx", sheet = 1, skip = 1))
+names(data) <- names(readxl::read_xlsx("~/Documents/CASSIA_Calibration/Raw_Data/hyy_all_2008_2019.xlsx", sheet = 1))
 
+plot(as.Date(weather_preles$date), weather_preles$PAR, col = "blue", ylab = "PAR", xlab = "Date")
+points(as.Date(data$Date), data$PAR)
+
+plot(as.Date(weather_preles$date), weather_preles$T, col = "blue", ylab = "Temperature", xlab = "Date")
+points(as.Date(data$Date), data$TA_F)
+
+plot(as.Date(weather_preles$date), weather_preles$Rain, col = "blue", ylab = "Rain / Precipitation", xlab = "Date")
+points(as.Date(data$Date), data$P_F)
+
+plot(as.Date(weather_preles$date), weather_preles$VPD, col = "blue", ylab = "VPD", xlab = "Date")
+points(as.Date(data$Date), data$VPD_F...8)
 ```
 
 ## Run the models
@@ -37,12 +49,6 @@ smear <- data.table::fread("~/Documents/CASSIA/data/daily_dataframe.csv")
 # Models
 
 CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
-plot(CASSIA_spp$Culm_Growth$culm_growth_height)
-
-CASSIA_eco_test <- CASSIA_cpp(weather_preles, "Hyde", tests = TRUE,
-                         ecoevolutionary = T,
-                         photosynthesis_as_input = F,
-                         preles = T)
 
 CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
                             site = "Hyde",
