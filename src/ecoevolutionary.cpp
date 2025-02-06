@@ -107,6 +107,7 @@ Rcpp::List CASSIA_eeo(int start_year,
   PlantAssimilationResult photosynthesis_phydro;
 
   growth_vector culm_growth;
+  growth_vector start_of_year;
   PlantAssimilationResult phydro_assimilation;
   culm_growth.height.push_back(parameters.h0);
   culm_growth.diameter.push_back(parameters.D0);
@@ -435,18 +436,17 @@ Rcpp::List CASSIA_eeo(int start_year,
 
       // Cumulative values
       if (day == 0) {
-        // TODO: THIS ASSUMES NO GROWTH BETWEEN YEARS
-        culm_growth.height.push_back(parameters.h0 + actual_growth_out.height);
-        culm_growth.roots.push_back(15 + actual_growth_out.diameter); // TODO: what is the initialisation here? Surely there is a value for this!
-        culm_growth.needles.push_back(repola_values.needle_mass + actual_growth_out.needles);
-        culm_growth.diameter.push_back(parameters.D0 + actual_growth_out.wall);
+        // TODO: this should be the value after two years
+        culm_growth.height.push_back(start_of_year.height[0] + actual_growth_out.height);
+        culm_growth.roots.push_back(start_of_year.roots[0] + actual_growth_out.diameter);  // TODO: root initilisation
+        culm_growth.needles.push_back(start_of_year.needles[0] + actual_growth_out.needles);
+        culm_growth.diameter.push_back(start_of_year.diameter[0] + actual_growth_out.wall);
       } else {
         culm_growth.height.push_back(culm_growth.height[day-1] + actual_growth_out.height);
         culm_growth.roots.push_back(culm_growth.roots[day-1] + actual_growth_out.roots);
         culm_growth.needles.push_back(culm_growth.needles[day-1] + actual_growth_out.needles);
         culm_growth.diameter.push_back(culm_growth.diameter[day-1] + actual_growth_out.wall);
       }
-      std::cout << "\n";
 
       /*
        * MYCOFON
@@ -684,7 +684,7 @@ Rcpp::List CASSIA_eeo(int start_year,
         soil_output.Norg_Uptake_Microbe_SOM.push_back(Soil_All.Norg_Uptake_Microbe_SOM);
         soil_output.C_Uptake_Microbe_SOM.push_back(Soil_All.C_Uptake_Microbe_SOM);
 
-        if (day == 364) {
+        if (day == days_per_year) {
           soil_reset.C_FOM_needles = Soil_All.C_FOM_needles;
           soil_reset.C_FOM_woody = Soil_All.C_FOM_woody;
           soil_reset.C_FOM_roots = Soil_All.C_FOM_roots;
@@ -732,13 +732,18 @@ Rcpp::List CASSIA_eeo(int start_year,
         MYCOFON_output.Plant_given.push_back(MYCOFON_for_next_iteration.Plant_given);
         MYCOFON_output.Fungal_given.push_back(MYCOFON_for_next_iteration.Fungal_given);
 
-        if (day == 364) {
+        if (day == days_per_year) {
           MYCOFON_reset.C_biomass = MYCOFON_for_next_iteration.C_biomass;
           MYCOFON_reset.C_fungal = MYCOFON_for_next_iteration.C_fungal;
           MYCOFON_reset.C_roots_NonStruct = MYCOFON_for_next_iteration.C_roots_NonStruct;
           MYCOFON_reset.C_fungal_NonStruct = MYCOFON_for_next_iteration.C_fungal_NonStruct;
           MYCOFON_reset.N_roots_NonStruct = MYCOFON_for_next_iteration.N_roots_NonStruct;
           MYCOFON_reset.N_fungal_NonStruct = MYCOFON_for_next_iteration.N_fungal_NonStruct;
+
+          start_of_year.height[0] = culm_growth.height[weather_index];
+          start_of_year.roots[0] = culm_growth.roots[weather_index];
+          start_of_year.needles[0] = culm_growth.needles[weather_index];
+          start_of_year.diameter[0] = culm_growth.diameter[weather_index];
         }
       }
     }
@@ -870,13 +875,18 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                 Rcpp::_["respiration_microbes_FOM"] = respiration_output.microbes_FOM,
                                                 Rcpp::_["respiration_microbes_SOM"] = respiration_output.microbes_SOM,
                                                 Rcpp::_["respiration_mycorrhiza"] = respiration_output.mycorrhiza);
+  Rcpp::DataFrame df7 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height,
+                                                Rcpp::_["culm_growth_roots"] = culm_growth.roots,
+                                                Rcpp::_["culm_growth_needles"] = culm_growth.needles,
+                                                Rcpp::_["culm_growth_diameter"] = culm_growth.diameter);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,
                             Rcpp::_["Soil"] = df3,
                             Rcpp::_["Fungal"] = df4,
                             Rcpp::_["Preles"] = df5,
-                            Rcpp::_["Respiration"] = df6);
+                            Rcpp::_["Respiration"] = df6,
+                            Rcpp::_["Culm_Growth"] = df7);
 
 }
 
