@@ -257,6 +257,7 @@ struct photo_out_vector {
   std::vector<double> ET;
   std::vector<double> SoilWater;
   std::vector<double> fS;
+  std::vector<double> fAPAR;
 };
 
 photosynthesis_out preles_cpp(int day,

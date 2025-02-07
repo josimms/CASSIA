@@ -267,6 +267,7 @@ Rcpp::List CASSIA_yearly(int start_year,
           photosynthesis_output.GPP.push_back(photosynthesis.GPP);
           photosynthesis_output.ET.push_back(photosynthesis.ET);
           photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
+          photosynthesis_output.fAPAR.push_back(fAPAR_used);
         }
       } else if (boolsettings.preles) {
         if (final_year%2!=0) {
@@ -278,6 +279,7 @@ Rcpp::List CASSIA_yearly(int start_year,
           photosynthesis_output.ET.push_back(photosynthesis.ET);
           photosynthesis_output.SoilWater.push_back(photosynthesis.SoilWater);
           photosynthesis_output.fS.push_back(photosynthesis.fS);
+          photosynthesis_output.fAPAR.push_back(fAPAR_used);
           GPP = photosynthesis_output.GPP[weather_index];
           ET = photosynthesis_output.ET[weather_index];
           SoilWater = photosynthesis_output.SoilWater[weather_index];
@@ -565,7 +567,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["n_M_pot"] = growth_values_for_next_iteration.n_M_pot);
   Rcpp::DataFrame df3 = Rcpp::DataFrame::create(Rcpp::_["GPP"] = photosynthesis_output.GPP,
                                                 Rcpp::_["ET"] = photosynthesis_output.ET,
-                                                Rcpp::_["SoilWater"] = photosynthesis_output.SoilWater);
+                                                Rcpp::_["SoilWater"] = photosynthesis_output.SoilWater,
+                                                Rcpp::_["fAPAR"] = photosynthesis_output.fAPAR);
   Rcpp::DataFrame df4 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height,
                                                 Rcpp::_["culm_growth_roots"] = culm_growth.roots,
                                                 Rcpp::_["culm_growth_needles"] = culm_growth.needles,
