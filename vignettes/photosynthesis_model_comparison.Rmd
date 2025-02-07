@@ -167,7 +167,7 @@ points(as.Date(paste0(height_df$date, "-05-31")), height_df$amount, col = "green
 points(as.Date(paste0(height_cl_df$date, "-05-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+20)
 legend("bottomright", legend = unique(c(as.factor(height_df$variable), as.factor(height_cl_df$variable))), 
        pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+20)), 
-       bty = "n", ncol = 2, title = "Measurement Desciption", col = "green")
+       bty = "n", ncol = 2, title = "Measurement Desciption", col = rep(c("green", "gold"),each = 4))
 
 # Diameter
 # TODO: is the updated height used anywhere?
