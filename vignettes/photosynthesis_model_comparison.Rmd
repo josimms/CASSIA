@@ -7,6 +7,27 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(data.table)
+```
+
+## Weather
+
+```{r}
+# Parameters
+new_parameters <- rep(0.5, 27)  # Example new parameters
+calibration = F
+parameters_all <- initialize_parameters(calibration, new_parameters)
+
+# Import weather data
+weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
+weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+
+weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
+
+# GPP from SMEAR
+
+smear <- data.table::fread("~/Documents/CASSIA/data/daily_dataframe.csv")
 ```
 
 ## Weather comparison
@@ -28,95 +49,9 @@ plot(as.Date(weather_preles$date), weather_preles$VPD, col = "blue", ylab = "VPD
 points(as.Date(data$Date), data$VPD_F...8)
 ```
 
-## Run the models
-
-```{r}
-# Parameters
-new_parameters <- rep(0.5, 27)  # Example new parameters
-calibration = F
-parameters_all <- initialize_parameters(calibration, new_parameters)
-
-# Import weather data
-weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
-weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
-
-weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
-
-# GPP from SMEAR
-
-smear <- data.table::fread("~/Documents/CASSIA/data/daily_dataframe.csv")
-
-# Models
-
-CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
-
-CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
-                            site = "Hyde",
-                            pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                            parameters = parameters_all$parameters_test,
-                            common = common_p,
-                            ratios = ratios_p,
-                            sperling = parameters_all$sperling_test,
-                            needle_mass_in = parameters_all$needle_mass_in,
-                            Throughfall = parameters_all$Throughfall,
-                            photosynthesis_as_input = FALSE,
-                            preles = TRUE)
-
-```
-
-```{r}
-library(data.table)
-
-height = loaded_data$smearII_data$variable %in% c("dominant_height") | 
-  loaded_data$smearII_data$variable %in% c("pine height BA weighted mean") |
-  loaded_data$smearII_data$variable %in% c("pine height arithmetic mean")
-
-height_df <- loaded_data$smearII_data[height,]
-height_result <- height_df[, list(total_amount = sum(amount)), by = date]
-height_result <- height_df[, sum(amount), by = date]
-
-unique(loaded_data$smearII_data$variable)
-
-```
-
-```{r}
-date_sim <- as.Date(CASSIA_preles$Growth$day-1, origin = paste0(CASSIA_preles$Growth$year, "-01-01"))
-par(mfrow = c(2, 2))
-plot(date_sim, CASSIA_preles$Growth$root_growth, ylab = "Root Growth", xlab = "Time")
-plot(date_sim, CASSIA_preles$Growth$respiration_growth + CASSIA_preles$Growth$respiration_maintenance, ylab = "Respiration", xlab = "Time")
-plot(date_sim, CASSIA_preles$Growth$diameter_growth, ylab = "Diameter Growth", xlab = "Time")
-plot(date_sim, CASSIA_preles$Preles$GPP, ylab = "GPP", xlab = "Time")
-points(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x")
-```
-
-
-## Preles against SPP (short term)
-
-```{r cars}
-Hyde_daily_original_plot <- Hyde_daily_original
-variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
-variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
-
-plot_comparison(CASSIA_spp, variables_new,
-                Hyde_daily_original_plot, variables_original, soil_processes)
-
-plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
-
-plot(CASSIA_preles$Preles$GPP, col = "black")
-
-CASSIA_preles_plot <- CASSIA_preles
-dates <- which(CASSIA_preles$Growth$year %in% 2015:2018)
-CASSIA_preles_plot$Growth <- CASSIA_preles$Growth[dates,]
-CASSIA_preles_plot$Sugar <- CASSIA_preles$Sugar[dates,]
-CASSIA_preles_plot$Preles <- CASSIA_preles$Preles[dates,]
-
-plot_comparison(CASSIA_preles_plot, variables_new,
-                Hyde_daily_original_plot, variables_original, FALSE)
-
-plot_sugar_starch_comparison(CASSIA_preles_plot, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
-```
-
 ## Comparing the ERA5 data with preles
+
+This works well with the difference is in the leaf area. Should also be noted that the eddy covarience is for the ecosystem not for pines
 
 ```{r}
 date_sim_2015_2018 <- as.Date(CASSIA_preles$Growth$day[CASSIA_preles$Growth$year %in% 2015:2018]-1, 
@@ -138,6 +73,151 @@ points(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x")
 points(date_sim_2015_2018, CASSIA_preles$Preles$GPP[CASSIA_preles$Growth$year %in% 2015:2018], col = "black", pch = "x")
 points(date_sim_2015_2018[-1461], preles_par_r$GPP, col = "red", pch = "x")
 
+```
+
+## Biomass for initial conditions
+
+```{r}
+unique(loaded_data$smearII_data$variable)
+
+height = loaded_data$smearII_data$variable %in% c("dominant_height") | 
+  loaded_data$smearII_data$variable %in% c("pine height BA weighted mean") |
+  loaded_data$smearII_data$variable %in% c("pine height arithmetic mean") |
+  loaded_data$smearII_data$variable %in% c("tree_height_baseal_area_weighted_mean")
+
+height_df <- loaded_data$smearII_data[height,]
+
+height_cl = loaded_data$smearII_data$variable %in% c("pine CrownL arithmetic mean") | 
+  loaded_data$smearII_data$variable %in% c("BA weighted mean CrownL pine") |
+  loaded_data$smearII_data$variable %in% c("Arithmetic mean CrownL pine") |
+  loaded_data$smearII_data$variable %in% c("pine CrownL BA weighted mean") |
+  loaded_data$smearII_data$variable %in% c("pine CrownL arithmetic mean")
+
+height_cl_df <- loaded_data$smearII_data[height_cl,]
+
+diameter = loaded_data$smearII_data$variable %in% c("BA weighted mean DBH pine") | 
+  loaded_data$smearII_data$variable %in% c("Arithmetic mean DBH pine") |
+  loaded_data$smearII_data$variable %in% c("pine DBH arithmetic mean") |
+  loaded_data$smearII_data$variable %in% c("pine diameter BA weighted mean")
+
+diameter_df <- loaded_data$smearII_data[diameter,]
+
+LAI = loaded_data$smearII_data$variable %in% c("LAI_pine_allsided") | 
+  loaded_data$smearII_data$variable %in% c("LAI_pine_ICOS")
+
+LAI_df <- loaded_data$smearII_data[LAI,]
+
+foliage_biomass = loaded_data$smearII_data$variable %in% c("pine_foliage_biomass") | 
+  loaded_data$smearII_data$variable %in% c("pine_foliage_biomass_ICOS") |
+  loaded_data$smearII_data$variable %in% c("Needles / Leaves before thinning") |
+  loaded_data$smearII_data$variable %in% c("Needles / Leaves after thinning") |
+  loaded_data$smearII_data$variable %in% c("Needles / Leaves removed in thinning")
+
+foliage_biomass_df <- loaded_data$smearII_data[foliage_biomass,]
+
+
+branches = loaded_data$smearII_data$variable %in% c("Living branches before thinning") | 
+  loaded_data$smearII_data$variable %in% c("Living branches after thinning")
+
+branches_df <- loaded_data$smearII_data[branches,]
+```
+
+## Run the models
+
+```{r}
+
+# Models
+CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
+
+```
+
+## Steady state CASSIA from 1997 to 2022
+
+```{r}
+
+weather_preles_1997_2022 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 1997:2022,]
+parameters_1997_2022 <- initialize_parameters(calibration, new_parameters)
+parameters_1997_2022$parameters_test[c("h0"),c("Hyde")] <- 14
+parameters_1997_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416 # TODO:check units, but value from data
+parameters_1997_2022$parameters_test[c("sugar0"),c("Hyde")] <- 0.41
+
+date_1997_2022 <- seq(as.Date("1997-01-01"), as.Date("2022-12-31"), by = "day")
+CASSIA_preles_1997_2022 <- CASSIA_cpp(weather = weather_preles_1997_2022,
+                                      site = "Hyde",
+                                      pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                      parameters = parameters_1997_2022$parameters_test,
+                                      common = common_p,
+                                      ratios = ratios_p,
+                                      sperling = parameters_all$sperling_test,
+                                      needle_mass_in = parameters_all$needle_mass_in,
+                                      Throughfall = parameters_all$Throughfall,
+                                      photosynthesis_as_input = FALSE,
+                                      preles = TRUE,
+                                      fAPAR_Tian = TRUE)
+# GPP
+plot(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x", main = "GPP", xlab = "Dates", ylab = "GPP")
+points(date_1997_2022, CASSIA_preles_1997_2022$Preles$GPP, col = "black", pch = "x")
+
+# Height
+# TODO: is the updated height used anywhere?
+# TODO: what time of year are the measurements taken?
+ylim = range(CASSIA_preles_1997_2022$Culm_Growth$culm_growth_height, height_cl_df$amount, height_df$amount)
+plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$culm_growth_height, col = "black", pch = "x", main = "Height", xlab = "Dates", ylab = "Height", ylim = ylim)
+points(as.Date(paste0(height_df$date, "-05-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
+points(as.Date(paste0(height_cl_df$date, "-05-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+20)
+legend("bottomright", legend = unique(c(as.factor(height_df$variable), as.factor(height_cl_df$variable))), 
+       pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+20)), 
+       bty = "n", ncol = 2, title = "Measurement Desciption", col = "green")
+
+# Diameter
+# TODO: is the updated height used anywhere?
+# TODO: what time of year are the measurements taken?
+ylim = range(CASSIA_preles_1997_2022$Culm_Growth$culm_growth_diameter, 0.01*diameter_df$amount)
+plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter", ylim = ylim)
+points(as.Date(paste0(diameter_df$date, "-05-31")), 0.01 * diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
+legend("bottomright", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green")
+
+# LAI
+# TODO: is the updated height used anywhere?
+# TODO: what time of year are the measurements taken?
+ylim = range(CASSIA_preles_1997_2022$Culm_Growth$LAI, LAI_df$amount)
+plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$LAI, col = "black", pch = "x", main = "LAI", xlab = "Dates", ylab = "LAI", ylim = ylim)
+points(as.Date(paste0(LAI_df$date, "-05-31")), LAI_df$amount, col = "green", pch = as.numeric(as.factor(LAI_df$variable))+16)
+legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(as.numeric(as.factor(LAI_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green")
+
+# Needles
+# TODO: is the updated height used anywhere?
+# TODO: what time of year are the measurements taken?
+ylim = range(CASSIA_preles_1997_2022$Culm_Growth$culm_growth_needles, foliage_biomass_df$amount)
+plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$culm_growth_needles, col = "black", pch = "x", main = "Needles", xlab = "Dates", ylab = "Needles", ylim = ylim)
+points(as.Date(paste0(foliage_biomass_df$date, "-05-31")), foliage_biomass_df$amount, col = "green", pch = as.numeric(as.factor(foliage_biomass_df$variable))+16)
+legend("bottomright", legend = unique(as.factor(foliage_biomass_df$variable)), pch = unique(as.numeric(as.factor(foliage_biomass_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green")
+
+```
+
+
+## Preles against SPP (short term)
+
+```{r cars}
+Hyde_daily_original_plot <- Hyde_daily_original
+variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
+variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
+
+plot_comparison(CASSIA_spp, variables_new,
+                Hyde_daily_original_plot, variables_original, soil_processes)
+
+plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
+
+CASSIA_preles_plot <- CASSIA_preles
+dates <- which(CASSIA_preles$Growth$year %in% 2015:2018)
+CASSIA_preles_plot$Growth <- CASSIA_preles$Growth[dates,]
+CASSIA_preles_plot$Sugar <- CASSIA_preles$Sugar[dates,]
+CASSIA_preles_plot$Preles <- CASSIA_preles$Preles[dates,]
+
+plot_comparison(CASSIA_preles_plot, variables_new,
+                Hyde_daily_original_plot, variables_original, FALSE)
+
+plot_sugar_starch_comparison(CASSIA_preles_plot, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
 ```
 
 ## Preles and Phydro long term
