@@ -142,7 +142,7 @@ weather_preles_1997_2022$fAPAR <- 0.9 # TODO: take away when I have found the pr
 parameters_1997_2022 <- initialize_parameters(calibration, new_parameters)
 parameters_1997_2022$parameters_test[c("h0"),c("Hyde")] <- 14
 parameters_1997_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416 # TODO: check units, but value from data
-parameters_1997_2022$sperling_test[c("sugar0"),c("Hyde")] <- 0.2
+parameters_1997_2022$sperling_test[c("sugar00"),c("Hyde")] <- 0.2
 
 date_1997_2022 <- seq(as.Date("1997-01-01"), as.Date("2022-12-31"), by = "day")
 CASSIA_preles_1997_2022 <- CASSIA_cpp(weather = weather_preles_1997_2022,
@@ -209,12 +209,14 @@ Hyde_daily_original_plot <- Hyde_daily_original
 variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P")
 variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
 
-### Preles wtih ERA5 data aginst the original CASSIA
+### CASSIA with the original SPP input
 
 plot_comparison(CASSIA_spp, variables_new,
                 Hyde_daily_original_plot, variables_original, soil_processes)
 
 plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
+
+### Preles wtih ERA5 data aginst the original CASSIA
 
 date_2015_2018 <- seq(as.Date("2015-01-01"), as.Date("2018-12-31"), by = "day")
 weather_preles_2015_2018 <- weather_preles[weather_preles$date %in% date_2015_2018,]
@@ -261,54 +263,54 @@ plot_sugar_starch_comparison(CASSIA_preles_2015_2018, weather_original$date, loa
 
 ```{r pressure, echo=FALSE}
 new_parameters <- rep(0.5, 27)  # Example new parameters
-  calibration = F
-  parameters_all <- initialize_parameters(calibration, new_parameters)
+calibration = F
+parameters_all <- initialize_parameters(calibration, new_parameters)
 
-  data.direct = "/home/josimms/Documents/CASSIA/data/"
-  phydro <- data.table::fread(paste0(data.direct, "ERA5_CASSIA_preles.csv"))
-  preles <- data.table::fread(paste0(data.direct, "ERA5_CASSIA_phydro.csv"))
-  names(preles)[1] <- "date"
+data.direct = "/home/josimms/Documents/CASSIA/data/"
+phydro <- data.table::fread(paste0(data.direct, "ERA5_CASSIA_preles.csv"))
+preles <- data.table::fread(paste0(data.direct, "ERA5_CASSIA_phydro.csv"))
+names(preles)[1] <- "date"
 
-  smear_preles <- CASSIA_cpp(weather = weather_preles,
-                             site = "Hyde",
-                             pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                             parameters = parameters_all$parameters_test,
-                             common = common_p,
-                             ratios = ratios_p,
-                             sperling = parameters_all$sperling_test,
-                             needle_mass_in = parameters_all$needle_mass_in,
-                             Throughfall = parameters_all$Throughfall,
-                             photosynthesis_as_input = FALSE,
-                             preles = TRUE)
+smear_preles <- CASSIA_cpp(weather = weather_preles,
+                           site = "Hyde",
+                           pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                           parameters = parameters_all$parameters_test,
+                           common = common_p,
+                           ratios = ratios_p,
+                           sperling = parameters_all$sperling_test,
+                           needle_mass_in = parameters_all$needle_mass_in,
+                           Throughfall = parameters_all$Throughfall,
+                           photosynthesis_as_input = FALSE,
+                           preles = TRUE)
 
-  # TODO: add into the parameters all formulation
-  phydro_parameters_in = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
-                           0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
-                           15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5))
+# TODO: add into the parameters all formulation
+phydro_parameters_in = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
+                         0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
+                         15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5))
 
-  smear_phydro <- CASSIA_cpp(weather = phydro,
-                             site = "Hyde",
-                             pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                             parameters = parameters_all$parameters_test,
-                             common = common_p,
-                             ratios = ratios_p,
-                             sperling = parameters_all$sperling_test,
-                             needle_mass_in = parameters_all$needle_mass_in,
-                             phydro_param = phydro_parameters_in,
-                             Throughfall = parameters_all$Throughfall,
-                             photosynthesis_as_input = FALSE,
-                             ecoevolutionary = TRUE,
-                             phydro = TRUE)
+smear_phydro <- CASSIA_cpp(weather = phydro,
+                           site = "Hyde",
+                           pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                           parameters = parameters_all$parameters_test,
+                           common = common_p,
+                           ratios = ratios_p,
+                           sperling = parameters_all$sperling_test,
+                           needle_mass_in = parameters_all$needle_mass_in,
+                           phydro_param = phydro_parameters_in,
+                           Throughfall = parameters_all$Throughfall,
+                           photosynthesis_as_input = FALSE,
+                           ecoevolutionary = TRUE,
+                           phydro = TRUE)
 
-  par(mfrow = c(3, 1))
-  plot(smear_preles$Preles$GPP, xlab = "Days since 2018-01-01", ylab = "Photosynthesis", col = "blue")
-  points(smear_phydro$Preles$GPP, col = "green")
+par(mfrow = c(3, 1))
+plot(smear_preles$Preles$GPP, xlab = "Days since 2018-01-01", ylab = "Photosynthesis", col = "blue")
+points(smear_phydro$Preles$GPP, col = "green")
 
-  plot(smear_preles$Growth$diameter_growth, xlab = "Days since 2018-01-01", ylab = "Diameter, kg C", col = "blue")
-  points(smear_phydro$Growth$diameter_growth, col = "green")
+plot(smear_preles$Growth$diameter_growth, xlab = "Days since 2018-01-01", ylab = "Diameter, kg C", col = "blue")
+points(smear_phydro$Growth$diameter_growth, col = "green")
 
-  plot(smear_preles$Growth$root_growth, xlab = "Days since 2018-01-01", ylab = "Root, kg C", col = "blue")
-  points(smear_phydro$Growth$root_growth, col = "green")
+plot(smear_preles$Growth$root_growth, xlab = "Days since 2018-01-01", ylab = "Root, kg C", col = "blue")
+points(smear_phydro$Growth$root_growth, col = "green")
 
 ```
 
