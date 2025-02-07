@@ -73,13 +73,12 @@ preles_par_r <- Rprebasso::PRELES(PAR = Ritika_2015_2018$PAR,
                                   CO2 = rep(410, nrow(Ritika_2015_2018)),
                                   fAPAR = CASSIA_preles$Preles$fAPAR)
 
-plot(date_sim_2015_2018, CASSIA_spp$Preles$GPP[CASSIA_spp$Growth$year %in% 2015:2018], col = "blue", ylab = "Photosynthesis", xlab = "Date", pch = "x")
+plot(date_sim_2015_2018, weather_original$P, col = "blue", ylab = "Photosynthesis", xlab = "Date", pch = "x")
 points(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x")
 points(date_sim_2015_2018, CASSIA_preles$Preles$GPP[CASSIA_preles$Growth$year %in% 2015:2018], col = "black", pch = "x")
 points(date_sim_2015_2018[-1461], preles_par_r$GPP, col = "red", pch = "x")
 legend("topleft", c("Preles Ritika, fAPAR in CASSIA", "SPP", "SMEAR", "Preles ER5"), 
        pch = "x", col = c("red", "blue", "green","black"), bty = "n", cex = 0.75)
-
 ```
 
 ## Biomass for initial conditions
@@ -137,68 +136,71 @@ CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
 ## Steady state CASSIA from 1997 to 2022
 
 ```{r}
-weather_preles_1997_2022 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 1997:2022,]
-weather_preles_1997_2022$fAPAR <- 0.9 # TODO: take away when I have found the problem
-parameters_1997_2022 <- initialize_parameters(calibration, new_parameters)
-parameters_1997_2022$parameters_test[c("h0"),c("Hyde")] <- 14
-parameters_1997_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416 # TODO: check units, but value from data
-parameters_1997_2022$sperling_test[c("sugar00"),c("Hyde")] <- 0.2
+weather_preles_1998_2022 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 1998:2022,]
+parameters_1998_2022 <- initialize_parameters(calibration, new_parameters)
+parameters_1998_2022$parameters_test[c("h0"),c("Hyde")] <- 14
+parameters_1998_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416 # TODO: check units, but value from data
+# parameters_1998_2022$sperling_test[c("sugar00"),c("Hyde")] <- 0.41
 
-date_1997_2022 <- seq(as.Date("1997-01-01"), as.Date("2022-12-31"), by = "day")
-CASSIA_preles_1997_2022 <- CASSIA_cpp(weather = weather_preles_1997_2022,
+date_1998_2022 <- seq(as.Date("1998-01-01"), as.Date("2022-12-31"), by = "day")
+CASSIA_preles_1998_2022 <- CASSIA_cpp(weather = weather_preles_1998_2022,
                                       site = "Hyde",
-                                      pPREL = c(parameters_1997_2022$pPREL, parameters_1997_2022$N_parameters),
-                                      parameters = parameters_1997_2022$parameters_test,
+                                      pPREL = c(parameters_1998_2022$pPREL, parameters_1998_2022$N_parameters),
+                                      parameters = parameters_1998_2022$parameters_test,
                                       common = common_p,
                                       ratios = ratios_p,
-                                      sperling = parameters_1997_2022$sperling_test,
-                                      needle_mass_in = parameters_1997_2022$needle_mass_in,
-                                      Throughfall = parameters_1997_2022$Throughfall,
+                                      sperling = parameters_1998_2022$sperling_test,
+                                      needle_mass_in = parameters_1998_2022$needle_mass_in,
+                                      Throughfall = parameters_1998_2022$Throughfall,
                                       photosynthesis_as_input = FALSE,
                                       preles = TRUE,
-                                      fAPAR_Tian = FALSE)
+                                      fAPAR_Tian = TRUE)
+
+plot(CASSIA_spp$Growth$height_growth_potential)
+points(CASSIA_preles_1998_2022$Growth$height_growth_potential, col = "blue")
+
 # GPP
 plot(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x", main = "GPP", xlab = "Dates", ylab = "GPP")
-points(date_1997_2022, CASSIA_preles_1997_2022$Preles$GPP, col = "black", pch = "x")
+points(date_1998_2022, CASSIA_preles_1998_2022$Preles$GPP, col = "black", pch = "x")
 
 # Sugar
-plot_sugar_starch_comparison(CASSIA_preles_1997_2022, date_1997_2022, loaded_data$original_data, loaded_data$yu_data)
+plot_sugar_starch_comparison(CASSIA_preles_1998_2022, date_1998_2022, loaded_data$original_data, loaded_data$yu_data)
 
 # Height
 # TODO: is the updated height used anywhere?
 # TODO: what time of year are the measurements taken?
-ylim = range(CASSIA_preles_1997_2022$Culm_Growth$culm_growth_height, height_cl_df$amount, height_df$amount)
-plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$culm_growth_height, col = "black", pch = "x", main = "Height", xlab = "Dates", ylab = "Height", ylim = ylim)
-points(as.Date(paste0(height_df$date, "-05-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
-points(as.Date(paste0(height_cl_df$date, "-05-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+20)
+ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height, height_cl_df$amount, height_df$amount)
+plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height, col = "black", pch = "x", main = "Height", xlab = "Dates", ylab = "Height", ylim = ylim)
+points(as.Date(paste0(height_df$date, "-12-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
+points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+16)
 legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(height_cl_df$variable))), 
-       pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+20)), 
+       pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+16)), 
        bty = "n", ncol = 2, title = "Measurement Desciption", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
 # Diameter
 # TODO: is the updated height used anywhere?
 # TODO: what time of year are the measurements taken?
-ylim = range(CASSIA_preles_1997_2022$Culm_Growth$culm_growth_diameter, 0.01*diameter_df$amount)
-plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter", ylim = ylim)
-points(as.Date(paste0(diameter_df$date, "-05-31")), 0.01 * diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
-legend("bottomright", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green")
+ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, 0.01*diameter_df$amount)
+plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter", ylim = ylim)
+points(as.Date(paste0(diameter_df$date, "-12-31")), 0.01 * diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
+legend("bottomright", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
 
 # LAI
 # TODO: is the updated height used anywhere?
 # TODO: what time of year are the measurements taken?
-ylim = range(CASSIA_preles_1997_2022$Culm_Growth$LAI, LAI_df$amount)
-plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$LAI, col = "black", pch = "x", main = "LAI", xlab = "Dates", ylab = "LAI", ylim = ylim)
-points(as.Date(paste0(LAI_df$date, "-05-31")), LAI_df$amount, col = "green", pch = as.numeric(as.factor(LAI_df$variable))+16)
-legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(as.numeric(as.factor(LAI_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green")
+ylim = range(CASSIA_preles_1998_2022$Culm_Growth$LAI, LAI_df$amount)
+plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$LAI, col = "black", pch = "x", main = "LAI", xlab = "Dates", ylab = "LAI", ylim = ylim)
+points(as.Date(paste0(LAI_df$date, "-12-31")), LAI_df$amount, col = "green", pch = as.numeric(as.factor(LAI_df$variable))+16)
+legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(as.numeric(as.factor(LAI_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
 
 # Needles
 # TODO: is the updated height used anywhere?
 # TODO: what time of year are the measurements taken?
 # TODO: What is this actually comparing?
-ylim = range(CASSIA_preles_1997_2022$Culm_Growth$culm_growth_needles, foliage_biomass_df$amount)
-plot(date_1997_2022, CASSIA_preles_1997_2022$Culm_Growth$culm_growth_needles, col = "black", pch = "x", main = "Foliage Biomass", xlab = "Dates", ylab = "Foliage Biomass", ylim = ylim)
-points(as.Date(paste0(foliage_biomass_df$date, "-05-31")), foliage_biomass_df$amount, col = "green", pch = as.numeric(as.factor(foliage_biomass_df$variable))+16)
-legend("bottomright", legend = unique(as.factor(foliage_biomass_df$variable)), pch = unique(as.numeric(as.factor(foliage_biomass_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green")
+ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, foliage_biomass_df$amount)
+plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, col = "black", pch = "x", main = "Foliage Biomass", xlab = "Dates", ylab = "Foliage Biomass", ylim = ylim)
+points(as.Date(paste0(foliage_biomass_df$date, "-12-31")), foliage_biomass_df$amount, col = "green", pch = as.numeric(as.factor(foliage_biomass_df$variable))+16)
+legend("bottomleft", legend = unique(as.factor(foliage_biomass_df$variable)), pch = unique(as.numeric(as.factor(foliage_biomass_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
 
 ```
 
@@ -223,7 +225,7 @@ weather_preles_2015_2018 <- weather_preles[weather_preles$date %in% date_2015_20
 CASSIA_preles_2015_2018 <- CASSIA_cpp(weather = weather_preles_2015_2018,
                                       site = "Hyde",
                                       pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                      parameters = parameters_1997_2022$parameters_test,
+                                      parameters = parameters_1998_2022$parameters_test,
                                       common = common_p,
                                       ratios = ratios_p,
                                       sperling = parameters_all$sperling_test,
@@ -244,7 +246,7 @@ weather_preles_2015_2018_high_fAPAR$fAPAR <- 1
 CASSIA_preles_2015_2018 <- CASSIA_cpp(weather = weather_preles_2015_2018_high_fAPAR,
                                       site = "Hyde",
                                       pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                      parameters = parameters_1997_2022$parameters_test,
+                                      parameters = parameters_1998_2022$parameters_test,
                                       common = common_p,
                                       ratios = ratios_p,
                                       sperling = parameters_all$sperling_test,
