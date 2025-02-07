@@ -145,7 +145,7 @@ carbo_balance sugar_model(int year,
 
       carbo_tracker Kd;
       carbo_tracker Ks;
-      // std::cout << " starch.B " << starch.B;
+
       Kd.needles = parameters_in.Ad.needles*std::exp(starch.B*TAir);
       Ks.needles = parameters_in.As.needles*std::exp(sugar.B*TAir);
       Kd.phloem = parameters_in.Ad.phloem*std::exp(starch.B*TAir);
