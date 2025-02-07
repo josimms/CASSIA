@@ -412,8 +412,8 @@ carbo_balance sugar_model(int year,
     double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch;
     double myco_allocation;
     if (day == 0) {
-      sugar_all = 0.4184208;
-      starch_all = parameters.starch00;
+      sugar_all = parameters.sugar0;
+      starch_all = parameters.starch0;
       to_sugar = 0;
       to_starch = 0;
       storage = storage_term.respiration = 1;
@@ -439,12 +439,12 @@ carbo_balance sugar_model(int year,
         (1 + common.Rg_N) * storage * pot_growth.bud -
         myco_allocation;
 
-      if (sugar_all < 0.41) {
-        to_sugar = std::min(starch.needles, (0.41 - sugar_all) / 2.0);
+      if (sugar_all < parameters.sugar00) {
+        to_sugar = std::min(starch.needles, (parameters.sugar00 - sugar_all) / 2.0);
         to_starch = 0;
-      } else if (sugar_all > 0.41) {
+      } else if (sugar_all > parameters.sugar00) {
         to_sugar = 0;
-        to_starch = (sugar_all - 0.41) / 2.0;
+        to_starch = (sugar_all - parameters.sugar00) / 2.0;
       } else {
         to_sugar = 0;
         to_starch = 0;
