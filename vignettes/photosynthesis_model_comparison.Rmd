@@ -137,29 +137,32 @@ CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
 ## Steady state CASSIA from 1997 to 2022
 
 ```{r}
-
 weather_preles_1997_2022 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 1997:2022,]
+weather_preles_1997_2022$fAPAR <- 0.9 # TODO: take away when I have found the problem
 parameters_1997_2022 <- initialize_parameters(calibration, new_parameters)
 parameters_1997_2022$parameters_test[c("h0"),c("Hyde")] <- 14
 parameters_1997_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416 # TODO: check units, but value from data
-parameters_1997_2022$parameters_test[c("sugar0"),c("Hyde")] <- 0.41
+parameters_1997_2022$sperling_test[c("sugar0"),c("Hyde")] <- 0.2
 
 date_1997_2022 <- seq(as.Date("1997-01-01"), as.Date("2022-12-31"), by = "day")
 CASSIA_preles_1997_2022 <- CASSIA_cpp(weather = weather_preles_1997_2022,
                                       site = "Hyde",
-                                      pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                      pPREL = c(parameters_1997_2022$pPREL, parameters_1997_2022$N_parameters),
                                       parameters = parameters_1997_2022$parameters_test,
                                       common = common_p,
                                       ratios = ratios_p,
-                                      sperling = parameters_all$sperling_test,
-                                      needle_mass_in = parameters_all$needle_mass_in,
-                                      Throughfall = parameters_all$Throughfall,
+                                      sperling = parameters_1997_2022$sperling_test,
+                                      needle_mass_in = parameters_1997_2022$needle_mass_in,
+                                      Throughfall = parameters_1997_2022$Throughfall,
                                       photosynthesis_as_input = FALSE,
                                       preles = TRUE,
-                                      fAPAR_Tian = TRUE)
+                                      fAPAR_Tian = FALSE)
 # GPP
 plot(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x", main = "GPP", xlab = "Dates", ylab = "GPP")
 points(date_1997_2022, CASSIA_preles_1997_2022$Preles$GPP, col = "black", pch = "x")
+
+# Sugar
+plot_sugar_starch_comparison(CASSIA_preles_1997_2022, date_1997_2022, loaded_data$original_data, loaded_data$yu_data)
 
 # Height
 # TODO: is the updated height used anywhere?
