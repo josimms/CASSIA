@@ -293,16 +293,6 @@ Rcpp::List CASSIA_yearly(int start_year,
         std::cout << "There is no photosynthesis model chosen!\n";
       }
 
-      if (day == 0) {
-        GPP_sum = 0.0;
-      } else if (day <= 182) {
-        GPP_sum = GPP_sum_yesterday;
-      } else if (day > 182 && day <= 244) {
-        GPP_sum = GPP_sum_yesterday + photosynthesis.GPP;
-      } else if (day > 245) {
-        GPP_sum = GPP_sum_yesterday;
-      }
-
       /*
        * Potential Growth
        *
@@ -501,8 +491,8 @@ Rcpp::List CASSIA_yearly(int start_year,
     if (final_year%2==0) {
       days_gone = days_gone + days_per_year;
 
-      GPP_mean = 463.8833; // TODO: should change this!
-      GPP_previous_sum.push_back(GPP_sum);
+      GPP_previous_sum.push_back(std::accumulate(photosynthesis_output.GPP.begin() + 182, photosynthesis_output.GPP.begin() + 245 + 1, 0.0));
+      std::cout << " GPP_previous_sum " << GPP_previous_sum[year-start_year] << "\n";
 
       last_cohorts.year_1 = needles_cohorts.year_1; // TODO: currently the growth doesn't really have an effect on this - should it?
       last_cohorts.year_2 = needles_cohorts.year_2;

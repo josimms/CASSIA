@@ -108,8 +108,9 @@ growth_out growth(int day,
   }
   double LH = parameters.LH0 * ratio.height_growth_coefficient;
   if (LH_estim) {
-    LH = LH * GPP_previous_sum / GPP_mean;
+    LH = LH * GPP_previous_sum / parameters.GPP_mean;
   }
+  std::cout << " GPP_previous_sum " << GPP_previous_sum;
   if (tests) {
     if ( year== 2016) {
       LH = 37.70821;
@@ -120,6 +121,7 @@ growth_out growth(int day,
     }
   }
   GH = g_sH * fH * LH;
+  std::cout << " LH " << LH << "\n";
   height_pot_growth = 0.02405282 * 200.0 * GH / 1000.0 * ratio.form_factor;
 
   if (day == 0) {
