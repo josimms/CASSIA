@@ -262,7 +262,6 @@ Rcpp::List CASSIA_yearly(int start_year,
         ET = photosynthesis.ET = 0.0;
         SoilWater = photosynthesis.SoilWater = 0.0;
         photosynthesis_per_stem = climate.Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
-
         if (final_year%2!=0) {
           photosynthesis_output.GPP.push_back(photosynthesis.GPP);
           photosynthesis_output.ET.push_back(photosynthesis.ET);
@@ -288,11 +287,11 @@ Rcpp::List CASSIA_yearly(int start_year,
           GPP = photosynthesis_output.GPP[day];
           ET = photosynthesis_output.ET[day];
           SoilWater = photosynthesis_output.SoilWater[day];
+          photosynthesis_per_stem = GPP / 1010 * 10000/1000;
         }
       } else {
         std::cout << "There is no photosynthesis model chosen!\n";
       }
-
 
       if (day == 0) {
         GPP_sum = 0.0;
