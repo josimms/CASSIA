@@ -569,7 +569,8 @@ Rcpp::List CASSIA_yearly(int start_year,
   Rcpp::DataFrame df4 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height,
                                                 Rcpp::_["culm_growth_roots"] = culm_growth.roots,
                                                 Rcpp::_["culm_growth_needles"] = culm_growth.needles,
-                                                Rcpp::_["culm_growth_diameter"] = culm_growth.diameter);
+                                                Rcpp::_["culm_growth_diameter"] = culm_growth.diameter,
+                                                Rcpp::_["LAI"] = 3); // TODO: add LAI here!
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,
