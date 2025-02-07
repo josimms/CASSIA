@@ -270,6 +270,10 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
   out.stem_no = temp124[0];
   std::vector<double> temp125 = input_parameters["diameter_start_day"];
   out.diameter_start_day = temp125[0];
+  std::vector<double> temp126 = input_parameters["GPP_mean"];
+  out.GPP_mean = temp126[0];
+  std::vector<double> temp127 = input_parameters["GPP_initial"];
+  out.GPP_initial = temp127[0];
   return out;
 }
 

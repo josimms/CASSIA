@@ -103,7 +103,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   double last_year_maxN;
   double GPP_mean;
   std::vector<double> GPP_previous_sum;
-  GPP_previous_sum.push_back(481.3); // TODO; make this a variable input, rather than this 2015 value
+  GPP_previous_sum.push_back(parameters.GPP_initial);
   double respiration_maintanence;
   std::vector<double> potenital_growth_use;
 

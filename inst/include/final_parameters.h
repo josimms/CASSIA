@@ -133,6 +133,8 @@ struct CASSIA_parameters {
   double stem_no;
   double m_R_tot;
   double diameter_start_day;
+  double GPP_mean;
+  double GPP_initial;
 };
 
 struct CASSIA_common {
