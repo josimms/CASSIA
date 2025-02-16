@@ -378,7 +378,6 @@ Rcpp::List CASSIA_yearly(int start_year,
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
 
-
       /*
        * Culmative growwth
        */
@@ -387,18 +386,18 @@ Rcpp::List CASSIA_yearly(int start_year,
         if (day == 0) {
           if (year == start_year) {
             culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
-            culm_growth_internal.diameter.push_back(diameter_next_year + actual_growth_out.diameter);
+            culm_growth_internal.diameter.push_back(1000 * diameter_next_year + ring_width.tot_mm);
             culm_growth_internal.roots.push_back(roots_next_year + actual_growth_out.roots);
             culm_growth_internal.needles.push_back(needles_next_year + actual_growth_out.needles);
           } else {
             culm_growth_internal.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
-            culm_growth_internal.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+            culm_growth_internal.diameter.push_back(culm_growth.diameter[weather_index-1] + ring_width.tot_mm);
             culm_growth_internal.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
             culm_growth_internal.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
           }
         } else {
           culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
-          culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + actual_growth_out.diameter);
+          culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + ring_width.tot_mm);
           culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + actual_growth_out.roots);
           culm_growth_internal.needles.push_back(culm_growth_internal.needles[weather_index-1] + actual_growth_out.needles);
         }
@@ -406,18 +405,18 @@ Rcpp::List CASSIA_yearly(int start_year,
         if (day == 0) {
           if (year == start_year) {
             culm_growth.height.push_back(height_next_year + actual_growth_out.height);
-            culm_growth.diameter.push_back(diameter_next_year + actual_growth_out.diameter);
+            culm_growth.diameter.push_back(1000 * diameter_next_year + ring_width.tot_mm);
             culm_growth.roots.push_back(roots_next_year + actual_growth_out.roots);
             culm_growth.needles.push_back(needles_next_year + actual_growth_out.needles);
           } else {
             culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
-            culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+            culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + ring_width.tot_mm);
             culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
             culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
           }
         } else {
           culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
-          culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
+          culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + ring_width.tot_mm);
           culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
           culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
         }
@@ -469,6 +468,8 @@ Rcpp::List CASSIA_yearly(int start_year,
           sugar_values_for_next_iteration.starch.xylem_sh +
           sugar_values_for_next_iteration.starch.xylem_st +
           sugar_values_for_next_iteration.starch.roots);
+        sugar_values_output.storage.push_back(sugar_values_for_next_iteration.storage.needles); // TODO: although this works for Pauliina's model at the moment, need for each organ
+
         sugar_values_output.starch_needles.push_back(sugar_values_for_next_iteration.starch.needles);
         sugar_values_output.starch_phloem.push_back(sugar_values_for_next_iteration.starch.phloem);
         sugar_values_output.starch_xylem_sh.push_back(sugar_values_for_next_iteration.starch.xylem_sh);
@@ -489,10 +490,10 @@ Rcpp::List CASSIA_yearly(int start_year,
     last_year_HH = HH;
 
     if (final_year%2==0) {
-      days_gone = days_gone + days_per_year;
-
-      GPP_previous_sum.push_back(std::accumulate(photosynthesis_output.GPP.begin() + 182, photosynthesis_output.GPP.begin() + 245 + 1, 0.0));
+      GPP_previous_sum.push_back(std::accumulate(photosynthesis_output.GPP.begin() + days_gone + 182, photosynthesis_output.GPP.begin() + days_gone + 245 + 1, 0.0));
       std::cout << " GPP_previous_sum " << GPP_previous_sum[year-start_year] << "\n";
+
+      days_gone = days_gone + days_per_year;
 
       last_cohorts.year_1 = needles_cohorts.year_1; // TODO: currently the growth doesn't really have an effect on this - should it?
       last_cohorts.year_2 = needles_cohorts.year_2;
@@ -553,6 +554,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["sugar_xylem_st"] = sugar_values_output.sugar_xylem_st,
                                                 Rcpp::_["sugar_roots"] = sugar_values_output.sugar_roots,
                                                 Rcpp::_["sugar_mycorrhiza"] = sugar_values_output.sugar_mycorrhiza,
+                                                Rcpp::_["storage_term"] = sugar_values_output.storage,
                                                 Rcpp::_["n_E_pot"] = growth_values_for_next_iteration.n_E_pot,
                                                 Rcpp::_["n_W_pot"] = growth_values_for_next_iteration.n_W_pot,
                                                 Rcpp::_["n_M_pot"] = growth_values_for_next_iteration.n_M_pot);
