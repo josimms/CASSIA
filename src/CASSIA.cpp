@@ -418,7 +418,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         } else {
           culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
           culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + actual_growth_out.diameter);
-          culm_growth.roots.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
+          culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + actual_growth_out.roots);
           culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
         }
       }
