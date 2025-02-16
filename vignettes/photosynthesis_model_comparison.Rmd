@@ -159,10 +159,21 @@ CASSIA_preles_1998_2022 <- CASSIA_cpp(weather = weather_preles_1998_2022,
                                       preles = TRUE,
                                       fAPAR_Tian = TRUE)
 
-plot(CASSIA_spp$Growth$height_growth_potential)
-points(CASSIA_preles_1998_2022$Growth$height_growth_potential, col = "blue")
+par(mfrow = c(2, 2))
+plot(date_sim_2015_2018, CASSIA_spp$Growth$height_growth, xlab = "Date", ylab = "Height")
+points(date_1998_2022, CASSIA_preles_1998_2022$Growth$height_growth, col = "blue")
+
+plot(date_sim_2015_2018, CASSIA_spp$Growth$diameter_growth, xlab = "Date", ylab = "Diameter")
+points(date_1998_2022, CASSIA_preles_1998_2022$Growth$diameter_growth, col = "blue")
+
+plot(date_sim_2015_2018, CASSIA_spp$Growth$needle_growth, xlab = "Date", ylab = "Needles")
+points(date_1998_2022, CASSIA_preles_1998_2022$Growth$needle_growth, col = "blue")
+
+plot(date_sim_2015_2018, CASSIA_spp$Growth$root_growth, xlab = "Date", ylab = "Roots")
+points(date_1998_2022, CASSIA_preles_1998_2022$Growth$root_growth, col = "blue")
 
 # GPP
+par(mfrow = c(1, 1))
 plot(as.Date(smear$Date), smear$GPP_mean, col = "green", pch = "x", main = "GPP", xlab = "Dates", ylab = "GPP")
 points(date_1998_2022, CASSIA_preles_1998_2022$Preles$GPP, col = "black", pch = "x")
 
@@ -174,6 +185,7 @@ plot_sugar_starch_comparison(CASSIA_preles_1998_2022, date_1998_2022, loaded_dat
 # TODO: what time of year are the measurements taken?
 ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height, height_cl_df$amount, height_df$amount)
 plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height, col = "black", pch = "x", main = "Height", xlab = "Dates", ylab = "Height", ylim = ylim)
+lines(date_1998_2022, 12 + cumsum(CASSIA_preles_1998_2022$Growth$height_growth), col = "yellow")
 points(as.Date(paste0(height_df$date, "-12-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
 points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+16)
 legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(height_cl_df$variable))), 
@@ -185,8 +197,16 @@ legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(hei
 # TODO: what time of year are the measurements taken?
 ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, 0.01*diameter_df$amount)
 plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter", ylim = ylim)
+lines(date_1998_2022, cumsum(CASSIA_preles_1998_2022$Growth$diameter_growth), col = "yellow")
 points(as.Date(paste0(diameter_df$date, "-12-31")), 0.01 * diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
 legend("bottomright", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
+
+ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots)
+plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots, col = "black", pch = "x", main = "Roots", xlab = "Dates", ylab = "Roots", ylim = ylim)
+lines(date_1998_2022, 12 + cumsum(CASSIA_preles_1998_2022$Growth$root_growth), col = "yellow") # TODO: not sure about the 12
+# TODO: data
+# points(as.Date(paste0(LAI_df$date, "-12-31")), LAI_df$amount, col = "green", pch = as.numeric(as.factor(LAI_df$variable))+16)
+# legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(as.numeric(as.factor(LAI_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
 
 # LAI
 # TODO: is the updated height used anywhere?
@@ -200,8 +220,9 @@ legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(
 # TODO: is the updated height used anywhere?
 # TODO: what time of year are the measurements taken?
 # TODO: What is this actually comparing?
-ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, foliage_biomass_df$amount)
-plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, col = "black", pch = "x", main = "Foliage Biomass", xlab = "Dates", ylab = "Foliage Biomass", ylim = ylim)
+ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, foliage_biomass_df$amount, cumsum(CASSIA_preles_1998_2022$Growth$needle_growth))
+plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, col = "black", pch = "x", main = "Foliage Biomass", xlab = "Dates", ylab = "Foliage Biomass")
+lines(date_1998_2022, 4.5 + cumsum(CASSIA_preles_1998_2022$Growth$needle_growth), col = "yellow") # TODO: not sure about the 12
 points(as.Date(paste0(foliage_biomass_df$date, "-12-31")), foliage_biomass_df$amount, col = "green", pch = as.numeric(as.factor(foliage_biomass_df$variable))+16)
 legend("bottomleft", legend = unique(as.factor(foliage_biomass_df$variable)), pch = unique(as.numeric(as.factor(foliage_biomass_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
 
