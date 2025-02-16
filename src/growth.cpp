@@ -110,7 +110,6 @@ growth_out growth(int day,
   if (LH_estim) {
     LH = LH * GPP_previous_sum / parameters.GPP_mean;
   }
-  std::cout << " GPP_previous_sum " << GPP_previous_sum;
   if (tests) {
     if ( year== 2016) {
       LH = 37.70821;
@@ -121,7 +120,6 @@ growth_out growth(int day,
     }
   }
   GH = g_sH * fH * LH;
-  std::cout << " LH " << LH << "\n";
   height_pot_growth = 0.02405282 * 200.0 * GH / 1000.0 * ratio.form_factor;
 
   if (day == 0) {
@@ -146,7 +144,7 @@ growth_out growth(int day,
   }
   double LN = parameters.LN0;
   if (LN_estim) {
-    LN = parameters.LN0 * GPP_previous_sum / GPP_mean;
+    LN = parameters.LN0 * GPP_previous_sum / parameters.GPP_mean;
   }
   if (tests) {
     if ( year== 2016) {
@@ -159,7 +157,7 @@ growth_out growth(int day,
   }
   GN = g * fN * LN;
 
-  double cumsum_GN = growth_previous.GN + GN;
+  double cumsum_GN = growth_previous.GN + GN; // TODO: should be initalised properly, but currently really really small values
   double HN = parameters.HN0 + cumsum_GN;
 
   needle_pot_growth = common.m_N * GN * last_year_HH / parameters.h_increment;
