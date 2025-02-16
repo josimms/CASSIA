@@ -192,6 +192,7 @@ struct sugar_values_vector
 {
   std::vector<double> sugar;
   std::vector<double> starch;
+  std::vector<double> storage;
   std::vector<double> starch_needles;
   std::vector<double> starch_phloem;
   std::vector<double> starch_xylem_sh;
@@ -204,6 +205,12 @@ struct sugar_values_vector
   std::vector<double> sugar_xylem_st;
   std::vector<double> sugar_roots;
   std::vector<double> sugar_mycorrhiza;
+  std::vector<double> storage_needles;
+  std::vector<double> storage_phloem;
+  std::vector<double> storage_xylem_sh;
+  std::vector<double> storage_xylem_st;
+  std::vector<double> storage_roots;
+  std::vector<double> storage_mycorrhiza;
 };
 
 /*
