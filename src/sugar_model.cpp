@@ -408,7 +408,7 @@ carbo_balance sugar_model(int year,
     sB0 = parameters.sB0;
 
     // Model
-    double ak = 1 / (1 - 1/exp(parameters.alfa * (0.7430989 - parameters.Wala)));
+    double ak = 1 / (1 - 1/exp(parameters.alfa * (parameters.sugar00 + parameters.starch00 - parameters.Wala)));
     double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch;
     double myco_allocation;
     if (day == 0) {
