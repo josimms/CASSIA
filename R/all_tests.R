@@ -177,6 +177,8 @@ initialize_parameters <- function(calibration = FALSE, new_parameters = NULL) {
 
   parameters_test <- parameters_p
   parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"), 1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
+  parameters_test[c("GPP_mean", "GPP_initial"), 1] <- c(463.8833, 481.3) # TODO: correct value
+
   sperling_test <- sperling_p
   sperling_test[c("tau.s", "tau.t"), 1] <- c(3, 3)
   sperling_test[c("k_np", "k_pr", "k_pxsh", "k_pxst"), 1] <- c(100, 100, 100, 100)
