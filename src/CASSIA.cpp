@@ -491,7 +491,6 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     if (final_year%2==0) {
       GPP_previous_sum.push_back(std::accumulate(photosynthesis_output.GPP.begin() + days_gone + 182, photosynthesis_output.GPP.begin() + days_gone + 245 + 1, 0.0));
-      std::cout << " GPP_previous_sum " << GPP_previous_sum[year-start_year] << "\n";
 
       days_gone = days_gone + days_per_year;
 
