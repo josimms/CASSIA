@@ -431,4 +431,6 @@ lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_
 plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Culm_Growth$culm_growth_diameter, type = "l", col = "blue", ylab = "Diameter", xlab = "Dates")
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Culm_Growth$culm_growth_diameter, col = "gold")
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_diameter, col = "red")
+
+legend("topleft", c("High", "Medium", "Low"), col = c("blue", "gold", "red"), lty = 1, bty = "n")
 ```
