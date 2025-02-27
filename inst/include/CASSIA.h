@@ -541,3 +541,15 @@ struct weather_all {
 weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool preles, bool phydro);
 
 #endif
+
+/*
+ * Initalise
+ */
+
+growth_values_out growth_values_out_init();
+
+ring_width_out ring_width_out_init();
+
+carbo_tracker carbo_tracker_init();
+
+carbo_balance carbo_balance_init();
