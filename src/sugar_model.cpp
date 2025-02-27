@@ -17,16 +17,16 @@ double storage_update(double alfa, double sugar, double starch, double Wala, boo
   // The checks here make sense, as the model should compensate for the sugar lost at the end of each iteration rather than the beginning
   // Therefore, there should always be a positive value of sugar at the beginning of an iteration (and hopefully generally)
   if (std::isnan(sugar)) {
-    std::cout << "Sugar is NaN ";
+    // std::cout << "Sugar is NaN ";
     out = 0;
   } else if (std::isnan(starch)) {
-    std::cout << "Starch is NaN ";
+    // std::cout << "Starch is NaN ";
     out = 0;
   } else if (sugar < 0) {
-    std::cout << "Sugar is negative ";
+    // std::cout << "Sugar is negative ";
     out = 0;
   } else if (starch < 0) {
-    std::cout << "Starch is negative ";
+    // std::cout << "Starch is negative ";
     out = 0;
   } else if (!tree_alive) {
     out = 0;
