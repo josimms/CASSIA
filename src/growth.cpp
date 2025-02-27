@@ -203,7 +203,6 @@ growth_out growth(int day,
   double LD = parameters.LD0 * ratio.diameter_growth_coefficient;
   double S_GPP, dS_GPP, S_GPP_ref, dS_GPP_ref;
   if (LD_estim) {
-    LD = parameters.LD0 * ratio.diameter_growth_coefficient;
     if (day == 0) {
       S_GPP = 0.0;
       S_GPP_ref = 0.0;
@@ -211,11 +210,15 @@ growth_out growth(int day,
       S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
       S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
     }
+    std::cout << " growth_previous.S_GPP " << growth_previous.S_GPP_ref << " growth_previous.dS_GPP " << growth_previous.dS_GPP_ref;
+    std::cout << " growth_previous.S_GPP_ref " << growth_previous.S_GPP_ref << " growth_previous.dS_GPP_ref " << growth_previous.dS_GPP_ref;
     dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
     dS_GPP_ref = (GPP_ref - S_GPP_ref) / parameters.tau_GPP;
+    std::cout << " S_GPP " << S_GPP << " S_GPP_ref " << S_GPP_ref << std::endl;
+    std::cout << " dS_GPP " << dS_GPP << " dS_GPP_ref " << dS_GPP_ref << std::endl;
 
     // Daily LD depends on the GPP of five previous days:
-    if (day > 78) {
+    if (day > 78) { // TODO: hard coded! Should this be parameter diameter start day?
       LD = parameters.LD0 * ratio.diameter_growth_coefficient * S_GPP / S_GPP_ref;
     }
   }
@@ -317,7 +320,7 @@ growth_out growth(int day,
 
     gR_fib = -0.84 + 0.13 * TSoil_A - 0.44 + 2.11 * Soil_Moisture;              // growth of fibrous roots from Ding et al. 2019 (model 5)
     if (gR_fib < 0) {gR_fib = 0;}
-    gR_pio = -0.84 + 0.13 * TSoil_B + 0.32 -0.16 + 0.78 * Soil_Moisture;       // growth of pioneer roots from Ding et al. 2019 (model 5)
+    gR_pio = -0.84 + 0.13 * TSoil_B + 0.32 - 0.16 + 0.78 * Soil_Moisture;       // growth of pioneer roots from Ding et al. 2019 (model 5)
     if (gR_pio < 0) {gR_pio = 0;}
     gR = fib_coef * gR_fib + gR_pio;                                    // if fib_coef = 1 this leads in year 2018 to 37 % fibrous roots of all roots
     LR = 0.0049 * 1.0 / (0.37 * fib_coef + 0.63);                  // if fib_coef = 1 this leads to (roughly and on average) same total root growth as original. If fib_coef is changed, L is changed accordingly
