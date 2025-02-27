@@ -79,13 +79,15 @@ Rcpp::List CASSIA_yearly(int start_year,
    * Vectors between iterations
    */
 
-  growth_values_out growth_values_for_next_iteration;
-  carbo_balance sugar_values_for_next_iteration;
-  ring_width_out previous_ring_width;
+  // TODO: initalise
+  growth_values_out growth_values_for_next_iteration = growth_values_out_init();
+  carbo_balance sugar_values_for_next_iteration = carbo_balance_init();
+  ring_width_out previous_ring_width = ring_width_out_init();
 
   double height_next_year = parameters.h0;
   double roots_next_year = 15;
   double needles_next_year = repola_values.needle_mass;
+  std::cout << " parameters.D0 " << parameters.D0 << "\n";
   double diameter_next_year = parameters.D0;
 
   /*
@@ -152,9 +154,9 @@ Rcpp::List CASSIA_yearly(int start_year,
 
 
     // B0, D00 and h00
-    double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
-    double D00 = parameters.D0;
-    double h00 = parameters.h0;
+    double B0 = M_PI/4.0 * pow(parameters.D0, 2.0); // TODO: B0 is the start of Bud burst right?
+    double D00 = parameters.D0; // Used to make the storage things in CASSIA
+    double h00 = parameters.h0; // TODO: this has never been used
     if (boolsettings.xylogensis_option) {
       double LH0 = parameters.h_increment / (0.5 * parameters.sHc);
       double LN0 = parameters.n_length / (0.5 * parameters.sNc); // TODO: check the 2.64 which is in CASSIA_soil
@@ -241,6 +243,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
         double LAI = 3; // TODO
         double f_modifer = needles_last/growth_values_for_next_iteration.max_N;
+        std::cout << " growth_values_for_next_iteration.max_N " << growth_values_for_next_iteration.max_N;
         double LAI_within_year;
         if (day < 182) { // TODO: I decided that the start of July is the end of spring
           LAI_within_year = 2.0/3.0*LAI + f_modifer*1.0/3.0*LAI;
@@ -361,7 +364,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        * Actual growth
        */
 
-      double n_rows = ratios.form_factor * parameters.h0 / parameters.cell_l_ew * M_PI * parameters.D0 / parameters.cell_d_ew;
+      double n_rows = ratios.form_factor * parameters.h0 / parameters.cell_l_ew * M_PI * parameters.D0 / parameters.cell_d_ew; // TODO: not used anywhere
       // double GD = // g_sD_T *fD * LD; TODO: where do the parameters come from?
       double ew_cells_vector; // TODO: where does this come from?
       double lw_cells_vector;
@@ -386,7 +389,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         if (day == 0) {
           if (year == start_year) {
             culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
-            culm_growth_internal.diameter.push_back(1000 * diameter_next_year + ring_width.tot_mm);
+            culm_growth_internal.diameter.push_back(diameter_next_year + ring_width.tot_mm);
             culm_growth_internal.roots.push_back(roots_next_year + actual_growth_out.roots);
             culm_growth_internal.needles.push_back(needles_next_year + actual_growth_out.needles);
           } else {
@@ -398,14 +401,14 @@ Rcpp::List CASSIA_yearly(int start_year,
         } else {
           culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
           culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + ring_width.tot_mm);
-          culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + actual_growth_out.roots);
+          culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + actual_growth_out.roots - actual_growth_out.roots / parameters.root_lifetime);
           culm_growth_internal.needles.push_back(culm_growth_internal.needles[weather_index-1] + actual_growth_out.needles);
         }
       } else {
         if (day == 0) {
           if (year == start_year) {
             culm_growth.height.push_back(height_next_year + actual_growth_out.height);
-            culm_growth.diameter.push_back(1000 * diameter_next_year + ring_width.tot_mm);
+            culm_growth.diameter.push_back(diameter_next_year + ring_width.tot_mm);
             culm_growth.roots.push_back(roots_next_year + actual_growth_out.roots);
             culm_growth.needles.push_back(needles_next_year + actual_growth_out.needles);
           } else {
