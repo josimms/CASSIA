@@ -198,9 +198,9 @@ legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(hei
 # Diameter
 # TODO: is the updated height used anywhere?
 # TODO: what time of year are the measurements taken?
-ylim = range(141.6 - 0.1416 + CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, 10 *diameter_df$amount)
-plot(date_1998_2022, 141.6 - 0.1416 + CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter", ylim = ylim)
-points(as.Date(paste0(diameter_df$date, "-12-31")), 10 * diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
+ylim = range(0.1 * CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, 0.01 * diameter_df$amount)
+plot(date_1998_2022, 0.1 * CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter", ylim = ylim)
+points(as.Date(paste0(diameter_df$date, "-12-31")), 0.01 * diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
 legend("topleft", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
 
 ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots)
