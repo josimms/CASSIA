@@ -349,7 +349,7 @@ CASSIA_preles_1998_2022_sugar_medium <- CASSIA_cpp(weather = weather_preles_1998
                                                 preles = TRUE,
                                                 fAPAR_Tian = TRUE)
 
-parameters_1998_2022$sperling_test[c(""), c()]
+# TOOD: new parameters! 
 
 CASSIA_preles_1998_2022_sugar_mine <- CASSIA_cpp(weather = weather_preles_1998_2022,
                                                 site = "Hyde",
@@ -440,12 +440,14 @@ points(as.Date(paste0(height_df$date, "-12-31")), height_df$amount, col = "green
 points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+16)
 legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(height_cl_df$variable))), 
        pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+16)), 
-       bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
+       bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.5)
+legend("bottomright", c("High", "Medium", "Low", "My Model"), col = c("blue", "gold", "red", "green"), lty = 1, bty = "n", cex = 0.75)
 
 plot(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_diameter, type = "l", col = "red", ylab = "Diameter", xlab = "Dates")
 lines(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_medium$Culm_Growth$culm_growth_diameter, col = "gold")
 lines(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_mine$Culm_Growth$culm_growth_diameter, col = "green")
 lines(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_high$Culm_Growth$culm_growth_diameter, col = "blue")
 points(as.Date(paste0(diameter_df$date, "-12-31")), diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
-legend("bottomright", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, col = "green", cex = 0.75)
+legend("bottomright", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, col = "green", cex = 0.5)
+
 ```
