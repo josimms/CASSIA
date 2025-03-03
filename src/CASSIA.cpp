@@ -132,7 +132,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   int days_gone = 0;
 
   double LAI = 3;
-  double LAI_within_year = 0.0;
+  std::vector<double> LAI_within_year_vector;
 
   for (int year : years_for_runs)  {
     /*
@@ -240,6 +240,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       double fAPAR_used = 0.0;
       double fS_out = 0.0;
       double needle_growth = 0.0;
+      double LAI_within_year = 0.0;
       if (day > 0) {
         fS_out = photosynthesis_output.fS[weather_index-1];
         needle_growth = actual_growth_output.needles[weather_index-1];
@@ -256,12 +257,14 @@ Rcpp::List CASSIA_yearly(int start_year,
         } else {
           LAI_within_year = LAI;
         }
-        std::cout << " LAI_within_year " << LAI_within_year;
         fAPAR_used = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
       } else if (!boolsettings.photosynthesis_as_input & !boolsettings.fAPAR_Tian & boolsettings.preles) {
         fAPAR_used = climate.fAPAR[weather_index];
       } else {
         fAPAR_used = 0.0;
+      }
+      if (final_year%2!=0) {
+        LAI_within_year_vector.push_back(LAI_within_year);
       }
 
       double photosynthesis_per_stem = 0.0;
@@ -586,7 +589,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   Rcpp::DataFrame df4 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height,
                                                 Rcpp::_["culm_growth_needles"] = culm_growth.needles,
                                                 Rcpp::_["culm_growth_diameter"] = culm_growth.diameter,
-                                                Rcpp::_["LAI"] = LAI_within_year);
+                                                Rcpp::_["LAI"] = LAI_within_year_vector);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,
