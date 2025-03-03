@@ -210,12 +210,8 @@ growth_out growth(int day,
       S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
       S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
     }
-    std::cout << " growth_previous.S_GPP " << growth_previous.S_GPP_ref << " growth_previous.dS_GPP " << growth_previous.dS_GPP_ref;
-    std::cout << " growth_previous.S_GPP_ref " << growth_previous.S_GPP_ref << " growth_previous.dS_GPP_ref " << growth_previous.dS_GPP_ref;
     dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
     dS_GPP_ref = (GPP_ref - S_GPP_ref) / parameters.tau_GPP;
-    std::cout << " S_GPP " << S_GPP << " S_GPP_ref " << S_GPP_ref << std::endl;
-    std::cout << " dS_GPP " << dS_GPP << " dS_GPP_ref " << dS_GPP_ref << std::endl;
 
     // Daily LD depends on the GPP of five previous days:
     if (day > 78) { // TODO: hard coded! Should this be parameter diameter start day?
