@@ -216,16 +216,6 @@ ylim = range(CASSIA_preles_1998_2022$Culm_Growth$LAI, LAI_df$amount)
 plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$LAI, col = "black", pch = "x", main = "LAI", xlab = "Dates", ylab = "LAI", ylim = ylim)
 points(as.Date(paste0(LAI_df$date, "-12-31")), LAI_df$amount, col = "green", pch = as.numeric(as.factor(LAI_df$variable))+16)
 legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(as.numeric(as.factor(LAI_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
-
-# Needles
-# TODO: is the updated height used anywhere?
-# TODO: what time of year are the measurements taken?
-# TODO: What is this actually comparing?
-ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, foliage_biomass_df$amount, cumsum(CASSIA_preles_1998_2022$Growth$needle_growth))
-plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_needles, col = "black", pch = "x", main = "Foliage Biomass", xlab = "Dates", ylab = "Foliage Biomass")
-points(as.Date(paste0(foliage_biomass_df$date, "-12-31")), foliage_biomass_df$amount, col = "green", pch = as.numeric(as.factor(foliage_biomass_df$variable))+16)
-legend("topleft", legend = unique(as.factor(foliage_biomass_df$variable)), pch = unique(as.numeric(as.factor(foliage_biomass_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
-
 ```
 
 ## Preles against SPP (short term)
