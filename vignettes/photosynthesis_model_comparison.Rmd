@@ -144,7 +144,7 @@ CASSIA_spp <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE,
 weather_preles_1998_2022 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 1998:2022,]
 parameters_1998_2022 <- initialize_parameters(calibration, new_parameters)
 parameters_1998_2022$parameters_test[c("h0"),c("Hyde")] <- 12
-parameters_1998_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416 # TODO: check units, but value from data
+parameters_1998_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416
 parameters_1998_2022$parameters_test[c("GPP_mean"),c("Hyde")] <- 463.8833
 parameters_1998_2022$parameters_test[c("GPP_initial"),c("Hyde")] <- 460.0
 
@@ -197,17 +197,12 @@ legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(hei
 
 # Diameter
 # TODO: is the updated height used anywhere?
-# TODO: what time of year are the measurements taken?
-ylim = range(0.1 * CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, 0.01 * diameter_df$amount)
-plot(date_1998_2022, 0.1 * CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter", ylim = ylim)
-points(as.Date(paste0(diameter_df$date, "-12-31")), 0.01 * diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
-legend("topleft", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
+ylim = range(0.1 * CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, diameter_df$amount)
+plot(date_1998_2022, 0.1 * CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter, col = "black", pch = "x", main = "Diameter", xlab = "Dates", ylab = "Diameter, cm", ylim = ylim)
+points(as.Date(paste0(diameter_df$date, "-12-31")), diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
+legend("topleft", legend = c(unique(as.factor(diameter_df$variable)), "Ring Width Model", "Diameter model"), pch = c(unique(as.numeric(as.factor(diameter_df$variable))+16), 95, 1), bty = "n", ncol = 1, title = "Measurement Desciption", col = c(rep("green", 4), "red", "black"), cex = 0.75)
+points(date_1998_2022, 100 * parameters_1998_2022$parameters_test[c("D0"),c("Hyde")] + 2 * 0.1 * CASSIA_preles_1998_2022$Growth$ring_width, col = "red", pch = ".")
 
-ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots)
-plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots, col = "black", pch = "x", main = "Roots", xlab = "Dates", ylab = "Roots", ylim = ylim)
-# TODO: data
-# points(as.Date(paste0(LAI_df$date, "-12-31")), LAI_df$amount, col = "green", pch = as.numeric(as.factor(LAI_df$variable))+16)
-# legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(as.numeric(as.factor(LAI_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
 
 # LAI
 # TODO: is the updated height used anywhere?
@@ -228,7 +223,7 @@ variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growt
 ### CASSIA with the original SPP input
 
 plot_comparison(CASSIA_spp, variables_new,
-                Hyde_daily_original_plot, variables_original, soil_processes)
+                Hyde_daily_original_plot, variables_original, FALSE)
 
 plot_sugar_starch_comparison(CASSIA_spp, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
 
@@ -354,6 +349,22 @@ CASSIA_preles_1998_2022_sugar_medium <- CASSIA_cpp(weather = weather_preles_1998
                                                 preles = TRUE,
                                                 fAPAR_Tian = TRUE)
 
+parameters_1998_2022$sperling_test[c(""), c()]
+
+CASSIA_preles_1998_2022_sugar_mine <- CASSIA_cpp(weather = weather_preles_1998_2022,
+                                                site = "Hyde",
+                                                pPREL = c(parameters_1998_2022$pPREL, parameters_1998_2022$N_parameters),
+                                                parameters = parameters_1998_2022$parameters_test,
+                                                common = common_p,
+                                                ratios = ratios_p,
+                                                sperling = parameters_1998_2022$sperling_test,
+                                                needle_mass_in = parameters_1998_2022$needle_mass_in,
+                                                Throughfall = parameters_1998_2022$Throughfall,
+                                                photosynthesis_as_input = FALSE,
+                                                preles = TRUE,
+                                                fAPAR_Tian = TRUE,
+                                                sperling_model = TRUE)
+
 parameters_1998_2022$sperling_test[c("sugar00"), c("Hyde")] <- 0.1
 CASSIA_preles_1998_2022_sugar_low <- CASSIA_cpp(weather = weather_preles_1998_2022,
                                                 site = "Hyde",
@@ -387,40 +398,54 @@ CASSIA_preles_1998_2022_sugar_high <- CASSIA_cpp(weather = weather_preles_1998_2
 ## Sugar value plots
 
 ```{r}
+plot_sugar_starch_comparison(CASSIA_preles_1998_2022_sugar_mine, date_1998_2022, loaded_data$original_data, loaded_data$yu_data)
+
 # Sugar, Starch
 par(mfrow = c(1, 2))
-plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Sugar$sugar, type = "l", col = "blue", ylab = "Sugar", xlab = "Dates")
+plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Sugar$sugar, type = "l", col = "red", ylab = "Sugar", xlab = "Dates", ylim = c(0, max(CASSIA_preles_1998_2022_sugar_mine$Sugar$sugar)))
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Sugar$sugar, col = "gold")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Sugar$sugar, col = "red")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_mine$Sugar$sugar, col = "green")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Sugar$sugar, col = "blue")
 
-plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Sugar$starch, type = "l", col = "blue", ylab = "Starch", xlab = "Dates")
+plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Sugar$starch, type = "l", col = "red", ylab = "Starch", xlab = "Dates", ylim = c(0, max(CASSIA_preles_1998_2022_sugar_mine$Sugar$starch)))
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Sugar$starch, col = "gold")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Sugar$starch, col = "red")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_mine$Sugar$starch, col = "green")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Sugar$starch, col = "blue")
 
 # Storage term
 par(mfrow = c(1, 1))
-plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Sugar$storage_term, type = "l", col = "blue", ylab = "Storage term", xlab = "Dates")
+plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Sugar$storage_term, type = "l", col = "red", ylab = "Storage term", xlab = "Dates", ylim = c(0, 1))
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Sugar$storage_term, col = "gold")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Sugar$storage_term, col = "red")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Sugar$storage_term, col = "blue")
+legend("bottomright", c("High", "Medium", "Low", "My Model"), col = c("blue", "gold", "red", "green"), lty = 1, bty = "n")
 
-# Seasonal, Storage
+# Seasonal, growth
 par(mfrow = c(1, 2))
-plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Growth$height_growth, type = "l", col = "blue", ylab = "Height", xlab = "Dates")
+plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Growth$height_growth, type = "l", col = "red", ylab = "Height", xlab = "Dates")
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Growth$height_growth, col = "gold")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Growth$height_growth, col = "red")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_mine$Growth$height_growth, col = "green")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Growth$height_growth, col = "blue")
 
-plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Growth$diameter_growth, type = "l", col = "blue", ylab = "Diameter", xlab = "Dates")
+plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Growth$diameter_growth, type = "l", col = "red", ylab = "Diameter", xlab = "Dates", ylim = c(0, 0.013))
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Growth$diameter_growth, col = "gold")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Growth$diameter_growth, col = "red")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_mine$Growth$diameter_growth, col = "green")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Growth$diameter_growth, col = "blue")
 
 # Culmative
-plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Culm_Growth$culm_growth_height, type = "l", col = "blue", ylab = "Height", xlab = "Dates")
+plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_height, type = "l", col = "red", ylab = "Height", xlab = "Dates")
 lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Culm_Growth$culm_growth_height, col = "gold")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_height, col = "red")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_mine$Culm_Growth$culm_growth_height, col = "green")
+lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Culm_Growth$culm_growth_height, col = "blue")
+points(as.Date(paste0(height_df$date, "-12-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
+points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+16)
+legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(height_cl_df$variable))), 
+       pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+16)), 
+       bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
-plot(date_1998_2022, CASSIA_preles_1998_2022_sugar_high$Culm_Growth$culm_growth_diameter, type = "l", col = "blue", ylab = "Diameter", xlab = "Dates")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_medium$Culm_Growth$culm_growth_diameter, col = "gold")
-lines(date_1998_2022, CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_diameter, col = "red")
-
-legend("topleft", c("High", "Medium", "Low"), col = c("blue", "gold", "red"), lty = 1, bty = "n")
+plot(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_diameter, type = "l", col = "red", ylab = "Diameter", xlab = "Dates")
+lines(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_medium$Culm_Growth$culm_growth_diameter, col = "gold")
+lines(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_mine$Culm_Growth$culm_growth_diameter, col = "green")
+lines(date_1998_2022, 0.1 * CASSIA_preles_1998_2022_sugar_high$Culm_Growth$culm_growth_diameter, col = "blue")
+points(as.Date(paste0(diameter_df$date, "-12-31")), diameter_df$amount, col = "green", pch = as.numeric(as.factor(diameter_df$variable))+16)
+legend("bottomright", legend = unique(as.factor(diameter_df$variable)), pch = unique(as.numeric(as.factor(diameter_df$variable))+16), bty = "n", ncol = 1, col = "green", cex = 0.75)
 ```
