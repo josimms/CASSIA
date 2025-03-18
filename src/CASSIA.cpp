@@ -131,7 +131,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   int final_year = 1;
   int days_gone = 0;
 
-  double LAI = 3;
+  double LAI = 5;
   std::vector<double> LAI_within_year_vector;
 
   for (int year : years_for_runs)  {
@@ -251,9 +251,9 @@ Rcpp::List CASSIA_yearly(int start_year,
         // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
         double f_modifer = needle_growth/max_needles; // the actual growth divided by the maximum per year
         if (day < 182) { // TODO: I decided that the start of July is the end of spring
-          LAI_within_year = 2.0/parameters.n_age*LAI + f_modifer*1.0/parameters.n_age*LAI; // TODO: divide by leaf lifetime rather than 3 as 3 is the leaf lifetime
+          LAI_within_year = LAI/parameters.n_age + parameters.n_age*f_modifer*LAI;
         } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
-          LAI_within_year = 2.0/parameters.n_age*LAI + fS_out*1.0/parameters.n_age*LAI;
+          LAI_within_year = LAI/parameters.n_age + parameters.n_age*fS_out*LAI;
         } else {
           LAI_within_year = LAI;
         }
