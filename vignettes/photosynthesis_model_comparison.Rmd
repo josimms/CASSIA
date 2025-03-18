@@ -26,8 +26,12 @@ weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 36
 weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
 
 # GPP from SMEAR
-
 smear <- data.table::fread("~/Documents/CASSIA/data/daily_dataframe.csv")
+
+# Data
+fapar_2019 <- readxl::read_xlsx("~/Documents/CASSIA_Calibration/Raw_Data/thinning_data_and_other/SMEAR2_LAI.xlsx", sheet = "BL2019_3d", na = "NaN")
+fapar_2020 <- readxl::read_xlsx("~/Documents/CASSIA_Calibration/Raw_Data/thinning_data_and_other/SMEAR2_LAI.xlsx", sheet = "BL2020_3d", na = "NaN")
+fapar_2021 <- readxl::read_xlsx("~/Documents/CASSIA_Calibration/Raw_Data/thinning_data_and_other/SMEAR2_LAI.xlsx", sheet = "BL2021_3d", na = "NaN")
 ```
 
 ## Weather comparison
@@ -207,10 +211,11 @@ points(date_1998_2022, 100 * parameters_1998_2022$parameters_test[c("D0"),c("Hyd
 # LAI
 # TODO: is the updated height used anywhere?
 # TODO: what time of year are the measurements taken?
-ylim = range(CASSIA_preles_1998_2022$Culm_Growth$LAI, LAI_df$amount)
+ylim = range(c(CASSIA_preles_1998_2022$Culm_Growth$LAI, LAI_df$amount, rowMeans(fapar_2019[,2:17]), rowMeans(fapar_2020[,2:17]), rowMeans(fapar_2021[,2:17])), na.rm = T)
 plot(date_1998_2022, CASSIA_preles_1998_2022$Culm_Growth$LAI, col = "black", pch = "x", main = "LAI", xlab = "Dates", ylab = "LAI", ylim = ylim)
 points(as.Date(paste0(LAI_df$date, "-12-31")), LAI_df$amount, col = "green", pch = as.numeric(as.factor(LAI_df$variable))+16)
-legend("bottomright", legend = unique(as.factor(LAI_df$variable)), pch = unique(as.numeric(as.factor(LAI_df$variable))+16), bty = "n", ncol = 1, title = "Measurement Desciption", col = "green", cex = 0.75)
+points(as.Date(c(fapar_2019$date, fapar_2020$date, fapar_2021$date)), c(rowMeans(fapar_2019[,2:17]), rowMeans(fapar_2020[,2:17]), rowMeans(fapar_2021[,2:17])), col = "blue", pch = 19)
+legend("topleft", legend = c(unique(as.factor(LAI_df$variable)), "Tim's Data"), pch = c(unique(as.numeric(as.factor(LAI_df$variable))+16), 19), bty = "n", ncol = 1, title = "Measurement Desciption", col = c(rep("green", 2), "blue"), cex = 0.75)
 ```
 
 ## Preles against SPP (short term)
