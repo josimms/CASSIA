@@ -3,50 +3,6 @@
 ######
 
 all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_spp_photosynthesis, soil_processes, jussi_data) {
-  ###
-  # Settings and parameters
-  ###
-  settings_basic = list(
-    storage_reset = TRUE,			# storage.reset<-TRUE=Same initial storage each year, storage.reset<-False, The storage on the last day of year X is  postponded to the first day of the year X+1
-    storage_grows = FALSE,			# TRUE if the critical storage level increases with tree size.
-
-    LN_estim = TRUE,				# LN depends on the GPP during previous july-august
-    mN_varies = TRUE,				# needle mass (in maintenance respiration) is 2/3 of the total during period 1.10 - 31.5.
-
-    LD_estim = TRUE,				# LD depends on the GPP during March-August
-    sD_estim_T_count = FALSE,			# sD depends on the number of days when g in growing window - analogue to needles
-
-    LH_estim = TRUE,
-
-    trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
-    growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
-    needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
-
-    phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
-
-    mycorrhiza = TRUE, 			# If allocation to mychorrhiza is taken into account
-    root_as_Ding = TRUE,
-
-    sperling_model = FALSE,       # Dynamic sugar model using Sperling's enzyme dynamics
-    myco_model = FALSE,           # Joanna's mycomodel development!
-    xylogenesis = FALSE,
-
-    PRELES_GPP = FALSE,
-    environment_effect_xylogenesis = FALSE,
-
-    photosynthesis_as_input = TRUE,
-
-    photoparameters = 3,
-    temp_rise = FALSE,
-    drought = FALSE,
-    Rm_acclimation = TRUE,
-
-    CASSIA_graphs = TRUE,
-    tests = TRUE,
-
-    etmodel = F,
-    LOGFLAG = F
-  )
 
   ### WEATHER
   processed_data <- process_weather_data(settings_basic$photosynthesis_as_input)
@@ -69,7 +25,7 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
   Hyde_daily_original_plot <- Hyde_daily_original
 
   ###
-  # Numerical tests of the functions in the model
+  # Numerical tests of the functions in the model TODO: put in test that
   ###
 
   an.error.occured <- c()
@@ -139,93 +95,154 @@ all_tests <- function(new_parameters, calibration, sperling_sugar_model, using_s
     stop("Photosynthesis in not the same as photosynthesis out, when using_spp_photosynthesis is TRUE")
   }
 
-  ###
-  # Weather Data Plots
-  ###
-
-  plot_weather_variables(processed_data$weather_original, processed_data$dates)
 
   ###
-  # Plotting the results
-  #
-  # NO SOIL
+  # Soil processes test
   ###
 
-  soil_processes = FALSE
+  ## PRELES
 
-  CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
-                                 site = "Hyde",
-                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                 parameters = parameters_all$parameters_test,
-                                 common = common_p,
-                                 ratios = ratios_p,
-                                 sperling = parameters_all$sperling_test,
-                                 needle_mass_in = parameters_all$needle_mass_in,
-                                 Throughfall = parameters_all$Throughfall,
-                                 tests = settings_basic$tests)
+  ### Not Trenched
+  CASSIA_new_output_no_tests = CASSIA_cpp(weather = processed_data$weather_original,
+                                          site = "Hyde",
+                                          pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                          parameters = parameters_all$parameters_test,
+                                          common = common_p,
+                                          ratios = ratios_p,
+                                          sperling = parameters_all$sperling_test,
+                                          parameters_R = parameters_all$parameters_R,
+                                          needle_mass_in = parameters_all$needle_mass_in,
+                                          Throughfall = parameters_all$Throughfall,
+                                          soil = FALSE,
+                                          photosynthesis_as_input = FALSE)
 
-  plot_comparison(CASSIA_new_output, variables_new,
-                  Hyde_daily_original_plot, variables_original, soil_processes)
-
-  plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
-
-  ### SUGAR NO SOIL
-
-  CASSIA_new_output = CASSIA_cpp(weather = processed_data$weather_original,
-                                 site = "Hyde",
-                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                 parameters = parameters_all$parameters_test,
-                                 common = common_p,
-                                 ratios = ratios_p,
-                                 sperling = parameters_all$sperling_test,
-                                 needle_mass_in = parameters_all$needle_mass_in,
-                                 Throughfall = parameters_all$Throughfall,
-                                 sperling_model = T)
-
-  plot_comparison(CASSIA_new_output, variables_new,
-                  Hyde_daily_original_plot, variables_original, soil_processes)
-
-  plot_sugar_starch_comparison(CASSIA_new_output, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
-
-  ### SOIL
-
-  ### Soil Processes
-  soil_processes = TRUE
+  ### Not Trenched
   CASSIA_new_output_not_trenching = CASSIA_cpp(weather = processed_data$weather_original,
-                                              site = "Hyde",
-                                              pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                              parameters = parameters_all$parameters_test,
-                                              common = common_p,
-                                              ratios = ratios_p,
-                                              sperling = parameters_all$sperling_test,
-                                              parameters_R = parameters_all$parameters_R,
-                                              needle_mass_in = parameters_all$needle_mass_in,
-                                              Throughfall = parameters_all$Throughfall,
-                                              trenching_year = NA,
-                                              soil = soil_processes)
+                                               site = "Hyde",
+                                               pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                               parameters = parameters_all$parameters_test,
+                                               common = common_p,
+                                               ratios = ratios_p,
+                                               sperling = parameters_all$sperling_test,
+                                               parameters_R = parameters_all$parameters_R,
+                                               needle_mass_in = parameters_all$needle_mass_in,
+                                               Throughfall = parameters_all$Throughfall,
+                                               trenching_year = NA,
+                                               soil = soil_processes,
+                                               photosynthesis_as_input = FALSE)
 
+  ### Trenched
   CASSIA_new_output_trenching = CASSIA_cpp(weather = processed_data$weather_original,
-                                            site = "Hyde",
-                                            pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                            parameters = parameters_all$parameters_test,
-                                            common = common_p,
-                                            ratios = ratios_p,
-                                            sperling = parameters_all$sperling_test,
-                                            parameters_R = parameters_all$parameters_R,
-                                            needle_mass_in = parameters_all$needle_mass_in,
-                                            Throughfall = parameters_all$Throughfall,
-                                            trenching_year = 2015,
-                                            soil = soil_processes)
+                                           site = "Hyde",
+                                           pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                           parameters = parameters_all$parameters_test,
+                                           common = common_p,
+                                           ratios = ratios_p,
+                                           sperling = parameters_all$sperling_test,
+                                           parameters_R = parameters_all$parameters_R,
+                                           needle_mass_in = parameters_all$needle_mass_in,
+                                           Throughfall = parameters_all$Throughfall,
+                                           trenching_year = 2015,
+                                           soil = soil_processes,
+                                           photosynthesis_as_input = FALSE)
 
-  plot_comparison(CASSIA_new_output_not_trenching, variables_new,
-                  Hyde_daily_original_plot, variables_original, soil_processes)
+  soil_against_yearly(CASSIA_new_output_no_tests, CASSIA_new_output_trenching, CASSIA_new_output_not_trenching)
 
-  plot_comparison(CASSIA_new_output_trenching, variables_new,
-                  Hyde_daily_original_plot, variables_original, soil_processes)
+  ## NO TESTS
 
-  plot_sugar_starch_comparison(CASSIA_new_output_not_trenching, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+  ### Not Trenched
+  CASSIA_new_output_no_tests = CASSIA_cpp(weather = processed_data$weather_original,
+                                          site = "Hyde",
+                                          pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                          parameters = parameters_all$parameters_test,
+                                          common = common_p,
+                                          ratios = ratios_p,
+                                          sperling = parameters_all$sperling_test,
+                                          parameters_R = parameters_all$parameters_R,
+                                          needle_mass_in = parameters_all$needle_mass_in,
+                                          Throughfall = parameters_all$Throughfall,
+                                          soil = FALSE,
+                                          tests = TRUE)
 
-  plot_sugar_starch_comparison(CASSIA_new_output_trenching, processed_data$dates, loaded_data$original_data, loaded_data$yu_data)
+  ### Not Trenched
+  CASSIA_new_output_not_trenching = CASSIA_cpp(weather = processed_data$weather_original,
+                                               site = "Hyde",
+                                               pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                               parameters = parameters_all$parameters_test,
+                                               common = common_p,
+                                               ratios = ratios_p,
+                                               sperling = parameters_all$sperling_test,
+                                               parameters_R = parameters_all$parameters_R,
+                                               needle_mass_in = parameters_all$needle_mass_in,
+                                               Throughfall = parameters_all$Throughfall,
+                                               trenching_year = NA,
+                                               soil = soil_processes,
+                                               tests = TRUE)
+
+  ### Trenched
+  CASSIA_new_output_trenching = CASSIA_cpp(weather = processed_data$weather_original,
+                                           site = "Hyde",
+                                           pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                           parameters = parameters_all$parameters_test,
+                                           common = common_p,
+                                           ratios = ratios_p,
+                                           sperling = parameters_all$sperling_test,
+                                           parameters_R = parameters_all$parameters_R,
+                                           needle_mass_in = parameters_all$needle_mass_in,
+                                           Throughfall = parameters_all$Throughfall,
+                                           trenching_year = 2015,
+                                           soil = soil_processes,
+                                           tests = TRUE)
+
+  soil_against_yearly(CASSIA_new_output_no_tests, CASSIA_new_output_trenching, CASSIA_new_output_not_trenching)
+
+  ## TESTS
+
+  ### Not Trenched
+  CASSIA_new_output_no_tests = CASSIA_cpp(weather = processed_data$weather_original,
+                                          site = "Hyde",
+                                          pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                          parameters = parameters_all$parameters_test,
+                                          common = common_p,
+                                          ratios = ratios_p,
+                                          sperling = parameters_all$sperling_test,
+                                          parameters_R = parameters_all$parameters_R,
+                                          needle_mass_in = parameters_all$needle_mass_in,
+                                          Throughfall = parameters_all$Throughfall,
+                                          soil = FALSE,
+                                          tests = FALSE)
+
+  ### Not Trenched
+  CASSIA_new_output_not_trenching = CASSIA_cpp(weather = processed_data$weather_original,
+                                               site = "Hyde",
+                                               pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                               parameters = parameters_all$parameters_test,
+                                               common = common_p,
+                                               ratios = ratios_p,
+                                               sperling = parameters_all$sperling_test,
+                                               parameters_R = parameters_all$parameters_R,
+                                               needle_mass_in = parameters_all$needle_mass_in,
+                                               Throughfall = parameters_all$Throughfall,
+                                               trenching_year = NA,
+                                               soil = soil_processes,
+                                               tests = FALSE)
+
+  ### Trenched
+  CASSIA_new_output_trenching = CASSIA_cpp(weather = processed_data$weather_original,
+                                           site = "Hyde",
+                                           pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                           parameters = parameters_all$parameters_test,
+                                           common = common_p,
+                                           ratios = ratios_p,
+                                           sperling = parameters_all$sperling_test,
+                                           parameters_R = parameters_all$parameters_R,
+                                           needle_mass_in = parameters_all$needle_mass_in,
+                                           Throughfall = parameters_all$Throughfall,
+                                           trenching_year = 2015,
+                                           soil = soil_processes,
+                                           tests = FALSE)
+
+  soil_against_yearly(CASSIA_new_output_no_tests, CASSIA_new_output_trenching, CASSIA_new_output_not_trenching)
 
   ### Extra Soil Processes
 

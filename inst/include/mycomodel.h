@@ -241,15 +241,6 @@ struct MYCOFON_function_out {
  * FUNCTIONS DEFINED HERE - WHEN THEY ARE NEEDED BETWEEN FILES (reference above them)
  */
 
-// FILE: general_functions.cpp
-
-#ifndef PKG_leap_year_H
-#define PKG_leap_year_H
-
-int leap_year(int year);
-
-#endif
-
 // FILE: Toy_Model.cpp
 
 #ifndef PKG_Toy_Model_H

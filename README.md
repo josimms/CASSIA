@@ -33,20 +33,20 @@ The R function will give an error if the weather data is wrongly named, within u
 # import the package
 library(CASSIA)
 
-# Get the weather data
-photosynthesis_as_input = TRUE
-processed_data = process_weather_data(photosynthesis_as_input)
+weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
+# TODO: change the path to your path. Data is found in ./data in the package
+weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
 
 # Run the model
-CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
+out = CASSIA_cpp(weather = weather_original, site = "Hyde")
 ```
 
-To use a different model setting you can use a toggle. An example that doesn't require changing any of the rest of the inputs is LN.estim. This means that a GPP correction is not applied to the potenital needle growth claculations.
+To use a different model setting you can use a toggle. An example that doesn't require changing any of the rest of the inputs is LN.estim. This means that a GPP correction is not applied to the potential needle growth calculations.
 
 ```{r}
-CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", LN.estim = FALSE)
+CASSIA_cpp(weather = weather_original, site = "Hyde", LN.estim = FALSE)
 ```
-There should be an error or a warning if you have choosen a set of toggles that cannot coexit. Usually the model will assume which combination you ment and run with the corrected toggles, so these should be checked carefully.
+There should be an error or a warning if you have chosen a set of toggles that cannot coexist. Usually the model will assume which combination you ment and run with the corrected toggles, so these should be checked carefully.
 
 The package automatically has tables of parameters included. These are notated with a _p after the argument name as in the function. The easiest way to reformulate the model is thus take these as a base and change the parameters you would like to accordingly. All of the parameters are named in the code objects and then are explained further in the CASSIA instruction booklet and the original articles.
 
@@ -55,12 +55,12 @@ In the data-raw folder you can also see how the _p objects are made if you would
 ```{r}
 ratios_new = ratios_p
 ratios_new[1,c("Hyde")] = 0.65
-CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", ratios = ratios_new)
+CASSIA_cpp(weather = weather_original, site = "Hyde", ratios = ratios_new)
 ```
 
 If you are using the model in Hyytiälä or Väriö then the model is calibrated. If not the model is not yet calibrated for your site. This means that you need to calibrate the model! To do this look at the markdown files for advice.
 
-**markdown files cover using the model again, also sensitivity analysis and weather processing**
+**markdown files cover using the model again and sensitivity analysis**
 
 Sidenote: If you have an error along the lines of 
 
@@ -70,6 +70,17 @@ Error in if GENERIC ARGUMENT missing value where TRUE/FALSE needed
 It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report then send joanna.x.simms@helsinki.fi an email.
 
 (Code working as of 19th Nov 2024 - contact Joanna if not working)
+
+### Weather Data
+
+It is hard to make an example file for the weather data needed as all weather data sources are different. Examples of such processes can be found in the files Hyytiala_Weather_Fast.R and ERAS_weather_processing.R - although the data needs to be downloaded by the user first.
+
+The basic process for all of the data is to:
+1. Download the data.
+2. Format the data as in the function help files in the units required (?CASSIA).
+3. Gapfill / Bias correct. If the data is taken from local weather stations you will need to gapfill the results with the closely stations. If you have taken the result from a global data set you will then need to bias correct with the local sites. (Gapfill example in Hyyiälä data porcessing and the bias correction in the ERA5 file)
+
+More information can be found in Running_The_Model.Rmd
 
 ### Ongoing Projects
 

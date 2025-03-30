@@ -27,8 +27,8 @@ myco_decision <- function(N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStru
     .Call(`_CASSIA_myco_decision`, N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt)
 }
 
-CASSIA_eeo <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings) {
-    .Call(`_CASSIA_CASSIA_eeo`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings)
+CASSIA_eeo <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, pPhydro, needle_mass_in, Throughfall, trenching_year, settings) {
+    .Call(`_CASSIA_CASSIA_eeo`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, pPhydro, needle_mass_in, Throughfall, trenching_year, settings)
 }
 
 growth_wrapper <- function(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, tests, growth_in, last_year_HH, no_day) {
@@ -63,8 +63,8 @@ Microbe_Uptake <- function(C_microbe, N_micorbe, C_exudates, C_soil_compartment,
     .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_exudates, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg, tests)
 }
 
-preles_test_cpp <- function(start_year, end_year, weather, pPREL, etmodel) {
-    .Call(`_CASSIA_preles_test_cpp`, start_year, end_year, weather, pPREL, etmodel)
+preles_test <- function(weather) {
+    .Call(`_CASSIA_preles_test`, weather)
 }
 
 repola_test_cpp <- function(pCASSIA_parameters, pCASSIA_sperling) {

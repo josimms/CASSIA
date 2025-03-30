@@ -14,6 +14,10 @@
 #include <map>
 #include <iomanip>
 #include <prelesglobals.h>
+#include <vector>
+#include <phydro.h>
+#include <map>
+#include <string>
 
 #ifndef CASSIA_H
 #define CASSIA_H
@@ -246,24 +250,6 @@ struct photosynthesis_out {
   double ET;
   double SoilWater;
   double fS;
-  double fW;
-  double fN;
-  double fCO2;
-  double theta_canopy;
-  double Throughfall;
-  double theta;
-  double theta_snow;
-  double S_state;
-  double PhenoS;
-  double Snowmelt;
-  double intercepted;
-  double Drainage;
-  double canw;
-  double fE;
-  double transp;
-  double evap;
-  double fWE;
-  double gpp380;
 };
 
 struct photo_out_vector {
@@ -271,42 +257,25 @@ struct photo_out_vector {
   std::vector<double> ET;
   std::vector<double> SoilWater;
   std::vector<double> fS;
-  std::vector<double> fW;
-  std::vector<double> fE;
-  std::vector<double> fN;
+  std::vector<double> fAPAR;
 };
 
-photosynthesis_out preles(int day,
-                          double PAR, double TAir, double VPD, double Precip,
-                          double CO2, double fAPAR, double Nitrogen,
-                          p1 Site_par,
-                          p2 GPP_par,
-                          p3 ET_par,
-                          p4 SnowRain_par,
-                          p5 Water_par,
-                          p7 N_par,
-                          int etmodel,
-                          double theta,
-                          double theta_snow,
-                          double theta_canopy,
-                          double Throughfall,
-                          double S_state,
-                          double PhenoS,
-                          double Snowmelt,
-                          double intercepted,
-                          double Drainage,
-                          double canw,
-                          double fE,
-                          double transp,
-                          double evap,
-                          double fWE,
-                          double fW,
-                          double gpp380);
+photosynthesis_out preles_cpp(int day,
+                              double I,
+                              double T,
+                              double P,
+                              double D,
+                              double CO2,
+                              double fAPAR,
+                              p1 Site_par,
+                              p2 GPP_par,
+                              p3 ET_par,
+                              p4 SnowRain_par,
+                              p5 Initials_snow,
+                              double LOGFLAG,
+                              int CO2model);
 
-Rcpp::List preles_test_cpp(int start_year, int end_year,
-                           Rcpp::DataFrame weather,
-                           std::vector<double> pPREL,
-                           int etmodel);
+Rcpp::DataFrame preles_test(Rcpp::DataFrame weather);
 
 /*
  * Respiration
@@ -447,6 +416,10 @@ p4 make_p4(std::vector<double> input);
 p5 make_p5(std::vector<double> input);
 p7 make_p7(std::vector<double> input);
 
+phydro_canopy_parameters parPhydro_initalise(std::vector<double> phydro_params);
+
+void print_phydro_parameters(const phydro_canopy_parameters& params);
+
 /*
  * Ring Width
  */
@@ -498,11 +471,12 @@ struct Settings {
   bool myco_model;
   bool xylogensis_option;
 
-  bool PRELES_GPP;
   bool environmental_effect_xylogenesis;
 
   bool photosynthesis_as_input;
+  bool preles;
   bool phydro;
+  bool fAPAR_Tian;
 
   int photoparameters;
   bool temp_rise;
@@ -519,11 +493,63 @@ struct Settings {
 Settings parseSettings(Rcpp::List settingsList);
 
 /*
+ * Leap year
+ */
+
+int leap_year(int year);
+
+/*
  * Plant Fate Logic
  */
 
-//PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
-  //                                                   double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
-    //                                                 phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta);
+PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta, int day);
+
+phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
+                                                    double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                    double TAir_assim, double PAR_assim, double VPD_assim, double CO2_assim, double SWP_assim, double PA_assim,
+                                                    phydro_canopy_parameters par, double zeta);
+
+void set_forcing_acclim(double TAir, double PAR, double VPD, double CO2, double SWP, double PA,
+                        double& TAir_assim, double& PAR_assim, double& VPD_assim, double& CO2_assim, double& SWP_assim, double& PA_assim,
+                        phydro_canopy_parameters par);
 
 #endif
+
+
+#ifndef READ_WEATHER_VARIABLES_H
+#define READ_WEATHER_VARIABLES_H
+
+
+struct weather_all {
+  std::vector<double> TAir;
+  std::vector<double> TSoil_A;
+  std::vector<double> TSoil_B;
+  std::vector<double> Soil_Moisture;
+  std::vector<double> Precip;
+  std::vector<double> Photosynthesis_IN;
+  std::vector<double> Nitrogen;
+  std::vector<double> PAR;
+  std::vector<double> CO2;
+  std::vector<double> VPD;
+  std::vector<double> fAPAR;
+  std::vector<double> PAR_max;
+  std::vector<double> PA;
+  std::vector<double> SWP;
+};
+
+weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool preles, bool phydro);
+
+#endif
+
+/*
+ * Initalise
+ */
+
+growth_values_out growth_values_out_init();
+
+ring_width_out ring_width_out_init();
+
+carbo_tracker carbo_tracker_init();
+
+carbo_balance carbo_balance_init();

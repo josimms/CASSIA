@@ -1,0 +1,37 @@
+---
+title: 'Tests: C++ against R'
+author: "Joanna"
+date: "2025-01-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The basic settings
+
+Note: here I compare the values against the original weather data that came with CASSIA originally.
+
+Import the weather from the original datafiles
+
+``` {r}
+weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
+weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+
+plot_weather_variables(weather_original)
+```
+
+## Compare against the original data
+
+```{r}
+CASSIA_Hyde <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
+
+variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
+variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
+
+Hyde_daily_original_plot <- Hyde_daily_original
+
+plot_comparison(CASSIA_Hyde, variables_new, Hyde_daily_original, variables_original, soil_processes = FALSE)
+```
+

@@ -1,0 +1,15 @@
+---
+title: "Light_Conditions"
+output: html_document
+---
+
+```{r}
+hyytälä <- data.table::fread("~/Documents/CASSIA/data/daily.dataframe.hyytiala.csv")
+
+par(mfrow = c(2, 2))
+plot(hyytälä$PAR_mean, hyytälä$GPP_mean, xlab = "PAR umol s-1 m-2", ylab = "GPP, umol s-1 m-2")
+plot(hyytälä$PAR_max, hyytälä$GPP_mean, xlab = "Max PAR umol s-1 m-2", ylab = "GPP, umol s-1 m-2")
+plot(hyytälä$T336_mean, hyytälä$GPP_mean, xlab = "Air Temperature 'C", ylab = "GPP, umol s-1 m-2")
+plot(hyytälä$VPD, hyytälä$GPP_mean, xlab = "VPD hPa", ylab = "GPP, umol s-1 m-2")
+
+```

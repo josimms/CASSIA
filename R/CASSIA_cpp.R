@@ -24,16 +24,22 @@ CASSIA_cpp <- function(
     tau.t.xylem.sh = 3,
     tau.t.xylem.st = 3,
 
-    ratios = ratios_p, # "./data/ratio.csv",
+    ratios = ratios_p,
     parameters = parameters_p,
     parameters_R_in = parameters_R,
-    common = common_p,  # "./data/common.csv",
+    common = common_p,
     sperling = sperling_p,
     repo = repo_p,
-    pPREL = c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
-               0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
-               0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
-               -999.9, -999.9, -999.9, 1/0.012, 0.0),
+    pPREL = c(413.0, 0.450, 0.118, 3.0,
+              0.745700, 10.930000, -3.06300, 17.720000, -0.102700, 0.036730, 0.777900, 0.500, -0.364,
+              0.271500, 0.835100, 0.073480, 0.999600, 0.442800,
+              1.2, 0.33, 4.970496, 0.0, 0.0,
+              160.0, 0.0, 0.0, 20.0,
+              -999.9, -999.9, -999.9,
+              1/0.012, 0.0),
+    phydro_param = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
+               0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
+               15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)),
 
     #####
     ## Default values of the set up
@@ -63,7 +69,6 @@ CASSIA_cpp <- function(
     myco_model = FALSE,           # Joanna's mycomodel development!
     xylogenesis = FALSE,
 
-    PRELES_GPP = FALSE,
     environment_effect_xylogenesis = FALSE,
 
     photosynthesis_as_input = TRUE,
@@ -85,8 +90,14 @@ CASSIA_cpp <- function(
     needle_mass_in = 4.467638,
     Throughfall = 1,
     trenching_year = NA,
+
     soil = FALSE,
     ecoevolutionary = FALSE,
+    fAPAR_Tian = FALSE,
+
+    phydro = FALSE,
+    preles = FALSE,
+
     tests = FALSE) {
 
   ####
@@ -97,34 +108,37 @@ CASSIA_cpp <- function(
   validate_site(site)
 
   # make the model settings into a list
-  settings = list("storage_reset" = storage_reset,
-                  "storage_grows" = storage_grows,
-                  "LN_estim" = LN_estim,
-                  "mN_varies" = mN_varies,
-                  "LD_estim" = LD_estim,
-                  "sD_estim_T_count" = sD_estim_T_count,
-                  "LH_estim" = LH_estim,
-                  "trees_grow" = trees_grow,
-                  "growth_decreases" = growth_decreases,
-                  "needle_mass_grows" = needle_mass_grows,
-                  "phloem_trigger" = phloem_trigger,
-                  "mycorrhiza" = mycorrhiza,
-                  "root_as_Ding" = root_as_Ding,
-                  "sperling_model" = sperling_model,
-                  "myco_model" = myco_model,
-                  "xylogenesis" = xylogenesis,
-                  "PRELES_GPP" = PRELES_GPP,
-                  "environment_effect_xylogenesis" = environment_effect_xylogenesis,
-                  "photosynthesis_as_input" = photosynthesis_as_input,
-                  "photoparameters" = photoparameters,
-                  "temp_rise" = temp_rise,
-                  "drought" = drought,
-                  "Rm_acclimation" = Rm_acclimation,
-                  "CASSIA_graphs" = CASSIA_graphs,
-                  "tests" = tests,
-                  "etmodel" = etmodel,
-                  "LOGFLAG" = LOGFLAG,
-                  "ecoevolutionary" = ecoevolutionary
+  settings = list(
+    "storage_reset" = storage_reset,
+    "storage_grows" = storage_grows,
+    "LN_estim" = LN_estim,
+    "mN_varies" = mN_varies,
+    "LD_estim" = LD_estim,
+    "sD_estim_T_count" = sD_estim_T_count,
+    "LH_estim" = LH_estim,
+    "trees_grow" = trees_grow,
+    "growth_decreases" = growth_decreases,
+    "needle_mass_grows" = needle_mass_grows,
+    "phloem_trigger" = phloem_trigger,
+    "mycorrhiza" = mycorrhiza,
+    "root_as_Ding" = root_as_Ding,
+    "sperling_model" = sperling_model,
+    "myco_model" = myco_model,
+    "xylogenesis" = xylogenesis,
+    "environment_effect_xylogenesis" = environment_effect_xylogenesis,
+    "photosynthesis_as_input" = photosynthesis_as_input,
+    "photoparameters" = photoparameters,
+    "temp_rise" = temp_rise,
+    "drought" = drought,
+    "Rm_acclimation" = Rm_acclimation,
+    "CASSIA_graphs" = CASSIA_graphs,
+    "tests" = tests,
+    "etmodel" = etmodel,
+    "LOGFLAG" = LOGFLAG,
+    "ecoevolutionary" = ecoevolutionary,
+    "fAPAR_Tian" = fAPAR_Tian,
+    "preles" = preles,
+    "phydro" = phydro
   )
 
   # Are the model settings valid?
@@ -132,15 +146,23 @@ CASSIA_cpp <- function(
   updated_settings <- update_model_settings(settings)
 
   # Is the weather data correct?
-  validate_weather_data(weather, updated_settings$PRELES_GPP, updated_settings$ecoevolutionary)
+  if (sum(c(photosynthesis_as_input, preles, phydro)) > 1) {
+    stop("Only one of the photosynthesis models can be use at a time.")
+  }
+
+  if (sum(c(photosynthesis_as_input, preles, phydro)) < 1) {
+    stop("No photosynthesis model is selected.")
+  }
+
+  # TODO: add the weather tests again
 
   #####
   ## Model conditions derived from model inputs
   #####
   # years from weather data
-  date_range = as.numeric(substring(weather$dates[c(1, nrow(weather))], 1, 4))
+  date_range = as.numeric(substring(weather$date[c(1, nrow(weather))], 1, 4))
   if (sum(date_range %in% 0:2500) < 2) {
-    stop("Dates are not between 0 and 2500. Is the column called dates?")
+    stop("Dates are not between 0 and 2500. Is the column called date?")
   }
   start_year <- date_range[1]
   end_year <- date_range[2]
@@ -153,7 +175,7 @@ CASSIA_cpp <- function(
                        updated_settings)
   } else if (ecoevolutionary) {
     out <- CASSIA_eeo(start_year, end_year, weather, GPP_ref_in,
-                      pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, # site,
+                      pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, phydro_param, # site,
                       needle_mass_in,
                       Throughfall, trenching_year,
                       updated_settings)

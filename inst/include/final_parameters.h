@@ -133,6 +133,8 @@ struct CASSIA_parameters {
   double stem_no;
   double m_R_tot;
   double diameter_start_day;
+  double GPP_mean;
+  double GPP_initial;
 };
 
 struct CASSIA_common {
@@ -180,12 +182,12 @@ struct phydro_canopy_parameters {
   double infra_translation; // Conversion from area biomass ratio to nitrogen price
   double kphio; // Quantum yield
   double rd; // Dark respiration
-  double a_jmax = 50; // Nitorgen to jmax ratio
+  double a_jmax; // Nitorgen to jmax ratio
 
   double p50_leaf;        ///< Leaf or whole-plant hydraulic vulnerability [MPa] (calculated from Xylem P50 and Safety margin)
   double K_leaf;          ///< Leaf conductivity [m]
   double b_leaf;          ///< Shape parameter of leaf vulnerabilty curve [-]
-  double cbio; // TODO: what is this?
+  double cbio;            // kg biomass per mol CO2 = 12.011 gC / mol CO2 * 1e-3 kgC/gC * 2.04 kg biomass/kg
 
   // Environment
   int n_layers;
@@ -201,6 +203,10 @@ struct phydro_canopy_parameters {
   double qm;
   double fg; // fg upper canopy gap fraction
   double k_light;
+
+  // Weather
+  double tau_weather;
+  double dt;
 };
 
 /*

@@ -28,16 +28,19 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.myco_model = Rcpp::as<bool>(settingsList["myco_model"]);
   settings.xylogensis_option = Rcpp::as<bool>(settingsList["xylogenesis"]);
 
-  settings.PRELES_GPP = Rcpp::as<bool>(settingsList["PRELES_GPP"]);
   settings.environmental_effect_xylogenesis = Rcpp::as<bool>(settingsList["environment_effect_xylogenesis"]);
 
   settings.photosynthesis_as_input = Rcpp::as<bool>(settingsList["photosynthesis_as_input"]);
   settings.phydro = Rcpp::as<bool>(settingsList["ecoevolutionary"]);
+  settings.fAPAR_Tian = Rcpp::as<bool>(settingsList["fAPAR_Tian"]);
 
   settings.photoparameters = Rcpp::as<int>(settingsList["photoparameters"]);
   settings.temp_rise = Rcpp::as<bool>(settingsList["temp_rise"]);
   settings.drought = Rcpp::as<bool>(settingsList["drought"]);
   settings.Rm_acclimation = Rcpp::as<bool>(settingsList["Rm_acclimation"]);
+
+  settings.preles = Rcpp::as<bool>(settingsList["preles"]);
+  settings.phydro = Rcpp::as<bool>(settingsList["phydro"]);
 
   settings.CASSIA_graphs = Rcpp::as<bool>(settingsList["CASSIA_graphs"]);
   settings.tests = Rcpp::as<bool>(settingsList["tests"]);

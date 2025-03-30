@@ -1,0 +1,237 @@
+---
+title: "Preles_Verion_Comparison"
+author: "Joanna"
+date: "2025-01-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+new_parameters <- rep(0.5, 27)  # Example new parameters
+calibration = F
+parameters_all <- initialize_parameters(calibration, new_parameters)
+```
+
+## Importing weather data
+
+```{r cars}
+weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
+
+plot_weather_variables(weather_preles)
+```
+
+## Running the models
+
+```{r pressure, echo=FALSE}
+preles_original <- Rprebasso::PRELES(weather_preles$PAR,
+                                     weather_preles$T,
+                                     weather_preles$VPD,
+                                     weather_preles$Rain,
+                                     weather_preles$CO2,
+                                     weather_preles$fAPAR)
+
+preles_CASSIA <- preles_test(weather_preles)
+
+CASSIA_preles <- CASSIA_cpp(weather = weather_preles,
+                            site = "Hyde",
+                            pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                            parameters = parameters_all$parameters_test,
+                            common = common_p,
+                            ratios = ratios_p,
+                            sperling = parameters_all$sperling_test,
+                            needle_mass_in = parameters_all$needle_mass_in,
+                            Throughfall = parameters_all$Throughfall,
+                            photosynthesis_as_input = FALSE,
+                            preles = TRUE)
+
+CASSIA_preles_soil <- CASSIA_cpp(weather = weather_preles,
+                                 site = "Hyde",
+                                 pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                 parameters = parameters_all$parameters_test,
+                                 common = common_p,
+                                 ratios = ratios_p,
+                                 sperling = parameters_all$sperling_test,
+                                 needle_mass_in = parameters_all$needle_mass_in,
+                                 Throughfall = parameters_all$Throughfall,
+                                 photosynthesis_as_input = FALSE,
+                                 preles = TRUE,
+                                 soil = TRUE)
+
+CASSIA_preles_ecoevolutionary <- CASSIA_cpp(weather = weather_preles,
+                                            site = "Hyde",
+                                            pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                            parameters = parameters_all$parameters_test,
+                                            common = common_p,
+                                            ratios = ratios_p,
+                                            sperling = parameters_all$sperling_test,
+                                            needle_mass_in = parameters_all$needle_mass_in,
+                                            Throughfall = parameters_all$Throughfall,
+                                            photosynthesis_as_input = FALSE,
+                                            preles = TRUE,
+                                            ecoevolutionary = TRUE)
+
+```
+
+## Model comparison
+
+```{r}
+par(mfrow = c(1, 3))
+ylim = c(0, max(c(preles_original$Preles$GPP, CASSIA_preles$Preles$GPP, preles_CASSIA$GPP, CASSIA_preles_ecoevolutionary$GPP, CASSIA_preles_soil$GPP)))
+plot(preles_original$GPP, ylab = "GPP", type = "l")
+lines(preles_CASSIA$GPP, col = "blue")
+lines(CASSIA_preles$Preles$GPP, col = "purple")
+lines(CASSIA_preles_soil$Preles$GPP, col = "green")
+lines(CASSIA_preles_ecoevolutionary$Preles$GPP, col = "orange")
+
+ylim = c(0, max(c(preles_original$Preles$GPP, CASSIA_preles$Preles$GPP, preles_CASSIA$GPP, CASSIA_preles_ecoevolutionary$GPP, CASSIA_preles_soil$GPP)))
+plot(preles_original$GPP, preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
+points(preles_original$GPP, CASSIA_preles$Preles$GPP, col = "purple")
+points(preles_original$GPP, CASSIA_preles_soil$Preles$GPP, col = "green")
+points(preles_original$GPP, CASSIA_preles_ecoevolutionary$Preles$GPP, col = "orange")
+
+plot(preles_original$GPP - preles_CASSIA$GPP, xlab = "Original", ylab = "CASSIA", col = "blue")
+points(preles_original$GPP - CASSIA_preles$Preles$GPP, col = "purple")
+points(preles_original$GPP - CASSIA_preles_soil$Preles$GPP, col = "green")
+points(preles_original$GPP - CASSIA_preles_ecoevolutionary$Preles$GPP, col = "orange")
+
+ylim = c(0, max(c(preles_CASSIA$ET, CASSIA_preles_Xianglin$Preles$ET)))
+plot(preles_original$ET, ylab = "ET", type = "l", ylim = ylim)
+lines(preles_CASSIA$ET, col = "blue")
+lines(CASSIA_preles$Preles$ET, col = "purple")
+lines(CASSIA_preles_soil$Preles$ET, col = "green")
+lines(CASSIA_preles_ecoevolutionary$Preles$ET, col = "orange")
+
+ylim = c(0, max(c(preles_CASSIA$ET, CASSIA_preles_Xianglin$Preles$ET)))
+plot(preles_original$ET, preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
+points(preles_original$ET, CASSIA_preles$Preles$ET, col = "purple")
+points(preles_original$ET, CASSIA_preles_soil$Preles$ET, col = "green")
+points(preles_original$ET, CASSIA_preles_ecoevolutionary$Preles$ET, col = "orange")
+
+plot(preles_original$ET - preles_CASSIA$ET, xlab = "Original", ylab = "CASSIA", col = "blue")
+points(preles_original$ET - CASSIA_preles$Preles$ET, col = "purple")
+points(preles_original$ET - CASSIA_preles_soil$Preles$ET, col = "green")
+points(preles_original$ET - CASSIA_preles_ecoevolutionary$Preles$ET, col = "orange")
+
+plot(preles_original$SW, ylab = "Soil Water", type = "l")
+lines(preles_CASSIA$SoilWater, col = "blue")
+lines(CASSIA_preles$Preles$SoilWater, col = "purple")
+lines(CASSIA_preles_soil$Preles$SoilWater, col = "green")
+lines(CASSIA_preles_ecoevolutionary$Preles$SoilWater, col = "orange")
+
+plot(preles_original$SW, preles_CASSIA$SoilWater, xlab = "Original", ylab = "CASSIA", col = "blue")
+points(preles_original$SW, CASSIA_preles$Preles$SoilWater, col = "purple")
+points(preles_original$SW, CASSIA_preles_soil$Preles$SoilWater, col = "green")
+points(preles_original$SW, CASSIA_preles_ecoevolutionary$Preles$SoilWater, col = "orange")
+legend("topleft", c("Original", "Preles Wrapper", "Preles in CASSIA", "Preles in CASSIA Soil", "Preles in CASSIA Eco"), col = c("black", "blue", "purple", "green", "orange"),
+       pch = c(2, 2, 2), bty = "n")
+
+plot(preles_original$SW - preles_CASSIA$SoilWater, xlab = "Original", ylab = "CASSIA", col = "blue")
+points(preles_original$SW - CASSIA_preles$Preles$SoilWater, col = "purple")
+points(preles_original$SW - CASSIA_preles_soil$Preles$SoilWater, col = "green")
+points(preles_original$SW - CASSIA_preles_ecoevolutionary$Preles$SoilWater, col = "orange")
+```
+
+## Xianglin Tian Effect
+
+
+```{r}
+CASSIA_preles_Xianglin <- CASSIA_cpp(weather = weather_preles,
+                                     site = "Hyde",
+                                     pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                     parameters = parameters_all$parameters_test,
+                                     common = common_p,
+                                     ratios = ratios_p,
+                                     sperling = parameters_all$sperling_test,
+                                     needle_mass_in = parameters_all$needle_mass_in,
+                                     Throughfall = parameters_all$Throughfall,
+                                     photosynthesis_as_input = FALSE,
+                                     fAPAR_Tian = TRUE,
+                                     preles = TRUE)
+
+CASSIA_preles_soil_Xianglin <- CASSIA_cpp(weather = weather_preles,
+                                          site = "Hyde",
+                                          pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                          parameters = parameters_all$parameters_test,
+                                          common = common_p,
+                                          ratios = ratios_p,
+                                          sperling = parameters_all$sperling_test,
+                                          needle_mass_in = parameters_all$needle_mass_in,
+                                          Throughfall = parameters_all$Throughfall,
+                                          photosynthesis_as_input = FALSE,
+                                          ecoevolutionary = TRUE,
+                                          fAPAR_Tian = TRUE,
+                                          preles = TRUE)
+
+CASSIA_preles_ecoevolutionary_Xianglin <- CASSIA_cpp(weather = weather_preles,
+                                                     site = "Hyde",
+                                                     pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                                     parameters = parameters_all$parameters_test,
+                                                     common = common_p,
+                                                     ratios = ratios_p,
+                                                     sperling = parameters_all$sperling_test,
+                                                     needle_mass_in = parameters_all$needle_mass_in,
+                                                     Throughfall = parameters_all$Throughfall,
+                                                     photosynthesis_as_input = FALSE,
+                                                     ecoevolutionary = TRUE,
+                                                     fAPAR_Tian = TRUE,
+                                                     preles = TRUE)
+```
+
+# Plots
+
+```{r}
+
+par(mfrow = c(1, 3))
+ylim = c(0, max(c(CASSIA_preles$Preles$GPP, CASSIA_preles_Xianglin$Preles$GPP, CASSIA_preles_soil_Xianglin$Preles$GPP, CASSIA_preles_ecoevolutionary_Xianglin$Preles$GPP)))
+plot(CASSIA_preles$Preles$GPP, col = "blue", ylab = "GPP", type = "l", ylim = ylim)
+lines(CASSIA_preles_Xianglin$Preles$GPP, col = "purple")
+lines(CASSIA_preles_soil_Xianglin$Preles$GPP, col = "green")
+lines(CASSIA_preles_ecoevolutionary_Xianglin$Preles$GPP, col = "orange")
+
+ylim = c(0, max(c(preles_CASSIA$GPP, CASSIA_preles_Xianglin$Preles$GPP)))
+plot(CASSIA_preles$Preles$GPP, CASSIA_preles$Preles$GPP, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
+points(CASSIA_preles$Preles$GPP, CASSIA_preles$Preles$GPP, col = "purple")
+points(CASSIA_preles$Preles$GPP, CASSIA_preles_soil$Preles$GPP, col = "green")
+points(CASSIA_preles$Preles$GPP, CASSIA_preles_ecoevolutionary$Preles$GPP, col = "orange")
+
+plot(CASSIA_preles$Preles$GPP - CASSIA_preles$Preles$GPP, xlab = "Time", ylab = "baseline - other", col = "blue")
+points(CASSIA_preles$Preles$GPP - CASSIA_preles$Preles$GPP, col = "purple")
+points(CASSIA_preles$Preles$GPP - CASSIA_preles_soil$Preles$GPP, col = "green")
+points(CASSIA_preles$Preles$GPP - CASSIA_preles_ecoevolutionary$Preles$GPP, col = "orange")
+
+ylim = c(0, max(c(CASSIA_preles$Preles$ET, CASSIA_preles_Xianglin$Preles$ET)))
+plot(CASSIA_preles$Preles$ET, col = "blue", ylab = "ET", type = "l")
+lines(CASSIA_preles_Xianglin$Preles$ET, col = "purple")
+lines(CASSIA_preles_soil_Xianglin$Preles$ET, col = "green")
+lines(CASSIA_preles_ecoevolutionary_Xianglin$Preles$ET, col = "orange")
+
+ylim = c(0, max(c(preles_CASSIA$ET, CASSIA_preles_Xianglin$Preles$ET)))
+plot(CASSIA_preles$Preles$ET, CASSIA_preles$Preles$ET, xlab = "Original", ylab = "CASSIA", col = "blue", ylim = ylim)
+points(CASSIA_preles$Preles$ET, CASSIA_preles_Xianglin$Preles$ET, col = "purple")
+points(CASSIA_preles$Preles$ET, CASSIA_preles_soil_Xianglin$Preles$ET, col = "green")
+points(CASSIA_preles$Preles$ET, CASSIA_preles_ecoevolutionary_Xianglin$Preles$ET, col = "orange")
+
+plot(CASSIA_preles$Preles$ET - CASSIA_preles$Preles$ET, xlab = "Time", ylab = "baseline - other", col = "blue")
+points(CASSIA_preles$Preles$ET - CASSIA_preles_Xianglin$Preles$ET, col = "purple")
+points(CASSIA_preles$Preles$ET - CASSIA_preles_soil_Xianglin$Preles$ET, col = "green")
+points(CASSIA_preles$Preles$ET - CASSIA_preles_ecoevolutionary_Xianglin$Preles$ET, col = "orange")
+
+plot(CASSIA_preles$Preles$SoilWater, col = "blue", ylab = "ET", type = "l")
+lines(CASSIA_preles_Xianglin$Preles$SoilWater, col = "purple")
+lines(CASSIA_preles_soil_Xianglin$Preles$SoilWater, col = "green")
+lines(CASSIA_preles_ecoevolutionary_Xianglin$Preles$SoilWater, col = "orange")
+
+plot(CASSIA_preles$Preles$SoilWater, preles_CASSIA$SoilWater, xlab = "Original", ylab = "CASSIA", col = "blue")
+points(CASSIA_preles$Preles$SoilWater, CASSIA_preles_Xianglin$Preles$SoilWater, col = "purple")
+points(CASSIA_preles$Preles$SoilWater, CASSIA_preles_soil_Xianglin$Preles$SoilWater, col = "green")
+points(CASSIA_preles$Preles$SoilWater, CASSIA_preles_ecoevolutionary_Xianglin$Preles$SoilWater, col = "orange")
+legend("topleft", c("Preles Wrapper", "Preles in CASSIA", "Preles in CASSIA Soil", "Preles in CASSIA Eco"), col = c("blue", "purple", "green", "orange"),
+       pch = c(2, 2, 2), bty = "n")
+
+plot(CASSIA_preles$Preles$SoilWater - preles_CASSIA$SoilWater, xlab = "Time", ylab = "baseline - other", col = "blue")
+points(CASSIA_preles$Preles$SoilWater - CASSIA_preles_Xianglin$Preles$SoilWater, col = "purple")
+points(CASSIA_preles$Preles$SoilWater - CASSIA_preles_soil_Xianglin$Preles$SoilWater, col = "green")
+points(CASSIA_preles$Preles$SoilWater - CASSIA_preles_ecoevolutionary_Xianglin$Preles$SoilWater, col = "orange")
+
+```

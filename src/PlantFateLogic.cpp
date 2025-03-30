@@ -1,14 +1,13 @@
-#include <phydro.h>
-#include "function_structures.h"
-#include "final_parameters.h"
+#include "CASSIA.h"
 
 // **
 // ** Gross and Net Assimilation
 // **
 
-/*
+
 phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
-                                                    double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                    double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                    double TAir_assim, double PAR_assim, double VPD_assim, double CO2_assim, double SWP_assim, double PA_assim,
                                                     phydro_canopy_parameters par, double zeta){
 
   double infrastructure = par.infra_translation * zeta;
@@ -22,23 +21,23 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
   double f_day_length = 0.5;
 
   // TODO: this originally had the difference between acclim and inst, need to work out how to do that in CASSIA
-  double Iabs_acclim = fipar * PAR;
+  double Iabs_acclim = fipar * PAR_max;
   double Iabs_day    = fipar * PAR / f_day_length;
   double Iabs_24hr   = fipar * PAR;
 
   // TODO: check that the climate isn't altered before it is put in phydro!
   auto out_phydro_acclim = phydro::phydro_nitrogen(
-    TAir,     // current temperature
-    TAir,     // growth temperature TODO: what is this?
+    TAir_assim,     // current temperature
+    TAir_assim,     // growth temperature TODO: what is this?
     Iabs_acclim,          // midday incident PAR [umol m-2 s-1]
-    PAR,     // Net radiation [W m-2] (only used for LE calculations which we dont use) // FIXME. Should this be Rnl? See message to Beni
-    VPD,    // vpd [kPa]
-    CO2,	  // co2 [ppm]
-    PA,     // surface pressure [Pa]
+    250,     // Net radiation [W m-2] (only used for LE calculations which we dont use) // FIXME. Should this be Rnl? See message to Beni
+    VPD_assim,     // vpd [kPa]
+    CO2_assim,	   // co2 [ppm]
+    PA_assim,      // surface pressure [Pa]
     Nitrogen, // Leaf nitrogen store!
     fapar,                // fraction of absorbed PAR
     par.kphio,            // phi0 - quantum yield
-    SWP,    // soil water potential [MPa]
+    SWP_assim,    // soil water potential [MPa]
     par.rd,               // ratio or dark respiration to vcmax
     3,  // wind speed [m s-1], only used by PML, which we dont use, so set to global average of 3 m/s
     par.a_jmax, // TODO: a_jmax parameter
@@ -51,9 +50,9 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
     out_phydro_acclim.vcmax25, // acclimated vcmax25
     out_phydro_acclim.jmax25,  // acclimated jmax25
     TAir,            // current temperature
-    TAir,          // growth temperature
+    TAir_assim,          // growth temperature
     Iabs_day,                  // daytime mean incident PAR [umol m-2 s-1]
-    PAR,            // mean net radiation [W m-2] (only used for LE calculations which we dont use)
+    250,            // mean net radiation [W m-2] (only used for LE calculations which we dont use)
     VPD,           // vpd [kPa]
     CO2,	       // co2 [ppm]
     PA,            // surface pressure [Pa]
@@ -69,15 +68,19 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
     par_control                // configuration params for phydro
   );
 
+  photo_leaf.a        *= f_day_length;
+  photo_leaf.e        *= f_day_length;
+  photo_leaf.gs       *= f_day_length;
+
   return photo_leaf;
 }
-*/
+
 
 // **
 // ** Building the canopy
 // **
 
-/*
+
 double q(double z, double height, phydro_canopy_parameters par){
   if (z > height || z < 0) return 0;
   else{
@@ -102,20 +105,57 @@ double crown_area_above(double z, double crown_area, double height, phydro_canop
     return crown_area * (1 - fq * fq * par.fg);
   }
 }
-*/
+
+void set_forcing_acclim(double TAir, double PAR, double VPD, double CO2, double SWP, double PA,
+                        double& TAir_assim, double& PAR_assim, double& VPD_assim, double& CO2_assim, double& SWP_assim, double& PA_assim,
+                        phydro_canopy_parameters par){
+   // Alpha, as dt is a constant of 1 day then dt = 1/365 or 1/366 as in the ecoevolutonary code
+   double alpha = 1 - exp(-par.dt/par.tau_weather);
+   TAir_assim += alpha * (TAir - TAir_assim);
+   PAR_assim += alpha * (PAR - PAR_assim);
+   VPD_assim += alpha * (VPD - VPD_assim);
+   CO2_assim += alpha * (CO2 - CO2_assim);
+   SWP_assim += alpha * (SWP - SWP_assim);
+   PA_assim += alpha * (PA - PA_assim);
+}
+
 
 // **
 // ** Plant assimilation for the canopy
 // **
 
-/*
-PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
-                                                     double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
-                                                     phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta){
+
+PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta, int day){
+  static double TAir_assim, PAR_assim, VPD_assim, CO2_assim, SWP_assim, PA_assim;
+  if (day == 0) {
+    TAir_assim = TAir;
+    PAR_assim = PAR;
+    VPD_assim = VPD;
+    CO2_assim = CO2;
+    SWP_assim = SWP;
+    PA_assim = PA;
+  } else {
+    set_forcing_acclim(TAir, PAR, VPD, CO2, SWP, PA,
+                       TAir_assim, PAR_assim, VPD_assim, CO2_assim, SWP_assim, PA_assim,
+                       par);
+  }
+
+  /*
+   * Calculate the parameters
+   */
+  // crown_area_above is the leaved area not considering gaps
+  double total_crown_area = crown_area_above(0.0, crown_area, height, par); // This is just one tree rather than all of them as in PlantFate
+  double n_layers = 3; // TODO: make this work int(total_crown_area / 0.99);
+
   // TODO: lai should be calculated in the CASSIA model
+  lai = 1.8; // TODO: so this the same as the amazon values
   double fapar = 1 - exp(-par.k_light * lai);
   bool by_layer = false;
 
+  /*
+   * plant_assim processes start
+   */
   PlantAssimilationResult plant_assim;
   plant_assim.gpp        = 0;
   plant_assim.rleaf      = 0;
@@ -135,11 +175,10 @@ PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
 
     double ca_layer = crown_area_above(zst, crown_area, height, par) - ca_cumm;
 
-    // TODO: environment - what is this?
-
     if (by_layer == true){
       auto res = leaf_assimilation_rate(par.canopy_openness[ilayer], fapar,
-                                        PAR, TAir, VPD, Precip, CO2, Nitrogen, PA, SWP,
+                                        PAR, PAR_max, TAir, VPD, Precip, CO2, Nitrogen, PA, SWP,
+                                        TAir_assim, PAR_assim, VPD_assim, CO2_assim, SWP_assim, PA_assim,
                                         par, zeta);
       plant_assim.gpp        += (res.a + res.vcmax * par.rd) * ca_layer;
       plant_assim.rleaf      += (res.vcmax * par.rd) * ca_layer;
@@ -170,7 +209,8 @@ PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
 
   if (by_layer == false){
     auto res = leaf_assimilation_rate(plant_assim.c_open_avg, fapar,
-                                      PAR, TAir, VPD, Precip, CO2, Nitrogen, PA, SWP,
+                                      PAR, PAR_max, TAir, VPD, Precip, CO2, Nitrogen, PA, SWP,
+                                      TAir_assim, PAR_assim, VPD_assim, CO2_assim, SWP_assim, PA_assim,
                                       par, zeta);
     plant_assim.gpp        = (res.a + res.vcmax * par.rd) * ca_total;
     plant_assim.rleaf      = (res.vcmax * par.rd) * ca_total;
@@ -183,10 +223,10 @@ PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
     plant_assim.nitrogen_avg     = res.n_leaf;
   }
 
-  plant_assim.gpp   *= (1e-6 * par.cbio);        // umol co2/s ----> umol co2/unit_t --> mol co2/unit_t --> kg/unit_t
-  plant_assim.rleaf *= (1e-6 * par.cbio);        // umol co2/s ----> umol co2/unit_t --> mol co2/unit_t --> kg/unit_t
-  plant_assim.trans *= (18e-3);                  // mol h2o/s  ----> mol h2o/unit_t  --> kg h2o /unit_t
+  plant_assim.gpp   *= (86400 * 1e-6 * par.cbio);        // umol co2/s ----> umol co2/unit_t --> mol co2/unit_t --> kg/unit_t
+  plant_assim.rleaf *= (86400 * 1e-6 * par.cbio);        // umol co2/s ----> umol co2/unit_t --> mol co2/unit_t --> kg/unit_t
+  plant_assim.trans *= (86400 * 18e-3);                  // mol h2o/s  ----> mol h2o/unit_t  --> kg h2o /unit_t
 
   return plant_assim;
 }
-*/
+

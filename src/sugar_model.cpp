@@ -17,16 +17,16 @@ double storage_update(double alfa, double sugar, double starch, double Wala, boo
   // The checks here make sense, as the model should compensate for the sugar lost at the end of each iteration rather than the beginning
   // Therefore, there should always be a positive value of sugar at the beginning of an iteration (and hopefully generally)
   if (std::isnan(sugar)) {
-    std::cout << "Sugar is NaN ";
+    // std::cout << "Sugar is NaN ";
     out = 0;
   } else if (std::isnan(starch)) {
-    std::cout << "Starch is NaN ";
+    // std::cout << "Starch is NaN ";
     out = 0;
   } else if (sugar < 0) {
-    std::cout << "Sugar is negative ";
+    // std::cout << "Sugar is negative ";
     out = 0;
   } else if (starch < 0) {
-    std::cout << "Starch is negative ";
+    // std::cout << "Starch is negative ";
     out = 0;
   } else if (!tree_alive) {
     out = 0;
@@ -145,7 +145,7 @@ carbo_balance sugar_model(int year,
 
       carbo_tracker Kd;
       carbo_tracker Ks;
-      // std::cout << " starch.B " << starch.B;
+
       Kd.needles = parameters_in.Ad.needles*std::exp(starch.B*TAir);
       Ks.needles = parameters_in.As.needles*std::exp(sugar.B*TAir);
       Kd.phloem = parameters_in.Ad.phloem*std::exp(starch.B*TAir);
@@ -408,12 +408,12 @@ carbo_balance sugar_model(int year,
     sB0 = parameters.sB0;
 
     // Model
-    double ak = 1 / (1 - 1/exp(parameters.alfa * (0.7430989 - parameters.Wala)));
+    double ak = 1 / (1 - 1/exp(parameters.alfa * (parameters.sugar00 + parameters.starch00 - parameters.Wala)));
     double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch;
     double myco_allocation;
     if (day == 0) {
-      sugar_all = 0.4184208;
-      starch_all = parameters.starch00;
+      sugar_all = parameters.sugar0;
+      starch_all = parameters.starch0;
       to_sugar = 0;
       to_starch = 0;
       storage = storage_term.respiration = 1;
@@ -439,12 +439,12 @@ carbo_balance sugar_model(int year,
         (1 + common.Rg_N) * storage * pot_growth.bud -
         myco_allocation;
 
-      if (sugar_all < 0.41) {
-        to_sugar = std::min(starch.needles, (0.41 - sugar_all) / 2.0);
+      if (sugar_all < parameters.sugar00) {
+        to_sugar = std::min(starch.needles, (parameters.sugar00 - sugar_all) / 2.0);
         to_starch = 0;
-      } else if (sugar_all > 0.41) {
+      } else if (sugar_all > parameters.sugar00) {
         to_sugar = 0;
-        to_starch = (sugar_all - 0.41) / 2.0;
+        to_starch = (sugar_all - parameters.sugar00) / 2.0;
       } else {
         to_sugar = 0;
         to_starch = 0;

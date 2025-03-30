@@ -51,8 +51,9 @@ process_weather_data <- function(using_spp_photosynthesis) {
 
   # Read and combine weather data from 2015 to 2018
   weather_original <- read_and_combine_weather_data(2015, 2018)
-  weather_original$dates <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
-  names(weather_original)[1] <- "date"
+  weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+
+  names(data_format)[1] <- "dates"
 
   # Add extra columns to the combined weather data
   extras <- data.frame(
@@ -60,7 +61,9 @@ process_weather_data <- function(using_spp_photosynthesis) {
     PAR = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "PAR"],
     VPD = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "VPD"],
     CO2 = data_format[substring(data_format$dates, 1, 4) %in% 2015:2018, "CO2"],
-    fAPAR = rep(0.7, nrow(weather_original))
+    fAPAR = rep(0.7, nrow(weather_original)),
+    PA = rep(1000, nrow(weather_original)),
+    SWP = rep(0.5, nrow(weather_original))
   )
 
   # Combine weather data with extra columns and remove specific rows
@@ -124,13 +127,15 @@ load_data <- function(data_directory = "~/Documents/CASSIA_Calibration/Processed
   load(paste0(direct, "obs.vec.og.RData"))
 
   korhonen_mineral_N <- read.csv(paste0(direct, "korhonen_mineral_N.csv"))
-  keskiarvot_kaittelyttain_vuot <- read.delim(paste0(direct, "keskiarvot_kasittelyttain_vuot_2013_2015.txt"))
-
-  nitorgen_balance <- read.csv(paste0(direct, "ecosystem_balence_N.csv"))
+  keskiarvot_kaittelyttain_vuot <- as.data.frame(t(read.table(paste0(direct, "keskiarvot_kasittelyttain_vuot_2013_2015.txt"), sep = " ", row.names = 1)))
+  keskiarvot_kaittelyttain_vuot$date <- as.Date(keskiarvot_kaittelyttain_vuot$date, format = "%Y-%m-%d")
+  keskiarvot_kaittelyttain_vuot[,-1] <- lapply(keskiarvot_kaittelyttain_vuot[,-1], as.numeric)
+  nitorgen_balance <- readxl::read_excel(paste0(direct, "Ecosystem_nitrogen_excel.xlsx"))
 
   # Reading core drilling data files
   core_drilling_files <- list.files(direct, pattern = "Core Drilling")
   core_drilling_list <- lapply(paste0(direct, core_drilling_files), read.delim)
+  names(core_drilling_list) <- gsub(" ", "_", gsub(".txt", "", core_drilling_files))
 
   # Print information about loaded data
   cat("Data loaded successfully.\n")
@@ -163,13 +168,17 @@ initialize_parameters <- function(calibration = FALSE, new_parameters = NULL) {
   needle_mass_in <- 4.467638
 
   N_parameters <- c(1/0.012, 0.0) # TODO: Fit the N parameters
-  pPREL <- c(413.0, 0.450, 0.118, 3.0, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
-             0.033942, 0.448975, 0.500, -0.364, 0.33271, 0.857291, 0.041781,
-             0.474173, 0.278332, 1.5, 0.33, 4.824704, 0.0, 0.0, 180.0, 0.0, 0.0, 10.0,
-             -999.9, -999.9, -999.9)
+  pPREL <-  c(413.0, 0.450, 0.118, 3.0,
+              0.745700, 10.930000, -3.06300, 17.720000, -0.102700, 0.036730, 0.777900, 0.500, -0.364,
+              0.271500, 0.835100, 0.073480, 0.999600, 0.442800,
+              1.2, 0.33, 4.970496, 0.0, 0.0,
+              160.0, 0.0, 0.0, 20.0,
+              -999.9, -999.9, -999.9)
 
   parameters_test <- parameters_p
   parameters_test[c("lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st"), 1] <- c(0.05, 0.13, 0.007, 0.009, 0.001)
+  parameters_test[c("GPP_mean", "GPP_initial"), 1] <- c(463.8833, 481.3) # TODO: correct value
+
   sperling_test <- sperling_p
   sperling_test[c("tau.s", "tau.t"), 1] <- c(3, 3)
   sperling_test[c("k_np", "k_pr", "k_pxsh", "k_pxst"), 1] <- c(100, 100, 100, 100)
@@ -237,6 +246,12 @@ initialize_parameters <- function(calibration = FALSE, new_parameters = NULL) {
 plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_original_plot, variables_original, soil_processes = FALSE) {
   par(mfrow = c(3, 3))
 
+  if (nrow(CASSIA_new_output[[1]]) == 1461) {
+    CASSIA_new_output[[1]] <- CASSIA_new_output[[1]][-731, ]
+    CASSIA_new_output[[2]] <- CASSIA_new_output[[2]][-731, ]
+    CASSIA_new_output[[3]] <- CASSIA_new_output[[3]][-731, ]
+  }
+
   dates = as.Date(strptime(paste(CASSIA_new_output$Growth$year, CASSIA_new_output$Growth$day), format = "%Y %j"))
   dates_original = as.Date(strptime(paste(Hyde_daily_original_plot$year, Hyde_daily_original_plot$day), format = "%Y %j"))
 
@@ -249,12 +264,12 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
 
       # Plot New against Old
       plot(Hyde_daily_original_plot[, variables_original[var]],
-           CASSIA_new_output$Growth[, variables_new[var]][-731],
+           CASSIA_new_output$Growth[, variables_new[var]],
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
 
       # Plot Residuals
-      plot(dates_original, Hyde_daily_original_plot[, variables_original[var]] - CASSIA_new_output$Growth[, variables_new[var]][-731],
+      plot(dates_original, Hyde_daily_original_plot[, variables_original[var]] - CASSIA_new_output$Growth[, variables_new[var]],
            main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
 
     } else {
@@ -265,12 +280,12 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
 
       # Plot New against Old
       plot(Hyde_daily_original_plot$P / (10000/1000) * 1010,
-           CASSIA_new_output$Preles[, variables_new[var]][-731],
+           CASSIA_new_output$Preles[, variables_new[var]],
            main = "New against old", xlab = "Original data", ylab = "New Data", col = "blue")
       abline(0, 1, col = "red")
 
       # Plot Residuals
-      plot(dates_original, Hyde_daily_original_plot$P / (10000/1000) * 1010 - CASSIA_new_output$Preles[, variables_new[var]][-731],
+      plot(dates_original, Hyde_daily_original_plot$P / (10000/1000) * 1010 - CASSIA_new_output$Preles[, variables_new[var]],
            main = "Residuals", xlab = "Date", ylab = "original - new output", col = "blue")
       legend("topright", c("C++ Model", "Original R Model"), col = c("black", "blue"), bty = "n", lty = 1, cex = 0.75)
     }
@@ -281,9 +296,10 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
 # Weather variables
 #####
 
-plot_weather_variables <- function(weather_original, dates) {
-  par(mfrow = c(3, 3))
+plot_weather_variables <- function(weather_original) {
+  par(mfrow = c(2, 3))
   not_dates = !(names(weather_original) %in% c("dates", "Date", "date", "X"))
+  dates = weather_original$date
   for (clim in which(not_dates)) {
     plot(dates, weather_original[,clim],
          main = names(weather_original)[clim],
@@ -647,3 +663,52 @@ plot_total_ecosystem_respiration <- function(CASSIA_new_output_not_trenching, CA
          lwd = 2,
          bty = "n")
 }
+
+#####
+#
+#####
+
+soil_against_yearly <- function(CASSIA_new_output_no_tests, CASSIA_new_output_trenching, CASSIA_new_output_not_trenching) {
+  par(mfrow = c(3, 3))
+  for (i in 1:ncol(CASSIA_new_output_no_tests$Sugar)) {
+    plot(CASSIA_new_output_no_tests$Sugar[,i],
+         main = names(CASSIA_new_output_no_tests$Sugar)[i],
+         ylab = names(CASSIA_new_output_no_tests$Sugar)[i],
+         xlab = "Dates")
+    points(CASSIA_new_output_trenching$Sugar[,i], col = "blue")
+    points(CASSIA_new_output_not_trenching$Sugar[,i], col = "red")
+    legend("bottomleft", c("Original", "Trenched", "Not Trenched"), col = c("black", "blue", "red"), pch = c(1, 1, 1), bty = "n")
+
+    plot(CASSIA_new_output_no_tests$Sugar[,i], CASSIA_new_output_trenching$Sugar[,i], col = "blue",
+         main = "Original against Trenched", ylab = "(Not) Trenched", xlab = "Original")
+    points(CASSIA_new_output_no_tests$Sugar[,i], CASSIA_new_output_not_trenching$Sugar[,i], col = "red",
+           main = "Original against Not Trenched")
+
+    plot(CASSIA_new_output_no_tests$Sugar[,i] - CASSIA_new_output_trenching$Sugar[,i], col = "blue",
+         main = "Original - Trenched", ylab = "Difference", xlab = "Dates")
+    points(CASSIA_new_output_no_tests$Sugar[,i] - CASSIA_new_output_not_trenching$Sugar[,i], col = "red",
+           main = "Original - Not Trenched")
+  }
+
+  for (i in 1:ncol(CASSIA_new_output_no_tests$Growth)) {
+    plot(CASSIA_new_output_no_tests$Growth[,i],
+         main = names(CASSIA_new_output_no_tests$Growth)[i],
+         ylab = names(CASSIA_new_output_no_tests$Growth)[i],
+         xlab = "Dates")
+    points(CASSIA_new_output_trenching$Growth[,i], col = "blue")
+    points(CASSIA_new_output_not_trenching$Growth[,i], col = "red")
+    legend("bottomleft", c("Original", "Trenched", "Not Trenched"), col = c("black", "blue", "red"), pch = c(1, 1, 1), bty = "n")
+
+    plot(CASSIA_new_output_no_tests$Growth[,i], CASSIA_new_output_trenching$Growth[,i], col = "blue",
+         main = "Original against Trenched", ylab = "(Not) Trenched", xlab = "Original")
+    points(CASSIA_new_output_no_tests$Growth[,i], CASSIA_new_output_not_trenching$Growth[,i], col = "red",
+           main = "Original against Not Trenched")
+
+    plot(CASSIA_new_output_no_tests$Growth[,i] - CASSIA_new_output_trenching$Growth[,i], col = "blue",
+         main = "Original - Trenched", ylab = "Difference", xlab = "Dates")
+    points(CASSIA_new_output_no_tests$Growth[,i] - CASSIA_new_output_not_trenching$Growth[,i], col = "red",
+           main = "Original - Not Trenched")
+  }
+}
+
+

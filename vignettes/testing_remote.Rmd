@@ -1,0 +1,16 @@
+---
+title: "testing_remote"
+author: "Joanna"
+date: "2025-01-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Testing the remote configiration of the model
+
+```{r}
+revtools::install_github("josimms/CASSIA@adding_externals", force = TRUE)
+```

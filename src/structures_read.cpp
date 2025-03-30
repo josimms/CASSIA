@@ -270,6 +270,10 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
   out.stem_no = temp124[0];
   std::vector<double> temp125 = input_parameters["diameter_start_day"];
   out.diameter_start_day = temp125[0];
+  std::vector<double> temp126 = input_parameters["GPP_mean"];
+  out.GPP_mean = temp126[0];
+  std::vector<double> temp127 = input_parameters["GPP_initial"];
+  out.GPP_initial = temp127[0];
   return out;
 }
 
@@ -479,9 +483,9 @@ CASSIA_ratios make_ratios(Rcpp::DataFrame input) {
 p1 make_p1(std::vector<double> input) {
   p1 out;
   out.soildepth = input[0];
-  out.tauDrainage = input[1];
-  out.ThetaFC = input[2];
-  out.ThetaPWP = input[3];
+  out.ThetaFC = input[1];
+  out.ThetaPWP = input[2];
+  out.tauDrainage = input[3];
   return(out);
 }
 
@@ -537,6 +541,104 @@ p7 make_p7(std::vector<double> input) {
   out.b = input[31];
   return(out);
 }
+
+phydro_canopy_parameters parPhydro_initalise(std::vector<double> phydro_params) {
+  phydro_canopy_parameters parPhydro;
+  parPhydro.alpha = phydro_params[0];           // Cost of maintaining photosynthetic capacity (Ref: Joshi et al 2022, removed shrubs and gymnosperms)
+  parPhydro.gamma = phydro_params[1];           // Cost of maintaining hydraulic pathway  (Ref: Joshi Slack)
+  parPhydro.infra_translation = phydro_params[2];    // Translation from biomass area ratio to Ib
+  parPhydro.kphio = phydro_params[3]; // 0.087            // Quantum yield efficiency
+  parPhydro.rd = phydro_params[4]; // 0.015              // ratio of leaf dark respiration rate to vcmax [-]  (Ref: 0.011 in Farquhar et al 1980, 0.015 in Collatz et al 1991)
+  parPhydro.a_jmax = phydro_params[5]; // TODO: 800 or 50?
+
+  parPhydro.k_light = phydro_params[6];
+
+  // Note the p50_leaf was commented and this was the value p50_xylem -2.29 was there
+  parPhydro.p50_leaf = phydro_params[7];          // Leaf P50 [MPa]
+  parPhydro.K_leaf = phydro_params[8];         // Leaf conductance [m]  ---> ** Calibrated to gs **
+  parPhydro.b_leaf = phydro_params[9];               // Shape parameter of xylem vulnerabilty curve [-]
+  parPhydro.cbio = phydro_params[10];           // kg biomass per mol CO2 = 12.011 gC / mol CO2 * 1e-3 kgC/gC * 2.04 kg biomass/kg
+  // TODO: replace with a boreal shape
+  parPhydro.m = phydro_params[11];                  // crown shape smoothness
+  parPhydro.n = phydro_params[12];                    // crown top-heaviness
+  parPhydro.fg = phydro_params[13];                 // upper canopy gap fraction
+  // qm defined in plant_architecture
+  parPhydro.qm = parPhydro.m * parPhydro.n * pow((parPhydro.n - 1) / (parPhydro.m * parPhydro.n - 1), 1 - 1 / parPhydro.n) * pow((parPhydro.m - 1) * parPhydro.n / (parPhydro.m * parPhydro.n - 1), parPhydro.m - 1);
+  // zm_H defined in plant_architecture
+  parPhydro.zm_H = pow((parPhydro.n - 1) / (parPhydro.m * parPhydro.n - 1), 1 / parPhydro.n);
+
+  // This value is random, although 15 is one of the values from PlantFate
+  parPhydro.z_star = {phydro_params[14], phydro_params[15], phydro_params[16], phydro_params[17]};
+  parPhydro.canopy_openness = {phydro_params[18], phydro_params[19], phydro_params[20], phydro_params[21]};
+
+  return(parPhydro);
+}
+// Helper function to convert double to string with specified precision
+std::string doubleToStringPrecision(double value, int precision = 6) {
+  std::ostringstream out;
+  out.precision(precision);
+  out << std::fixed << value;
+  return out.str();
+}
+
+void print_phydro_parameters(const phydro_canopy_parameters& params) {
+  // Photosynthesis parameters
+  std::cout << "Photosynthesis Parameters:\n";
+  std::cout << "  alpha: " << doubleToStringPrecision(params.alpha) << " (Cost for photosynthesis)\n";
+  std::cout << "  gamma: " << doubleToStringPrecision(params.gamma) << " (Cost for water)\n";
+  std::cout << "  infra_translation: " << doubleToStringPrecision(params.infra_translation) << " (Conversion from area biomass ratio to nitrogen price)\n";
+  std::cout << "  kphio: " << doubleToStringPrecision(params.kphio) << " (Quantum yield)\n";
+  std::cout << "  rd: " << doubleToStringPrecision(params.rd) << " (Dark respiration)\n";
+  std::cout << "  a_jmax: " << doubleToStringPrecision(params.a_jmax) << " (Nitrogen to jmax ratio)\n";
+  std::cout << "  p50_leaf: " << doubleToStringPrecision(params.p50_leaf) << " (Leaf hydraulic vulnerability [MPa])\n";
+  std::cout << "  K_leaf: " << doubleToStringPrecision(params.K_leaf) << " (Leaf conductivity [m])\n";
+  std::cout << "  b_leaf: " << doubleToStringPrecision(params.b_leaf) << " (Shape parameter of leaf vulnerability curve)\n";
+  std::cout << "  cbio: " << doubleToStringPrecision(params.cbio) << " (kg biomass per mol CO2)\n";
+
+  // Environment parameters
+  std::cout << "\nEnvironment Parameters:\n";
+  std::cout << "  n_layers: " << params.n_layers << " (Number of layers)\n";
+  std::cout << "  total_crown_area: " << doubleToStringPrecision(params.total_crown_area) << "\n";
+
+  // z_star vector
+  std::cout << "  z_star: [";
+  for (size_t i = 0; i < params.z_star.size(); ++i) {
+    std::cout << doubleToStringPrecision(params.z_star[i]);
+    if (i < params.z_star.size() - 1) std::cout << ", ";
+  }
+  std::cout << "]\n";
+
+  // fapar_tot vector
+  std::cout << "  fapar_tot: [";
+  for (size_t i = 0; i < params.fapar_tot.size(); ++i) {
+    std::cout << doubleToStringPrecision(params.fapar_tot[i]);
+    if (i < params.fapar_tot.size() - 1) std::cout << ", ";
+  }
+  std::cout << "]\n";
+
+  // canopy_openness vector
+  std::cout << "  canopy_openness: [";
+  for (size_t i = 0; i < params.canopy_openness.size(); ++i) {
+    std::cout << doubleToStringPrecision(params.canopy_openness[i]);
+    if (i < params.canopy_openness.size() - 1) std::cout << ", ";
+  }
+  std::cout << "]\n";
+
+  // Canopy parameters
+  std::cout << "\nCanopy Parameters:\n";
+  std::cout << "  m: " << doubleToStringPrecision(params.m) << " (Canopy shape parameter)\n";
+  std::cout << "  n: " << doubleToStringPrecision(params.n) << " (Canopy shape parameter)\n";
+  std::cout << "  zm_H: " << doubleToStringPrecision(params.zm_H) << " (Precomputed geometric parameter)\n";
+  std::cout << "  qm: " << doubleToStringPrecision(params.qm) << " (Precomputed geometric parameter)\n";
+  std::cout << "  fg: " << doubleToStringPrecision(params.fg) << " (Upper canopy gap fraction)\n";
+  std::cout << "  k_light: " << doubleToStringPrecision(params.k_light) << " (Light extinction coefficient)\n";
+
+  // Weather parameters
+  std::cout << "\nWeather Parameters:\n";
+  std::cout << "  tau_weather: " << doubleToStringPrecision(params.tau_weather) << "\n";
+  std::cout << "  dt: " << doubleToStringPrecision(params.dt) << " (Time step)\n";
+}
+
 
 parameters_soil parameters_initalise_test(std::vector<double> parameters_R) {
   parameters_soil out;
