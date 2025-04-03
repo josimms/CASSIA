@@ -36,7 +36,7 @@ CASSIA_new_output_sugar = CASSIA_cpp(weather = weather_original,
 plot_comparison(CASSIA_new_output_sugar, variables_new,
                 Hyde_daily_original_plot, variables_original, soil_processes)
 
-plot_sugar_starch_comparison(CASSIA_new_output_sugar, weather_original$date, loaded_data$original_data, loaded_data$yu_data)
+plot_sugar_starch_comparison(CASSIA_new_output_sugar, weather_original$date, loaded_data$original_data, loaded_data$yu_data) 
 ```
 
 Calibration Weather
@@ -55,10 +55,12 @@ parameters_1998_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416
 parameters_1998_2022$parameters_test[c("GPP_mean"),c("Hyde")] <- 463.8833
 parameters_1998_2022$parameters_test[c("GPP_initial"),c("Hyde")] <- 460.0
 
-parameters_1998_2022$sperling_test[c("Ad0.needles", "Ad0.phloem", "Ad0.roots", "Ad0.xylem.sh", "Ad0.xylem.st"),c("Hyde")] <- c()
-parameters_1998_2022$sperling_test[c("lamda.needles", "lamda.phloem", "lamda.roots", "lamda.xylem.sh", "lamda.xylem.st"),c("Hyde")] <- c()
-parameters_1998_2022$sperling_test[c("delta.needles", "delta.phloem", "delta.roots", "delta.xylem.sh", "delta.xylem.st"),c("Hyde")] <- c()
-parameters_1998_2022$sperling_test[c("k_np", "k_pr", "k_pxsh", "k_pxst", "myco.thresh"),c("Hyde")] <- c()
+parameters_1998_2022$sperling_test[c("Ad0.needles", "Ad0.phloem", "Ad0.roots", "Ad0.xylem.sh", "Ad0.xylem.st"),c("Hyde")] <- c(0.1, 0.1, 0.1, 0.1, 0.1)
+parameters_1998_2022$sperling_test[c("lamda.needles", "lamda.phloem", "lamda.roots", "lamda.xylem.sh", "lamda.xylem.st"),c("Hyde")] <- c(1e-4, 1e-4, 1e-4, 1e-4, 1e-4)
+parameters_1998_2022$sperling_test[c("delta.needles", "delta.phloem", "delta.roots", "delta.xylem.sh", "delta.xylem.st"),c("Hyde")] <- c(25e-6, 25e-6, 25e-6, 25e-6, 25e-6)
+parameters_1998_2022$sperling_test[c("myco.thresh"),c("Hyde")] <- 0.3
+# These are not currently used!
+# parameters_1998_2022$sperling_test[c("k_np", "k_pr", "k_pxsh", "k_pxst", "myco.thresh"),c("Hyde")]
 ```
 
 Simulation
