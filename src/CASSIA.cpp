@@ -378,6 +378,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       sugar_values_for_next_iteration.storage = sugar_model_out.storage;
       parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
       tree_alive = sugar_model_out.previous_values.tree_alive;
+      equilibrium_temperature = std::log(sugar_values_for_next_iteration.previous_values.As.needles/sugar_values_for_next_iteration.previous_values.Ad.needles)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
 
       if (final_year%2==0) {
         sugar_values_output.sugar.push_back(sugar_values_for_next_iteration.sugar.needles +
