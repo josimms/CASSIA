@@ -39,7 +39,7 @@ double storage_update(double alfa, double sugar, double starch, double Wala, boo
 }
 
 // TODO: make this make sense for each organ
-double storage_update_organs(double storage_capacity, double sugar, double starch, bool tree_alive) {
+double storage_update_organs(double storage_capacity, double sugar, double starch, bool tree_alive, double limiting_parameter) {
   double out;
   // The checks here make sense, as the model should compensate for the sugar lost at the end of each iteration rather than the beginning
   // Therefore, there should always be a positive value of sugar at the beginning of an iteration (and hopefully generally)
@@ -63,14 +63,14 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
   return out;
 }
 
-carbo_tracker As_initiliser(carbo_tracker Ad, double equilibrium_temperature, double Bd, double Bs)
+carbo_tracker As_initiliser(carbo_tracker Ad, carbo_tracker equilibrium_temperature, double Bd, double Bs)
 {
   carbo_tracker As;
-  As.needles = Ad.needles * std::exp(equilibrium_temperature * (Bd - Bs));
-  As.phloem = Ad.phloem * std::exp(equilibrium_temperature * (Bd - Bs));
-  As.xylem_sh = Ad.xylem_sh * std::exp(equilibrium_temperature * (Bd - Bs));
-  As.xylem_st = Ad.xylem_st * std::exp(equilibrium_temperature * (Bd - Bs));
-  As.roots = Ad.roots * std::exp(equilibrium_temperature * (Bd - Bs));
+  As.needles = Ad.needles * std::exp(equilibrium_temperature.needles * (Bd - Bs));
+  As.phloem = Ad.phloem * std::exp(equilibrium_temperature.phloem * (Bd - Bs));
+  As.xylem_sh = Ad.xylem_sh * std::exp(equilibrium_temperature.xylem_sh * (Bd - Bs));
+  As.xylem_st = Ad.xylem_st * std::exp(equilibrium_temperature.xylem_st * (Bd - Bs));
+  As.roots = Ad.roots * std::exp(equilibrium_temperature.roots * (Bd - Bs));
 
   return As;
 }
@@ -113,7 +113,8 @@ carbo_balance sugar_model(int year,
                           bool tree_alive,
                           bool storage_grows,
                           double needles_mass, // Repola
-                          double temperature_equilibrium, // Calculated in the main function
+                          double root_mass,
+                          carbo_tracker temperature_equilibrium, // Calculated in the main function
 
                           growth_out pot_growth,
 
@@ -122,9 +123,8 @@ carbo_balance sugar_model(int year,
 
                           carbo_values_out parameters_in) {
 
-  // TODO: can this be derived dynamically by the model?
+  // TODO: phloem mass is hard to get within the model, maybe a product of diameter and height
   double phloem_mass = 7.410537931;
-  double root_mass = 2.8;
   double xylem_sh_mass = 74.10537931;
   double xylem_st_mass = 8.65862069;
 
@@ -133,11 +133,11 @@ carbo_balance sugar_model(int year,
   double xylem_st_respiration_share = xylem_st_mass / (phloem_mass + xylem_sh_mass + xylem_st_mass);
 
   carbo_tracker storage_term;
-  storage_term.needles = storage_update_organs(0.1*needles_mass, sugar.needles, starch.needles, tree_alive);
-  storage_term.phloem = storage_update_organs(0.1*phloem_mass, sugar.phloem, starch.phloem, tree_alive);
-  storage_term.xylem_sh = storage_update_organs(0.1*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive);
-  storage_term.xylem_st = storage_update_organs(0.1*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive);
-  storage_term.roots = storage_update_organs(0.1*root_mass, sugar.roots, starch.roots, tree_alive);
+  storage_term.needles = storage_update_organs(0.1*needles_mass, sugar.needles, starch.needles, tree_alive, parameters.Wala_needles); // TODO: lower_bound_needles not being used so used for the expoential parmeters
+  storage_term.phloem = storage_update_organs(0.1*phloem_mass, sugar.phloem, starch.phloem, tree_alive, parameters.Wala_needles);
+  storage_term.xylem_sh = storage_update_organs(0.1*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive, parameters.Wala_needles);
+  storage_term.xylem_st = storage_update_organs(0.1*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive, parameters.Wala_needles);
+  storage_term.roots = storage_update_organs(0.1*root_mass, sugar.roots, starch.roots, tree_alive, parameters.Wala_needles);
 
   double sB0;
   carbo_tracker As_new, Ad_new;
@@ -229,7 +229,7 @@ carbo_balance sugar_model(int year,
       // coefficients are from mass ratio in starch and sugar 2015 xls
       sugar.phloem = sugar.phloem -
         phloem_respiration_share * resp.RmS * storage_term.phloem -
-        (1 + common.Rg_S) * storage_term.phloem * (pot_growth.wall + pot_growth.height) +  // growth
+        phloem_respiration_share * (1 + common.Rg_S) * storage_term.phloem * (pot_growth.wall + pot_growth.height) +  // growth
         concentration_gradient.needles_to_phloem -                                         // transfer between organs
         concentration_gradient.phloem_to_roots -                                           // transfer between organs
         concentration_gradient.phloem_to_xylem_sh -
@@ -253,18 +253,18 @@ carbo_balance sugar_model(int year,
       sugar.xylem_sh = sugar.xylem_sh -
         xylem_sh_respiration_share * resp.RmS * storage_term.xylem_sh -                                   // maintenance respiration
         xylem_sh_capacity -                                                                               // Over the storage limit
-        (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +               // growth
+        xylem_sh_respiration_share * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +               // growth
         concentration_gradient.phloem_to_xylem_sh +
-        (Kd.xylem_sh - Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * xylem_st_mass;
+        (Kd.xylem_sh - Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * xylem_sh_mass;
 
       sugar.xylem_sh = std::max(sugar.xylem_sh, 0.0);
 
       sugar.xylem_st = sugar.xylem_st -
         xylem_st_respiration_share * resp.RmS * storage_term.xylem_st -                                // maintenance respiration
         xylem_st_capacity -                                                                            // Over the storage limit
-        (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height) +            // growth
+        xylem_st_respiration_share * (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height) +            // growth
         concentration_gradient.phloem_to_xylem_st +
-        (Kd.xylem_st - Ks.xylem_st) * parameters.carbon_sugar * 0.001 * xylem_sh_mass;
+        (Kd.xylem_st - Ks.xylem_st) * parameters.carbon_sugar * 0.001 * xylem_st_mass;
 
       sugar.xylem_st = std::max(sugar.xylem_st, 0.0);
 
@@ -275,6 +275,12 @@ carbo_balance sugar_model(int year,
         xylem_st_respiration_share * (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height) +
         xylem_sh_respiration_share * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +
                                      (1 + common.Rg_R) * storage_term.roots * pot_growth.roots;
+
+      double respiration_maintainence = resp.RmN * storage_term.needles +
+             phloem_respiration_share * resp.RmS * storage_term.phloem +
+           xylem_sh_respiration_share * resp.RmS * storage_term.xylem_sh +
+           xylem_st_respiration_share * resp.RmS * storage_term.xylem_st +
+                                        resp.RmR * storage_term.roots;
 
       /*
        * STARCH UPDATED SPERLING
@@ -331,7 +337,7 @@ carbo_balance sugar_model(int year,
        * Mass check
        */
 
-      sugar_out_of_system = respiration_growth + sugar.mycorrhiza + pot_growth.use - pot_growth.release;
+      sugar_out_of_system = respiration_growth + respiration_maintainence + sugar.mycorrhiza + pot_growth.use - pot_growth.release;
       double carbo_ending = sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots +
         starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots + sugar_out_of_system;
       double difference = carbo_beginning - carbo_ending;
