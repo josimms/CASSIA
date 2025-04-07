@@ -134,7 +134,8 @@ carbo_balance sugar_model(int year,
                           bool tree_alive,
                           bool storage_grows,
                           double needles_mass, // Repola
-                          double temperature_equilibrium,
+                          double root_mass,
+                          carbo_tracker temperature_equilibrium, // Calculated in the main function
 
                           growth_out pot_growth,
 

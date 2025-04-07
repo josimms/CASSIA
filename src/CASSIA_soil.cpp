@@ -139,6 +139,12 @@ Rcpp::List CASSIA_soil(int start_year,
     }
   }
 
+  // Temperature equilibrium for the sugar model
+  //	# Compute initial Te by the mean temperature for the first week of # Semptemver plus 3C (for the exponential nature of the curves), original was October
+  carbo_tracker equilibrium_temperature = carbo_tracker_init();
+  double equilibrium_temperature_init = (climate.TAir[244] + climate.TAir[245] + climate.TAir[246] + climate.TAir[247] + climate.TAir[248] + climate.TAir[249] + climate.TAir[250] + climate.TAir[251]) / 7 + 3;
+  equilibrium_temperature.needles = equilibrium_temperature.phloem = equilibrium_temperature.roots = equilibrium_temperature.xylem_sh = equilibrium_temperature.xylem_st = equilibrium_temperature_init;
+
   int final_year = 1;
   int days_gone = 0;
   for (int year : years_for_runs)  {
@@ -162,10 +168,6 @@ Rcpp::List CASSIA_soil(int start_year,
     /*
      * Yearly initialization
      */
-
-    // Temperature equilibrium for the sugar model
-    //	# Compute initial Te by the mean temperature for the first week of # October plus 3C (for the exponential nature of the curves)
-    double equilibrium_temperature = (climate.TAir[244] + climate.TAir[245] + climate.TAir[246] + climate.TAir[247] + climate.TAir[248] + climate.TAir[249] + climate.TAir[250] + climate.TAir[251]) / 7 + 3;
 
     // B0, D00 and h00
     double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
@@ -368,11 +370,13 @@ Rcpp::List CASSIA_soil(int start_year,
                                                   tree_alive,
                                                   boolsettings.storage_grows,
                                                   repola_values.needle_mass,
+                                                  culm_growth.roots[weather_index-1],
                                                   equilibrium_temperature,
                                                   potential_growth,
                                                   sugar_values_for_next_iteration.sugar,
                                                   sugar_values_for_next_iteration.starch,
                                                   sugar_values_for_next_iteration.previous_values);
+
       // Saved for the next iteration
       sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
       sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
