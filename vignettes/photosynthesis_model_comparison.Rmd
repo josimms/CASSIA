@@ -436,13 +436,13 @@ parameters_2015$sperling_test[c("Ad0.xylem.st"), c("Hyde")] <- 0.768777
 
 # equipoints: initial conditions? TODO: hard coded
 
-# lambda: 1*10^-4 <-- original values. Fitted to the data from Oct to Jan
-# delta: 25*10^-6 <-- original values. Fitted to the data from Oct to Jan
+# lambda: 1*10^-4 <-- original values. Fitted to the data from Sept to Jan
+# delta: 25*10^-6 <-- original values. Fitted to the data from Sept to Jan
 parameters_2015$sperling_test[c("lamda.needles"), c("Hyde")] <- 0.002
 parameters_2015$sperling_test[c("delta.needles"), c("Hyde")] <- 0.05
 
-parameters_2015$sperling_test[c("lamda.phloem"), c("Hyde")] <- 0.002
-parameters_2015$sperling_test[c("delta.phloem"), c("Hyde")] <- 0.05
+parameters_2015$sperling_test[c("lamda.phloem"), c("Hyde")] <- 0.001
+parameters_2015$sperling_test[c("delta.phloem"), c("Hyde")] <- 0.01
 
 parameters_2015$sperling_test[c("lamda.roots"), c("Hyde")] <- 0.002
 parameters_2015$sperling_test[c("delta.roots"), c("Hyde")] <- 0.05
@@ -546,7 +546,7 @@ plot(dates, CASSIA_preles_2015$Sugar$starch_needles, type = "l", col = "green", 
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$needles_starch, col = "green")
 lines(dates, CASSIA_preles_2015$Sugar$starch_phloem, type = "l", col = "brown")
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$phloem_starch, col = "brown")
-# lines(dates, CASSIA_preles_2015$Sugar$starch_xylem_sh, type = "l", col = "red")
+lines(dates, CASSIA_preles_2015$Sugar$starch_xylem_sh, type = "l", col = "red")
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$xylem_sh_starch, col = "red")
 lines(dates, CASSIA_preles_2015$Sugar$starch_xylem_st, type = "l", col = "gold")
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$xylem_st_starch, col = "gold")
