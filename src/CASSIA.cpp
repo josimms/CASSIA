@@ -411,7 +411,11 @@ Rcpp::List CASSIA_yearly(int start_year,
           sugar_values_for_next_iteration.starch.xylem_sh +
           sugar_values_for_next_iteration.starch.xylem_st +
           sugar_values_for_next_iteration.starch.roots);
-        sugar_values_output.storage.push_back(sugar_values_for_next_iteration.storage.needles); // TODO: although this works for Pauliina's model at the moment, need for each organ
+        sugar_values_output.storage.push_back(sugar_values_for_next_iteration.storage.needles +
+          sugar_values_for_next_iteration.storage.phloem +
+          sugar_values_for_next_iteration.storage.xylem_sh +
+          sugar_values_for_next_iteration.storage.xylem_st +
+          sugar_values_for_next_iteration.storage.roots);
 
         sugar_values_output.starch_needles.push_back(sugar_values_for_next_iteration.starch.needles);
         sugar_values_output.starch_phloem.push_back(sugar_values_for_next_iteration.starch.phloem);
@@ -419,12 +423,26 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_output.starch_xylem_st.push_back(sugar_values_for_next_iteration.starch.xylem_st);
         sugar_values_output.starch_roots.push_back(sugar_values_for_next_iteration.starch.roots);
         sugar_values_output.starch_mycorrhiza.push_back(sugar_values_for_next_iteration.starch.mycorrhiza);
+
         sugar_values_output.sugar_needles.push_back(sugar_values_for_next_iteration.sugar.needles);
         sugar_values_output.sugar_phloem.push_back(sugar_values_for_next_iteration.sugar.phloem);
         sugar_values_output.sugar_xylem_sh.push_back(sugar_values_for_next_iteration.sugar.xylem_sh);
         sugar_values_output.sugar_xylem_st.push_back(sugar_values_for_next_iteration.sugar.xylem_st);
         sugar_values_output.sugar_roots.push_back(sugar_values_for_next_iteration.sugar.roots);
         sugar_values_output.sugar_mycorrhiza.push_back(sugar_values_for_next_iteration.sugar.mycorrhiza);
+
+        sugar_values_output.storage_needles.push_back(sugar_values_for_next_iteration.storage.needles);
+        sugar_values_output.storage_phloem.push_back(sugar_values_for_next_iteration.storage.phloem);
+        sugar_values_output.storage_xylem_sh.push_back(sugar_values_for_next_iteration.storage.xylem_sh);
+        sugar_values_output.storage_xylem_st.push_back(sugar_values_for_next_iteration.storage.xylem_st);
+        sugar_values_output.storage_roots.push_back(sugar_values_for_next_iteration.storage.roots);
+
+        /*
+         * Respiration
+         */
+
+        respiration_output.maintenance.push_back(sugar_model_out.resp_main);
+        respiration_output.growth.push_back(sugar_model_out.resp_growth);
       }
 
       /*
@@ -444,7 +462,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                    resp,
                                                    boolsettings.sperling_model);
       // TODO: update the parameters like D0 and h0 that need to be updated
-      double growth_and_mortality = actual_growth_out.roots - actual_growth_out.roots*fS_out; // TODO: more sensible value here!
+      double growth_and_mortality = actual_growth_out.roots * (0.975 - fS_out); // TODO: more sensible value here!
 
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
@@ -455,11 +473,8 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       if (final_year%2!=0) {
         /*
-         * Respiration and actual growth
+         * Actual growth
          */
-
-        respiration_output.maintenance.push_back(actual_growth_out.respiration_maintenance);
-        respiration_output.growth.push_back(actual_growth_out.respiration_growth);
 
         actual_growth_output.height.push_back(actual_growth_out.height);
         actual_growth_output.needles.push_back(actual_growth_out.needles);
@@ -480,13 +495,13 @@ Rcpp::List CASSIA_yearly(int start_year,
             culm_growth_internal.roots.push_back(roots_next_year + growth_and_mortality); // TODO: make this an actual parameter
           } else {
             culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
-            culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + 2*ring_width.tot_mm);
+            culm_growth_internal.diameter.push_back(2*ring_width.tot_mm);
             culm_growth_internal.needles.push_back(actual_growth_out.needles);
             culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + growth_and_mortality);
           }
         } else {
           culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
-          culm_growth_internal.diameter.push_back(culm_growth_internal.diameter[weather_index-1] + 2*ring_width.tot_mm);
+          culm_growth_internal.diameter.push_back(2*ring_width.tot_mm);
           culm_growth_internal.needles.push_back(actual_growth_out.needles);
           culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + growth_and_mortality);
         }
@@ -496,15 +511,15 @@ Rcpp::List CASSIA_yearly(int start_year,
             culm_growth.height.push_back(height_next_year + actual_growth_out.height);
             culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
             culm_growth.needles.push_back(actual_growth_out.needles);
-            culm_growth.roots.push_back(roots_next_year + growth_and_mortality); // TODO 2.0 is the number of years roots live for
+            culm_growth.roots.push_back(roots_next_year + growth_and_mortality);
           } else {
             culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
-            culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + 2*ring_width.tot_mm);
+            culm_growth.diameter.push_back(2*ring_width.tot_mm);
             culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
           }
         } else {
           culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
-          culm_growth.diameter.push_back(culm_growth.diameter[weather_index-1] + 2*ring_width.tot_mm);
+          culm_growth.diameter.push_back(2*ring_width.tot_mm);
           culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
         }
       }
@@ -604,7 +619,11 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["sugar_xylem_st"] = sugar_values_output.sugar_xylem_st,
                                                 Rcpp::_["sugar_roots"] = sugar_values_output.sugar_roots,
                                                 Rcpp::_["sugar_mycorrhiza"] = sugar_values_output.sugar_mycorrhiza,
-                                                Rcpp::_["storage_term"] = sugar_values_output.storage,
+                                                Rcpp::_["storage_term_needles"] = sugar_values_output.storage_needles,
+                                                Rcpp::_["storage_term_phloem"] = sugar_values_output.storage_phloem,
+                                                Rcpp::_["storage_term_xylem_sh"] = sugar_values_output.storage_xylem_sh,
+                                                Rcpp::_["storage_term_xylem_st"] = sugar_values_output.storage_xylem_st,
+                                                Rcpp::_["storage_term_rootws"] = sugar_values_output.storage_roots,
                                                 Rcpp::_["n_E_pot"] = growth_values_for_next_iteration.n_E_pot,
                                                 Rcpp::_["n_W_pot"] = growth_values_for_next_iteration.n_W_pot,
                                                 Rcpp::_["n_M_pot"] = growth_values_for_next_iteration.n_M_pot);
