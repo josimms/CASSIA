@@ -9,31 +9,37 @@ growth_out actual_growth(CASSIA_parameters parameters,
 
   growth_out actual_growth_out;
 
-  // TODO: check the storage initialisation
+  double phloem_mass = 7.410537931;
+  double xylem_sh_mass = 74.10537931;
+  double xylem_st_mass = 8.65862069;
+
+  double phloem_respiration_share = phloem_mass / (phloem_mass + xylem_sh_mass + xylem_st_mass);
+  double xylem_sh_respiration_share = xylem_sh_mass / (phloem_mass + xylem_sh_mass + xylem_st_mass);
+  double xylem_st_respiration_share = xylem_st_mass / (phloem_mass + xylem_sh_mass + xylem_st_mass);
 
   /*
    * Height
    */
 
-  double sugar_limit_hight;
+  double storage_height = 0;
   if (sperling_sugar_model) {
-    sugar_limit_hight = (0.082179938 * storage.phloem + 0.821799379 * storage.xylem_st + 0.096020683 * storage.xylem_sh);
+    storage_height = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st + xylem_sh_respiration_share * storage.xylem_sh);
   } else {
-    sugar_limit_hight = storage.needles;
+    storage_height = storage.needles;
   }
-  actual_growth_out.height = potential_growth.height * sugar_limit_hight;
+  actual_growth_out.height = potential_growth.height * storage_height;
 
   /*
    * Wall
    */
 
-  double sugar_limit_wall;
+  double storage_wall = 0;
   if (sperling_sugar_model) {
-    sugar_limit_wall = (0.082179938 * storage.phloem + 0.821799379 * storage.xylem_st + 0.096020683 * storage.xylem_sh);
+    storage_wall = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st + xylem_sh_respiration_share * storage.xylem_sh);
   } else {
-    sugar_limit_wall = storage.needles;
+    storage_wall = storage.needles;
   }
-  actual_growth_out.wall = potential_growth.diameter * sugar_limit_wall;
+  actual_growth_out.wall = potential_growth.diameter * storage_wall;
 
   /*
    * Bud
@@ -48,67 +54,24 @@ growth_out actual_growth(CASSIA_parameters parameters,
   /*
    * Roots
    */
-  double sugar_limit_roots;
+  double storage_roots;
   if (sperling_sugar_model) {
-    sugar_limit_roots = storage.roots;
+    storage_roots = storage.roots;
   } else {
-    sugar_limit_roots = storage.needles;
+    storage_roots = storage.needles;
   }
-  actual_growth_out.roots = potential_growth.roots * sugar_limit_roots;
+  actual_growth_out.roots = potential_growth.roots * storage_roots;
 
   /*
    * GD
    */
-  // TODO: storage is needles as the sugar model isn't being used here, but it should be a general storage term when the sugar model is being used
-  actual_growth_out.GD = storage.needles * potential_growth.GD;
-
-  /*
-   * Respiration Growth
-   */
-  actual_growth_out.respiration_growth = common.Rg_R * actual_growth_out.roots +
-    common.Rg_N * actual_growth_out.needles +
-    common.Rg_S * (actual_growth_out.wall + actual_growth_out.height);
-
-  /*
-   * Respiration Maintenance
-   */
+  double storage_GD;
   if (sperling_sugar_model) {
-    double storage_needles_rm, storage_roots_rm, storage_xylem_sh_rm, storage_xylem_st_rm, storage_phloem_rm;
-    if (storage.needles < 0.1) {
-      storage_needles_rm = 0;
-    } else {
-      storage_needles_rm = 1;
-    }
-
-    if (storage.roots < 0.1) {
-      storage_roots_rm = 0;
-    } else {
-      storage_roots_rm = 1;
-    }
-
-    if (storage.xylem_sh < 0.1) {
-      storage_xylem_sh_rm = 0;
-    } else {
-      storage_xylem_sh_rm = 1;
-    }
-
-    if (storage.xylem_st < 0.1) {
-      storage_xylem_st_rm = 0;
-    } else {
-      storage_xylem_st_rm = 1;
-    }
-
-    if (storage.phloem < 0.1) {
-      storage_phloem_rm = 0;
-    } else {
-      storage_phloem_rm = 1;
-    }
-
-    // Respiration
-    actual_growth_out.respiration_maintenance = storage_needles_rm * resp.RmN + storage.roots * resp.RmR + (0.082179938 * storage.phloem + 0.821799379 * storage.xylem_st + 0.096020683 * storage.xylem_sh) * resp.RmS;
+    storage_GD = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st + xylem_sh_respiration_share * storage.xylem_sh);
   } else {
-    actual_growth_out.respiration_maintenance = storage.respiration * resp.Rm_a;
+    storage_GD = storage.needles;
   }
+  actual_growth_out.GD = storage_GD * potential_growth.GD;
 
   return actual_growth_out;
 };
