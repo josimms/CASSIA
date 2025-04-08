@@ -177,6 +177,8 @@ struct carbo_balance
   carbo_tracker sugar;
   carbo_tracker starch;
   carbo_tracker storage;
+  double resp_main;
+  double resp_growth;
   carbo_values_out previous_values;
 };
 
