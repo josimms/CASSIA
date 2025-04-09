@@ -525,6 +525,7 @@ points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$r
 # Yearly view
 ###
 
+dates = seq(as.Date("2015-01-01"), as.Date("2015-12-31"), by = "day")
 plot_sugar_starch_comparison(CASSIA_preles_2015, dates, loaded_data$original_data, loaded_data$yu_data)
 
 ylim = range(0, CASSIA_preles_2015$Sugar$sugar_needles, CASSIA_preles_2015$Sugar$sugar_phloem, CASSIA_preles_2015$Sugar$sugar_xylem_sh, CASSIA_preles_2015$Sugar$sugar_xylem_st, CASSIA_preles_2015$Sugar$sugar_roots, na.rm = T)
