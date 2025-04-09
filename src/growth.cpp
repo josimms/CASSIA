@@ -376,6 +376,7 @@ growth_out growth(int day,
   values_out.en_pot_growth = en_pot_growth;
   values_out.pot_mm_max = pot_mm_max;
   values_out.wall_pot_growth = wall_pot_growth;
+  values_out.pot_mm = pot_mm;
   values_out.n_E_pot = n_E_pot;
   values_out.n_W_pot = n_W_pot;
   values_out.n_M_pot = n_M_pot;

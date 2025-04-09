@@ -61,6 +61,7 @@ struct growth_values_out {
   double ew_cells_pot_max;
   double en_pot_growth;
   double pot_mm_max;
+  double pot_mm;
   double wall_pot_growth;
   double n_E_pot;
   double n_W_pot;
@@ -92,6 +93,7 @@ struct growth_vector {
   std::vector<double> needles;
   std::vector<double> roots;
   std::vector<double> diameter;
+  std::vector<double> diameter_potential;
   std::vector<double> bud;
   std::vector<double> ring_width;
   std::vector<double> height_tot;

@@ -87,6 +87,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   double height_next_year = parameters.h0;
   double diameter_next_year = 1000 * parameters.D0;
+  double diameter_potential_next_year = 1000 * parameters.D0;
   double roots_next_year = 2.0; // TODO: make dynamic
 
   /*
@@ -331,6 +332,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         potential_growth_output.bud.push_back(potential_growth.bud);
         potential_growth_output.g.push_back(potential_growth.g);
         potential_growth_output.en_pot_growth.push_back(potential_growth.use);
+        potential_growth_output.ring_width.push_back(potential_growth.previous_values.pot_mm);
       }
       // Saved for the next iteration
       growth_values_for_next_iteration = potential_growth.previous_values;
@@ -491,17 +493,20 @@ Rcpp::List CASSIA_yearly(int start_year,
           if (year == start_year) {
             culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
             culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
+            culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth_internal.needles.push_back(actual_growth_out.needles); // TODO: the life of the needles is actually here, add to the LAI section
             culm_growth_internal.roots.push_back(roots_next_year + growth_and_mortality); // TODO: make this an actual parameter
           } else {
             culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
             culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm); // Ring width is culmative, but need consistent initial condition
+            culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth_internal.needles.push_back(actual_growth_out.needles);
             culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + growth_and_mortality);
           }
         } else {
           culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
           culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
+          culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
           culm_growth_internal.needles.push_back(actual_growth_out.needles);
           culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + growth_and_mortality);
         }
@@ -510,16 +515,19 @@ Rcpp::List CASSIA_yearly(int start_year,
           if (year == start_year) {
             culm_growth.height.push_back(height_next_year + actual_growth_out.height);
             culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
+            culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth.needles.push_back(actual_growth_out.needles);
             culm_growth.roots.push_back(roots_next_year + growth_and_mortality);
           } else {
             culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
             culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
+            culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
           }
         } else {
           culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
           culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
+          culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
           culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
         }
       }
@@ -541,6 +549,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
         if (day == days_per_year-1) {
           diameter_next_year = culm_growth.diameter[weather_index];
+          diameter_potential_next_year = culm_growth.diameter_potential[weather_index];
         }
       }
 
@@ -604,7 +613,9 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                Rcpp::_["height_growth"] = actual_growth_output.height,
                                                Rcpp::_["respiration_growth"] = respiration_output.growth,
                                                Rcpp::_["respiration_maintenance"] = respiration_output.maintenance,
-                                               Rcpp::_["ring_width"] = actual_growth_output.ring_width);
+                                               Rcpp::_["ring_width"] = actual_growth_output.ring_width,
+                                               Rcpp::_["mm_potenital"] = potential_growth_output.ring_width);
+
   Rcpp::DataFrame df2 = Rcpp::DataFrame::create(Rcpp::_["sugar"] = sugar_values_output.sugar,
                                                 Rcpp::_["starch"] = sugar_values_output.starch,
                                                 Rcpp::_["starch"] = sugar_values_output.storage,
@@ -628,13 +639,16 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["n_E_pot"] = growth_values_for_next_iteration.n_E_pot,
                                                 Rcpp::_["n_W_pot"] = growth_values_for_next_iteration.n_W_pot,
                                                 Rcpp::_["n_M_pot"] = growth_values_for_next_iteration.n_M_pot);
+
   Rcpp::DataFrame df3 = Rcpp::DataFrame::create(Rcpp::_["GPP"] = photosynthesis_output.GPP,
                                                 Rcpp::_["ET"] = photosynthesis_output.ET,
                                                 Rcpp::_["SoilWater"] = photosynthesis_output.SoilWater,
                                                 Rcpp::_["fAPAR"] = photosynthesis_output.fAPAR);
+
   Rcpp::DataFrame df4 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height,
                                                 Rcpp::_["culm_growth_needles"] = culm_growth.needles,
                                                 Rcpp::_["culm_growth_diameter"] = culm_growth.diameter,
+                                                Rcpp::_["culm_growth_diameter_potential"] = culm_growth.diameter_potential,
                                                 Rcpp::_["culm_growth_roots"] = culm_growth.roots,
                                                 Rcpp::_["LAI"] = LAI_within_year_vector);
 
