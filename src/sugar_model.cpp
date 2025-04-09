@@ -371,20 +371,13 @@ carbo_balance sugar_model(int year,
        * Storage check
        */
 
-      if ((sugar.needles <= 0) & (starch.needles <= 0)) {
-        std::cerr << " Day " << day << " No Storage needles! Plant died" << "\n";
+      if ((starch.needles == 0) & (starch.phloem == 0) & (starch.xylem_sh == 0) & (starch.xylem_st == 0) & (starch.roots == 0)) {
+        std::cerr << " Day " << day << " No total storage - plant died!" << "\n";
+        tree_alive = false;
       }
-      if ((sugar.phloem <= 0) & (starch.phloem <= 0)) {
-        std::cerr << " Day " << day << " No Storage phloem! Plant died" << "\n";
-      }
-      if ((sugar.roots <= 0) & (starch.roots <= 0)) {
-        std::cerr <<  " Day " << day << " No Storage roots! Plant died" << "\n";
-      }
-      if ((sugar.xylem_sh <= 0) & (starch.xylem_sh <= 0)) {
-        std::cerr << " Day " << day << " No Storage xylem shoot! Plant died" << "\n";
-      }
-      if ((sugar.xylem_st <= 0) & (starch.xylem_st <= 0)) {
-        std::cerr << " Day " << day << " No Storage xylem stem! Plant died" << "\n";
+      if ((sugar.needles == 0) & (sugar.phloem == 0) & (sugar.xylem_sh == 0) & (sugar.xylem_st == 0) & (sugar.roots == 0)) {
+        std::cerr << " Day " << day << " No total sugar - plant died!" << "\n";
+        tree_alive = false;
       }
 
       /*

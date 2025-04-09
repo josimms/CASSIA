@@ -100,6 +100,7 @@ struct growth_vector {
   std::vector<double> wall_tot;
   std::vector<double> g;
   std::vector<double> en_pot_growth;
+  std::vector<bool> tree_alive;
 };
 
 /*

@@ -530,6 +530,8 @@ Rcpp::List CASSIA_yearly(int start_year,
           culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
           culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
         }
+
+        culm_growth.tree_alive.push_back(tree_alive);
       }
 
       /*
@@ -539,9 +541,6 @@ Rcpp::List CASSIA_yearly(int start_year,
       // TODO: what does this do?
       HH = potential_growth.previous_values.HH;
       potenital_growth_use.push_back(potential_growth.use);
-      if (!tree_alive) {
-        // std::cout << "The tree is dead due to sugar storage\n";
-      }
 
       if (final_year%2==0) {
         years.push_back(year);
@@ -650,6 +649,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["culm_growth_diameter"] = culm_growth.diameter,
                                                 Rcpp::_["culm_growth_diameter_potential"] = culm_growth.diameter_potential,
                                                 Rcpp::_["culm_growth_roots"] = culm_growth.roots,
+                                                Rcpp::_["tree_alive"] = culm_growth.tree_alive,
                                                 Rcpp::_["LAI"] = LAI_within_year_vector);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
