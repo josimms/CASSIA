@@ -17,6 +17,9 @@ Rcpp::List CASSIA_soil(int start_year,
 
                        double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                        double Throughfall,
+
+                       double nitrogen_capacity,
+
                        int trenching_year,
 
                        Rcpp::List settings) {
@@ -400,7 +403,8 @@ Rcpp::List CASSIA_soil(int start_year,
       growth_out actual_growth_out = actual_growth(parameters, common,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
-                                                   boolsettings.sperling_model);
+                                                   boolsettings.sperling_model,
+                                                   nitrogen_capacity);
 
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;

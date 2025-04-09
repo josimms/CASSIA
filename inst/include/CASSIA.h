@@ -324,7 +324,8 @@ growth_out actual_growth(CASSIA_parameters parameters,
                          carbo_tracker storage,
                          growth_out potential_growth,
                          respiration_out resp,
-                         bool sperling_sugar_model);
+                         bool sperling_sugar_model,
+                         double nitrogen_capacity);
 
 /*
  * CASSIA_yearly
@@ -344,6 +345,8 @@ Rcpp::List CASSIA_yearly(int start_year,
 
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
+
+                         double nitrogen_capacity,
 
                          Rcpp::List settings);
 

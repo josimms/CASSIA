@@ -25,6 +25,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
 
+                         double nitrogen_capacity,
+
                          Rcpp::List settings) {
 
   /*
@@ -458,11 +460,11 @@ Rcpp::List CASSIA_yearly(int start_year,
       double max_ew_cells = std::max(ew_cells_vector, 0.0); // TODO: make this come from the last iteration?
       double max_lw_cells = std::max(lw_cells_vector, 0.0); // TODO: make this come from the last iteration?
 
-      // TODO: storage
       growth_out actual_growth_out = actual_growth(parameters, common,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
-                                                   boolsettings.sperling_model);
+                                                   boolsettings.sperling_model,
+                                                   nitrogen_capacity);
       // TODO: update the parameters like D0 and h0 that need to be updated
       double growth_and_mortality = actual_growth_out.roots * (0.975 - fS_out); // TODO: more sensible value here!
 
@@ -617,7 +619,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   Rcpp::DataFrame df2 = Rcpp::DataFrame::create(Rcpp::_["sugar"] = sugar_values_output.sugar,
                                                 Rcpp::_["starch"] = sugar_values_output.starch,
-                                                Rcpp::_["starch"] = sugar_values_output.storage,
+                                                Rcpp::_["storage"] = sugar_values_output.storage,
                                                 Rcpp::_["starch_needles"] = sugar_values_output.starch_needles,
                                                 Rcpp::_["starch_phloem"] = sugar_values_output.starch_phloem,
                                                 Rcpp::_["starch_xylem_sh"] = sugar_values_output.starch_xylem_sh,
