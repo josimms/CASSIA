@@ -2,8 +2,8 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @export
-CASSIA_yearly <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, surplus_c, nitrogen_capacity, settings) {
-    .Call(`_CASSIA_CASSIA_yearly`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, surplus_c, nitrogen_capacity, settings)
+CASSIA_yearly <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_capacity, settings) {
+    .Call(`_CASSIA_CASSIA_yearly`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_capacity, settings)
 }
 
 replace_value_DataFrame <- function(df, value, ref) {
@@ -11,8 +11,8 @@ replace_value_DataFrame <- function(df, value, ref) {
 }
 
 #' @export
-CASSIA_soil <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, surplus_c, nitrogen_capacity, trenching_year, settings) {
-    .Call(`_CASSIA_CASSIA_soil`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, surplus_c, nitrogen_capacity, trenching_year, settings)
+CASSIA_soil <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_capacity, trenching_year, settings) {
+    .Call(`_CASSIA_CASSIA_soil`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_capacity, trenching_year, settings)
 }
 
 xylogenesis_wrapper <- function(no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw) {
@@ -27,8 +27,8 @@ myco_decision <- function(N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStru
     .Call(`_CASSIA_myco_decision`, N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt)
 }
 
-CASSIA_eeo <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, pPhydro, needle_mass_in, Throughfall, surplus_c, nitrogen_capacity, trenching_year, settings) {
-    .Call(`_CASSIA_CASSIA_eeo`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, pPhydro, needle_mass_in, Throughfall, surplus_c, nitrogen_capacity, trenching_year, settings)
+CASSIA_eeo <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, pPhydro, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_capacity, trenching_year, settings) {
+    .Call(`_CASSIA_CASSIA_eeo`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, pPhydro, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_capacity, trenching_year, settings)
 }
 
 growth_wrapper <- function(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, tests, growth_in, last_year_HH, no_day) {

@@ -183,6 +183,7 @@ struct carbo_balance
   double resp_main;
   double resp_growth;
   carbo_values_out previous_values;
+  double nitrogen_capacity;
 };
 
 struct interaction
@@ -203,7 +204,7 @@ struct sugar_values_vector
   std::vector<double> starch_xylem_sh;
   std::vector<double> starch_xylem_st;
   std::vector<double> starch_roots;
-  std::vector<double> starch_mycorrhiza;
+  std::vector<double> nitrogen_capacity;
   std::vector<double> sugar_needles;
   std::vector<double> sugar_phloem;
   std::vector<double> sugar_xylem_sh;

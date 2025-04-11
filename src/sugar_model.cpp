@@ -66,9 +66,9 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
   return out;
 }
 
-double nitrogen_storage(double sugar_mycorrhiza, double nitrogen_capacity) {
+double nitrogen_storage(double sugar_mycorrhiza) {
   double out;
-  out = std::max(0.0, 1/(1+exp(-2*(sugar_mycorrhiza - 0.1/2))));
+  out = std::max(0.0, 1/(1+exp(-2*(sugar_mycorrhiza - 0.05))));
   return(out);
 }
 
@@ -297,17 +297,6 @@ carbo_balance sugar_model(int year,
 
       sugar.xylem_st = std::max(sugar.xylem_st, 0.0);
 
-
-      /*
-       * Mycorrhiza
-       */
-
-      sugar.mycorrhiza = concentration_gradient.roots_to_myco;
-
-      if (nitrogen_change) {
-        nitrogen_capacity = nitrogen_storage(sugar.mycorrhiza);
-      }
-
       /*
        * Respiration
        */
@@ -330,6 +319,16 @@ carbo_balance sugar_model(int year,
            xylem_sh_respiration_share * resp.RmS * storage_term_resp.xylem_sh * nitrogen_capacity +
            xylem_st_respiration_share * resp.RmS * storage_term_resp.xylem_st * nitrogen_capacity +
                                         resp.RmR * storage_term_resp.roots * nitrogen_capacity;
+
+      /*
+       * Mycorrhiza
+       */
+
+      sugar.mycorrhiza = concentration_gradient.roots_to_myco;
+
+      if (nitrogen_change) {
+        nitrogen_capacity = nitrogen_storage(sugar.mycorrhiza);
+      }
 
       /*
        * STARCH UPDATED SPERLING
@@ -604,6 +603,7 @@ carbo_balance sugar_model(int year,
   out.storage = storage_term;
   out.resp_growth = respiration_growth;
   out.resp_main = respiration_maintainence;
+  out.nitrogen_capacity = nitrogen_capacity;
   out.previous_values = previous_values_out;
 
   return out;

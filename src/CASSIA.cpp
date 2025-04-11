@@ -26,6 +26,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                          double Throughfall,
 
                          bool surplus_c,
+                         bool nitrogen_change,
 
                          double nitrogen_capacity,
 
@@ -382,6 +383,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                   potential_growth.previous_values.sH,
                                                   resp,
                                                   nitrogen_capacity,
+                                                  nitrogen_change,
                                                   boolsettings.sperling_model,
                                                   tree_alive,
                                                   boolsettings.storage_grows,
@@ -405,10 +407,15 @@ Rcpp::List CASSIA_yearly(int start_year,
       equilibrium_temperature.xylem_sh = std::log(sugar_values_for_next_iteration.previous_values.As.xylem_sh/sugar_values_for_next_iteration.previous_values.Ad.xylem_sh)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
       equilibrium_temperature.xylem_st = std::log(sugar_values_for_next_iteration.previous_values.As.xylem_st/sugar_values_for_next_iteration.previous_values.Ad.xylem_st)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
       equilibrium_temperature.roots = std::log(sugar_values_for_next_iteration.previous_values.As.roots/sugar_values_for_next_iteration.previous_values.Ad.roots)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
+      if (nitrogen_change) {
+        nitrogen_capacity = sugar_model_out.nitrogen_capacity;
+      }
 
       // TODO: add other organs
 
       if (final_year%2==0) {
+        sugar_values_output.nitrogen_capacity.push_back(nitrogen_capacity);
+
         sugar_values_output.sugar.push_back(sugar_values_for_next_iteration.sugar.needles +
           sugar_values_for_next_iteration.sugar.phloem +
           sugar_values_for_next_iteration.sugar.xylem_sh +
@@ -430,7 +437,6 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_output.starch_xylem_sh.push_back(sugar_values_for_next_iteration.starch.xylem_sh);
         sugar_values_output.starch_xylem_st.push_back(sugar_values_for_next_iteration.starch.xylem_st);
         sugar_values_output.starch_roots.push_back(sugar_values_for_next_iteration.starch.roots);
-        sugar_values_output.starch_mycorrhiza.push_back(sugar_values_for_next_iteration.starch.mycorrhiza);
 
         sugar_values_output.sugar_needles.push_back(sugar_values_for_next_iteration.sugar.needles);
         sugar_values_output.sugar_phloem.push_back(sugar_values_for_next_iteration.sugar.phloem);
@@ -629,7 +635,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["starch_xylem_sh"] = sugar_values_output.starch_xylem_sh,
                                                 Rcpp::_["starch_xylem_st"] = sugar_values_output.starch_xylem_st,
                                                 Rcpp::_["starch_roots"] = sugar_values_output.starch_roots,
-                                                Rcpp::_["starch_mycorrhiza"] = sugar_values_output.starch_mycorrhiza,
+                                                Rcpp::_["nitrogen_capacity"] = sugar_values_output.nitrogen_capacity,
                                                 Rcpp::_["sugar_needles"] = sugar_values_output.sugar_needles,
                                                 Rcpp::_["sugar_phloem"] = sugar_values_output.sugar_phloem,
                                                 Rcpp::_["sugar_xylem_sh"] = sugar_values_output.sugar_xylem_sh,

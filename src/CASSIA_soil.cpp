@@ -19,6 +19,7 @@ Rcpp::List CASSIA_soil(int start_year,
                        double Throughfall,
 
                        bool surplus_c,
+                       bool nitrogen_change,
 
                        double nitrogen_capacity,
 
@@ -372,6 +373,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                   potential_growth.previous_values.sH,
                                                   resp,
                                                   nitrogen_capacity,
+                                                  nitrogen_change,
                                                   boolsettings.sperling_model,
                                                   tree_alive,
                                                   boolsettings.storage_grows,
@@ -659,7 +661,6 @@ Rcpp::List CASSIA_soil(int start_year,
         sugar_values_output.starch_xylem_sh.push_back(sugar_values_for_next_iteration.starch.xylem_sh);
         sugar_values_output.starch_xylem_st.push_back(sugar_values_for_next_iteration.starch.xylem_st);
         sugar_values_output.starch_roots.push_back(sugar_values_for_next_iteration.starch.roots);
-        sugar_values_output.starch_mycorrhiza.push_back(sugar_values_for_next_iteration.starch.mycorrhiza);
         sugar_values_output.sugar_needles.push_back(sugar_values_for_next_iteration.sugar.needles);
         sugar_values_output.sugar_phloem.push_back(sugar_values_for_next_iteration.sugar.phloem);
         sugar_values_output.sugar_xylem_sh.push_back(sugar_values_for_next_iteration.sugar.xylem_sh);
@@ -816,7 +817,6 @@ Rcpp::List CASSIA_soil(int start_year,
                                                 Rcpp::_["starch_xylem_sh"] = sugar_values_output.starch_xylem_sh,
                                                 Rcpp::_["starch_xylem_st"] = sugar_values_output.starch_xylem_st,
                                                 Rcpp::_["starch_roots"] = sugar_values_output.starch_roots,
-                                                Rcpp::_["starch_mycorrhiza"] = sugar_values_output.starch_mycorrhiza,
                                                 Rcpp::_["sugar_needles"] = sugar_values_output.sugar_needles,
                                                 Rcpp::_["sugar_phloem"] = sugar_values_output.sugar_phloem,
                                                 Rcpp::_["sugar_xylem_sh"] = sugar_values_output.sugar_xylem_sh,
