@@ -25,6 +25,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
 
+                         bool surplus_c,
+
                          double nitrogen_capacity,
 
                          Rcpp::List settings) {
@@ -379,9 +381,11 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                   D00,
                                                   potential_growth.previous_values.sH,
                                                   resp,
+                                                  nitrogen_capacity,
                                                   boolsettings.sperling_model,
                                                   tree_alive,
                                                   boolsettings.storage_grows,
+                                                  surplus_c,
                                                   repola_values.needle_mass,
                                                   root_mass,
                                                   equilibrium_temperature,

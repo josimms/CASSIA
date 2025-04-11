@@ -130,9 +130,12 @@ carbo_balance sugar_model(int year,
                           double sH,
                           respiration_out resp,
 
+                          double nitrogen_capacity,
+
                           bool sperling_sugar_model,
                           bool tree_alive,
                           bool storage_grows,
+                          bool surplus_c,
                           double needles_mass, // Repola
                           double root_mass,
                           carbo_tracker temperature_equilibrium, // Calculated in the main function
@@ -346,6 +349,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
 
+                         bool surplus_c,
+
                          double nitrogen_capacity,
 
                          Rcpp::List settings);
@@ -366,9 +371,15 @@ Rcpp::List CASSIA_eeo(int start_year,
                       Rcpp::DataFrame pCASSIA_ratios,
                       Rcpp::DataFrame pCASSIA_sperling,
                       std::vector<double> parameters_R,
+                      std::vector<double> pPhydro,
 
                       double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                       double Throughfall,
+
+                      bool surplus_c,
+
+                      double nitrogen_capacity,
+
                       int trenching_year,
 
                       Rcpp::List settings);
@@ -392,6 +403,11 @@ Rcpp::List CASSIA_soil(int start_year,
 
                        double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                        double Throughfall,
+
+                       bool surplus_c,
+
+                       double nitrogen_capacity,
+
                        int trenching_year,
 
                        Rcpp::List settings);

@@ -18,6 +18,8 @@ Rcpp::List CASSIA_eeo(int start_year,
                        double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                        double Throughfall,
 
+                       bool surplus_c,
+
                        double nitrogen_capacity,
 
                        int trenching_year,
@@ -402,9 +404,11 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                   D00,
                                                   potential_growth.previous_values.sH,
                                                   resp,
+                                                  nitrogen_capacity,
                                                   boolsettings.sperling_model,
                                                   tree_alive,
                                                   boolsettings.storage_grows,
+                                                  surplus_c,
                                                   repola_values.needle_mass,
                                                   culm_growth.roots[weather_index-1],
                                                   equilibrium_temperature,
