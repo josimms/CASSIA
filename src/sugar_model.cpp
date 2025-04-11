@@ -148,11 +148,11 @@ carbo_balance sugar_model(int year,
 
   carbo_tracker storage_term;
   // 7.5% of mass should be for storage, von Arx 2017 max axis
-  storage_term.needles = storage_update_organs(0.05*needles_mass, sugar.needles, starch.needles, tree_alive);
-  storage_term.phloem = storage_update_organs(0.05*phloem_mass, sugar.phloem, starch.phloem, tree_alive);
-  storage_term.xylem_sh = storage_update_organs(0.01*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive);
-  storage_term.xylem_st = storage_update_organs(0.05*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive);
-  storage_term.roots = storage_update_organs(0.05*root_mass, sugar.roots, starch.roots, tree_alive);
+  storage_term.needles = storage_update_organs(0.1*needles_mass, sugar.needles, starch.needles, tree_alive);
+  storage_term.phloem = storage_update_organs(0.1*phloem_mass, sugar.phloem, starch.phloem, tree_alive);
+  storage_term.xylem_sh = storage_update_organs(0.003*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive);
+  storage_term.xylem_st = storage_update_organs(0.075*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive);
+  storage_term.roots = storage_update_organs(0.15*root_mass, sugar.roots, starch.roots, tree_alive);
 
   double respiration_growth = 0;
   double respiration_maintainence = 0;
@@ -206,38 +206,26 @@ carbo_balance sugar_model(int year,
       conc_gradient concentration_gradient;
 
       double needle_transfer = (sugar.needles + starch.needles) * (storage_term.needles - storage_term.phloem)/2;
-      if (surplus_c) {
-        needle_transfer = std::max(sugar.needles - resp.RmN * storage_term.needles - (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud), 0.0);
-      }
-      concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - 0.05 * needles_mass, needle_transfer);
+      concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - 0.1 * needles_mass, needle_transfer);
 
       double phloem_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.roots)/2;
-      if (surplus_c) {
-        phloem_transfer = std::max(sugar.phloem - phloem_respiration_share * resp.RmS * storage_term.phloem - phloem_respiration_share * (1 + common.Rg_S) * storage_term.phloem * (pot_growth.wall + pot_growth.height), 0.0);
-      }
-      concentration_gradient.phloem_to_roots = std::max((sugar.phloem + starch.phloem) - 0.05 * phloem_mass, phloem_transfer);
+      concentration_gradient.phloem_to_roots = std::max((sugar.phloem + starch.phloem) - 0.1 * phloem_mass, phloem_transfer);
 
       double xylem_sh_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_sh)/2;
-      if (surplus_c) {
-        xylem_sh_transfer = std::max(sugar.xylem_sh - xylem_sh_respiration_share * resp.RmS * storage_term.xylem_sh - xylem_sh_respiration_share * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height), 0.0);
-      }
       concentration_gradient.phloem_to_xylem_sh = xylem_sh_transfer;
 
       double xylem_st_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_st)/2;
-      if (surplus_c) {
-        xylem_st_transfer = std::max(sugar.xylem_st - xylem_st_respiration_share * resp.RmS * storage_term.xylem_st - xylem_st_respiration_share * (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height), 0.0);
-      }
       concentration_gradient.phloem_to_xylem_st = xylem_st_transfer;
 
-      double root_capacity = std::max(sugar.roots + starch.roots - 0.05 * root_mass, 0.0);
+      double root_capacity = std::max(sugar.roots + starch.roots - 0.15 * root_mass, 0.0);
       double myco_transfer = parameters.mycorrhiza_threshold * (sugar.roots + starch.roots);
       if (surplus_c) {
         myco_transfer = std::max(sugar.roots - resp.RmR * storage_term.roots - (1 + common.Rg_R) * pot_growth.roots, 0.0);
       }
       concentration_gradient.roots_to_myco = std::max(myco_transfer, root_capacity);
 
-      double xylem_sh_capacity = std::max((sugar.xylem_sh + starch.xylem_sh) - 0.05 * xylem_sh_mass, 0.0);
-      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - 0.05 * xylem_st_mass, 0.0);
+      double xylem_sh_capacity = std::max((sugar.xylem_sh + starch.xylem_sh) - 0.003 * xylem_sh_mass, 0.0);
+      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - 0.075 * xylem_st_mass, 0.0);
 
       /*
        * Balance calculations
@@ -390,11 +378,11 @@ carbo_balance sugar_model(int year,
        * Storage check
        */
 
-      if ((starch.needles == 0) & (starch.phloem == 0) & (starch.xylem_sh == 0) & (starch.xylem_st == 0) & (starch.roots == 0)) {
+      if ((starch.needles == 0) && (starch.phloem == 0) && (starch.xylem_sh == 0) && (starch.xylem_st == 0) && (starch.roots == 0)) {
         std::cerr << " Day " << day << " No total storage - plant died!" << "\n";
         tree_alive = false;
       }
-      if ((sugar.needles == 0) & (sugar.phloem == 0) & (sugar.xylem_sh == 0) & (sugar.xylem_st == 0) & (sugar.roots == 0)) {
+      if ((sugar.needles == 0) && (sugar.phloem == 0) && (sugar.xylem_sh == 0) && (sugar.xylem_st == 0) && (sugar.roots == 0)) {
         std::cerr << " Day " << day << " No total sugar - plant died!" << "\n";
         tree_alive = false;
       }
@@ -427,45 +415,45 @@ carbo_balance sugar_model(int year,
        * TODO: should I make these numbers automatic somehow?
        */
 
-      if (sugar.needles>0.12) {
+      if (sugar.needles > parameters.sugar_needles0) {
         As_new.needles=As_new.needles+parameters.delta_needles;
       }
-      else if (sugar.needles<0.12 && starch.needles> 0) {
+      else if (sugar.needles < parameters.sugar_needles0 && starch.needles> 0) {
         Ad_new.needles=Ad_new.needles+parameters.delta_needles;
       }
 
-      if  (sugar.phloem>0.28)
+      if  (sugar.phloem > parameters.sugar_phloem0)
       {
         As_new.phloem=As_new.phloem+parameters.delta_phloem;
       }
-      else if (sugar.phloem<0.28 && starch.phloem> 0)
+      else if (sugar.phloem < parameters.sugar_phloem0 && starch.phloem> 0)
       {
         Ad_new.phloem=Ad_new.phloem+parameters.delta_phloem;
       }
 
-      if (sugar.roots>0.09)
+      if (sugar.roots > parameters.sugar_roots0)
       {
         As_new.roots=As_new.roots+parameters.delta_roots;
       }
-      else if (sugar.roots<0.09 && starch.roots> 0)
+      else if (sugar.roots < parameters.sugar_roots0 && starch.roots> 0)
       {
         Ad_new.roots=Ad_new.roots+parameters.delta_roots;
       }
 
-      if  (sugar.xylem_sh>0.049)
+      if  (sugar.xylem_sh > parameters.sugar_xylem_sh0)
       {
         As_new.xylem_sh=As_new.xylem_sh+parameters.delta_xylem_sh;
       }
-      else if (sugar.xylem_sh<0.049 && starch.xylem_sh > 0)
+      else if (sugar.xylem_sh < parameters.sugar_xylem_sh0 && starch.xylem_sh > 0)
       {
         Ad_new.xylem_sh=Ad_new.xylem_sh+parameters.delta_xylem_sh;
       }
 
-      if  (sugar.xylem_st>0.32)
+      if  (sugar.xylem_st > parameters.sugar_xylem_st0)
       {
         As_new.xylem_st=As_new.xylem_st+parameters.delta_xylem_st;
       }
-      else if (sugar.xylem_st<0.32 && starch.xylem_sh > 0)
+      else if (sugar.xylem_st < parameters.sugar_xylem_st0 && starch.xylem_sh > 0)
       {
         Ad_new.xylem_st=Ad_new.xylem_st+parameters.delta_xylem_st;
       }
