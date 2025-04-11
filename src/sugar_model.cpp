@@ -66,6 +66,12 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
   return out;
 }
 
+double nitrogen_storage(double sugar_mycorrhiza, double nitrogen_capacity) {
+  double out;
+  out = std::max(0.0, 1/(1+exp(-2*(sugar_mycorrhiza - 0.1/2))));
+  return(out);
+}
+
 carbo_tracker As_initiliser(carbo_tracker Ad, carbo_tracker equilibrium_temperature, double Bd, double Bs)
 {
   carbo_tracker As;
@@ -121,6 +127,7 @@ carbo_balance sugar_model(int year,
                           respiration_out resp,
 
                           double nitrogen_capacity,
+                          bool nitrogen_change,
 
                           bool sperling_sugar_model,
                           bool tree_alive,
@@ -148,10 +155,10 @@ carbo_balance sugar_model(int year,
 
   carbo_tracker storage_term;
   // 7.5% of mass should be for storage, von Arx 2017 max axis
-  storage_term.needles = storage_update_organs(0.1*needles_mass, sugar.needles, starch.needles, tree_alive);
-  storage_term.phloem = storage_update_organs(0.1*phloem_mass, sugar.phloem, starch.phloem, tree_alive);
-  storage_term.xylem_sh = storage_update_organs(0.003*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive);
-  storage_term.xylem_st = storage_update_organs(0.075*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive);
+  storage_term.needles = storage_update_organs(0.11*needles_mass, sugar.needles, starch.needles, tree_alive);
+  storage_term.phloem = storage_update_organs(0.11*phloem_mass, sugar.phloem, starch.phloem, tree_alive);
+  storage_term.xylem_sh = storage_update_organs(0.002*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive);
+  storage_term.xylem_st = storage_update_organs(0.05*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive);
   storage_term.roots = storage_update_organs(0.15*root_mass, sugar.roots, starch.roots, tree_alive);
 
   double respiration_growth = 0;
@@ -206,10 +213,10 @@ carbo_balance sugar_model(int year,
       conc_gradient concentration_gradient;
 
       double needle_transfer = (sugar.needles + starch.needles) * (storage_term.needles - storage_term.phloem)/2;
-      concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - 0.1 * needles_mass, needle_transfer);
+      concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - 0.11 * needles_mass, needle_transfer);
 
       double phloem_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.roots)/2;
-      concentration_gradient.phloem_to_roots = std::max((sugar.phloem + starch.phloem) - 0.1 * phloem_mass, phloem_transfer);
+      concentration_gradient.phloem_to_roots = std::max((sugar.phloem + starch.phloem) - 0.11 * phloem_mass, phloem_transfer);
 
       double xylem_sh_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_sh)/2;
       concentration_gradient.phloem_to_xylem_sh = xylem_sh_transfer;
@@ -224,8 +231,8 @@ carbo_balance sugar_model(int year,
       }
       concentration_gradient.roots_to_myco = std::max(myco_transfer, root_capacity);
 
-      double xylem_sh_capacity = std::max((sugar.xylem_sh + starch.xylem_sh) - 0.003 * xylem_sh_mass, 0.0);
-      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - 0.075 * xylem_st_mass, 0.0);
+      double xylem_sh_capacity = std::max((sugar.xylem_sh + starch.xylem_sh) - 0.002 * xylem_sh_mass, 0.0);
+      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - 0.05 * xylem_st_mass, 0.0);
 
       /*
        * Balance calculations
@@ -290,7 +297,20 @@ carbo_balance sugar_model(int year,
 
       sugar.xylem_st = std::max(sugar.xylem_st, 0.0);
 
+
+      /*
+       * Mycorrhiza
+       */
+
       sugar.mycorrhiza = concentration_gradient.roots_to_myco;
+
+      if (nitrogen_change) {
+        nitrogen_capacity = nitrogen_storage(sugar.mycorrhiza);
+      }
+
+      /*
+       * Respiration
+       */
 
       respiration_growth = (1 + common.Rg_N) * storage_term.needles * nitrogen_capacity * (pot_growth.needles + pot_growth.bud) +
           phloem_respiration_share * (1 + common.Rg_S) * storage_term.phloem * nitrogen_capacity * (pot_growth.wall + pot_growth.height) +
@@ -462,6 +482,7 @@ carbo_balance sugar_model(int year,
        * Bud burst trigger
        */
       // If it hasn't been bud burst yet then possible bud burst is calculated
+      /*
       if (day < parameters.sB0-1) {
         if (sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots < parameters.SCb) {
           std::cout << "New Bud Burst set: " << day << "\n";
@@ -470,6 +491,7 @@ carbo_balance sugar_model(int year,
           sB0 = parameters.sB0;
         }
       }
+       */
     }
   } else {
     // Sperling parameters
