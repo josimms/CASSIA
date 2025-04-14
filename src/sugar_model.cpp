@@ -16,19 +16,7 @@ double storage_update(double alfa, double sugar, double starch, double Wala, boo
   double out;
   // The checks here make sense, as the model should compensate for the sugar lost at the end of each iteration rather than the beginning
   // Therefore, there should always be a positive value of sugar at the beginning of an iteration (and hopefully generally)
-  if (std::isnan(sugar)) {
-    // std::cout << "Sugar is NaN ";
-    out = 0;
-  } else if (std::isnan(starch)) {
-    // std::cout << "Starch is NaN ";
-    out = 0;
-  } else if (sugar < 0) {
-    // std::cout << "Sugar is negative ";
-    out = 0;
-  } else if (starch < 0) {
-    // std::cout << "Starch is negative ";
-    out = 0;
-  } else if (!tree_alive) {
+  if (!tree_alive) {
     out = 0;
   } else {
     double ak = 1 / (1 - 1/std::exp(alfa * (sugar + starch - Wala)));
@@ -58,7 +46,7 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
   } else if (!tree_alive) {
     out = 0;
   } else {
-    out = std::max(0.0, 1/(1+exp(-4*(sugar + starch - storage_capacity/2))));
+    out = std::max(0.0, 1/(1+exp(-2*(sugar + starch - storage_capacity/2))));
     if (out > 1) {
       out = 1; // Corrected here as this is calculated at the beginning, but in the model the extra sugar would be transferred at the end of the iteration
     }
@@ -203,6 +191,18 @@ carbo_balance sugar_model(int year,
       Kd.xylem_st = parameters_in.Ad.xylem_st*std::exp(starch.B*TAir);
       Ks.xylem_st = parameters_in.As.xylem_st*std::exp(sugar.B*TAir);
 
+
+      /*
+       * Storage for respiration
+       */
+
+      carbo_tracker storage_term_resp;
+      storage_term_resp.needles = respiration_check(storage_term.needles, parameters.lower_bound_needles);
+      storage_term_resp.phloem = respiration_check(storage_term.phloem, parameters.lower_bound_phloem);
+      storage_term_resp.xylem_sh = respiration_check(storage_term.xylem_sh, parameters.lower_bound_xylem_sh);
+      storage_term_resp.xylem_st = respiration_check(storage_term.xylem_st, parameters.lower_bound_xylem_st);
+      storage_term_resp.roots = respiration_check(storage_term.roots, parameters.lower_bound_roots);
+
       /*
        * The concentration gradient is represented by the difference in storage terms.
        *
@@ -211,20 +211,41 @@ carbo_balance sugar_model(int year,
        * The amount  that is transferred should then either be the sugar that is over the storage capacity of the organ
        */
 
-      // NOTE 7.5% of organ mass is storage
+      // NOTE various amount of organ mass is storage
       conc_gradient concentration_gradient;
 
       double needle_transfer = (sugar.needles + starch.needles) * (storage_term.needles - storage_term.phloem)/2;
+      if (surplus_c) {
+        needle_transfer = sugar.needles - resp.RmN -
+          (1 + common.Rg_N) * nitrogen_capacity * (pot_growth.needles + pot_growth.bud);
+      }
       concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - 0.11 * needles_mass, needle_transfer);
 
-      double phloem_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.roots)/2;
-      concentration_gradient.phloem_to_roots = std::max((sugar.phloem + starch.phloem) - 0.11 * phloem_mass, phloem_transfer);
+      double phloem_capacity = (sugar.phloem + starch.phloem) - 0.11 * phloem_mass;
 
       double xylem_sh_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_sh)/2;
-      concentration_gradient.phloem_to_xylem_sh = xylem_sh_transfer;
+      if (surplus_c) {
+        // NOTE: Phloem used here as the sugar is coming from the phloem
+        xylem_sh_transfer = xylem_sh_respiration_share * resp.RmS -                                   // maintenance respiration
+          xylem_sh_respiration_share * (1 + common.Rg_S) * nitrogen_capacity * (pot_growth.wall + pot_growth.height);
+      }
+      concentration_gradient.phloem_to_xylem_sh = std::max(xylem_sh_transfer, xylem_sh_respiration_share * phloem_capacity); // TODO; split somehow?
 
       double xylem_st_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_st)/2;
-      concentration_gradient.phloem_to_xylem_st = xylem_st_transfer;
+      if (surplus_c) {
+        // NOTE: Phloem used here as the sugar is coming from the phloem
+        xylem_st_transfer = sugar.xylem_st - xylem_st_respiration_share * resp.RmS -
+          xylem_st_respiration_share * (1 + common.Rg_S) * nitrogen_capacity * (pot_growth.wall + pot_growth.height);
+
+      }
+      concentration_gradient.phloem_to_xylem_st = std::max(xylem_st_transfer, xylem_st_respiration_share * phloem_capacity);
+
+      double phloem_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.roots)/2;
+      if (surplus_c) {
+        phloem_transfer = sugar.phloem - phloem_respiration_share * resp.RmS * storage_term_resp.phloem -
+          phloem_respiration_share * (1 + common.Rg_S) * (nitrogen_capacity) * (pot_growth.wall + pot_growth.height);
+      }
+      concentration_gradient.phloem_to_roots = std::max(phloem_respiration_share * phloem_capacity, phloem_transfer);
 
       double root_capacity = std::max(sugar.roots + starch.roots - 0.15 * root_mass, 0.0);
       double myco_transfer = parameters.mycorrhiza_threshold * (sugar.roots);
@@ -250,17 +271,6 @@ carbo_balance sugar_model(int year,
       double carbo_beginning = sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots +
         starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots + PF;
       double sugar_out_of_system = 0;
-
-      /*
-       * Storage for respiration
-       */
-
-      carbo_tracker storage_term_resp;
-      storage_term_resp.needles = respiration_check(storage_term.needles, parameters.lower_bound_needles);
-      storage_term_resp.phloem = respiration_check(storage_term.phloem, parameters.lower_bound_phloem);
-      storage_term_resp.xylem_sh = respiration_check(storage_term.xylem_sh, parameters.lower_bound_xylem_sh);
-      storage_term_resp.xylem_st = respiration_check(storage_term.xylem_st, parameters.lower_bound_xylem_st);
-      storage_term_resp.roots = respiration_check(storage_term.roots, parameters.lower_bound_roots);
 
       /*
        * SUGAR TRANSFER WITH ALL PROCESSES BUT EMERGANCY
@@ -416,13 +426,10 @@ carbo_balance sugar_model(int year,
        * Storage check
        */
 
-      if ((starch.needles == 0) && (starch.phloem == 0) && (starch.xylem_sh == 0) && (starch.xylem_st == 0) && (starch.roots == 0)) {
+      if ((starch.needles == 0) && (starch.phloem == 0) && (starch.xylem_sh == 0) && (starch.xylem_st == 0) && (starch.roots == 0) &&
+          (sugar.needles == 0) && (sugar.phloem == 0) && (sugar.xylem_sh == 0) && (sugar.xylem_st == 0) && (sugar.roots == 0)) {
         std::cerr << " Day " << day << " No total storage - plant died!" << "\n";
-        tree_alive = false;
-      }
-      if ((sugar.needles == 0) && (sugar.phloem == 0) && (sugar.xylem_sh == 0) && (sugar.xylem_st == 0) && (sugar.roots == 0)) {
-        std::cerr << " Day " << day << " No total sugar - plant died!" << "\n";
-        tree_alive = false;
+        // tree_alive = false;
       }
 
       /*
@@ -577,9 +584,9 @@ carbo_balance sugar_model(int year,
       storage_term.xylem_st = storage;
     }
 
-    if ((sugar.needles <= 0) & (starch.needles <= 0)) {
+    if ((sugar.needles <= 0) && (starch.needles <= 0)) {
       std::cout << " No Storage! Plant died" << "\n";
-      tree_alive = FALSE;
+      // tree_alive = false;
     }
 
     // I don't want to change the structure too much from the original sugar model
