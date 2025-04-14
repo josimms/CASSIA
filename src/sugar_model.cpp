@@ -226,7 +226,7 @@ carbo_balance sugar_model(int year,
       double xylem_sh_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_sh)/2;
       if (surplus_c) {
         // NOTE: Phloem used here as the sugar is coming from the phloem
-        xylem_sh_transfer = xylem_sh_respiration_share * resp.RmS -                                   // maintenance respiration
+        xylem_sh_transfer = sugar.xylem_sh - xylem_sh_respiration_share * resp.RmS -                                   // maintenance respiration
           xylem_sh_respiration_share * (1 + common.Rg_S) * nitrogen_capacity * (pot_growth.wall + pot_growth.height);
       }
       concentration_gradient.phloem_to_xylem_sh = std::max(xylem_sh_transfer, xylem_sh_respiration_share * phloem_capacity); // TODO; split somehow?
@@ -242,7 +242,7 @@ carbo_balance sugar_model(int year,
 
       double phloem_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.roots)/2;
       if (surplus_c) {
-        phloem_transfer = sugar.phloem - phloem_respiration_share * resp.RmS * storage_term_resp.phloem -
+        phloem_transfer = sugar.phloem + starch.phloem - phloem_respiration_share * resp.RmS * storage_term_resp.phloem -
           phloem_respiration_share * (1 + common.Rg_S) * (nitrogen_capacity) * (pot_growth.wall + pot_growth.height);
       }
       concentration_gradient.phloem_to_roots = std::max(phloem_respiration_share * phloem_capacity, phloem_transfer);
@@ -460,45 +460,45 @@ carbo_balance sugar_model(int year,
        * TODO: should I make these numbers automatic somehow?
        */
 
-      if (sugar.needles > parameters.sugar_needles0) {
+      if (sugar.needles > parameters.sugar_needles00) {
         As_new.needles=As_new.needles+parameters.delta_needles;
       }
-      else if (sugar.needles < parameters.sugar_needles0 && starch.needles> 0) {
+      else if (sugar.needles < parameters.sugar_needles00 && starch.needles> 0) {
         Ad_new.needles=Ad_new.needles+parameters.delta_needles;
       }
 
-      if  (sugar.phloem > parameters.sugar_phloem0)
+      if  (sugar.phloem > parameters.sugar_phloem00)
       {
         As_new.phloem=As_new.phloem+parameters.delta_phloem;
       }
-      else if (sugar.phloem < parameters.sugar_phloem0 && starch.phloem> 0)
+      else if (sugar.phloem < parameters.sugar_phloem00 && starch.phloem> 0)
       {
         Ad_new.phloem=Ad_new.phloem+parameters.delta_phloem;
       }
 
-      if (sugar.roots > parameters.sugar_roots0)
+      if (sugar.roots > parameters.sugar_roots00)
       {
         As_new.roots=As_new.roots+parameters.delta_roots;
       }
-      else if (sugar.roots < parameters.sugar_roots0 && starch.roots> 0)
+      else if (sugar.roots < parameters.sugar_roots00 && starch.roots> 0)
       {
         Ad_new.roots=Ad_new.roots+parameters.delta_roots;
       }
 
-      if  (sugar.xylem_sh > parameters.sugar_xylem_sh0)
+      if  (sugar.xylem_sh > parameters.sugar_xylem_sh00)
       {
         As_new.xylem_sh=As_new.xylem_sh+parameters.delta_xylem_sh;
       }
-      else if (sugar.xylem_sh < parameters.sugar_xylem_sh0 && starch.xylem_sh > 0)
+      else if (sugar.xylem_sh < parameters.sugar_xylem_sh00 && starch.xylem_sh > 0)
       {
         Ad_new.xylem_sh=Ad_new.xylem_sh+parameters.delta_xylem_sh;
       }
 
-      if  (sugar.xylem_st > parameters.sugar_xylem_st0)
+      if  (sugar.xylem_st > parameters.sugar_xylem_st00)
       {
         As_new.xylem_st=As_new.xylem_st+parameters.delta_xylem_st;
       }
-      else if (sugar.xylem_st < parameters.sugar_xylem_st0 && starch.xylem_sh > 0)
+      else if (sugar.xylem_st < parameters.sugar_xylem_st00 && starch.xylem_sh > 0)
       {
         Ad_new.xylem_st=Ad_new.xylem_st+parameters.delta_xylem_st;
       }
@@ -585,7 +585,7 @@ carbo_balance sugar_model(int year,
     }
 
     if ((sugar.needles <= 0) && (starch.needles <= 0)) {
-      std::cout << " No Storage! Plant died" << "\n";
+      std::cout << "Day: " << day << " No Storage! Plant died" << "\n";
       // tree_alive = false;
     }
 
@@ -609,7 +609,7 @@ carbo_balance sugar_model(int year,
       (common.Rg_N) * std::min(storage, nitrogen_capacity) * pot_growth.needles -
       (common.Rg_R) * std::min(storage, nitrogen_capacity) * pot_growth.roots -
       (common.Rg_N) * std::min(storage, nitrogen_capacity) * pot_growth.bud;
-    respiration_maintainence = std::min(storage_term.respiration, nitrogen_capacity) * resp.Rm_a;
+    respiration_maintainence = storage_term.respiration * resp.Rm_a;
   }
 
   /*
