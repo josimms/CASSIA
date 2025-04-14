@@ -654,5 +654,11 @@ lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza/CA
 lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar, col = "purple")
 lines(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green")
 
-plot(dates, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$nitrogen_capacity)
+par(mfrow = c(1, 1))
+plot(dates, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$nitrogen_capacity, type = "l", xlab = "Years", ylab = "Nitorgen Capacity (between 0 and 1)", col = "orange", ylim = c(0.25, 1))
+lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$nitrogen_capacity, col = "red")
+lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$nitrogen_capacity, col = "purple")
+lines(dates, CASSIA_preles_1998_2022_nitrogen_high$Sugar$nitrogen_capacity, col = "blue")
+lines(dates, CASSIA_preles_1998_2022$Sugar$nitrogen_capacity, col = "green")
+
 ```
