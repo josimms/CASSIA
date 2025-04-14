@@ -75,6 +75,18 @@ Rcpp::List CASSIA_yearly(int start_year,
   Ad.xylem_st = parameters.Ad0_xylem_st;
   Ad.roots = parameters.Ad0_roots;
 
+  parameters.starch_needles00 = parameters.starch_needles0;
+  parameters.sugar_needles00 = parameters.sugar_needles0;
+  parameters.starch_phloem00 = parameters.starch_phloem0;
+  parameters.sugar_phloem00 = parameters.sugar_phloem0;
+  parameters.starch_roots00 = parameters.starch_roots0;
+  parameters.sugar_roots00 = parameters.sugar_roots0;
+  parameters.starch_xylem_sh00 = parameters.starch_xylem_sh0;
+  parameters.sugar_xylem_sh00 = parameters.sugar_xylem_sh0;
+  parameters.starch_xylem_st00 = parameters.starch_xylem_st0;
+  parameters.sugar_xylem_st00 = parameters.sugar_xylem_st0;
+
+
   repola_out repola_values;
   if (needle_mass_in == 0) { // The value of this should be 0 if you want the needle value to be calculated
     repola_values = repola(parameters); // TODO: fix
@@ -86,7 +98,6 @@ Rcpp::List CASSIA_yearly(int start_year,
    * Vectors between iterations
    */
 
-  // TODO: initalise
   growth_values_out growth_values_for_next_iteration = growth_values_out_init();
   carbo_balance sugar_values_for_next_iteration = carbo_balance_init();
   ring_width_out previous_ring_width = ring_width_out_init();
