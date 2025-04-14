@@ -72,6 +72,16 @@ struct CASSIA_parameters {
   double sugar_roots0;
   double sugar_xylem_sh0;
   double sugar_xylem_st0;
+  double starch_needles00;
+  double starch_phloem00;
+  double starch_xylem_sh00;
+  double starch_xylem_st00;
+  double starch_roots00;
+  double sugar_needles00;
+  double sugar_phloem00;
+  double sugar_roots00;
+  double sugar_xylem_sh00;
+  double sugar_xylem_st00;
   double Wala_needles;
   double Wala_phloem;
   double Wala_xylem_sh;
