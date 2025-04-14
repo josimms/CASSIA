@@ -20,6 +20,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
                        bool surplus_c,
                        bool nitrogen_change,
+                       bool nitrogen_contrast,
 
                        double nitrogen_capacity,
 
@@ -374,6 +375,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                   resp,
                                                   nitrogen_capacity,
                                                   nitrogen_change,
+                                                  nitrogen_contrast,
                                                   boolsettings.sperling_model,
                                                   tree_alive,
                                                   boolsettings.storage_grows,

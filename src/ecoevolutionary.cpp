@@ -22,6 +22,7 @@ Rcpp::List CASSIA_eeo(int start_year,
                        bool nitrogen_change,
 
                        double nitrogen_capacity,
+                       bool nitrogen_contrast,
 
                        int trenching_year,
 
@@ -407,6 +408,7 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                   resp,
                                                   nitrogen_capacity,
                                                   nitrogen_change,
+                                                  nitrogen_contrast,
                                                   boolsettings.sperling_model,
                                                   tree_alive,
                                                   boolsettings.storage_grows,

@@ -132,6 +132,7 @@ carbo_balance sugar_model(int year,
 
                           double nitrogen_capacity,
                           bool nitrogen_change,
+                          bool nitrogen_contrast,
 
                           bool sperling_sugar_model,
                           bool tree_alive,
@@ -352,6 +353,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
                          bool surplus_c,
                          bool nitrogen_change,
+                         bool nitrogen_contrast,
 
                          double nitrogen_capacity,
 
@@ -380,6 +382,7 @@ Rcpp::List CASSIA_eeo(int start_year,
 
                       bool surplus_c,
                       bool nitrogen_change,
+                      bool nitrogen_contrast,
 
                       double nitrogen_capacity,
 
@@ -409,6 +412,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
                        bool surplus_c,
                        bool nitrogen_change,
+                       bool nitrogen_contrast,
 
                        double nitrogen_capacity,
 
