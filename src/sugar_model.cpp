@@ -56,7 +56,7 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
 
 double nitrogen_storage(double sugar_mycorrhiza) {
   double out;
-  out = std::max(0.0, 1/(1+exp(-4*(sugar_mycorrhiza - 0.01))));
+  out = std::max(0.0, 1/(1+exp(-4*(sugar_mycorrhiza - 0.2))));
   return(out);
 }
 
@@ -171,7 +171,6 @@ carbo_balance sugar_model(int year,
       starch.roots = parameters.starch_roots0;
       starch.xylem_sh = parameters.starch_xylem_sh0;
       starch.xylem_st = parameters.starch_xylem_st0;
-      starch.mycorrhiza = parameters.mycorrhiza_threshold * starch.roots;
     } else {
       /*
        * PARAMETER UPDATES!
@@ -216,8 +215,7 @@ carbo_balance sugar_model(int year,
 
       double needle_transfer = (sugar.needles + starch.needles) * (storage_term.needles - storage_term.phloem)/2;
       if (surplus_c) {
-        needle_transfer = sugar.needles - resp.RmN -
-          (1 + common.Rg_N) * nitrogen_capacity * (pot_growth.needles + pot_growth.bud);
+        needle_transfer = (sugar.needles + starch.needles) - 0.11 * needles_mass;
       }
       concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - 0.11 * needles_mass, needle_transfer);
 
@@ -226,36 +224,44 @@ carbo_balance sugar_model(int year,
       double xylem_sh_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_sh)/2;
       if (surplus_c) {
         // NOTE: Phloem used here as the sugar is coming from the phloem
-        xylem_sh_transfer = sugar.xylem_sh - xylem_sh_respiration_share * resp.RmS -                                   // maintenance respiration
-          xylem_sh_respiration_share * (1 + common.Rg_S) * nitrogen_capacity * (pot_growth.wall + pot_growth.height);
+        xylem_sh_transfer = 0;
       }
       concentration_gradient.phloem_to_xylem_sh = std::max(xylem_sh_transfer, xylem_sh_respiration_share * phloem_capacity); // TODO; split somehow?
 
       double xylem_st_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_st)/2;
       if (surplus_c) {
         // NOTE: Phloem used here as the sugar is coming from the phloem
-        xylem_st_transfer = sugar.xylem_st - xylem_st_respiration_share * resp.RmS -
-          xylem_st_respiration_share * (1 + common.Rg_S) * nitrogen_capacity * (pot_growth.wall + pot_growth.height);
+        xylem_st_transfer = 0;
 
       }
       concentration_gradient.phloem_to_xylem_st = std::max(xylem_st_transfer, xylem_st_respiration_share * phloem_capacity);
 
       double phloem_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.roots)/2;
       if (surplus_c) {
-        phloem_transfer = sugar.phloem + starch.phloem - phloem_respiration_share * resp.RmS * storage_term_resp.phloem -
-          phloem_respiration_share * (1 + common.Rg_S) * (nitrogen_capacity) * (pot_growth.wall + pot_growth.height);
+        phloem_transfer = phloem_respiration_share * phloem_capacity;
       }
       concentration_gradient.phloem_to_roots = std::max(phloem_respiration_share * phloem_capacity, phloem_transfer);
 
       double root_capacity = std::max(sugar.roots + starch.roots - 0.15 * root_mass, 0.0);
       double myco_transfer = parameters.mycorrhiza_threshold * (sugar.roots);
       if (surplus_c) {
-        // TODO: the respiration term is wrong here, should be respiration storage nor general storage
-        myco_transfer = std::max(sugar.roots - resp.RmR * storage_term.roots - (1 + common.Rg_R) * pot_growth.roots, 0.0);
+        myco_transfer = root_capacity;
       } else if (nitrogen_contrast) {
-        double normalised_nitrogen_target_increase = std::max(storage_term.roots - nitrogen_capacity, 0.0);
+        // Difference in total storage terms
+        double normalised_nitrogen_target_increase = std::max((storage_term.needles + storage_term.phloem + storage_term.roots + storage_term.xylem_sh + storage_term.xylem_st)/5 - nitrogen_capacity, 0.0);
+        // Sugar needed to make this difference
         double nitrogen_target_increase_sugar_investment = (1/4) * std::log((1/nitrogen_capacity - 1)/(1/(nitrogen_capacity+normalised_nitrogen_target_increase)-1));
-        double sugar_extra = std::max(sugar.roots - resp.RmR * storage_term.roots - (1 + common.Rg_R) * pot_growth.roots * storage_term.roots, 0.0);
+        // Total sugar and storage in the model
+        double total_sugar = sugar.roots + sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st +
+          starch.roots + starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st;
+        // And the total sugar used considering only the sugar limitation - gives the sugar left over
+        double total_use = resp.RmR * storage_term_resp.roots + (1 + common.Rg_R) * pot_growth.roots * storage_term.roots +
+          resp.RmN * storage_term_resp.needles + (1 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) +
+          phloem_respiration_share * resp.RmS * storage_term_resp.phloem + phloem_respiration_share * (1 + common.Rg_S) * storage_term.phloem * (pot_growth.wall + pot_growth.height) +
+          xylem_sh_respiration_share * resp.RmS * storage_term_resp.xylem_sh + xylem_sh_respiration_share * (1 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +
+          xylem_st_respiration_share * resp.RmS * storage_term_resp.xylem_st + xylem_st_respiration_share * (1 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height);
+
+        double sugar_extra = std::max(total_sugar - total_use, 0.0);
         // Then considering the investment needed compared to the sugar in the roots. Note that the investment needed should always be positive
         myco_transfer = std::min(nitrogen_target_increase_sugar_investment, sugar_extra);
       }
@@ -357,6 +363,7 @@ carbo_balance sugar_model(int year,
 
       if (nitrogen_change) {
         nitrogen_capacity = nitrogen_storage(sugar.mycorrhiza);
+        std::cout << " nitrogen capacity " << nitrogen_capacity << "\n";
       }
 
       /*
