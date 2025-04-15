@@ -598,14 +598,14 @@ Rcpp::List CASSIA_yearly(int start_year,
       last_cohorts.year_3 = needles_cohorts.year_3;
       // TODO: make it possible to make this for 5 years?
 
-      parameters.sugar0 = sugar_values_for_next_iteration.sugar.needles;
+      parameters.sugar0 = sugar_values_for_next_iteration.sugar.needles + sugar_values_for_next_iteration.sugar.phloem + sugar_values_for_next_iteration.sugar.roots + sugar_values_for_next_iteration.sugar.xylem_sh + sugar_values_for_next_iteration.sugar.xylem_st;
       parameters.sugar_needles0 = sugar_values_for_next_iteration.sugar.needles;
       parameters.sugar_phloem0 = sugar_values_for_next_iteration.sugar.phloem;
       parameters.sugar_roots0 = sugar_values_for_next_iteration.sugar.roots;
       parameters.sugar_xylem_sh0 = sugar_values_for_next_iteration.sugar.xylem_sh;
       parameters.sugar_xylem_st0 = sugar_values_for_next_iteration.sugar.xylem_st;
 
-      parameters.starch0 = sugar_values_for_next_iteration.starch.needles;
+      parameters.starch0 = sugar_values_for_next_iteration.starch.needles + sugar_values_for_next_iteration.starch.phloem + sugar_values_for_next_iteration.starch.roots + sugar_values_for_next_iteration.starch.xylem_sh + sugar_values_for_next_iteration.starch.xylem_st;
       parameters.starch_needles0 = sugar_values_for_next_iteration.starch.needles;
       parameters.starch_phloem0 = sugar_values_for_next_iteration.starch.phloem;
       parameters.starch_roots0 = sugar_values_for_next_iteration.starch.roots;
