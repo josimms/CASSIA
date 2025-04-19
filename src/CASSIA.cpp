@@ -278,6 +278,10 @@ Rcpp::List CASSIA_yearly(int start_year,
           LAI_within_year = LAI;
         }
         fAPAR_used = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
+        if (std::isnan(fAPAR_used)) {
+          std::cout << "fAPAR_used was NaN so replaced. TODO: fix\n";
+          fAPAR_used = 0.7;
+        }
       } else if (!boolsettings.photosynthesis_as_input & !boolsettings.fAPAR_Tian & boolsettings.preles) {
         fAPAR_used = climate.fAPAR[weather_index];
       } else {
