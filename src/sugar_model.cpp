@@ -313,6 +313,9 @@ carbo_balance sugar_model(int year,
         concentration_gradient.roots_to_myco +                                         // transfer between organs, no multiplier as this is for mycorrhiza and the model just takes the extra sugar
         (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * root_mass;
 
+      if (sugar.roots < 0) {
+        std::cout << "Could be this that is the problem";
+      }
       sugar.roots = std::max(sugar.roots, 0.0);
 
       sugar.xylem_sh = sugar.xylem_sh -
