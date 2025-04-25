@@ -76,12 +76,7 @@ double emergancy(double sugar, double starch, double tau_emergancy, double lower
   double out;
   if (starch > 0) {
     if (sugar < lower_bound) {
-      double comaprison = 0.0;
-      if (sugar < 0.0) {
-        comaprison = 0.0 - sugar;
-      } else {
-        comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
-      }
+      double comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
       out = std::min(starch, comaprison);
     } else {
       out = 0;
@@ -287,14 +282,14 @@ carbo_balance sugar_model(int year,
        * SUGAR TRANSFER WITH ALL PROCESSES BUT EMERGANCY
        */
 
-      // TODO: change the order here to better represent the mycorrhiza
-
       // # Rm.a maintenance respiration separated into organs
       sugar.needles = sugar.needles + PF -                                                          // Last day sugar + daily photosynthesis
         resp.RmN * storage_term_resp.needles -                                                           // maintenance respiration (altered by the carbon storage)
         (1 + common.Rg_N) * std::min(storage_term.needles, nitrogen_capacity) * (pot_growth.needles + pot_growth.bud) -          // growth and growth respiration altered by the storage
         concentration_gradient.needles_to_phloem +                                                  // transfer between organs
         (Kd.needles - Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass;                 // + sperling processes with links to the needles growth process
+
+      sugar.needles = std::max(sugar.needles, 0.0);
 
       // coefficients are from mass ratio in starch and sugar 2015 xls
       sugar.phloem = sugar.phloem -
@@ -309,12 +304,19 @@ carbo_balance sugar_model(int year,
         pot_growth.use + pot_growth.release +                                              // growth sugar use and + release and to the rest of the organs
         (Kd.phloem - Ks.phloem) * parameters.carbon_sugar * 0.001 * phloem_mass;
 
+      sugar.phloem = std::max(sugar.phloem, 0.0);
+
       sugar.roots = sugar.roots -
         resp.RmR * storage_term_resp.roots -                                                // maintenance respiration);
         (1 + common.Rg_R) * pot_growth.roots * std::min(storage_term.roots, nitrogen_capacity) +                    // growth
         concentration_gradient.phloem_to_roots -                                       // transfer between organs
         concentration_gradient.roots_to_myco +                                         // transfer between organs, no multiplier as this is for mycorrhiza and the model just takes the extra sugar
         (Kd.roots - Ks.roots) * parameters.carbon_sugar * 0.001 * root_mass;
+
+      if (sugar.roots < 0) {
+        std::cout << "Could be this that is the problem";
+      }
+      sugar.roots = std::max(sugar.roots, 0.0);
 
       sugar.xylem_sh = sugar.xylem_sh -
         xylem_sh_capacity -                                                                               // Over the storage limit
@@ -323,12 +325,16 @@ carbo_balance sugar_model(int year,
         concentration_gradient.phloem_to_xylem_sh +
         (Kd.xylem_sh - Ks.xylem_sh) * parameters.carbon_sugar * 0.001 * xylem_sh_mass;
 
+      sugar.xylem_sh = std::max(sugar.xylem_sh, 0.0);
+
       sugar.xylem_st = sugar.xylem_st -
         xylem_st_capacity -                                                                            // Over the storage limit
         xylem_st_respiration_share * resp.RmS * storage_term_resp.xylem_st -                                // maintenance respiration
         xylem_st_respiration_share * (1 + common.Rg_S) * std::min(storage_term.xylem_st, nitrogen_capacity) * (pot_growth.wall + pot_growth.height) +            // growth
         concentration_gradient.phloem_to_xylem_st +
         (Kd.xylem_st - Ks.xylem_st) * parameters.carbon_sugar * 0.001 * xylem_st_mass;
+
+      sugar.xylem_st = std::max(sugar.xylem_st, 0.0);
 
       /*
        * Respiration
@@ -405,22 +411,6 @@ carbo_balance sugar_model(int year,
       sugar.xylem_sh = sugar.xylem_sh + emergancy_transfer.xylem_sh;
       sugar.xylem_st = sugar.xylem_st + emergancy_transfer.xylem_st;
       sugar.roots = sugar.roots + emergancy_transfer.roots;
-
-      if (sugar.needles < 0.0) {
-        std::cout << "Day " << day << " Sugar in needles is negative";
-      }
-      if (sugar.phloem < 0.0) {
-        std::cout << "Day " << day << " Sugar in phloem is negative";
-      }
-      if (sugar.roots < 0.0) {
-        std::cout << "Day " << day << " Sugar in roots is negative";
-      }
-      if (sugar.xylem_sh < 0.0) {
-        std::cout << "Day " << day << " Sugar in xylem sh is negative";
-      }
-      if (sugar.xylem_st < 0.0) {
-        std::cout << "Day " << day << " Sugar in xylem st is negative";
-      }
 
       // Starch update
 
