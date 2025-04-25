@@ -76,7 +76,12 @@ double emergancy(double sugar, double starch, double tau_emergancy, double lower
   double out;
   if (starch > 0) {
     if (sugar < lower_bound) {
-      double comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
+      double comaprison = 0.0;
+      if (sugar < 0.0) {
+        comaprison = 0.0 - sugar;
+      } else {
+        comaprison = std::max((lower_bound - sugar) / tau_emergancy, 0.0);
+      }
       out = std::min(starch, comaprison);
     } else {
       out = 0;
@@ -282,6 +287,8 @@ carbo_balance sugar_model(int year,
        * SUGAR TRANSFER WITH ALL PROCESSES BUT EMERGANCY
        */
 
+      // TODO: change the order here to better represent the mycorrhiza
+
       // # Rm.a maintenance respiration separated into organs
       sugar.needles = sugar.needles + PF -                                                          // Last day sugar + daily photosynthesis
         resp.RmN * storage_term_resp.needles -                                                           // maintenance respiration (altered by the carbon storage)
@@ -289,6 +296,8 @@ carbo_balance sugar_model(int year,
         concentration_gradient.needles_to_phloem +                                                  // transfer between organs
         (Kd.needles - Ks.needles) * parameters.carbon_sugar * 0.001 * needles_mass;                 // + sperling processes with links to the needles growth process
 
+
+      // TODO: take these away! Too much starch in the system
       sugar.needles = std::max(sugar.needles, 0.0);
 
       // coefficients are from mass ratio in starch and sugar 2015 xls
