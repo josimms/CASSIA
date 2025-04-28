@@ -78,7 +78,7 @@ It is likely that the values you have chosen for the parameters have caused one 
 #### Parameterisation for the CASSIA Lehtosuo site
 Alexis Lehtonen
 
-#### Addition of a enzyme driven sugar model and mycorrhizal interactions. Thus linking with a soil model (SYMPHONY) and mycorrhizal model (MYCOFON). 
+#### Addition of a enzyme driven sugar model and mycorrhizal interactions. Thus linking with a soil model and mycorrhizal model. 
 Joanna Simms
 
 ![kuva](https://github.com/josimms/MycoModel/assets/102613042/1a465070-6995-4f73-bef7-4e7920bca289)
