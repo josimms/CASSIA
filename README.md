@@ -1,6 +1,6 @@
 ## CASSIA Model
 
-NOTE: The CASSIA+ Instruction and Plans Booklet has the latest information in terms of what the model will include and what the model currently includes. If you have any questions please email: joanna.x.simms@helsinki.fi
+NOTE: The CASSIA+ Instruction and Plans Booklet (man/) has the latest information in terms of what the model will include and what the model currently includes. If you have any questions please email: joanna.x.simms@helsinki.fi
 
 ### Ideas and structure
 
