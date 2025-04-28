@@ -1,6 +1,6 @@
 ## CASSIA Model
 
-NOTE: for the basic model use this. For development of the model use the Adding Externals branch. This should be used on linux. If used this version of the model is used contact Joanna (joanna.x.simms@helsinki.fi) for support.
+NOTE: for the basic model use this. For development of the model use the Adding Externals branch. This should be used on linux (but other systems if requested). If used this version of the model is used contact Joanna (joanna.x.simms@helsinki.fi) for support.
 
 ### Ideas and structure
 
