@@ -1,5 +1,7 @@
 ## CASSIA Model
 
+NOTE: The CASSIA+ Instruction and Plans Booklet has the latest information in terms of what the model will include and what the model currently includes. If you have any questions please email: joanna.x.simms@helsinki.fi
+
 ### Ideas and structure
 
 CASSIA model is an intra-annual growth model for an individual tree in boreal conditions. Seasonal organ level cell growth is modelled, as well as sugar and water when the appropriate settings are chosen. Further deatails for the indervidual functions can be found with the functions themselves.
