@@ -29,7 +29,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                          bool nitrogen_change,
                          bool nitrogen_contrast,
 
-                         double nitrogen_capacity,
+                         double nitrogen_balance,
 
                          Rcpp::List settings) {
 
@@ -398,7 +398,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                   D00,
                                                   potential_growth.previous_values.sH,
                                                   resp,
-                                                  nitrogen_capacity,
+                                                  nitrogen_balance,
                                                   nitrogen_change,
                                                   nitrogen_contrast,
                                                   boolsettings.sperling_model,
@@ -417,6 +417,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
       sugar_values_for_next_iteration.starch = sugar_model_out.starch;
       sugar_values_for_next_iteration.storage = sugar_model_out.storage;
+      sugar_values_for_next_iteration.nitrogen_capacity = sugar_model_out.nitrogen_capacity;
       parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
       tree_alive = sugar_model_out.previous_values.tree_alive;
       equilibrium_temperature.needles = std::log(sugar_values_for_next_iteration.previous_values.As.needles/sugar_values_for_next_iteration.previous_values.Ad.needles)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
@@ -425,13 +426,19 @@ Rcpp::List CASSIA_yearly(int start_year,
       equilibrium_temperature.xylem_st = std::log(sugar_values_for_next_iteration.previous_values.As.xylem_st/sugar_values_for_next_iteration.previous_values.Ad.xylem_st)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
       equilibrium_temperature.roots = std::log(sugar_values_for_next_iteration.previous_values.As.roots/sugar_values_for_next_iteration.previous_values.Ad.roots)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
       if (nitrogen_change) {
-        nitrogen_capacity = sugar_model_out.nitrogen_capacity;
+        nitrogen_balance = sugar_model_out.nitrogen_balance;
+
       }
 
       // TODO: add other organs
 
       if (final_year%2==0) {
-        sugar_values_output.nitrogen_capacity.push_back(nitrogen_capacity);
+        sugar_values_output.nitrogen_balance.push_back(nitrogen_balance);
+        sugar_values_output.nitrogen_capacity_needles.push_back(sugar_model_out.nitrogen_capacity.needles);
+        sugar_values_output.nitrogen_capacity_wall.push_back(sugar_model_out.nitrogen_capacity.wall);
+        sugar_values_output.nitrogen_capacity_height.push_back(sugar_model_out.nitrogen_capacity.height);
+        sugar_values_output.nitrogen_capacity_bud.push_back(sugar_model_out.nitrogen_capacity.bud);
+        sugar_values_output.nitrogen_capacity_roots.push_back(sugar_model_out.nitrogen_capacity.roots);
 
         sugar_values_output.sugar.push_back(sugar_values_for_next_iteration.sugar.needles +
           sugar_values_for_next_iteration.sugar.phloem +
@@ -491,7 +498,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
                                                    boolsettings.sperling_model,
-                                                   nitrogen_capacity);
+                                                   sugar_model_out.nitrogen_capacity); // TODO: either than the nitrogen capacity or the nitrogen balance
       // TODO: update the parameters like D0 and h0 that need to be updated
       double growth_and_mortality = actual_growth_out.roots * (0.975 - fS_out); // TODO: more sensible value here!
 
@@ -652,7 +659,6 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["starch_xylem_sh"] = sugar_values_output.starch_xylem_sh,
                                                 Rcpp::_["starch_xylem_st"] = sugar_values_output.starch_xylem_st,
                                                 Rcpp::_["starch_roots"] = sugar_values_output.starch_roots,
-                                                Rcpp::_["nitrogen_capacity"] = sugar_values_output.nitrogen_capacity,
                                                 Rcpp::_["sugar_needles"] = sugar_values_output.sugar_needles,
                                                 Rcpp::_["sugar_phloem"] = sugar_values_output.sugar_phloem,
                                                 Rcpp::_["sugar_xylem_sh"] = sugar_values_output.sugar_xylem_sh,
@@ -679,7 +685,13 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["culm_growth_diameter_potential"] = culm_growth.diameter_potential,
                                                 Rcpp::_["culm_growth_roots"] = culm_growth.roots,
                                                 Rcpp::_["tree_alive"] = culm_growth.tree_alive,
-                                                Rcpp::_["LAI"] = LAI_within_year_vector);
+                                                Rcpp::_["LAI"] = LAI_within_year_vector,
+                                                Rcpp::_["nitrogen_balance"] = sugar_values_output.nitrogen_balance,
+                                                Rcpp::_["nitrogen_capacity_needles"] = sugar_values_output.nitrogen_capacity_needles,
+                                                Rcpp::_["nitrogen_capacity_wall"] = sugar_values_output.nitrogen_capacity_wall,
+                                                Rcpp::_["nitrogen_capacity_height"] = sugar_values_output.nitrogen_capacity_height,
+                                                Rcpp::_["nitrogen_capacity_bud"] = sugar_values_output.nitrogen_capacity_bud,
+                                                Rcpp::_["nitrogen_capacity_roots"] = sugar_values_output.nitrogen_capacity_roots);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,

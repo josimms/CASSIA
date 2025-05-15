@@ -445,7 +445,7 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
                                                    boolsettings.sperling_model,
-                                                   nitrogen_capacity);
+                                                   sugar_model_out.nitrogen_capacity);
       // TODO: update the parameters like D0 and h0 that need to be updated
 
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);

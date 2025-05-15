@@ -130,7 +130,7 @@ carbo_balance sugar_model(int year,
                           double sH,
                           respiration_out resp,
 
-                          double nitrogen_capacity,
+                          double nitrogen_balance,
                           bool nitrogen_change,
                           bool nitrogen_contrast,
 
@@ -330,7 +330,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
                          growth_out potential_growth,
                          respiration_out resp,
                          bool sperling_sugar_model,
-                         double nitrogen_capacity);
+                         growth_out nitrogen_capacity);
 
 /*
  * CASSIA_yearly

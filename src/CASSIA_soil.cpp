@@ -22,7 +22,7 @@ Rcpp::List CASSIA_soil(int start_year,
                        bool nitrogen_change,
                        bool nitrogen_contrast,
 
-                       double nitrogen_capacity,
+                       double nitrogen_balance,
 
                        int trenching_year,
 
@@ -367,13 +367,24 @@ Rcpp::List CASSIA_soil(int start_year,
        * Sugar
        */
 
+      double root_mass = 0;
+      if (day == 0) {
+        root_mass = roots_next_year;
+      } else {
+        if (final_year%2!=0) {
+          root_mass = culm_growth_internal.roots[weather_index-1];
+        } else {
+          root_mass = culm_growth.roots[weather_index-1];
+        }
+      }
+
       carbo_balance sugar_model_out = sugar_model(year, day, climate.TAir[weather_index],
                                                   photosynthesis_per_stem,
                                                   common, parameters,
                                                   D00,
                                                   potential_growth.previous_values.sH,
                                                   resp,
-                                                  nitrogen_capacity,
+                                                  nitrogen_balance,
                                                   nitrogen_change,
                                                   nitrogen_contrast,
                                                   boolsettings.sperling_model,
@@ -381,20 +392,29 @@ Rcpp::List CASSIA_soil(int start_year,
                                                   boolsettings.storage_grows,
                                                   surplus_c,
                                                   repola_values.needle_mass,
-                                                  culm_growth.roots[weather_index-1],
+                                                  root_mass,
                                                   equilibrium_temperature,
                                                   potential_growth,
                                                   sugar_values_for_next_iteration.sugar,
                                                   sugar_values_for_next_iteration.starch,
                                                   sugar_values_for_next_iteration.previous_values);
-
       // Saved for the next iteration
       sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
       sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
       sugar_values_for_next_iteration.starch = sugar_model_out.starch;
       sugar_values_for_next_iteration.storage = sugar_model_out.storage;
+      sugar_values_for_next_iteration.nitrogen_capacity = sugar_model_out.nitrogen_capacity;
       parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
       tree_alive = sugar_model_out.previous_values.tree_alive;
+      equilibrium_temperature.needles = std::log(sugar_values_for_next_iteration.previous_values.As.needles/sugar_values_for_next_iteration.previous_values.Ad.needles)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
+      equilibrium_temperature.phloem = std::log(sugar_values_for_next_iteration.previous_values.As.phloem/sugar_values_for_next_iteration.previous_values.Ad.phloem)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
+      equilibrium_temperature.xylem_sh = std::log(sugar_values_for_next_iteration.previous_values.As.xylem_sh/sugar_values_for_next_iteration.previous_values.Ad.xylem_sh)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
+      equilibrium_temperature.xylem_st = std::log(sugar_values_for_next_iteration.previous_values.As.xylem_st/sugar_values_for_next_iteration.previous_values.Ad.xylem_st)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
+      equilibrium_temperature.roots = std::log(sugar_values_for_next_iteration.previous_values.As.roots/sugar_values_for_next_iteration.previous_values.Ad.roots)/(sugar_values_for_next_iteration.starch.B - sugar_values_for_next_iteration.starch.B);
+      if (nitrogen_change) {
+        nitrogen_balance = sugar_model_out.nitrogen_balance;
+
+      }
 
       /*
        * Actual growth
@@ -412,7 +432,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
                                                    boolsettings.sperling_model,
-                                                   nitrogen_capacity);
+                                                   sugar_model_out.nitrogen_capacity);
 
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
@@ -647,6 +667,13 @@ Rcpp::List CASSIA_soil(int start_year,
         actual_growth_output.diameter.push_back(actual_growth_out.wall);
         actual_growth_output.bud.push_back(actual_growth_out.bud);
         actual_growth_output.ring_width.push_back(ring_width.tot_mm);
+
+        sugar_values_output.nitrogen_balance.push_back(nitrogen_balance);
+        sugar_values_output.nitrogen_capacity_needles.push_back(sugar_model_out.nitrogen_capacity.needles);
+        sugar_values_output.nitrogen_capacity_wall.push_back(sugar_model_out.nitrogen_capacity.wall);
+        sugar_values_output.nitrogen_capacity_height.push_back(sugar_model_out.nitrogen_capacity.height);
+        sugar_values_output.nitrogen_capacity_bud.push_back(sugar_model_out.nitrogen_capacity.bud);
+        sugar_values_output.nitrogen_capacity_roots.push_back(sugar_model_out.nitrogen_capacity.roots);
 
         sugar_values_output.sugar.push_back(sugar_values_for_next_iteration.sugar.needles +
           sugar_values_for_next_iteration.sugar.phloem +
@@ -889,7 +916,13 @@ Rcpp::List CASSIA_soil(int start_year,
   Rcpp::DataFrame df7 = Rcpp::DataFrame::create(Rcpp::_["culm_growth_height"] = culm_growth.height,
                                                 Rcpp::_["culm_growth_roots"] = culm_growth.roots,
                                                 Rcpp::_["culm_growth_needles"] = culm_growth.needles,
-                                                Rcpp::_["culm_growth_diameter"] = culm_growth.diameter);
+                                                Rcpp::_["culm_growth_diameter"] = culm_growth.diameter,
+                                                Rcpp::_["nitrogen_balance"] = sugar_values_output.nitrogen_balance,
+                                                Rcpp::_["nitrogen_capacity_needles"] = sugar_values_output.nitrogen_capacity_needles,
+                                                Rcpp::_["nitrogen_capacity_wall"] = sugar_values_output.nitrogen_capacity_wall,
+                                                Rcpp::_["nitrogen_capacity_height"] = sugar_values_output.nitrogen_capacity_height,
+                                                Rcpp::_["nitrogen_capacity_bud"] = sugar_values_output.nitrogen_capacity_bud,
+                                                Rcpp::_["nitrogen_capacity_roots"] = sugar_values_output.nitrogen_capacity_roots);
 
   return Rcpp::List::create(Rcpp::_["Growth"] = df,
                             Rcpp::_["Sugar"] = df2,

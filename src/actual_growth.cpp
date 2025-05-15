@@ -6,7 +6,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
                          growth_out potential_growth,
                          respiration_out resp,
                          bool sperling_sugar_model,
-                         double nitrogen_capacity) {
+                         growth_out nitrogen_capacity) {
 
   growth_out actual_growth_out;
 
@@ -28,7 +28,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
   } else {
     storage_height = storage.needles;
   }
-  actual_growth_out.height = potential_growth.height * std::min(storage_height, nitrogen_capacity);
+  actual_growth_out.height = potential_growth.height * std::min(storage_height, nitrogen_capacity.height);
 
   /*
    * Wall
@@ -40,17 +40,17 @@ growth_out actual_growth(CASSIA_parameters parameters,
   } else {
     storage_wall = storage.needles;
   }
-  actual_growth_out.wall = potential_growth.diameter * std::min(storage_wall, nitrogen_capacity);
+  actual_growth_out.wall = potential_growth.diameter * std::min(storage_wall, nitrogen_capacity.wall);
 
   /*
    * Bud
    */
-  actual_growth_out.bud = potential_growth.bud * std::min(storage.needles, nitrogen_capacity);
+  actual_growth_out.bud = potential_growth.bud * std::min(storage.needles, nitrogen_capacity.bud);
 
   /*
    * Needles
    */
-  actual_growth_out.needles = potential_growth.needles * std::min(storage.needles, nitrogen_capacity);
+  actual_growth_out.needles = potential_growth.needles * std::min(storage.needles, nitrogen_capacity.needles);
 
   /*
    * Roots
@@ -61,7 +61,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
   } else {
     storage_roots = storage.needles;
   }
-  actual_growth_out.roots = potential_growth.roots * std::min(storage_roots, nitrogen_capacity);
+  actual_growth_out.roots = potential_growth.roots * std::min(storage_roots, nitrogen_capacity.roots);
 
   /*
    * GD
@@ -72,7 +72,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
   } else {
     storage_GD = storage.needles;
   }
-  actual_growth_out.GD = potential_growth.GD * std::min(storage_GD, nitrogen_capacity);
+  actual_growth_out.GD = potential_growth.GD * std::min(storage_GD, nitrogen_capacity.wall);
 
   return actual_growth_out;
 };

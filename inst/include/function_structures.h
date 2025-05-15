@@ -180,10 +180,11 @@ struct carbo_balance
   carbo_tracker sugar;
   carbo_tracker starch;
   carbo_tracker storage;
+  growth_out nitrogen_capacity;
   double resp_main;
   double resp_growth;
   carbo_values_out previous_values;
-  double nitrogen_capacity;
+  double nitrogen_balance;
 };
 
 struct interaction
@@ -204,7 +205,7 @@ struct sugar_values_vector
   std::vector<double> starch_xylem_sh;
   std::vector<double> starch_xylem_st;
   std::vector<double> starch_roots;
-  std::vector<double> nitrogen_capacity;
+  std::vector<double> nitrogen_balance;
   std::vector<double> sugar_needles;
   std::vector<double> sugar_phloem;
   std::vector<double> sugar_xylem_sh;
@@ -217,6 +218,11 @@ struct sugar_values_vector
   std::vector<double> storage_xylem_st;
   std::vector<double> storage_roots;
   std::vector<double> storage_mycorrhiza;
+  std::vector<double> nitrogen_capacity_needles;
+  std::vector<double> nitrogen_capacity_bud;
+  std::vector<double> nitrogen_capacity_wall;
+  std::vector<double> nitrogen_capacity_height;
+  std::vector<double> nitrogen_capacity_roots;
 };
 
 /*
