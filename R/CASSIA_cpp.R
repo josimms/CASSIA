@@ -91,7 +91,7 @@ CASSIA_cpp <- function(
     Throughfall = 1,
     trenching_year = NA,
 
-    nitrogen_capacity = 1,
+    nitrogen_balance = 25,
     nitrogen_change = FALSE,
     nitrogen_contrast = FALSE,
     surplus_c = FALSE,
@@ -176,19 +176,19 @@ CASSIA_cpp <- function(
     out <- CASSIA_soil(start_year, end_year, weather, GPP_ref_in,
                        pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, # site,
                        needle_mass_in,
-                       Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_capacity, trenching_year,
+                       Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, trenching_year,
                        updated_settings)
   } else if (ecoevolutionary) {
     out <- CASSIA_eeo(start_year, end_year, weather, GPP_ref_in,
                       pPREL, t(parameters), common, t(ratios), t(sperling), parameters_R_in, phydro_param, # site,
                       needle_mass_in,
-                      Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_capacity, trenching_year,
+                      Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, trenching_year,
                       updated_settings)
   } else {
     out <- CASSIA_yearly(start_year, end_year, weather, GPP_ref_in,
                          pPREL, t(parameters), common, t(ratios), t(sperling), # site,
                          needle_mass_in,
-                         Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_capacity,
+                         Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance,
                          updated_settings)
   }
 
