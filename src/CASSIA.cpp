@@ -270,6 +270,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         // Extinction coefficient 0.52 is from Tian 2021 as well
         // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
         double f_modifer = needle_growth/max_needles; // the actual growth divided by the maximum per year
+        std::cout << " max_needles " << max_needles;
         if (day < 182) { // TODO: I decided that the start of July is the end of spring
           LAI_within_year = LAI*(parameters.n_age - 1)/parameters.n_age + (1/parameters.n_age)*f_modifer*LAI; // TODO: this varies too much!
         } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
@@ -277,7 +278,11 @@ Rcpp::List CASSIA_yearly(int start_year,
         } else {
           LAI_within_year = LAI;
         }
-        fAPAR_used = (1 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
+        fAPAR_used = (1.0 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
+        if (std::isnan(LAI_within_year)) {
+          std::cout << "LAI_within_year was NaN so replaced. TODO: fix\n";
+          fAPAR_used = 0.7;
+        }
         if (std::isnan(fAPAR_used)) {
           std::cout << "fAPAR_used was NaN so replaced. TODO: fix\n";
           fAPAR_used = 0.7;
@@ -536,7 +541,7 @@ Rcpp::List CASSIA_yearly(int start_year,
             culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
             culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm); // Ring width is culmative, but need consistent initial condition
             culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
-            culm_growth_internal.needles.push_back(actual_growth_out.needles);
+            culm_growth_internal.needles.push_back(actual_growth_out.needles); // TODO: should there be culmative things here? Fix after the max works
             culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + growth_and_mortality);
           }
         } else {
@@ -558,16 +563,19 @@ Rcpp::List CASSIA_yearly(int start_year,
             culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
             culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
             culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
+            culm_growth.needles.push_back(actual_growth_out.needles);
             culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
           }
         } else {
           culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
           culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
           culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
+          culm_growth.needles.push_back(actual_growth_out.needles);
           culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
         }
 
         culm_growth.tree_alive.push_back(tree_alive);
+        std::cout << " culm_growth.needles " << culm_growth.needles[weather_index-1];
       }
 
       /*
@@ -600,7 +608,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       // TOOD: should this be every year or just every other?
       max_needles = *std::max_element(culm_growth.needles.begin() + days_gone,
-                                      culm_growth.needles.begin() + days_gone + days_per_year) - culm_growth.needles[days_gone];
+                                      culm_growth.needles.begin() + days_gone + days_per_year);
 
       days_gone = days_gone + days_per_year;
 
