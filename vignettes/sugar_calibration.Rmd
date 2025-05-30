@@ -1237,9 +1237,9 @@ lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_mycorrhiza/
 
 #png("nitrogen_store.png", width = 2000, height = 1600, res = 300)
 par(mfrow = c(1, 2))
-plot(dates, CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$, type = "l", xlab = "Years", ylab = "Nitorgen Capacity (between 0 and 1)", col = "red", ylim = c(0, 1))
-lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Culm_Growth$, col = "purple")
-lines(dates, CASSIA_preles_1998_2022$Culm_Growth$, col = "green")
+plot(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$nitrogen_capacity, type = "l", xlab = "Years", ylab = "Nitorgen Capacity (between 0 and 1)", col = "red", ylim = c(0, 1))
+lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$nitrogen_capacity, col = "purple")
+lines(dates, CASSIA_preles_1998_2022$Sugar$nitrogen_capacity, col = "green")
 
 plot(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$storage/5, type = "l", xlab = "Years", ylab = "Tree Storage (between 0 and 1)", col = "red", ylim = c(0, 1))
 lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$storage/5, col = "purple")
