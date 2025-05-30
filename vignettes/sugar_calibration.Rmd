@@ -300,7 +300,7 @@ lines(dates_2015, CASSIA_preles_2015$Sugar$sugar_xylem_st, type = "l", col = "go
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$xylem_st_sugar, col = "gold")
 lines(dates_2015, CASSIA_preles_2015$Sugar$sugar_roots, type = "l", col = "black")
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$roots_sugar, col = "black")
-legend("topright", c("Needles", "Phloem", "Xylem Sh", "Xylem St", "Roots"), col = c("green", "brown", "red", "gold", "black"), lty = 1)
+legend("topleft", c("Needles", "Phloem", "Xylem Sh", "Xylem St", "Roots"), col = c("green", "brown", "red", "gold", "black"), lty = 1, bty = "n", cex = 0.75)
 
 # CASSIA_preles_2015$Sugar$starch_xylem_sh
 ylim = range(0, CASSIA_preles_2015$Sugar$starch_needles, CASSIA_preles_2015$Sugar$starch_phloem, CASSIA_preles_2015$Sugar$starch_xylem_st, CASSIA_preles_2015$Sugar$starch_roots, CASSIA_preles_2015$Sugar$starch_xylem_sh, na.rm = T)
