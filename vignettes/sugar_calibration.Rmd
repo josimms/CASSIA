@@ -496,7 +496,7 @@ CASSIA_preles_1998_2022_nitrogen_medium <- CASSIA_cpp(
     needle_mass_in = parameters_2015$needle_mass_in,
     Throughfall = parameters_2015$Throughfall,
     photosynthesis_as_input = FALSE,
-    nitrogen_balance = 25*0.7,
+    nitrogen_balance = 25*0.5,
     preles = TRUE,
     fAPAR_Tian = TRUE,
     sperling_model = TRUE
@@ -839,13 +839,14 @@ CASSIA_preles_1998_2022_nitrogen_varies <- CASSIA_cpp(
     needle_mass_in = parameters_2015$needle_mass_in,
     Throughfall = parameters_2015$Throughfall,
     photosynthesis_as_input = FALSE,
-    nitrogen_balance = 25*0.5,
+    nitrogen_balance = 25*0.3,
     nitrogen_change = TRUE,
     preles = TRUE,
     fAPAR_Tian = TRUE,
     sperling_model = TRUE
   )
 ```
+
 
 ```{r}
 parameters_2015$sperling_test[c("sugar00"), c("Hyde")] <- 0.42
@@ -1310,23 +1311,6 @@ lines(dates, CASSIA_preles_1998_2022$Sugar$nitrogen_capacity, col = "green")
 plot(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$storage/5, type = "l", xlab = "Years", ylab = "Tree Storage (between 0 and 1)", col = "red", ylim = c(0, 1))
 lines(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$storage/5, col = "pink")
 lines(dates, CASSIA_preles_1998_2022$Sugar$storage/5, col = "green")
-
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_needles, col = "pink", type = "l")
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$starch_needles, col = "pink", type = "l")
-
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_phloem, col = "pink", type = "l")
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$starch_phloem, col = "pink", type = "l")
-
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_xylem_st, col = "pink", type = "l")
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$starch_xylem_st, col = "pink", type = "l")
-
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_xylem_sh, col = "pink", type = "l")
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$starch_xylem_sh, col = "pink", type = "l")
-
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_roots, col = "pink", type = "l")
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$starch_roots, col = "pink", type = "l")
-
-plot(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_mycorrhiza, col = "pink", type = "l")
 ```
 
 
