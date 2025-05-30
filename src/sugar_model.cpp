@@ -294,21 +294,20 @@ carbo_balance sugar_model(int year,
         double total_sugar = sugar.roots + sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st +
           starch.roots + starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st;
         // And the total sugar used considering only the sugar limitation - gives the sugar left over
-        double total_use = resp.RmR * storage_term_resp.roots + (1.0 + common.Rg_R) * pot_growth.roots * storage_term.roots +
-                                       resp.RmN * storage_term_resp.needles + (1.0 + common.Rg_N) * storage_term.needles * (pot_growth.needles + pot_growth.bud) +
-            phloem_respiration_share * resp.RmS * storage_term_resp.phloem + phloem_respiration_share * (1.0 + common.Rg_S) * storage_term.phloem * (pot_growth.wall + pot_growth.height) +
-          xylem_sh_respiration_share * resp.RmS * storage_term_resp.xylem_sh + xylem_sh_respiration_share * (1.0 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +
-          xylem_st_respiration_share * resp.RmS * storage_term_resp.xylem_st + xylem_st_respiration_share * (1.0 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height);
+        double total_use =             resp.RmR * storage_term_resp.roots     +                              (1.0 + common.Rg_R) * storage_term.roots    * pot_growth.roots +
+                                       resp.RmN * storage_term_resp.needles   +                              (1.0 + common.Rg_N) * storage_term.needles  * (pot_growth.needles + pot_growth.bud) +
+            phloem_respiration_share * resp.RmS * storage_term_resp.phloem    +   phloem_respiration_share * (1.0 + common.Rg_S) * storage_term.phloem   * (pot_growth.wall + pot_growth.height) +
+          xylem_sh_respiration_share * resp.RmS * storage_term_resp.xylem_sh  + xylem_sh_respiration_share * (1.0 + common.Rg_S) * storage_term.xylem_sh * (pot_growth.wall + pot_growth.height) +
+          xylem_st_respiration_share * resp.RmS * storage_term_resp.xylem_st  + xylem_st_respiration_share * (1.0 + common.Rg_S) * storage_term.xylem_st * (pot_growth.wall + pot_growth.height);
 
         double sugar_extra = std::max(total_sugar - total_use, 0.0);
         // Then considering the investment needed compared to the sugar in the roots. Note that the investment needed should always be positive
         myco_transfer = std::min(nitrogen_target_increase_sugar_investment, sugar_extra);
-        std::cout << " myco_transfer " << myco_transfer;
       }
       concentration_gradient.roots_to_myco = std::max(myco_transfer, root_capacity); // TODO; should this be the entire tree or the root?
 
       double xylem_sh_capacity = std::max((sugar.xylem_sh + starch.xylem_sh) - 0.002 * xylem_sh_mass, 0.0);
-      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - 0.05 * xylem_st_mass, 0.0);
+      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - 0.05  * xylem_st_mass, 0.0);
 
       /*
        * Balance calculations
@@ -408,18 +407,22 @@ carbo_balance sugar_model(int year,
 
       if (nitrogen_change) {
         nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance/5.0, "needles");
-        nitrogen_capacity.bud = nitrogen_storage(nitrogen_balance/5.0, "bud");
-        nitrogen_capacity.wall = nitrogen_storage(nitrogen_balance/5.0, "wall");
-        nitrogen_capacity.height = nitrogen_storage(nitrogen_balance/5.0, "height");
-        nitrogen_capacity.roots = nitrogen_storage(nitrogen_balance/5.0, "roots");
+        nitrogen_capacity.bud     = nitrogen_storage(nitrogen_balance/5.0, "bud");
+        nitrogen_capacity.wall    = nitrogen_storage(nitrogen_balance/5.0, "wall");
+        nitrogen_capacity.height  = nitrogen_storage(nitrogen_balance/5.0, "height");
+        nitrogen_capacity.roots   = nitrogen_storage(nitrogen_balance/5.0, "roots");
+
+        // TODO: actual uptake
+        double nitrogen_uptake = sugar.mycorrhiza; // TODO: add an uptake function here!
 
         // C:N ratios are from the Korhonen 2013 paper
-        nitrogen_balance = nitrogen_balance -
-          (std::min(storage_term.needles, nitrogen_capacity.needles) * pot_growth.needles * 1.0/104.0  + std::min(storage_term.needles, nitrogen_capacity.bud) * pot_growth.bud * 1.0/221.0) -
-          (std::min(storage_term.phloem, nitrogen_capacity.wall) * pot_growth.wall * 1.0/134.0 + std::min(storage_term.phloem, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
-          (std::min(storage_term.xylem_st, nitrogen_capacity.wall) * pot_growth.wall * 1.0/134.0 + std::min(storage_term.xylem_st, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
-          (std::min(storage_term.xylem_sh, nitrogen_capacity.wall) * pot_growth.wall * 1.0/134.0 + std::min(storage_term.xylem_sh, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
-           std::min(storage_term.roots, nitrogen_capacity.roots) * pot_growth.roots * 1.0/100.0; // TODO: real value for the roots
+        nitrogen_balance = nitrogen_balance +
+           nitrogen_uptake -
+          (std::min(storage_term.needles, nitrogen_capacity.needles) * pot_growth.needles * 1.0/104.0     + std::min(storage_term.needles, nitrogen_capacity.bud)     * pot_growth.bud    * 1.0/221.0) -
+          (std::min(storage_term.phloem, nitrogen_capacity.wall)     * pot_growth.wall    * 1.0/134.0     + std::min(storage_term.phloem, nitrogen_capacity.height)   * pot_growth.height * 1.0/134.0) -
+          (std::min(storage_term.xylem_st, nitrogen_capacity.wall)   * pot_growth.wall    * 1.0/134.0     + std::min(storage_term.xylem_st, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
+          (std::min(storage_term.xylem_sh, nitrogen_capacity.wall)   * pot_growth.wall    * 1.0/134.0     + std::min(storage_term.xylem_sh, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
+           std::min(storage_term.roots, nitrogen_capacity.roots)     * pot_growth.roots   * 1.0/100.0; // TODO: real value for the roots
       }
 
       /*
