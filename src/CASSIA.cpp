@@ -269,7 +269,12 @@ Rcpp::List CASSIA_yearly(int start_year,
         // Uses the method from Tian 2021
         // Extinction coefficient 0.52 is from Tian 2021 as well
         // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
-        double f_modifer = needle_growth/max_needles; // the actual growth divided by the maximum per year
+        double f_modifer = 0.0;
+        if (max_needles == 0.0) {
+          f_modifer = 0.0;
+        } else {
+          f_modifer = needle_growth/max_needles; // the actual growth divided by the maximum per year
+        }
         if (day < 182) { // TODO: I decided that the start of July is the end of spring
           LAI_within_year = LAI*(parameters.n_age - 1)/parameters.n_age + (1/parameters.n_age)*f_modifer*LAI; // TODO: this varies too much!
         } else if (day > 244) { // TODO: I decided that the end of august is the start of autumn
@@ -279,11 +284,11 @@ Rcpp::List CASSIA_yearly(int start_year,
         }
         fAPAR_used = (1.0 - std::exp(-0.52 * LAI_within_year));  // TODO: Check this is sensible
         if (std::isnan(LAI_within_year)) {
-          std::cout << "LAI_within_year was NaN so replaced. TODO: fix\n";
+          std::cout << "Day " << day << " LAI_within_year was NaN so replaced. TODO: fix\n";
           fAPAR_used = 0.7;
         }
         if (std::isnan(fAPAR_used)) {
-          std::cout << "fAPAR_used was NaN so replaced. TODO: fix\n";
+          std::cout << "Day " << day << " fAPAR_used was NaN so replaced. TODO: fix\n";
           fAPAR_used = 0.7;
         }
       } else if (!boolsettings.photosynthesis_as_input & !boolsettings.fAPAR_Tian & boolsettings.preles) {
