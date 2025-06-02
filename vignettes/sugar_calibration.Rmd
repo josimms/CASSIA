@@ -522,7 +522,7 @@ CASSIA_preles_1998_2022_nitrogen_low  <- CASSIA_cpp(
     needle_mass_in = parameters_2015$needle_mass_in,
     Throughfall = parameters_2015$Throughfall,
     photosynthesis_as_input = FALSE,
-    nitrogen_capacity = 25*0.3,
+    nitrogen_balance = 25*0.3,
     preles = TRUE,
     fAPAR_Tian = TRUE,
     sperling_model = TRUE
@@ -1375,12 +1375,12 @@ lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_mycorrh
 lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
 
 par(mfrow = c(1, 2))
-plot(dates, (CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity +
+plot(dates, (CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity_needles +
                 CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity_bud +
                 CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity_height + 
                 CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity_wall + 
                 CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity_roots)/5, type = "l", xlab = "Years", ylab = "Nitorgen Capacity (between 0 and 1)", col = "red", ylim = c(0, 1))
-lines(dates, (CASSIA_preles_1998_2022_nitrogen_investment$Sugar$nitrogen_capacity +
+lines(dates, (CASSIA_preles_1998_2022_nitrogen_investment$Culm_Growth$nitrogen_capacity_needles +
                 CASSIA_preles_1998_2022_nitrogen_investment$Culm_Growth$nitrogen_capacity_bud +
                 CASSIA_preles_1998_2022_nitrogen_investment$Culm_Growth$nitrogen_capacity_height + 
                 CASSIA_preles_1998_2022_nitrogen_investment$Culm_Growth$nitrogen_capacity_wall + 
