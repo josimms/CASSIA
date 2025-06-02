@@ -129,7 +129,10 @@ objective_function <- function(par) {
     "Ad0.roots",   "lamda.roots",   "delta.roots",
     "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
     "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
-    "myco.thresh"
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage"
   )
 
   # Update parameters
@@ -191,8 +194,9 @@ initial_guess <- c(
   0.790206, 0.002, 0.05,   # roots
   0.7712,   0.002, 0.05,   # xylem.sh
   0.768777, 0.002, 0.05,   # xylem.st
-  0.3                      # myco.thresh in roots
-  # Storage Capacity
+  0.3,                      # myco.thresh in roots
+  # Storage Capacity of each organ
+  0.11, 0.11, 0.2, 0.2, 0.11
 )
 
 # Set up parallel cluster
@@ -237,11 +241,14 @@ print(fit$optim$bestmem)  # Parhaat parametrit
 
 ```{r}
 names(fit$optim$bestmem) <- c("Ad0.needles", "lamda.needles", "delta.needles",
-                    "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
-                    "Ad0.roots",  "lamda.roots",  "delta.roots",
-                    "Ad0.xylem.sh","lamda.xylem.sh", "delta.xylem.sh",
-                    "Ad0.xylem.st", "lamda.xylem.st", "delta.xylem.st",
-                    "myco.thresh")
+    "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
+    "Ad0.roots",   "lamda.roots",   "delta.roots",
+    "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
+    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage")
 
 # Update parameters
 parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- fit$optim$bestmem
@@ -534,7 +541,11 @@ objective_function <- function(par) {
     "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
     "Ad0.roots",   "lamda.roots",   "delta.roots",
     "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
-    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st"
+    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage"
   )
 
   # Update parameters
@@ -591,11 +602,15 @@ objective_function <- function(par) {
 
 # Initial parameter guess
 initial_guess <- c(
+  # Ezymes
   0.438024, 0.002, 0.05,   # needles
   0.608733, 0.001, 0.01,   # phloem
   0.790206, 0.002, 0.05,   # roots
   0.7712,   0.002, 0.05,   # xylem.sh
-  0.768777, 0.002, 0.05    # xylem.st
+  0.768777, 0.002, 0.05,   # xylem.st
+  0.3,                      # myco.thresh in roots
+  # Storage Capacity of each organ
+  0.11, 0.11, 0.2, 0.2, 0.11
 )
 
 # Set up parallel cluster
@@ -640,10 +655,14 @@ print(fit$optim$bestmem)  # Parhaat parametrit
 ###
 
 names(fit$optim$bestmem) <- c("Ad0.needles", "lamda.needles", "delta.needles",
-                              "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
-                              "Ad0.roots",  "lamda.roots",  "delta.roots",
-                              "Ad0.xylem.sh","lamda.xylem.sh", "delta.xylem.sh",
-                              "Ad0.xylem.st", "lamda.xylem.st", "delta.xylem.st")
+    "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
+    "Ad0.roots",   "lamda.roots",   "delta.roots",
+    "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
+    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage")
 
 # Update parameters
 parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- fit$optim$bestmem
@@ -715,7 +734,10 @@ objective_function <- function(par) {
     "Ad0.roots",   "lamda.roots",   "delta.roots",
     "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
     "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
-    "myco.thresh"
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage"
   )
 
   # Update parameters
@@ -772,12 +794,15 @@ objective_function <- function(par) {
 
 # Initial parameter guess
 initial_guess <- c(
+  # Ezymes
   0.438024, 0.002, 0.05,   # needles
   0.608733, 0.001, 0.01,   # phloem
   0.790206, 0.002, 0.05,   # roots
   0.7712,   0.002, 0.05,   # xylem.sh
   0.768777, 0.002, 0.05,   # xylem.st
-  0.3
+  0.3,                      # myco.thresh in roots
+  # Storage Capacity of each organ
+  0.11, 0.11, 0.2, 0.2, 0.11
 )
 
 # Set up parallel cluster
@@ -822,10 +847,14 @@ print(fit$optim$bestmem)  # Parhaat parametrit
 ###
 
 names(fit$optim$bestmem) <- c("Ad0.needles", "lamda.needles", "delta.needles",
-                    "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
-                    "Ad0.roots",  "lamda.roots",  "delta.roots",
-                    "Ad0.xylem.sh","lamda.xylem.sh", "delta.xylem.sh",
-                    "Ad0.xylem.st", "lamda.xylem.st", "delta.xylem.st", "myco.thresh")
+    "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
+    "Ad0.roots",   "lamda.roots",   "delta.roots",
+    "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
+    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage")
 
 # Update parameters
 parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- fit$optim$bestmem
@@ -859,7 +888,11 @@ objective_function <- function(par) {
     "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
     "Ad0.roots",   "lamda.roots",   "delta.roots",
     "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
-    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st"
+    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage"
   )
 
   # Update parameters
@@ -916,11 +949,15 @@ objective_function <- function(par) {
 
 # Initial parameter guess
 initial_guess <- c(
+  # Ezymes
   0.438024, 0.002, 0.05,   # needles
   0.608733, 0.001, 0.01,   # phloem
   0.790206, 0.002, 0.05,   # roots
   0.7712,   0.002, 0.05,   # xylem.sh
-  0.768777, 0.002, 0.05   # xylem.st
+  0.768777, 0.002, 0.05,   # xylem.st
+  0.3,                      # myco.thresh in roots
+  # Storage Capacity of each organ
+  0.11, 0.11, 0.2, 0.2, 0.11
 )
 
 # Set up parallel cluster
@@ -965,10 +1002,14 @@ print(fit$optim$bestmem)  # Parhaat parametrit
 ###
 
 names(fit$optim$bestmem) <- c("Ad0.needles", "lamda.needles", "delta.needles",
-                    "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
-                    "Ad0.roots",  "lamda.roots",  "delta.roots",
-                    "Ad0.xylem.sh","lamda.xylem.sh", "delta.xylem.sh",
-                    "Ad0.xylem.st", "lamda.xylem.st", "delta.xylem.st")
+    "Ad0.phloem",  "lamda.phloem",  "delta.phloem",
+    "Ad0.roots",   "lamda.roots",   "delta.roots",
+    "Ad0.xylem.sh","lamda.xylem.sh","delta.xylem.sh",
+    "Ad0.xylem.st","lamda.xylem.st","delta.xylem.st",
+    "myco.thresh",
+    "percentage_needle_storage", "percentage_phloem_storage", 
+    "percentage_xylem_sh_storage", "percentage_xylem_st_storage", 
+    "percentage_roots_storage")
 
 # Update parameters
 parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- fit$optim$bestmem
