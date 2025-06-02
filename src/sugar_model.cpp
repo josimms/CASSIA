@@ -485,7 +485,7 @@ carbo_balance sugar_model(int year,
         starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots + sugar_out_of_system;
       double difference = carbo_beginning - carbo_ending;
       if (difference > 0.00000000000001) { // 10^13
-        std::cout << "On day " << day + 1 << " The carbohydrate balance compared to the beginning of the day " << difference << "\n";
+        std::cout << "On day " << day + 1 << " The carbohydrate balance compared to the beginning of the day. Difference is: " << difference << "\n";
       }
 
       /*
