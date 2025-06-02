@@ -177,11 +177,11 @@ carbo_balance sugar_model(int year,
 
   carbo_tracker storage_term;
   // 7.5% of mass should be for storage, von Arx 2017 max axis
-  storage_term.needles = storage_update_organs(0.11*needles_mass, sugar.needles, starch.needles, tree_alive);
-  storage_term.phloem = storage_update_organs(0.11*phloem_mass, sugar.phloem, starch.phloem, tree_alive);
-  storage_term.xylem_sh = storage_update_organs(0.002*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive);
-  storage_term.xylem_st = storage_update_organs(0.05*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive);
-  storage_term.roots = storage_update_organs(0.15*root_mass, sugar.roots, starch.roots, tree_alive);
+  storage_term.needles  = storage_update_organs(parameters.percentage_needle_storage*needles_mass,    sugar.needles,  starch.needles,  tree_alive);
+  storage_term.phloem   = storage_update_organs(parameters.percentage_phloem_storage*phloem_mass,     sugar.phloem,   starch.phloem,   tree_alive);
+  storage_term.xylem_sh = storage_update_organs(parameters.percentage_xylem_sh_storage*xylem_sh_mass, sugar.xylem_sh, starch.xylem_sh, tree_alive);
+  storage_term.xylem_st = storage_update_organs(parameters.percentage_xylem_st_storage*xylem_st_mass, sugar.xylem_st, starch.xylem_st, tree_alive);
+  storage_term.roots    = storage_update_organs(parameters.percentage_roots_storage*root_mass,        sugar.roots,    starch.roots,    tree_alive);
 
   growth_out nitrogen_capacity;
   nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance, "needles");
@@ -254,18 +254,18 @@ carbo_balance sugar_model(int year,
 
       double needle_transfer = (sugar.needles + starch.needles) * (storage_term.needles - storage_term.phloem)/2;
       if (surplus_c) {
-        needle_transfer = (sugar.needles + starch.needles) - 0.11 * needles_mass;
+        needle_transfer = (sugar.needles + starch.needles) - parameters.percentage_needle_storage * needles_mass;
       }
-      concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - 0.11 * needles_mass, needle_transfer);
+      concentration_gradient.needles_to_phloem = std::max((sugar.needles + starch.needles) - parameters.percentage_needle_storage * needles_mass, needle_transfer);
 
-      double phloem_capacity = (sugar.phloem + starch.phloem) - 0.11 * phloem_mass;
+      double phloem_capacity = (sugar.phloem + starch.phloem) - parameters.percentage_phloem_storage * phloem_mass;
 
       double xylem_sh_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_sh)/2;
       if (surplus_c) {
         // NOTE: Phloem used here as the sugar is coming from the phloem
         xylem_sh_transfer = 0;
       }
-      concentration_gradient.phloem_to_xylem_sh = std::max(xylem_sh_transfer, xylem_sh_respiration_share * phloem_capacity); // TODO; split somehow?
+      concentration_gradient.phloem_to_xylem_sh = std::max(xylem_sh_transfer, xylem_sh_respiration_share * phloem_capacity); // TODO: split somehow?
 
       double xylem_st_transfer = (sugar.phloem + starch.phloem) * (storage_term.phloem - storage_term.xylem_st)/2;
       if (surplus_c) {
@@ -281,8 +281,8 @@ carbo_balance sugar_model(int year,
       }
       concentration_gradient.phloem_to_roots = std::max(phloem_respiration_share * phloem_capacity, phloem_transfer);
 
-      double root_capacity = std::max(sugar.roots + starch.roots - 0.15 * root_mass, 0.0);
-      double myco_transfer = parameters.mycorrhiza_threshold * (sugar.roots);
+      double root_capacity = std::max(sugar.roots + starch.roots - parameters.percentage_roots_storage * root_mass, 0.0);
+      double myco_transfer = parameters.mycorrhiza_threshold * (sugar.roots + starch.roots);
       if (surplus_c) {
         myco_transfer = root_capacity;
       } else if (nitrogen_contrast) {
@@ -310,8 +310,8 @@ carbo_balance sugar_model(int year,
       }
       concentration_gradient.roots_to_myco = std::max(myco_transfer, root_capacity); // TODO; should this be the entire tree or the root?
 
-      double xylem_sh_capacity = std::max((sugar.xylem_sh + starch.xylem_sh) - 0.002 * xylem_sh_mass, 0.0);
-      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - 0.05  * xylem_st_mass, 0.0);
+      double xylem_sh_capacity = std::max((sugar.xylem_sh + starch.xylem_sh) - parameters.percentage_xylem_sh_storage * xylem_sh_mass, 0.0);
+      double xylem_st_capacity = std::max((sugar.xylem_st + starch.xylem_st) - parameters.percentage_xylem_st_storage  * xylem_st_mass, 0.0);
 
       /*
        * Balance calculations

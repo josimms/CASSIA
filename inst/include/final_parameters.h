@@ -129,10 +129,11 @@ struct CASSIA_parameters {
   double tau_emergancy_roots;
   double tau_emergancy_xylem_sh;
   double tau_emergancy_xylem_st;
-  double resistance_needles_to_phloem;
-  double resistance_phloem_to_roots;
-  double resistance_phloem_to_xylem_sh;
-  double resistance_phloem_to_xylem_st;
+  double percentage_needle_storage;
+  double percentage_xylem_sh_storage;
+  double percentage_xylem_st_storage;
+  double percentage_phloem_storage;
+  double percentage_roots_storage;
   double lower_bound_W;
   double tau_emergancy;
   double b0_repo;

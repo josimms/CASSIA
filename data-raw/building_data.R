@@ -241,11 +241,12 @@ sperling_p[46,] <- c(0.832, NA, NA) # delta.phloem
 sperling_p[47,] <- c(0.853, NA, NA) # delta.roots
 sperling_p[48,] <- c(0.762, NA, NA) # delta.xylem.sh
 sperling_p[49,] <- c(0.294, NA, NA) # delta.xylem.st
-sperling_p[50,] <- c(0.3, NA, NA) # k_np
-sperling_p[51,] <- c(0.072, NA, NA) # k_pr
-sperling_p[52,] <- c(0.188, NA, NA) # k_pxsh
-sperling_p[53,] <- c(0.17, NA, NA) # k_pxst
-sperling_p[54,] <- c(0.025, NA, NA) # myco.thresh
+sperling_p[50,] <- c(0.11, NA, NA) # percentage_needle_storage
+sperling_p[51,] <- c(0.11, NA, NA) # percentage_phloem_storage
+sperling_p[52,] <- c(0.11, NA, NA) # percentage_xylem_sh_storage
+sperling_p[53,] <- c(0.11, NA, NA) # percentage_xylem_st_storage
+sperling_p[54,] <- c(0.11, NA, NA) # percentage_roots_storage
+sperling_p[55,] <- c(0.3, NA, NA) # myco.thresh
 
 row.names(sperling_p) <- c("starch0", "sugar0", "starch.needles0", "starch.phloem0", "starch.xylem.sh0", "starch.xylem.st0", "starch.roots0",
                      "sugar.needles0", "sugar.phloem0", "sugar.roots0", "sugar.xylem.sh0", "sugar.xylem.st0",
@@ -256,7 +257,7 @@ row.names(sperling_p) <- c("starch0", "sugar0", "starch.needles0", "starch.phloe
                      "Ad0.needles", "Ad0.phloem", "Ad0.roots", "Ad0.xylem.sh", "Ad0.xylem.st",
                      "lamda.needles", "lamda.phloem", "lamda.roots", "lamda.xylem.sh", "lamda.xylem.st",
                      "delta.needles", "delta.phloem", "delta.roots", "delta.xylem.sh", "delta.xylem.st",
-                     "k_np", "k_pr", "k_pxsh", "k_pxst", "myco.thresh")
+                     "percentage_needle_storage", "percentage_phloem_storage", "percentage_xylem_sh_storage", "percentage_xylem_st_storage", "percentage_roots_storage", "myco.thresh")
 
 save(sperling_p, file = paste0(data.direct, "/sperling_p.RData"))
 
