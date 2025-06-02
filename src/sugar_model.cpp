@@ -184,11 +184,11 @@ carbo_balance sugar_model(int year,
   storage_term.roots    = storage_update_organs(parameters.percentage_roots_storage*root_mass,        sugar.roots,    starch.roots,    tree_alive);
 
   growth_out nitrogen_capacity;
-  nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance, "needles");
-  nitrogen_capacity.bud = nitrogen_storage(nitrogen_balance, "bud");
-  nitrogen_capacity.wall = nitrogen_storage(nitrogen_balance, "wall");
-  nitrogen_capacity.height = nitrogen_storage(nitrogen_balance, "height");
-  nitrogen_capacity.roots = nitrogen_storage(nitrogen_balance, "roots");
+  nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance/5, "needles");
+  nitrogen_capacity.bud = nitrogen_storage(nitrogen_balance/5, "bud");
+  nitrogen_capacity.wall = nitrogen_storage(nitrogen_balance/5, "wall");
+  nitrogen_capacity.height = nitrogen_storage(nitrogen_balance/5, "height");
+  nitrogen_capacity.roots = nitrogen_storage(nitrogen_balance/5, "roots");
 
   double growth = 0;
   double respiration_growth = 0;
@@ -420,13 +420,14 @@ carbo_balance sugar_model(int year,
         double nitrogen_uptake = sugar.mycorrhiza; // TODO: add an uptake function here!
 
         // C:N ratios are from the Korhonen 2013 paper
+        // TODO: real value for the roots
         nitrogen_balance = nitrogen_balance +
            nitrogen_uptake -
           (std::min(storage_term.needles, nitrogen_capacity.needles) * pot_growth.needles * 1.0/104.0     + std::min(storage_term.needles, nitrogen_capacity.bud)     * pot_growth.bud    * 1.0/221.0) -
           (std::min(storage_term.phloem, nitrogen_capacity.wall)     * pot_growth.wall    * 1.0/134.0     + std::min(storage_term.phloem, nitrogen_capacity.height)   * pot_growth.height * 1.0/134.0) -
           (std::min(storage_term.xylem_st, nitrogen_capacity.wall)   * pot_growth.wall    * 1.0/134.0     + std::min(storage_term.xylem_st, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
           (std::min(storage_term.xylem_sh, nitrogen_capacity.wall)   * pot_growth.wall    * 1.0/134.0     + std::min(storage_term.xylem_sh, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
-           std::min(storage_term.roots, nitrogen_capacity.roots)     * pot_growth.roots   * 1.0/100.0; // TODO: real value for the roots
+           std::min(storage_term.roots, nitrogen_capacity.roots)     * pot_growth.roots   * 1.0/100.0;
       }
 
       /*
