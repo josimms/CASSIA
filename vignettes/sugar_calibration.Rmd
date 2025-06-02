@@ -185,12 +185,14 @@ objective_function <- function(par) {
 
 # Initial parameter guess
 initial_guess <- c(
+  # Ezymes
   0.438024, 0.002, 0.05,   # needles
   0.608733, 0.001, 0.01,   # phloem
   0.790206, 0.002, 0.05,   # roots
   0.7712,   0.002, 0.05,   # xylem.sh
   0.768777, 0.002, 0.05,   # xylem.st
-  0.3                      # myco.thresh
+  0.3                      # myco.thresh in roots
+  # Storage Capacity
 )
 
 # Set up parallel cluster
