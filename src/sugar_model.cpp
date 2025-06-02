@@ -46,7 +46,7 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
   } else if (!tree_alive) {
     out = 0;
   } else {
-    out = std::max(0.0, 1/(1+exp(-2*(sugar + starch - storage_capacity/2))));
+    out = std::max(std::min(1.0, 1.0 - pow(1.0 - (sugar + starch)/(storage_capacity/2), 2.0)), 0.0);
     if (out > 1) {
       out = 1; // Corrected here as this is calculated at the beginning, but in the model the extra sugar would be transferred at the end of the iteration
     }
@@ -54,7 +54,7 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
   return out;
 }
 
-double nitrogen_storage(double sugar_mycorrhiza, std::string organ) {
+double nitrogen_storage(double nitrogen_balance, std::string organ) {
   double out;
   /*
    Korhonen 2007, N mg g−1
@@ -72,19 +72,23 @@ double nitrogen_storage(double sugar_mycorrhiza, std::string organ) {
    *
    */
 
+
+  double storage_capcity = 0.0;
   if (organ == "needles") {
-    out = std::max(0.0, 1.0/(1.0+exp(-3.0*(sugar_mycorrhiza - 4.0))));
+    storage_capcity = 4.9;
   } else if (organ == "bud") {
-    out = std::max(0.0, 1.0/(1.0+exp(-3.0*(sugar_mycorrhiza - 2.0))));
+    storage_capcity = 2.1;
   } else if (organ == "wall") {
-    out = std::max(0.0, 1.0/(1.0+exp(-3.0*(sugar_mycorrhiza - 3.0))));
+    storage_capcity = 3.7;
   } else if (organ == "height") {
-    out = std::max(0.0, 1.0/(1.0+exp(-3.0*(sugar_mycorrhiza - 3.0))));
+    storage_capcity = 4.7;
   } else if (organ == "roots") {
-    out = std::max(0.0, 1.0/(1.0+exp(-3.0*(sugar_mycorrhiza - 2.0)))); // TODO: what is the ratio here
+    storage_capcity = 3;            // TODO: find a better value for this!
   } else if (organ == "all") {
-    out = std::max(0.0, 1.0/(1.0+exp(-3.0*(sugar_mycorrhiza - 4.0))));
+    storage_capcity = 4;
   }
+
+  out = std::max(std::min(1.0, 1.0 - pow(1.0 - nitrogen_balance/storage_capcity, 2.0)), 0.0);
 
   return(out);
 }
@@ -335,8 +339,8 @@ carbo_balance sugar_model(int year,
       sugar.needles = sugar.needles + PF -                                                          // Last day sugar + daily photosynthesis
         resp.RmN * storage_term_resp.needles -                                                           // maintenance respiration (altered by the carbon storage)
         (1 + common.Rg_N) * (std::min(storage_term.needles, nitrogen_capacity.needles) * pot_growth.needles + std::min(storage_term.needles, nitrogen_capacity.bud) * pot_growth.bud) -          // growth and growth respiration altered by the storage
-        concentration_gradient.needles_to_phloem; // +                                                     // transfer between organs
-        // enzyme.needles;                                                                                  // sperling processes with links to the needles growth process
+        concentration_gradient.needles_to_phloem +                                                     // transfer between organs
+        enzyme.needles;                                                                                  // sperling processes with links to the needles growth process
 
       // coefficients are from mass ratio in starch and sugar 2015 xls
       sugar.phloem = sugar.phloem -
@@ -348,29 +352,29 @@ carbo_balance sugar_model(int year,
         concentration_gradient.phloem_to_xylem_st +
         xylem_st_capacity +
         xylem_sh_capacity -
-        pot_growth.use + pot_growth.release; // +                                                // growth sugar use and + release and to the rest of the organs
-        // enzyme.phloem;
+        pot_growth.use + pot_growth.release +                                                // growth sugar use and + release and to the rest of the organs
+        enzyme.phloem;
 
       sugar.roots = sugar.roots -
         resp.RmR * storage_term_resp.roots -                                                // maintenance respiration);
         (1 + common.Rg_R) * pot_growth.roots * std::min(storage_term.roots, nitrogen_capacity.roots) +                    // growth
         concentration_gradient.phloem_to_roots -                                           // transfer between organs
-        concentration_gradient.roots_to_myco; // +                                             // transfer between organs, no multiplier as this is for mycorrhiza and the model just takes the extra sugar
-        // enzyme.roots;
+        concentration_gradient.roots_to_myco +                                             // transfer between organs, no multiplier as this is for mycorrhiza and the model just takes the extra sugar
+        enzyme.roots;
 
       sugar.xylem_sh = sugar.xylem_sh -
         xylem_sh_respiration_share * resp.RmS * storage_term_resp.xylem_sh -                                   // maintenance respiration
         xylem_sh_respiration_share * (1 + common.Rg_S) * (std::min(storage_term.xylem_sh, nitrogen_capacity.wall) * pot_growth.wall + std::min(storage_term.xylem_sh, nitrogen_capacity.height) * pot_growth.height) -               // growth
         xylem_sh_capacity +                                                                                  // Over the storage limit
-        concentration_gradient.phloem_to_xylem_sh; // +
-        // enzyme.xylem_sh;
+        concentration_gradient.phloem_to_xylem_sh +
+        enzyme.xylem_sh;
 
       sugar.xylem_st = sugar.xylem_st -
         xylem_st_respiration_share * resp.RmS * storage_term_resp.xylem_st -                                // maintenance respiration
         xylem_st_respiration_share * (1 + common.Rg_S) * (std::min(storage_term.xylem_st, nitrogen_capacity.wall) * pot_growth.wall + std::min(storage_term.xylem_st, nitrogen_capacity.height) * pot_growth.height) -            // growth
         xylem_st_capacity +                                                                                // Over the storage limit
-        concentration_gradient.phloem_to_xylem_st; // +
-        // enzyme.xylem_st;
+        concentration_gradient.phloem_to_xylem_st +
+        enzyme.xylem_st;
 
       /*
        * Respiration
@@ -431,11 +435,11 @@ carbo_balance sugar_model(int year,
 
       // SPERLING MODEL
 
-      starch.needles  = starch.needles; //   - enzyme.needles;        // Subtract starch degradation and add synthase to starch
-      starch.phloem   = starch.phloem; //    - enzyme.phloem;         // Subtract starch degradation and add synthase to starch
-      starch.roots    = starch.roots; //     - enzyme.roots;          // Subtract starch degradation and add synthase to starch
-      starch.xylem_sh = starch.xylem_sh; //  - enzyme.xylem_sh;       // Subtract starch degradation and add synthase to starch
-      starch.xylem_st = starch.xylem_st; //  - enzyme.xylem_st;       // Subtract starch degradation and add synthase to starch
+      starch.needles  = starch.needles   - enzyme.needles;        // Subtract starch degradation and add synthase to starch
+      starch.phloem   = starch.phloem    - enzyme.phloem;         // Subtract starch degradation and add synthase to starch
+      starch.roots    = starch.roots     - enzyme.roots;          // Subtract starch degradation and add synthase to starch
+      starch.xylem_sh = starch.xylem_sh  - enzyme.xylem_sh;       // Subtract starch degradation and add synthase to starch
+      starch.xylem_st = starch.xylem_st  - enzyme.xylem_st;       // Subtract starch degradation and add synthase to starch
 
       /*
        * STARCH AND SUGAR UPDATED EMERGANCY MODEL
