@@ -46,7 +46,7 @@ double storage_update_organs(double storage_capacity, double sugar, double starc
   } else if (!tree_alive) {
     out = 0;
   } else {
-    out = std::max(std::min(1.0, 1.0 - pow(1.0 - (sugar + starch)/(storage_capacity/2), 2.0)), 0.0);
+    out = std::max(std::min(1.0, 1.0 - pow(1.0 - (sugar + starch)/storage_capacity, 2.0)), 0.0);
     if (out > 1) {
       out = 1; // Corrected here as this is calculated at the beginning, but in the model the extra sugar would be transferred at the end of the iteration
     }
