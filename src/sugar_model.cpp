@@ -600,7 +600,8 @@ carbo_balance sugar_model(int year,
 
     // Model
     double ak = 1 / (1 - 1/exp(parameters.alfa * (parameters.sugar00 + parameters.starch00 - parameters.Wala)));
-    double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch, nitrogen_capacity;
+    double storage, storage_term_Rm, sugar_all, starch_all, to_sugar, to_starch;
+    double nitrogen_capacity_all;
     double myco_allocation;
     if (day == 0) {
       sugar_all = parameters.sugar0;
@@ -608,10 +609,10 @@ carbo_balance sugar_model(int year,
       to_sugar = 0;
       to_starch = 0;
       storage = storage_term.respiration = 1;
-      nitrogen_capacity = 1;
+      nitrogen_capacity_all = 1;
     } else {
       storage = std::max(0.0 , std::min(1.0 , ak * (1.0 - 1.0 / exp(parameters.alfa * (sugar.needles + starch.needles - parameters.Wala)))));
-      nitrogen_capacity = nitrogen_storage(nitrogen_balance/5.0, "all");
+      nitrogen_capacity_all = nitrogen_storage(nitrogen_balance/5.0, "all");
       if ((sugar.needles + starch.needles) < 0.1) {
         storage_term.respiration = 0.0;
       } else {
@@ -624,12 +625,12 @@ carbo_balance sugar_model(int year,
         myco_allocation = 0.0;
       }
 
-      sugar_all = sugar.needles + PF - pot_growth.use + pot_growth.release - std::min(storage_term.respiration, nitrogen_capacity) * resp.Rm_a -
-        (1 + common.Rg_S) * std::min(storage, nitrogen_capacity) * pot_growth.height -
-        (1 + common.Rg_S) * std::min(storage, nitrogen_capacity) * pot_growth.diameter -
-        (1 + common.Rg_N) * std::min(storage, nitrogen_capacity) * pot_growth.needles -
-        (1 + common.Rg_R) * std::min(storage, nitrogen_capacity) * pot_growth.roots -
-        (1 + common.Rg_N) * std::min(storage, nitrogen_capacity) * pot_growth.bud -
+      sugar_all = sugar.needles + PF - pot_growth.use + pot_growth.release - std::min(storage_term.respiration, nitrogen_capacity_all) * resp.Rm_a -
+        (1 + common.Rg_S) * std::min(storage, nitrogen_capacity_all) * pot_growth.height -
+        (1 + common.Rg_S) * std::min(storage, nitrogen_capacity_all) * pot_growth.diameter -
+        (1 + common.Rg_N) * std::min(storage, nitrogen_capacity_all) * pot_growth.needles -
+        (1 + common.Rg_R) * std::min(storage, nitrogen_capacity_all) * pot_growth.roots -
+        (1 + common.Rg_N) * std::min(storage, nitrogen_capacity_all) * pot_growth.bud -
         myco_allocation;
 
       if (sugar_all < parameters.sugar00) {
@@ -672,11 +673,17 @@ carbo_balance sugar_model(int year,
     starch.xylem_sh = 0.0;
     starch.xylem_st = 0.0;
 
-    respiration_growth = (common.Rg_S) * std::min(storage, nitrogen_capacity) * pot_growth.height -
-      (common.Rg_S) * std::min(storage, nitrogen_capacity) * pot_growth.diameter -
-      (common.Rg_N) * std::min(storage, nitrogen_capacity) * pot_growth.needles -
-      (common.Rg_R) * std::min(storage, nitrogen_capacity) * pot_growth.roots -
-      (common.Rg_N) * std::min(storage, nitrogen_capacity) * pot_growth.bud;
+    nitrogen_capacity.needles = nitrogen_capacity_all;
+    nitrogen_capacity.bud = nitrogen_capacity_all;
+    nitrogen_capacity.roots = nitrogen_capacity_all;
+    nitrogen_capacity.wall = nitrogen_capacity_all;
+    nitrogen_capacity.height = nitrogen_capacity_all;
+
+    respiration_growth = (common.Rg_S) * std::min(storage, nitrogen_capacity_all) * pot_growth.height -
+      (common.Rg_S) * std::min(storage, nitrogen_capacity_all) * pot_growth.diameter -
+      (common.Rg_N) * std::min(storage, nitrogen_capacity_all) * pot_growth.needles -
+      (common.Rg_R) * std::min(storage, nitrogen_capacity_all) * pot_growth.roots -
+      (common.Rg_N) * std::min(storage, nitrogen_capacity_all) * pot_growth.bud;
     respiration_maintainence = storage_term.respiration * resp.Rm_a;
   }
 
