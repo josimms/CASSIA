@@ -140,6 +140,7 @@ carbo_balance sugar_model(int year,
                           bool surplus_c,
                           double needles_mass, // Repola
                           double root_mass,
+                          double mycorrhizal_biomass,
                           carbo_tracker temperature_equilibrium, // Calculated in the main function
 
                           growth_out pot_growth,
