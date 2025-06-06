@@ -106,6 +106,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   double diameter_next_year = 1000 * parameters.D0;
   double diameter_potential_next_year = 1000 * parameters.D0;
   double roots_next_year = 2.0; // TODO: make dynamic
+  double mycorrhiza_next_year = 2.0; // TODO: make dynamic
 
   /*
    * Vectors for the outputs
@@ -391,13 +392,17 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       double root_mass = 0;
+      double mycorrhizal_biomass = 0;
       if (day == 0) {
         root_mass = roots_next_year;
+        mycorrhizal_biomass = mycorrhiza_next_year;
       } else {
         if (final_year%2!=0) {
           root_mass = culm_growth_internal.roots[weather_index-1];
+          mycorrhizal_biomass = culm_growth_internal.mycorrhiza[weather_index-1];
         } else {
           root_mass = culm_growth.roots[weather_index-1];
+          mycorrhizal_biomass = culm_growth.mycorrhiza[weather_index-1];
         }
       }
 
@@ -416,6 +421,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                   surplus_c,
                                                   repola_values.needle_mass,
                                                   root_mass,
+                                                  mycorrhizal_biomass,
                                                   equilibrium_temperature,
                                                   potential_growth,
                                                   sugar_values_for_next_iteration.sugar,
@@ -541,19 +547,22 @@ Rcpp::List CASSIA_yearly(int start_year,
             culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth_internal.needles.push_back(actual_growth_out.needles); // TODO: the life of the needles is actually here, add to the LAI section
             culm_growth_internal.roots.push_back(roots_next_year + growth_and_mortality); // TODO: make this an actual parameter
+            culm_growth_internal.mycorrhiza.push_back(mycorrhiza_next_year + growth_and_mortality);
           } else {
             culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
             culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm); // Ring width is culmative, but need consistent initial condition
             culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth_internal.needles.push_back(actual_growth_out.needles); // TODO: should there be culmative things here? Fix after the max works
             culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + growth_and_mortality);
+            culm_growth_internal.mycorrhiza.push_back(culm_growth_internal.mycorrhiza[weather_index-1] + growth_and_mortality);
           }
         } else {
           culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
           culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
           culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
-          culm_growth_internal.needles.push_back(culm_growth_internal.roots[weather_index-1] + actual_growth_out.needles);
+          culm_growth_internal.needles.push_back(culm_growth_internal.needles[weather_index-1] + actual_growth_out.needles);
           culm_growth_internal.roots.push_back(culm_growth_internal.roots[weather_index-1] + growth_and_mortality);
+          culm_growth_internal.mycorrhiza.push_back(culm_growth_internal.mycorrhiza[weather_index-1] + growth_and_mortality);
         }
       } else {
         if (day == 0) {
@@ -563,12 +572,14 @@ Rcpp::List CASSIA_yearly(int start_year,
             culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth.needles.push_back(actual_growth_out.needles);
             culm_growth.roots.push_back(roots_next_year + growth_and_mortality);
+            culm_growth.mycorrhiza.push_back(mycorrhiza_next_year + growth_and_mortality);
           } else {
             culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
             culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
             culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth.needles.push_back(actual_growth_out.needles);
             culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
+            culm_growth.mycorrhiza.push_back(culm_growth.mycorrhiza[weather_index-1] + growth_and_mortality);
           }
         } else {
           culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
@@ -576,6 +587,7 @@ Rcpp::List CASSIA_yearly(int start_year,
           culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
           culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
           culm_growth.roots.push_back(culm_growth.roots[weather_index-1] + growth_and_mortality);
+          culm_growth.mycorrhiza.push_back(culm_growth.mycorrhiza[weather_index-1] + growth_and_mortality);
         }
 
         culm_growth.tree_alive.push_back(tree_alive);
