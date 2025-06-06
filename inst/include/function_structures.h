@@ -95,6 +95,7 @@ struct growth_vector {
   std::vector<double> diameter;
   std::vector<double> diameter_potential;
   std::vector<double> bud;
+  std::vector<double> mycorrhiza;
   std::vector<double> ring_width;
   std::vector<double> height_tot;
   std::vector<double> wall_tot;
