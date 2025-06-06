@@ -64,6 +64,18 @@ growth_out actual_growth(CASSIA_parameters parameters,
   actual_growth_out.roots = potential_growth.roots * std::min(storage_roots, nitrogen_capacity.roots);
 
   /*
+   * Mycorrhiza
+   *
+   * double storage_mycorrhiza;
+   if (sperling_sugar_model) {
+   storage_mycorrhiza = storage.roots;
+   } else {
+   storage_mycorrhiza = storage.needles;
+   }
+   actual_growth_out. = potential_growth.roots * std::min(storage_mycorrhiza, nitrogen_capacity.roots);
+   */
+
+  /*
    * GD
    */
   double storage_GD;
