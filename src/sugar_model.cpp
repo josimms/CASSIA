@@ -98,11 +98,11 @@ double nitrogen_storage(double nitrogen_balance, std::string organ) {
   return(out);
 }
 
-double nitrogen_uptake(double N,
-                       double sugar_mycorrhiza,
-                       double mycorrhizal_biomass,
-                       double root_biomass,
-                       bool mycorrhiza_passive) {
+uptake_structre nitrogen_uptake(double N,
+                                double sugar_mycorrhiza,
+                                double mycorrhizal_biomass,
+                                double root_biomass,
+                                bool mycorrhiza_passive) {
 
   double uptake_capacity_constant = 0.1;
   double root_exploration = 0.0017;
@@ -129,7 +129,13 @@ double nitrogen_uptake(double N,
 
   double ectomycorrhizal_transfer = percengae_of_whole_uptake * ectomycorrhizal_upatke; // New Function
 
-  double out = root_upatke * (1 - percentage_through_mycorrhiza) + ectomycorrhizal_transfer * percentage_through_mycorrhiza;
+  double total_uptake = root_upatke * (1 - percentage_through_mycorrhiza) + ectomycorrhizal_transfer * percentage_through_mycorrhiza;
+
+  uptake_structre out;
+  out.ectomycorrhizal_transfer = ectomycorrhizal_transfer;
+  out.root_upatke = root_upatke;
+  out.ectomycorrhizal_upatke = ectomycorrhizal_upatke;
+  out.total_uptake = total_uptake;
 
   return(out);
 }
@@ -207,6 +213,8 @@ carbo_balance sugar_model(int year,
                           carbo_tracker starch,
 
                           carbo_values_out parameters_in) {
+
+  uptake_structre uptake;
 
   // TODO: phloem mass is hard to get within the model, maybe a product of diameter and height
   double phloem_mass = 7.410537931;
@@ -461,22 +469,22 @@ carbo_balance sugar_model(int year,
 
         double N = 0.5;
 
-        double nitrogen_uptaken = nitrogen_uptake(N,
-                                                  sugar.mycorrhiza,
-                                                  mycorrhizal_biomass,
-                                                  root_mass,
-                                                  TRUE);
+        uptake = nitrogen_uptake(N,
+                                 sugar.mycorrhiza,
+                                 mycorrhizal_biomass,
+                                 root_mass,
+                                 TRUE);
 
         // C:N ratios are from the Korhonen 2013 paper
         // TODO: real value for the roots
         // TODO: I think the phloem share should be included here!
         nitrogen_balance = nitrogen_balance +
-                                        nitrogen_uptaken -
+                                        uptake.total_uptake -
                                        (std::min(storage_term.needles, nitrogen_capacity.needles) * pot_growth.needles * 1.0/104.0   + std::min(storage_term.needles, nitrogen_capacity.bud)     * pot_growth.bud    * 1.0/221.0) -
             phloem_respiration_share * (std::min(storage_term.phloem, nitrogen_capacity.wall)     * pot_growth.wall    * 1.0/134.0   + std::min(storage_term.phloem, nitrogen_capacity.height)   * pot_growth.height * 1.0/134.0) -
-          xylem_st_respiration_share * (std::min(storage_term.xylem_st, nitrogen_capacity.wall) * pot_growth.wall    * 1.0/134.0   + std::min(storage_term.xylem_st, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
-          xylem_sh_respiration_share * (std::min(storage_term.xylem_sh, nitrogen_capacity.wall) * pot_growth.wall    * 1.0/134.0   + std::min(storage_term.xylem_sh, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
-           std::min(storage_term.roots, nitrogen_capacity.roots)     * pot_growth.roots   * 1.0/100.0;
+          xylem_st_respiration_share * (std::min(storage_term.xylem_st, nitrogen_capacity.wall)   * pot_growth.wall    * 1.0/134.0   + std::min(storage_term.xylem_st, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
+          xylem_sh_respiration_share * (std::min(storage_term.xylem_sh, nitrogen_capacity.wall)   * pot_growth.wall    * 1.0/134.0   + std::min(storage_term.xylem_sh, nitrogen_capacity.height) * pot_growth.height * 1.0/134.0) -
+                                        std::min(storage_term.roots, nitrogen_capacity.roots)     * pot_growth.roots   * 1.0/100.0;
       }
 
       /*
@@ -757,6 +765,10 @@ carbo_balance sugar_model(int year,
   out.resp_main = respiration_maintainence;
   out.nitrogen_balance = nitrogen_balance;
   out.previous_values = previous_values_out;
+
+  if (nitrogen_change) {
+    out.uptake = uptake;
+  }
 
   return out;
 }
