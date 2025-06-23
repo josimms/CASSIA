@@ -130,6 +130,8 @@ Rcpp::List CASSIA_yearly(int start_year,
   photosynthesis_out photosynthesis;
   photo_out_vector photosynthesis_output;
 
+  uptake_structre_vector uptake_values_output;
+
   /*
    * YEAR LOOP
    */
@@ -490,6 +492,13 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_output.storage_xylem_st.push_back(sugar_values_for_next_iteration.storage.xylem_st);
         sugar_values_output.storage_roots.push_back(sugar_values_for_next_iteration.storage.roots);
 
+        if (nitrogen_change) {
+          uptake_values_output.ectomycorrhizal_transfer.push_back(sugar_model_out.uptake.ectomycorrhizal_transfer);
+          uptake_values_output.root_upatke.push_back(sugar_model_out.uptake.root_upatke);
+          uptake_values_output.ectomycorrhizal_upatke.push_back(sugar_model_out.uptake.ectomycorrhizal_upatke);
+          uptake_values_output.total_uptake.push_back(sugar_model_out.uptake.total_uptake);
+        }
+
         /*
          * Respiration
          */
@@ -716,9 +725,23 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["nitrogen_capacity_bud"] = sugar_values_output.nitrogen_capacity_bud,
                                                 Rcpp::_["nitrogen_capacity_roots"] = sugar_values_output.nitrogen_capacity_roots);
 
-  return Rcpp::List::create(Rcpp::_["Growth"] = df,
-                            Rcpp::_["Sugar"] = df2,
-                            Rcpp::_["Preles"] = df3,
-                            Rcpp::_["Culm_Growth"] = df4);
+  if (nitrogen_change) {
+    Rcpp::DataFrame df5 = Rcpp::DataFrame::create(Rcpp::_["root_upatke"] = 0.0, // TODO: have made the vector need to put it here
+                                                  Rcpp::_["ectomycorrhizal_upatke"] = 0.0,
+                                                  Rcpp::_["total_uptake"] = 0.0,
+                                                  Rcpp::_["ectomycorrhizal_transfer"] = 0.0);
+
+    return Rcpp::List::create(Rcpp::_["Growth"] = df,
+                              Rcpp::_["Sugar"] = df2,
+                              Rcpp::_["Preles"] = df3,
+                              Rcpp::_["Culm_Growth"] = df4,
+                              Rcpp::_["Uptake"] = df5);
+  } else {
+
+    return Rcpp::List::create(Rcpp::_["Growth"] = df,
+                              Rcpp::_["Sugar"] = df2,
+                              Rcpp::_["Preles"] = df3,
+                              Rcpp::_["Culm_Growth"] = df4);
+  }
 
 }
