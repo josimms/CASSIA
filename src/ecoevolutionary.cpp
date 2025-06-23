@@ -24,6 +24,8 @@ Rcpp::List CASSIA_eeo(int start_year,
                        double nitrogen_capacity,
                        bool nitrogen_contrast,
 
+                       double nitrogen_balance,
+
                        int trenching_year,
 
                        Rcpp::List settings) {
@@ -94,6 +96,7 @@ Rcpp::List CASSIA_eeo(int start_year,
 
   double height_next_year = parameters.h0;
   double roots_next_year = 15;
+  double mycorrhiza_next_year = 15;
   double needles_next_year = repola_values.needle_mass;
   double diameter_next_year = parameters.D0;
 
@@ -400,13 +403,28 @@ Rcpp::List CASSIA_eeo(int start_year,
        * Sugar
        */
 
+      double root_mass = 0;
+      double mycorrhizal_biomass = 0;
+      if (day == 0) {
+        root_mass = roots_next_year;
+        mycorrhizal_biomass = mycorrhiza_next_year;
+      } else {
+        if (final_year%2!=0) {
+          root_mass = culm_growth_internal.roots[weather_index-1];
+          mycorrhizal_biomass = culm_growth_internal.mycorrhiza[weather_index-1];
+        } else {
+          root_mass = culm_growth.roots[weather_index-1];
+          mycorrhizal_biomass = culm_growth.mycorrhiza[weather_index-1];
+        }
+      }
+
       carbo_balance sugar_model_out = sugar_model(year, day, climate.TAir[weather_index],
                                                   photosynthesis_per_stem,
                                                   common, parameters,
                                                   D00,
                                                   potential_growth.previous_values.sH,
                                                   resp,
-                                                  nitrogen_capacity,
+                                                  nitrogen_balance,
                                                   nitrogen_change,
                                                   nitrogen_contrast,
                                                   boolsettings.sperling_model,
@@ -414,7 +432,8 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                   boolsettings.storage_grows,
                                                   surplus_c,
                                                   repola_values.needle_mass,
-                                                  culm_growth.roots[weather_index-1],
+                                                  root_mass,
+                                                  mycorrhizal_biomass,
                                                   equilibrium_temperature,
                                                   potential_growth,
                                                   sugar_values_for_next_iteration.sugar,
