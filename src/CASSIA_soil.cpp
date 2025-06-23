@@ -95,6 +95,7 @@ Rcpp::List CASSIA_soil(int start_year,
 
   double height_next_year = parameters.h0;
   double roots_next_year = 15;
+  double mycorrhiza_next_year = 15;
   double needles_next_year = repola_values.needle_mass;
   double diameter_next_year = parameters.D0;
 
@@ -368,13 +369,17 @@ Rcpp::List CASSIA_soil(int start_year,
        */
 
       double root_mass = 0;
+      double mycorrhizal_biomass = 0;
       if (day == 0) {
         root_mass = roots_next_year;
+        mycorrhizal_biomass = mycorrhiza_next_year;
       } else {
         if (final_year%2!=0) {
           root_mass = culm_growth_internal.roots[weather_index-1];
+          mycorrhizal_biomass = culm_growth_internal.mycorrhiza[weather_index-1];
         } else {
           root_mass = culm_growth.roots[weather_index-1];
+          mycorrhizal_biomass = culm_growth.mycorrhiza[weather_index-1];
         }
       }
 
@@ -393,6 +398,7 @@ Rcpp::List CASSIA_soil(int start_year,
                                                   surplus_c,
                                                   repola_values.needle_mass,
                                                   root_mass,
+                                                  mycorrhizal_biomass,
                                                   equilibrium_temperature,
                                                   potential_growth,
                                                   sugar_values_for_next_iteration.sugar,
