@@ -176,11 +176,28 @@ struct carbo_values_out
   double sB0;
 };
 
+struct uptake_structre
+{
+  double ectomycorrhizal_transfer;
+  double root_upatke;
+  double ectomycorrhizal_upatke;
+  double total_uptake;
+};
+
+struct uptake_structre_vector
+{
+  std::vector<double> ectomycorrhizal_transfer;
+  std::vector<double> root_upatke;
+  std::vector<double> ectomycorrhizal_upatke;
+  std::vector<double> total_uptake;
+};
+
 struct carbo_balance
 {
   carbo_tracker sugar;
   carbo_tracker starch;
   carbo_tracker storage;
+  uptake_structre uptake;
   growth_out nitrogen_capacity;
   double resp_main;
   double resp_growth;
