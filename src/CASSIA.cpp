@@ -726,10 +726,10 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["nitrogen_capacity_roots"] = sugar_values_output.nitrogen_capacity_roots);
 
   if (nitrogen_change) {
-    Rcpp::DataFrame df5 = Rcpp::DataFrame::create(Rcpp::_["root_upatke"] = 0.0, // TODO: have made the vector need to put it here
-                                                  Rcpp::_["ectomycorrhizal_upatke"] = 0.0,
-                                                  Rcpp::_["total_uptake"] = 0.0,
-                                                  Rcpp::_["ectomycorrhizal_transfer"] = 0.0);
+    Rcpp::DataFrame df5 = Rcpp::DataFrame::create(Rcpp::_["root_upatke"] = uptake_values_output.root_upatke,
+                                                  Rcpp::_["ectomycorrhizal_upatke"] = uptake_values_output.ectomycorrhizal_upatke,
+                                                  Rcpp::_["total_uptake"] = uptake_values_output.total_uptake,
+                                                  Rcpp::_["ectomycorrhizal_transfer"] = uptake_values_output.ectomycorrhizal_transfer);
 
     return Rcpp::List::create(Rcpp::_["Growth"] = df,
                               Rcpp::_["Sugar"] = df2,
