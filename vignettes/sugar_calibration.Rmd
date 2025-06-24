@@ -6,7 +6,6 @@ output: html_document
 ```{r}
 library(parallel)
 library(DEoptim)
-library(CASSIA)
 ```
 
 # Set up the initial conditions
@@ -252,17 +251,17 @@ names(fit$optim$bestmem) <- c(
   )
 
 # Update parameters
-parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(fit$optim$bestmem[1:15], 0.3, 0.3, 0.01, 0.3, 0.3, 0.99)
+parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(fit$optim$bestmem)
 #parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(
   # Ezymes
-#  0.438024, 0.002, 0.05,   # needles
-#  0.608733, 0.001, 0.01,   # phloem
-#  0.790206, 0.002, 0.05,   # roots
-#  0.7712,   0.002, 0.05,   # xylem.sh
-#  0.768777, 0.002, 0.05,   # xylem.st
+  #0.7, 0.02, 0.5,   # needles
+  #0.608733, 0.001, 0.01,   # phloem
+  #0.790206, 0.002, 0.05,   # roots
+  #0.7712,   0.002, 0.05,   # xylem.sh
+  #0.768777, 0.002, 0.05,   # xylem.st
   # Storage Capacity of each organ
-#  0.09, 0.11, 0.2, 0.01, 0.1,
-#  0.99 # myco.thresh in roots
+  #0.09, 0.11, 0.2, 0.01, 0.1,
+  #0.99 # myco.thresh in roots
 #)
 
 CASSIA_preles_2015 <- CASSIA_cpp(
