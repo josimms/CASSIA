@@ -419,6 +419,7 @@ Rcpp::List CASSIA_eeo(int start_year,
       }
 
       carbo_balance sugar_model_out = sugar_model(year, day, climate.TAir[weather_index],
+                                                  climate.PAR[weather_index],
                                                   photosynthesis_per_stem,
                                                   common, parameters,
                                                   D00,
