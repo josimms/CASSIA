@@ -24,7 +24,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
 
   double storage_height = 0;
   if (sperling_sugar_model) {
-    storage_height = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st + xylem_sh_respiration_share * storage.xylem_sh);
+    storage_height = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st);
   } else {
     storage_height = storage.needles;
   }
@@ -36,7 +36,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
 
   double storage_wall = 0;
   if (sperling_sugar_model) {
-    storage_wall = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st + xylem_sh_respiration_share * storage.xylem_sh);
+    storage_wall = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st);
   } else {
     storage_wall = storage.needles;
   }
@@ -80,7 +80,7 @@ growth_out actual_growth(CASSIA_parameters parameters,
    */
   double storage_GD;
   if (sperling_sugar_model) {
-    storage_GD = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st + xylem_sh_respiration_share * storage.xylem_sh);
+    storage_GD = (phloem_respiration_share * storage.phloem + xylem_st_respiration_share * storage.xylem_st);
   } else {
     storage_GD = storage.needles;
   }
