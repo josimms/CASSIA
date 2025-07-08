@@ -121,6 +121,7 @@ yearly_in yearly_initial_conditions(double days_per_year);
 carbo_balance sugar_model(int year,
                           int day,
                           double TAir,
+                          double PAR,
                           double PF,
 
                           CASSIA_common common,
