@@ -486,6 +486,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         sugar_values_output.sugar_xylem_st.push_back(sugar_values_for_next_iteration.sugar.xylem_st);
         sugar_values_output.sugar_roots.push_back(sugar_values_for_next_iteration.sugar.roots);
         sugar_values_output.sugar_mycorrhiza.push_back(sugar_values_for_next_iteration.sugar.mycorrhiza);
+        sugar_values_output.sugar_surplus.push_back(sugar_values_for_next_iteration.sugar.surplus);
 
         sugar_values_output.storage_needles.push_back(sugar_values_for_next_iteration.storage.needles);
         sugar_values_output.storage_phloem.push_back(sugar_values_for_next_iteration.storage.phloem);
@@ -697,7 +698,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                 Rcpp::_["sugar_xylem_sh"] = sugar_values_output.sugar_xylem_sh,
                                                 Rcpp::_["sugar_xylem_st"] = sugar_values_output.sugar_xylem_st,
                                                 Rcpp::_["sugar_roots"] = sugar_values_output.sugar_roots,
-                                                Rcpp::_["sugar_mycorrhiza"] = sugar_values_output.sugar_mycorrhiza,
+                                                Rcpp::_["sugar_to_mycorrhiza"] = sugar_values_output.sugar_mycorrhiza,
+                                                Rcpp::_["sugar_out_surplus"] = sugar_values_output.sugar_surplus,
                                                 Rcpp::_["storage_term_needles"] = sugar_values_output.storage_needles,
                                                 Rcpp::_["storage_term_phloem"] = sugar_values_output.storage_phloem,
                                                 Rcpp::_["storage_term_xylem_sh"] = sugar_values_output.storage_xylem_sh,
