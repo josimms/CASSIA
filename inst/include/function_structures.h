@@ -163,6 +163,7 @@ typedef struct
   double roots; // Initial value from inputs
   double mycorrhiza; // Initial value 0
   double respiration;
+  double surplus;
   double initial_amount; // Initial value from inputs
   double B;
 } carbo_tracker;
@@ -230,6 +231,7 @@ struct sugar_values_vector
   std::vector<double> sugar_xylem_st;
   std::vector<double> sugar_roots;
   std::vector<double> sugar_mycorrhiza;
+  std::vector<double> sugar_surplus;
   std::vector<double> storage_needles;
   std::vector<double> storage_phloem;
   std::vector<double> storage_xylem_sh;
