@@ -651,165 +651,150 @@ carbo_balance sugar_model(int year,
       double sugar_needles = sugar.needles;
       double sugar_phloem  = sugar.phloem;
 
-      // --- STEP 1: Compute downstream demand ---
-      double demand_roots    = growth_resp.roots + winter_costs.needles + myco_demand;
+      // --- STEP 1: Compute sink demands and capacities ---
+
+      // ROOTS
+      double root_storage_total = sugar.roots + starch.roots;
+      double root_capacity_max = parameters.percentage_roots_storage * root_mass;
+      double root_capacity_remaining = std::max(root_capacity_max - root_storage_total, 0.0);
+      double demand_roots = growth_resp.roots + winter_costs.roots;
+      double actual_root_demand = std::min(demand_roots, root_capacity_remaining);
+
+      // XYLEM ST
+      double xylem_st_storage_total = sugar.xylem_st + starch.xylem_st;
+      double xylem_st_capacity_max = parameters.percentage_xylem_st_storage * xylem_st_mass;
+      double xylem_st_capacity_remaining = std::max(xylem_st_capacity_max - xylem_st_storage_total, 0.0);
       double demand_xylem_st = growth_resp.xylem_st + winter_costs.xylem_st;
+      double actual_xylem_st_demand = std::min(demand_xylem_st, xylem_st_capacity_remaining);
+
+      // XYLEM SH
+      double xylem_sh_storage_total = sugar.xylem_sh + starch.xylem_sh;
+      double xylem_sh_capacity_max = parameters.percentage_xylem_sh_storage * xylem_sh_mass;
+      double xylem_sh_capacity_remaining = std::max(xylem_sh_capacity_max - xylem_sh_storage_total, 0.0);
       double demand_xylem_sh = growth_resp.xylem_sh + winter_costs.xylem_sh;
+      double actual_xylem_sh_demand = std::min(demand_xylem_sh, xylem_sh_capacity_remaining);
 
-      double total_demand = demand_roots + demand_xylem_st + demand_xylem_sh;
+      // PHLOEM SELF-DEMAND
+      double demand_phloem = growth_resp.phloem + winter_costs.phloem;
 
-      // --- STEP 2: Determine how much sugar phloem still needs ---
-      double available_phloem = sugar_phloem - winter_costs.phloem;
-      double phloem_to_cover_sinks = std::max(total_demand - available_phloem, 0.0);
+      // Compute total effective (capacity-limited + flow-through + phloem) demand
+      double capacity_limited_demand = actual_root_demand + actual_xylem_st_demand + actual_xylem_sh_demand;
+      double total_effective_demand = capacity_limited_demand + myco_demand + demand_phloem;
 
-      // --- STEP 3: Cap needle export by available sugar ---
-      double needle_reserve = std::max(sugar_needles - winter_costs.needles, 0.0);
+      // --- STEP 2: Compute phloem gap to meet demands ---
+      double available_phloem = sugar_phloem;
+      double phloem_to_cover_sinks = std::max(total_effective_demand - available_phloem, 0.0);
+
+      // --- STEP 3: Determine needle-to-phloem transfer (capped by reserve and phloem need) ---
+      double needle_reserve = std::max(sugar_needles - winter_costs.needles - growth_resp.needles, 0.0);
       double needle_to_phloem = std::min(needle_reserve, phloem_to_cover_sinks);
 
+      // Apply transfer
       conc_gradient concentration_gradient;
       concentration_gradient.needles_to_phloem = needle_to_phloem;
 
-      // Apply transfer
       sugar.needles -= needle_to_phloem;
       sugar.phloem  += needle_to_phloem;
 
       if (sugar.needles < 0.0) std::cout << "sugar.needles is negative after needle concentration!\n";
-      if (sugar.phloem < 0.0) std::cout << "sugar.phloem is negative after needle concentration!\n";
+      if (sugar.phloem  < 0.0) std::cout << "sugar.phloem is negative after needle concentration!\n";
 
-      // STEP 4: Redistribute sugar in phloem to sinks, capped by supply but keep minimum reserve
-      double phloem_min_reserve = winter_costs.phloem;
+      // === STEP 4: Redistribute sugar in phloem to sinks (roots, mycorrhiza, xylem) ===
+
+      // Maintain reserve in phloem for its own costs
+      double phloem_min_reserve = demand_phloem;
       double phloem_available_for_transfer = std::max(sugar.phloem - phloem_min_reserve, 0.0);
 
       // === ROOTS ===
-      double root_storage_total = sugar.roots + starch.roots;
-      double root_capacity_max = parameters.percentage_roots_storage * root_mass;
-      double root_capacity_remaining = std::max(root_capacity_max - root_storage_total, 0.0);
-
-      // Only growth + winter demand here; myco_demand handled separately
-      double root_growth_and_maintenance_demand = growth_resp.roots + winter_costs.roots;
-
-      // ---- TRANSFER sugar from phloem to roots storage (capacity limited)
-      double root_storage_transfer = std::min({phloem_available_for_transfer, root_growth_and_maintenance_demand, root_capacity_remaining});
+      double root_growth_and_maintenance_demand = demand_roots;
+      // === ROOTS ===
+      double root_storage_transfer = std::min(phloem_available_for_transfer, actual_root_demand);
       sugar.phloem -= root_storage_transfer;
       sugar.roots += root_storage_transfer;
       phloem_available_for_transfer -= root_storage_transfer;
       concentration_gradient.phloem_to_roots = root_storage_transfer;
 
-      // ---- Flow-through sugar for mycorrhiza demand (bypasses root storage capacity)
-      double root_flow_through = std::min(phloem_available_for_transfer, myco_demand);
-      sugar.phloem -= root_flow_through;
-      phloem_available_for_transfer -= root_flow_through;
-
-      // Total sugar available for myco export = stored roots sugar + flow-through sugar
-      double total_sugar_for_myco = sugar.roots + root_flow_through;
-
-      // Export sugar to mycorrhiza
-      double myco_export = std::min(total_sugar_for_myco, myco_demand);
-      if (myco_export > sugar.roots) {
-        double flow_through_export = myco_export - sugar.roots;
-        sugar.roots = 0.0;
-        // flow_through_export already accounted for in phloem subtraction above
-      } else {
-        sugar.roots -= myco_export;
-      }
-      concentration_gradient.roots_to_myco = myco_export;
-      sugar_out_of_system += myco_export;
-      sugar.mycorrhiza = myco_export;
-
       // === XYLEM ST ===
-      double xylem_st_storage_total = sugar.xylem_st + starch.xylem_st;
-      double xylem_st_capacity_max = parameters.percentage_xylem_st_storage * xylem_st_mass;
-      double xylem_st_capacity_remaining = std::max(xylem_st_capacity_max - xylem_st_storage_total, 0.0);
-
-      double xylem_st_demand = demand_xylem_st;
-      double xylem_st_transfer = std::min({phloem_available_for_transfer, xylem_st_demand, xylem_st_capacity_remaining});
+      double xylem_st_transfer = std::min({phloem_available_for_transfer, actual_xylem_st_demand});
       sugar.phloem -= xylem_st_transfer;
       sugar.xylem_st += xylem_st_transfer;
       phloem_available_for_transfer -= xylem_st_transfer;
       concentration_gradient.phloem_to_xylem_st = xylem_st_transfer;
 
       // === XYLEM SH ===
-      double xylem_sh_storage_total = sugar.xylem_sh + starch.xylem_sh;
-      double xylem_sh_capacity_max = parameters.percentage_xylem_sh_storage * xylem_sh_mass;
-      double xylem_sh_capacity_remaining = std::max(xylem_sh_capacity_max - xylem_sh_storage_total, 0.0);
-
-      double xylem_sh_demand = demand_xylem_sh;
-      double xylem_sh_transfer = std::min({phloem_available_for_transfer, xylem_sh_demand, xylem_sh_capacity_remaining});
+      double xylem_sh_transfer = std::min({phloem_available_for_transfer, actual_xylem_sh_demand});
       sugar.phloem -= xylem_sh_transfer;
       sugar.xylem_sh += xylem_sh_transfer;
       phloem_available_for_transfer -= xylem_sh_transfer;
       concentration_gradient.phloem_to_xylem_sh = xylem_sh_transfer;
 
+      // === MYCORRHIZA: Direct export from phloem ===
+      double myco_export = std::min(phloem_available_for_transfer, myco_demand);
+      sugar.phloem -= myco_export;
+      phloem_available_for_transfer -= myco_export;
+
+      concentration_gradient.roots_to_myco = myco_export;
+      sugar_out_of_system += myco_export;
+      sugar.mycorrhiza = myco_export;
+
+      // --- BALANCE CHECK ---
+      double carbo_ending_2 = sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots +
+        starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots +
+        sugar_out_of_system;
+
+      double difference_2 = carbo_beginning - carbo_ending_2;
+
+      if (difference_2 > 1e-8) {
+        std::cout << "Day " << day + 1 << ": More carbs at beginning. Difference: " << difference_2 << "\n";
+      } else if (difference_2 < -1e-8) {
+        std::cout << "Day " << day + 1 << ": More carbs at end. Difference: " << difference_2 << "\n";
+      }
+
       /*
        * === Excess sugar export beyond capacity ===
        */
 
-      // Step 2: Compute total organ storage capacity
-      double total_capacity =
-        parameters.percentage_needle_storage * needles_mass +
-        parameters.percentage_phloem_storage * phloem_mass +
-        parameters.percentage_roots_storage * root_mass +
-        parameters.percentage_xylem_sh_storage * xylem_sh_mass +
-        parameters.percentage_xylem_st_storage * xylem_st_mass;
+      // --- STEP 1: Compute per-organ storage capacities ---
+      double needle_capacity = parameters.percentage_needle_storage * needles_mass;
+      double phloem_capacity = parameters.percentage_phloem_storage * phloem_mass;
 
-      // Step 3: Calculate overflow sugar to export
-      double excess_carbo = std::max(total_storage - total_capacity - myco_demand, 0.0);
+      // --- STEP 2: Compute per-organ excess (above storage limits) ---
+      double excess_needles = std::max(sugar.needles - needle_capacity, 0.0);
+      double excess_phloem  = std::max(sugar.phloem  - phloem_capacity, 0.0);
 
-      // Step 4: Apply export rate
-      double export_rate = 0.75;  // Reuse this as export efficiency
-      double export_amount = export_rate * excess_carbo;
+      // --- STEP 3: Total excess available for export ---
+      double total_excess_available = excess_needles + excess_phloem;
 
-      // Step 5: Transfer excess sugar into roots storage (limited by capacity)
-      double root_capacity = parameters.percentage_roots_storage * root_mass;
-      double root_current = sugar.roots + starch.roots;
-      double root_space = std::max(root_capacity - root_current, 0.0);
+      // --- STEP 4: Apply export rate ---
+      double export_rate = 0.5; // You can adjust this efficiency
+      double export_target = export_rate * total_excess_available;
 
-      double transfer_to_roots_storage = std::min({sugar.phloem, root_space, export_amount});
-      sugar.phloem -= transfer_to_roots_storage;
-      sugar.roots += transfer_to_roots_storage;
-      export_amount -= transfer_to_roots_storage;
+      // --- STEP 5: Export from needles first ---
+      double export_from_needles = std::min(sugar.needles, std::min(excess_needles, export_target));
+      sugar.needles -= export_from_needles;
+      export_target -= export_from_needles;
 
-      // Step 6: Flow-through excess sugar from phloem directly to export (bypassing root storage)
-      double flow_through_excess = std::min(sugar.phloem, export_amount);
-      sugar.phloem -= flow_through_excess;
-      export_amount -= flow_through_excess;
-
-      // Step 7: Export sugar from roots storage + flow-through sugar
-      double total_roots_available = sugar.roots + flow_through_excess;
-      double export_from_roots = std::min(total_roots_available, export_amount + transfer_to_roots_storage);
-      // total export must not exceed what is available + already transferred to roots storage
-
-      // Subtract exported sugar from stored roots sugar first, then flow-through sugar
-      if (export_from_roots > sugar.roots) {
-        double flow_through_export = export_from_roots - sugar.roots;
-        sugar.roots = 0.0;
-        // flow_through_export already accounted for in phloem subtraction above
-      } else {
-        sugar.roots -= export_from_roots;
-      }
-
-      // Step 8: Export remainder from phloem (if roots + flow-through not enough)
-      double export_from_phloem = std::min(sugar.phloem, export_amount - export_from_roots);
+      // --- STEP 6: Export remaining from phloem (if needed) ---
+      double export_from_phloem = std::min(sugar.phloem, std::min(excess_phloem, export_target));
       sugar.phloem -= export_from_phloem;
-      export_amount -= export_from_roots + export_from_phloem;
+      export_target -= export_from_phloem;
 
-      // Final export sum
-      double total_exported = transfer_to_roots_storage + flow_through_excess + export_from_roots + export_from_phloem;
+      // --- STEP 7: Finalize export ---
+      double total_exported = export_from_needles + export_from_phloem;
       sugar_out_of_system += total_exported;
-
-      sugar.surplus = total_exported;
+      sugar.surplus = total_exported;  // For tracking in output
 
       /*
-       * Concentration
+       * Balence Check
        */
 
-      double carbo_ending_2 = sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots +
+      double carbo_ending_3 = sugar.needles + sugar.phloem + sugar.xylem_sh + sugar.xylem_st + sugar.roots +
         starch.needles + starch.phloem + starch.xylem_sh + starch.xylem_st + starch.roots + sugar_out_of_system;
-      double difference_2 = carbo_beginning - carbo_ending_2;
-      if (difference_2 > 1e-8) {
-        std::cout << "On day " << day + 1 << " After concentration: More carbohydrates compared to the BEGINNING of the day. Difference is: " << difference_2 << "\n";
-      } else if (difference_2 < -1e-8) {
-        std::cout << "On day " << day + 1 << " After concentration: More carbohydrate compared to the END of the day. Difference is: " << difference_2 << "\n";
+      double difference_3 = carbo_beginning - carbo_ending_3;
+      if (difference_3 > 1e-8) {
+        std::cout << "On day " << day + 1 << " After Excess: More carbohydrates compared to the BEGINNING of the day. Difference is: " << difference_3 << "\n";
+      } else if (difference_3 < -1e-8) {
+        std::cout << "On day " << day + 1 << " After Excess: More carbohydrate compared to the END of the day. Difference is: " << difference_3 << "\n";
       }
 
       /*
