@@ -1404,7 +1404,8 @@ plot(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), col = "gr
 lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza), col = "red")
 lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza), col = "pink")
 lines(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_out_surplus), lty = 2, col = "green")
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza), lty = 2, col = "red")
+lines(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_out_surplus), lty = 2, col = "green")
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_out_surplus), lty = 2, col = "red")
 lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_out_surplus), lty = 2, col = "pink")
 legend("topleft", c("Control", "Low Nitrogen", "Invested Nitrogen", "To Mycorrhiza", "Surplus C"), col = c("green", "red", "pink", "black", "black"), cex = 0.75, bty = "n", lty = c(1, 1, 1, 1, 2))
 
