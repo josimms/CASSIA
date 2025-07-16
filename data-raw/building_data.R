@@ -186,7 +186,7 @@ parameters_p[70,] <- c(0.118, NA, 0.118) # eki_repo TODO
 parameters_p[71,] <- c(3, NA, NA) # stem_no TODO
 parameters_p[72,] <- c(79, NA, NA) # diameter_start_day
 
-parameters_p[73,] <- c(79, NA, NA) # xylem_start_estimate
+parameters_p[73,] <- c(4.5, NA, NA) # If we assume that the growth is around linear before 2001 and the value 15 years before 1998 is taken
 
 
 row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R", "sR0", "sRc", "growth.myco", "root.lifetime",
