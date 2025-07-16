@@ -146,6 +146,9 @@ struct CASSIA_parameters {
   double diameter_start_day;
   double GPP_mean;
   double GPP_initial;
+  double phloem_density;
+  double xylem_st_density;
+  double xylem_start_estimate;
 };
 
 struct CASSIA_common {
