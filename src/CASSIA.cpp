@@ -396,7 +396,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       double root_mass = 0;
       double mycorrhizal_biomass = 0;
-      double xylem_st_mass;
+      double xylem_sh_mass;
       double phloem_mass;
       if (day == 0) {
         root_mass = roots_next_year;
@@ -406,12 +406,12 @@ Rcpp::List CASSIA_yearly(int start_year,
         if (final_year%2!=0) {
           root_mass = culm_growth_internal.roots[weather_index-1];
           mycorrhizal_biomass = culm_growth_internal.mycorrhiza[weather_index-1];
-          xylem_st_mass = culm_growth_internal.xylem_st[weather_index-1];
+          xylem_sh_mass = culm_growth_internal.xylem_st[weather_index-1];
           phloem_mass = culm_growth_internal.phloem[weather_index-1];
         } else {
           root_mass = culm_growth.roots[weather_index-1];
           mycorrhizal_biomass = culm_growth.mycorrhiza[weather_index-1];
-          xylem_st_mass = culm_growth.xylem_st[weather_index-1];
+          xylem_sh_mass = culm_growth.xylem_st[weather_index-1];
           phloem_mass = culm_growth.phloem[weather_index-1];
         }
       }
@@ -433,7 +433,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                                                   repola_values.needle_mass,
                                                   root_mass,
                                                   mycorrhizal_biomass,
-
+                                                  xylem_sh_mass,
+                                                  phloem_mass,
                                                   equilibrium_temperature,
                                                   potential_growth,
                                                   sugar_values_for_next_iteration.sugar,
@@ -583,7 +584,7 @@ Rcpp::List CASSIA_yearly(int start_year,
             culm_growth_internal.height.push_back(height_next_year + actual_growth_out.height);
             culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
             // cell_wall_density_ew kg C m-3 only early wood uses as early and late wood are currently the same for both parameters
-            culm_growth_internal.xylem_st.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
+            culm_growth_internal.xylem_sh.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth_internal.phloem.push_back(M_PI * pow(1.5/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth_internal.needles.push_back(actual_growth_out.needles); // TODO: the life of the needles is actually here, add to the LAI section
@@ -592,7 +593,7 @@ Rcpp::List CASSIA_yearly(int start_year,
           } else {
             culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
             culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm); // Ring width is culmative, but need consistent initial condition
-            culm_growth_internal.xylem_st.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
+            culm_growth_internal.xylem_sh.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth_internal.phloem.push_back(M_PI * pow(1.5/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth_internal.needles.push_back(actual_growth_out.needles); // TODO: should there be culmative things here? Fix after the max works
@@ -602,7 +603,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         } else {
           culm_growth_internal.height.push_back(culm_growth_internal.height[weather_index-1] + actual_growth_out.height);
           culm_growth_internal.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
-          culm_growth_internal.xylem_st.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
+          culm_growth_internal.xylem_sh.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
           culm_growth_internal.phloem.push_back(M_PI * pow(1.5/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
           culm_growth_internal.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
           culm_growth_internal.needles.push_back(culm_growth_internal.needles[weather_index-1] + actual_growth_out.needles);
@@ -614,7 +615,7 @@ Rcpp::List CASSIA_yearly(int start_year,
           if (year == start_year) {
             culm_growth.height.push_back(height_next_year + actual_growth_out.height);
             culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
-            culm_growth.xylem_st.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
+            culm_growth.xylem_sh.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth.phloem.push_back(M_PI * pow(1.5/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth.needles.push_back(actual_growth_out.needles);
@@ -623,7 +624,7 @@ Rcpp::List CASSIA_yearly(int start_year,
           } else {
             culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
             culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
-            culm_growth.xylem_st.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
+            culm_growth.xylem_sh.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth.phloem.push_back(M_PI * pow(1.5/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
             culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
             culm_growth.needles.push_back(actual_growth_out.needles);
@@ -633,7 +634,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         } else {
           culm_growth.height.push_back(culm_growth.height[weather_index-1] + actual_growth_out.height);
           culm_growth.diameter.push_back(diameter_next_year + 2*ring_width.tot_mm);
-          culm_growth.xylem_st.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
+          culm_growth.xylem_sh.push_back(M_PI * pow(xylem_width/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
           culm_growth.phloem.push_back(M_PI * pow(1.5/1000, 2) * (height_next_year + actual_growth_out.height) * parameters.cell_wall_density_ew);
           culm_growth.diameter_potential.push_back(diameter_potential_next_year + 2*potential_growth.previous_values.pot_mm);
           culm_growth.needles.push_back(culm_growth.needles[weather_index-1] + actual_growth_out.needles);
