@@ -312,6 +312,8 @@ carbo_balance sugar_model(int year,
                           double needles_mass, // Repola
                           double root_mass,
                           double mycorrhizal_biomass,
+                          double xylem_st_mass,
+                          double phloem_mass,
                           carbo_tracker temperature_equilibrium, // Calculated in the main function
 
                           growth_out pot_growth,
@@ -324,9 +326,9 @@ carbo_balance sugar_model(int year,
   uptake_structre uptake;
 
   // TODO: phloem mass is hard to get within the model, maybe a product of diameter and height
-  double phloem_mass = 7.410537931;
+  // double phloem_mass = 7.410537931;
   double xylem_sh_mass = 74.10537931;
-  double xylem_st_mass = 8.65862069;
+  // double xylem_st_mass = 8.65862069;
 
   double phloem_respiration_share = phloem_mass / (phloem_mass + xylem_sh_mass + xylem_st_mass);
   double xylem_sh_respiration_share = xylem_sh_mass / (phloem_mass + xylem_sh_mass + xylem_st_mass);
