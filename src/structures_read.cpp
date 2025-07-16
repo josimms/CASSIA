@@ -276,6 +276,8 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
   out.GPP_mean = temp126[0];
   std::vector<double> temp127 = input_parameters["GPP_initial"];
   out.GPP_initial = temp127[0];
+  std::vector<double> temp130 = input_parameters["xylem_start_estimate"];
+  out.xylem_start_estimate = temp130[0];
   return out;
 }
 
@@ -329,7 +331,6 @@ CASSIA_common make_common(Rcpp::DataFrame input) {
   out.Uggla = temp23[0];
   return(out);
 }
-
 
 CASSIA_common read_common_parameters(const std::string& filename) {
   CASSIA_common common_params;

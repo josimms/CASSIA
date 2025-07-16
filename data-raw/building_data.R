@@ -186,6 +186,9 @@ parameters_p[70,] <- c(0.118, NA, 0.118) # eki_repo TODO
 parameters_p[71,] <- c(3, NA, NA) # stem_no TODO
 parameters_p[72,] <- c(79, NA, NA) # diameter_start_day
 
+parameters_p[73,] <- c(79, NA, NA) # xylem_start_estimate
+
+
 row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R", "sR0", "sRc", "growth.myco", "root.lifetime",
 "HH0", "sH0", "LH", "LH0", "sHc", "sN0", "LN", "LN0", "sNc", "HN0", "sD0.Trad", "LD", "LD0", "sDc", "sDc.T.count",
 "tau.Ee", "tau.El", "tau.We", "tau.Wl", "tau.GPP", "Uggla", "sB0", "sBc", "LB",
@@ -194,7 +197,7 @@ row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R",
 "density_tree", "carbon_share", "D0", "h0", "n_age", "n_lenght", "h_increment", "SLA", "LR0", "b0_repo", "b1_repo", "b2_repo",
 "lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st",
 "tau_emergancy_needles", "tau_emergancy_phloem", "tau_emergancy_roots", "tau_emergancy_xylem_sh", "tau_emergancy_xylem_st",
-"lower_bound_W", "tau_emergancy", "uk_repo", "eki_repo", "stem_no", "diameter_start_day")
+"lower_bound_W", "tau_emergancy", "uk_repo", "eki_repo", "stem_no", "diameter_start_day", "xylem_start_estimate")
 save(parameters_p, file = paste0(data.direct, "/parameters_p.RData"))
 
 ######
