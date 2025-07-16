@@ -1144,12 +1144,12 @@ legend("topleft", legend = c("Tree Height\nBasal Area Weighted Mean"),
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
 ylim = range(c(0, 
-               max(cumsum(CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_mycorrhiza)), 
-               max(cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza)),
-               cumsum(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_mycorrhiza)), na.rm = TRUE)
+               max(cumsum(CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_to_mycorrhiza)), 
+               max(cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza)),
+               cumsum(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_to_mycorrhiza)), na.rm = TRUE)
 # Mycorrhizal allocation
-plot(dates, cumsum(CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_mycorrhiza), col = "red", main = "Cumulative Allocation\n to Mycorrhiza", xlab = "Years", ylab = "Sugar to Mycorrhiza, kg", ylim = ylim, type = "l")
-lines(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza), type = "l", col = "green")
+plot(dates, cumsum(CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_to_mycorrhiza), col = "red", main = "Cumulative Allocation\n to Mycorrhiza", xlab = "Years", ylab = "Sugar to Mycorrhiza, kg", ylim = ylim, type = "l")
+lines(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), type = "l", col = "green")
 legend("bottomright", c("Control", "Conservative Carbohydrates"), col = c("green", "red"), , cex = 0.75, bty = "n", lty = 1)
 #dev.off()
 
@@ -1170,16 +1170,16 @@ abline(h = mean(CASSIA_preles_1998_2022$Sugar$starch), lty = 2, col = "green")
 abline(h = mean(CASSIA_preles_1998_2022_roots_surplus_c$Sugar$starch), lty = 2, col = "red")
 #dev.off()
 
-ylim = range(c(CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza), na.rm = T)
+ylim = range(c(CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), na.rm = T)
 if (ylim[2] > 1) {
   ylim[2] = 1.2
 }
-plot(dates, CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_mycorrhiza, col = "red", type = "l", main = "Allocation to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza, col = "green")
+plot(dates, CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_to_mycorrhiza, col = "red", type = "l", main = "Allocation to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
+lines(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, col = "green")
 
 
-plot(dates, 100*CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar, col = "red", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 100))
-lines(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green")
+plot(dates, 100*CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_roots_surplus_c$Sugar$sugar, col = "red", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 100))
+lines(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green")
 
 par(mfrow = c(1, 2))
 plot(dates, CASSIA_preles_1998_2022_roots_surplus_c$Culm_Growth$nitrogen_capacity_needles, type = "l", xlab = "Years", ylab = "Nitorgen Capacity (between 0 and 1)", col = "red", ylim = c(0, 1))
@@ -1213,14 +1213,14 @@ legend("topleft", legend = c("Tree Height\nBasal Area Weighted Mean"),
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
 ylim = range(c(0, 
-               cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza),
-               cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza), 
-               cumsum(CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza), 
-               cumsum(CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza)), na.rm = T)
-plot(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza), col = "green", type = "l", main = "Cumulative Allocation\n to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza), col = "red")
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza), col = "orange")
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza), col = "blue")
+               cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza),
+               cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza), 
+               cumsum(CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_to_mycorrhiza), 
+               cumsum(CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza)), na.rm = T)
+plot(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), col = "green", type = "l", main = "Cumulative Allocation\n to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza), col = "red")
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza), col = "orange")
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_to_mycorrhiza), col = "blue")
 legend("bottomright", c("Control", "High Nitrogen", "Medium Nitrogen", "Low Nitrogen"), col = c("green", "blue", "orange", "red"), cex = 0.75, bty = "n", lty = 1)
 #dev.off()
 
@@ -1244,16 +1244,16 @@ abline(h = mean(CASSIA_preles_1998_2022_nitrogen_medium$Sugar$starch), lty = 2, 
 abline(h = mean(CASSIA_preles_1998_2022_nitrogen_low$Sugar$starch), lty = 2, col = "red")
 abline(h = mean(CASSIA_preles_1998_2022_nitrogen_high$Sugar$starch), lty = 2, col = "blue")
 
-ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza), na.rm = T)
-plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza, col = "green", type = "l", main = "Allocation to mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza, col = "orange")
-lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza, col = "red")
-lines(dates, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza, col = "blue")
+ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza), na.rm = T)
+plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, col = "green", type = "l", main = "Allocation to mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
+lines(dates, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza, col = "orange")
+lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza, col = "red")
+lines(dates, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_to_mycorrhiza, col = "blue")
 
-plot(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 50))
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "orange")
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar, col = "blue")
+plot(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 50))
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "orange")
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar, col = "blue")
 
 par(mfrow = c(1, 2))
 plot(dates, (CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity_needles +
@@ -1305,12 +1305,12 @@ legend("topleft", legend = c("Tree Height\nBasal Area Weighted Mean"),
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
 ylim = range(c(0, 
-               cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza), 
-               cumsum(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_mycorrhiza),
-               cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza)), na.rm = T)
-plot(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza), col = "green", type = "l", main = "Cumulative Allocation\n to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza), col = "red")
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_mycorrhiza), col = "purple")
+               cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), 
+               cumsum(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_to_mycorrhiza),
+               cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza)), na.rm = T)
+plot(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), col = "green", type = "l", main = "Cumulative Allocation\n to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza), col = "red")
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_to_mycorrhiza), col = "purple")
 legend("bottomright", c("Control", "Low Nitrogen", "Varied Nitrogen"), col = c("green", "red", "purple"), cex = 0.75, bty = "n", lty = 1)
 #dev.off()
 
@@ -1330,14 +1330,14 @@ abline(h = mean(CASSIA_preles_1998_2022$Sugar$starch), lty = 2, col = "green")
 abline(h = mean(CASSIA_preles_1998_2022_nitrogen_low$Sugar$starch), lty = 2, col = "red")
 abline(h = mean(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$starch), lty = 2, col = "purple")
 
-ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$starch), na.rm = T)
-plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza, col = "green", type = "l", main = "Allocation to mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza, col = "red")
-lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_mycorrhiza, col = "purple")
+ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$starch), na.rm = T)
+plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, col = "green", type = "l", main = "Allocation to mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
+lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza, col = "red")
+lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_to_mycorrhiza, col = "purple")
 
-plot(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 50))
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar, col = "purple")
+plot(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 50))
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_varies$Sugar$sugar, col = "purple")
 
 #png("nitrogen_store.png", width = 2000, height = 1600, res = 300)
 par(mfrow = c(1, 2))
@@ -1386,12 +1386,12 @@ legend("topleft", legend = c("Tree Height\nBasal Area Weighted Mean"),
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
 ylim = range(c(0, 
-               cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza), 
-               cumsum(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_mycorrhiza),
-               cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza)), na.rm = T)
-plot(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza), col = "green", type = "l", main = "Cumulative Allocation\n to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza), col = "red")
-lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_mycorrhiza), col = "pink")
+               cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), 
+               cumsum(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza),
+               cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza)), na.rm = T)
+plot(dates, cumsum(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza), col = "green", type = "l", main = "Cumulative Allocation\n to Mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza), col = "red")
+lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza), col = "pink")
 legend("bottomright", c("Control", "Low Nitrogen", "Invested Nitrogen"), col = c("green", "red", "pink"), cex = 0.75, bty = "n", lty = 1)
 
 ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar), na.rm = T)
@@ -1410,14 +1410,14 @@ abline(h = mean(CASSIA_preles_1998_2022$Sugar$starch), lty = 2, col = "green")
 abline(h = mean(CASSIA_preles_1998_2022_nitrogen_low$Sugar$starch), lty = 2, col = "red")
 abline(h = mean(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$starch), lty = 2, col = "pink")
 
-ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_mycorrhiza), na.rm = T)
-plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza, col = "green", type = "l", main = "Allocation to mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_mycorrhiza, col = "pink")
-lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_mycorrhiza, col = "red")
+ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza), na.rm = T)
+plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, col = "green", type = "l", main = "Allocation to mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
+lines(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza, col = "pink")
+lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza, col = "red")
 
-plot(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 50))
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar, col = "pink")
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
+plot(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 50))
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar, col = "pink")
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
 
 par(mfrow = c(1, 2))
 plot(dates, (CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$nitrogen_capacity_needles +
