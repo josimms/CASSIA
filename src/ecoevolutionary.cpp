@@ -1,3 +1,5 @@
+/*
+
 #include "CASSIA.h"
 
 // [[Rcpp::export]]
@@ -29,11 +31,12 @@ Rcpp::List CASSIA_eeo(int start_year,
                        int trenching_year,
 
                        Rcpp::List settings) {
-
+*/
   /*
    * Read into structures
    */
 
+  /*
   p1 parSite = make_p1(pPREL);
   p2 parGPP = make_p2(pPREL);
   p3 parET = make_p3(pPREL);
@@ -52,11 +55,12 @@ Rcpp::List CASSIA_eeo(int start_year,
 
   Settings boolsettings = parseSettings(settings);
 
+   */
   /*
    * Weather input made into vectors
    */
 
-  weather_all climate = readWeatherVariables(weather, boolsettings.photosynthesis_as_input, boolsettings.preles, boolsettings.phydro);
+  // weather_all climate = readWeatherVariables(weather, boolsettings.photosynthesis_as_input, boolsettings.preles, boolsettings.phydro);
 
   /*
    * Structures set up
@@ -64,6 +68,7 @@ Rcpp::List CASSIA_eeo(int start_year,
 
   // Forward init values (previous day values) as first values of result vectors
 
+  /*
   bool tree_alive = true;
 
   double CH = parameters.density_tree * parameters.carbon_share;
@@ -82,11 +87,13 @@ Rcpp::List CASSIA_eeo(int start_year,
   } else {
     repola_values.needle_mass = needle_mass_in;
   }
+   */
 
   /*
    * Vectors between iterations
    */
 
+  /*
   growth_values_out growth_values_for_next_iteration;
   carbo_balance sugar_values_for_next_iteration;
   ring_width_out previous_ring_width;
@@ -100,10 +107,13 @@ Rcpp::List CASSIA_eeo(int start_year,
   double needles_next_year = repola_values.needle_mass;
   double diameter_next_year = parameters.D0;
 
+   */
+
   /*
    * Vectors for the outputs
    */
 
+  /*
   growth_vector potential_growth_output;
   growth_vector actual_growth_output;
   sugar_values_vector sugar_values_output;
@@ -130,10 +140,13 @@ Rcpp::List CASSIA_eeo(int start_year,
   SYMPHONY_vector soil_output;
   SYMPHONY_output soil_reset;
   MYCOFON_function_out MYCOFON_reset;
+   */
 
   /*
    * YEAR LOOP
    */
+
+  /*
   std::vector<int> years;
   std::vector<int> days;
 
@@ -165,20 +178,24 @@ Rcpp::List CASSIA_eeo(int start_year,
       trenching = false;
     }
 
+   */
     /*
      * Daily output
      */
 
+    /*
     carbo_tracker carbo_tracker_vector;
     xylogensis_out xylogensis_vector;
     photosynthesis.fS = 0.0;
 
     std::vector<double> release;
+*/
 
     /*
      * Yearly initialization
      */
 
+    /*
     // B0, D00 and h00
     double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
     double D00 = parameters.D0;
@@ -189,6 +206,7 @@ Rcpp::List CASSIA_eeo(int start_year,
       double LR0 = 2.0 * parameters.m_R_tot / parameters.sRc; // TODO: check if these parameters are updated somewhere
     }
 
+     */
     /*
      * NEEDLE MASS CALCULATION
      *
@@ -196,6 +214,7 @@ Rcpp::List CASSIA_eeo(int start_year,
      * after this if there is growth in the model the needle mass is calculated based on last year
      * if there is no growth then the needle mass stays at the originally calculated value
      */
+    /*
 
     if (boolsettings.needle_mass_grows) {
       repola_values = repola(parameters); // Needle mass is then calculated on the next D0 and h0 values
@@ -218,31 +237,37 @@ Rcpp::List CASSIA_eeo(int start_year,
 
     // TODO: There should also be xylogenesis dependency here!
 
+     */
+
     /*
      * Days per year
      */
 
-    int days_per_year = leap_year(year);
+    // int days_per_year = leap_year(year);
 
     /*
      * Yearly initial conditions updated
      */
 
     // Set up the initial conditions
-    yearly_in yearly = yearly_initial_conditions(days_per_year); // TODO: growth should be added to this!
+    // yearly_in yearly = yearly_initial_conditions(days_per_year); // TODO: growth should be added to this!
 
     /*
      * DAYS LOOP
      */
+
+    /*
     int weather_index;
     for (int day = 0; day < days_per_year; day++) {
 
       weather_index = days_gone + day;
 
+     */
       /*
        * Weather checks!
        */
 
+    /*
       if (boolsettings.preles) {
         if (weather_index > 0) {
           if (climate.PAR[weather_index] < -900) climate.PAR[weather_index] = climate.PAR[weather_index-1];
@@ -255,12 +280,15 @@ Rcpp::List CASSIA_eeo(int start_year,
         }
       }
 
+      */
+
       /*
        * PHOTOSYNTHESIS
        *
        * There are yearly, but not daily dependencies other than environmental states here!
        */
 
+      /*
       double fAPAR_used, fS_out;
       // LAI value is fairly constant if we look at Rautiainen 2012, LAI ~ 3
       double LAI = 3.0;
@@ -361,12 +389,15 @@ Rcpp::List CASSIA_eeo(int start_year,
       } else if (day > 245) {
         GPP_sum = GPP_sum_yesterday;
       }
+       */
 
       /*
        * Potential Growth
        *
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
+
+      /*
 
       growth_out potential_growth = growth(day, year, climate.TAir[weather_index], climate.TSoil_A[weather_index], climate.TSoil_B[weather_index], climate.Soil_Moisture[weather_index], GPP, GPP_ref[day],
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
@@ -387,21 +418,27 @@ Rcpp::List CASSIA_eeo(int start_year,
         potential_growth.release = 0.0;
       }
 
+       */
+
       /*
        * Respiration
        *
        * There are yearly, but not daily dependencies other than weather conditions here!
        */
 
+      /*
+
       respiration_out resp = respiration(day, parameters, ratios, repola_values,
                                          climate.TAir[weather_index], climate.TSoil_A[weather_index],
                                          boolsettings.temp_rise, boolsettings.Rm_acclimation, boolsettings.mN_varies,
                                          // parameters that I am not sure about
-                                         B0);
+                                         B0); */
 
       /*
        * Sugar
        */
+
+      /*
 
       double root_mass = 0;
       double mycorrhizal_biomass = 0;
@@ -418,28 +455,31 @@ Rcpp::List CASSIA_eeo(int start_year,
         }
       }
 
+      double xylem_sh_mass = 10.0;
+      double phloem_mass = 10.0;
       carbo_balance sugar_model_out = sugar_model(year, day, climate.TAir[weather_index],
                                                   climate.PAR[weather_index],
-                                                  photosynthesis_per_stem,
-                                                  common, parameters,
-                                                  D00,
-                                                  potential_growth.previous_values.sH,
-                                                  resp,
-                                                  nitrogen_balance,
-                                                  nitrogen_change,
-                                                  nitrogen_contrast,
-                                                  boolsettings.sperling_model,
-                                                  tree_alive,
-                                                  boolsettings.storage_grows,
-                                                  surplus_c,
-                                                  repola_values.needle_mass,
-                                                  root_mass,
-                                                  mycorrhizal_biomass,
-                                                  equilibrium_temperature,
-                                                  potential_growth,
-                                                  sugar_values_for_next_iteration.sugar,
-                                                  sugar_values_for_next_iteration.starch,
-                                                  sugar_values_for_next_iteration.previous_values);
+                                                             photosynthesis_per_stem,
+                                                             common, parameters,
+                                                             D00,
+                                                             potential_growth.previous_values.sH,
+                                                             resp,
+                                                             nitrogen_balance,
+                                                             nitrogen_change,
+                                                             nitrogen_contrast,
+                                                             boolsettings.sperling_model,
+                                                             tree_alive,
+                                                             boolsettings.storage_grows,
+                                                             surplus_c,
+                                                             repola_values.needle_mass,
+                                                             root_mass,
+                                                             mycorrhizal_biomass,
+                                                             xylem_sh_mass,
+                                                             phloem_mass,
+                                                             potential_growth,
+                                                             sugar_values_for_next_iteration.sugar,
+                                                             sugar_values_for_next_iteration.starch,
+                                                             sugar_values_for_next_iteration.previous_values);
 
       // Saved for the next iteration
       sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
@@ -449,9 +489,13 @@ Rcpp::List CASSIA_eeo(int start_year,
       parameters.sB0 = sugar_values_for_next_iteration.previous_values.sB0;
       tree_alive = sugar_model_out.previous_values.tree_alive;
 
+       */
+
       /*
        * Actual growth
        */
+
+      /*
 
       double n_rows = ratios.form_factor * parameters.h0 / parameters.cell_l_ew * M_PI * parameters.D0 / parameters.cell_d_ew;
       // double GD = // g_sD_T *fD * LD; TODO: where do the parameters come from?
@@ -471,9 +515,13 @@ Rcpp::List CASSIA_eeo(int start_year,
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);
       previous_ring_width = ring_width;
 
+       */
+
       /*
        * Culmative growwth
        */
+
+      /*
 
       if (final_year%2!=0) {
         if (day == 0) {
@@ -515,9 +563,13 @@ Rcpp::List CASSIA_eeo(int start_year,
         }
       }
 
+       */
+
       /*
        * MYCOFON
        */
+
+      /*
 
       // TODO: work out which parameters are available here
       // TODO: 0.5 is a filler for the C:N ratio of roots, should this be a ratio of the nitrogen stored in the tree?
@@ -608,12 +660,16 @@ Rcpp::List CASSIA_eeo(int start_year,
       // TODO: does the sugar balance for this need to be added to the CASSIA model?
       MYCOFON_for_next_iteration = MYCOFON_out;
 
+       */
+
       /*
        *  Litter
        */
 
       // Currently a time series - should add litter in the model more explicitly
       // There is a trenched version for Jussi's data
+
+      /*
 
       double Litter_needles, Litter_woody, Litter_roots, Litter_ERM, Little_mantle;
       Litter_needles = 0.1 * (needle_mass_in / 3) / 365;
@@ -630,11 +686,15 @@ Rcpp::List CASSIA_eeo(int start_year,
         MYCOFON_for_next_iteration.exudes_plant = 0.0;
       }
 
+       */
+
       /*
        * SOIL
        */
 
       // TODO: if there are no roots then there can't be transfers sort this!
+
+      /*
 
       SYMPHONY_output Soil_All = symphony_multiple_FOM_daily(climate.TSoil_B[day], climate.Soil_Moisture[day],
                                                              soil_values_for_next_iteration.C_FOM_needles,
@@ -660,9 +720,13 @@ Rcpp::List CASSIA_eeo(int start_year,
                                                              parameters_in.N_limits_microbes, parameters_in.N_k_microbes, parameters_in.SWC_limits_microbes,
                                                              parameters_in.NC_microbe_opt, parameters_in.microbe_turnover, true);
 
+       */
+
       /*
        * Output
        */
+
+      /*
       HH = potential_growth.previous_values.HH;
       needles_last = potential_growth.needles;
       potenital_growth_use.push_back(potential_growth.use);
@@ -949,5 +1013,5 @@ Rcpp::List CASSIA_eeo(int start_year,
                             Rcpp::_["Culm_Growth"] = df7);
 
 }
-
+ */
 
