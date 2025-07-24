@@ -1,116 +1,65 @@
 #include "CASSIA.h"
 
 /*
- * Make Growth function
- */
-
-growth_values_out make_growth(std::vector<double> values_in) {
-  growth_values_out out;
-  out.sH = values_in[0];
-  out.fH = values_in[1];
-  out.sN = values_in[2];
-  out.fN = values_in[3];
-  out.sD = values_in[4];
-  out.fD = values_in[5];
-  out.sR = values_in[6];
-  out.fR = values_in[7];
-  out.n_rows = values_in[8];
-  out.GH = values_in[9];
-  out.GN = values_in[10];
-  out.S_GPP = values_in[11];
-  out.dS_GPP = values_in[12];
-  out.S_GPP_ref = values_in[13];
-  out.dS_GPP_ref = values_in[14];
-  out.GPP_ref = values_in[15];
-  out.ew_cells_pot_max = values_in[16];
-  out.pot_mm_max = values_in[17];
-  out.wall_pot_growth = values_in[18];
-  out.n_E_pot = values_in[19];
-  out.n_W_pot = values_in[20];
-  out.n_M_pot = values_in[21];
-  out.n_E = values_in[22];
-
-  return(out);
-}
-
-
-/*
  * Growth Function
  */
 
-growth_out growth(int day,
-                  int year,
-                  double TAir,
-                  double TSoil_A,
-                  double TSoil_B,
-                  double Soil_Moisture,
-                  double PF,
-                  double GPP_ref,
-                  bool root_as_Ding,
-                  bool xylogenesis_option,
-                  bool environmental_effect_xylogenesis,
-                  bool sD_estim_T_count,
-                  CASSIA_common common,
-                  CASSIA_parameters parameters,
-                  CASSIA_ratios ratio,
-                  double CH,
-                  double B0,
-                  double GPP_mean,
-                  double GPP_previous_sum,
+void growth(int day,
+            int days_gone,
+            int year,
 
-                  bool LH_estim,
-                  bool LN_estim,
-                  bool LD_estim,
-                  bool tests,
+            growth_state& state,
+            output_vector& out,
 
-                  growth_values_out growth_previous,
-                  double last_year_HH,
-                  int no_day)
+            double TAir,
+            double TSoil_A,
+            double TSoil_B,
+            double Soil_Moisture,
+            double PF,
+            double GPP_ref,
+            Settings boolsettings,
+
+            const CASSIA_common& common,
+            const CASSIA_parameters& parameters,
+            const CASSIA_ratios& ratio,
+
+            double CH,
+            double B0,
+            double GPP_mean,
+            double GPP_previous_sum,
+
+            double last_year_HH,
+            int no_day)
 {
-
-  double g = 0;
-  double g_sH = g;
-  double g_sN = g;
-  double g_sD_T;
-  double sH, sN, sD, sR;
-  double fH, fN, fD, fR;
-  double GH, GN, GD, GR;
-  double height_pot_growth, needle_pot_growth;
-  double HH = 0;
-  sH = sN = sD = sR = 0;
-  fH = fN = fD = fR = 0;
-  GH = GN = GD = GR = 0;
-  height_pot_growth = needle_pot_growth = 0;
 
   if (TAir > 0) {
     /*
      * Growth
      */
-    g = 1 / (1 + exp(-common.a * (TAir - common.b)));
-    if (g < 0) {
-      g = 0;
+    state.g = 1 / (1 + exp(-common.a * (TAir - common.b)));
+    if (state.g < 0) {
+      state.g = 0;
     }
   }
 
   /*
    * Height
    */
-  g_sH = g;
   if (day == 0) {
-    sH = parameters.sH0 + g_sH; // First day that it could have a value is this!
+    state.sH = parameters.sH0 + state.g; // First day that it could have a value is this!
   } else {
-    sH = growth_previous.sH + g_sH;
+    state.sH = state.sH + state.g;
   }
-  if ((sH > 0) & (sH < parameters.sHc)) {
-    fH = (sin(2 * M_PI/parameters.sHc * (sH - parameters.sHc / 4)) + 1) / 2;
+  if ((state.sH > 0) & (state.sH < parameters.sHc)) {
+    state.fH = (sin(2 * M_PI/parameters.sHc * (state.sH - parameters.sHc / 4)) + 1) / 2;
   } else {
-    fH = 0;
+    state.fH = 0;
   }
   double LH = parameters.LH0 * ratio.height_growth_coefficient;
-  if (LH_estim) {
+  if (boolsettings.LH_estim) {
     LH = LH * GPP_previous_sum / parameters.GPP_mean;
   }
-  if (tests) {
+  if (boolsettings.tests) {
     if ( year== 2016) {
       LH = 37.70821;
     } else if (year == 2017) {
@@ -119,34 +68,34 @@ growth_out growth(int day,
       LH = 36.93803;
     }
   }
-  GH = g_sH * fH * LH;
-  height_pot_growth = 0.02405282 * 200.0 * GH / 1000.0 * ratio.form_factor;
+  state.GH = state.g * state.fH * LH;
+  state.height = 0.02405282 * 200.0 * state.GH / 1000.0 * ratio.form_factor;
 
   if (day == 0) {
-    HH = parameters.HH0 + GH;
+    state.HH = parameters.HH0 + state.GH;
   } else {
-    HH = growth_previous.HH + GH;
+    state.HH = state.HH + state.GH;
   }
 
   /*
    * Needles
    */
-  g_sN = g;
+  double old_GN = 0.0;
   if (day == 0) {
-    sN = parameters.sN0 + g_sN;
+    state.sN = parameters.sN0 + state.g;
   } else {
-    sN = growth_previous.sN + g_sN;
+    state.sN = state.sN + state.g;
   }
-  if ((sN > 0) & (sN < pow(parameters.sNc, 2))) {
-    fN = (parameters.sNc * pow(sN, 0.5) - sN) / (pow(parameters.sNc, 2.0)/4.0);
+  if ((state.sN > 0) & (state.sN < pow(parameters.sNc, 2))) {
+    state.fN = (parameters.sNc * pow(state.sN, 0.5) - state.sN) / (pow(parameters.sNc, 2.0)/4.0);
   } else {
-    fN = 0.0;
+    state.fN = 0.0;
   }
   double LN = parameters.LN0;
-  if (LN_estim) {
+  if (boolsettings.LN_estim) {
     LN = parameters.LN0 * GPP_previous_sum / parameters.GPP_mean;
   }
-  if (tests) {
+  if (boolsettings.tests) {
     if ( year== 2016) {
       LN = 1.971561;
     } else if (year == 2017) {
@@ -155,14 +104,14 @@ growth_out growth(int day,
       LN = 1.931293;
     }
   }
-  GN = g * fN * LN;
+  state.GN = state.g * state.fN * LN;
 
-  double cumsum_GN = growth_previous.GN + GN; // TODO: should be initalised properly, but currently really really small values
-  double HN = parameters.HN0 + cumsum_GN;
+  double cumsum_GN = state.GN + old_GN; // TODO: should be initalised properly, but currently really really small values
+  double HN = parameters.HN0 + cumsum_GN; // TODO: where does this go?
 
-  needle_pot_growth = common.m_N * GN * last_year_HH / parameters.h_increment;
+  state.needles = common.m_N * state.GN * last_year_HH / parameters.h_increment;
 
-  double max_N = std::max(needle_pot_growth, growth_previous.max_N);
+  state.max_N = std::max(state.needles, state.max_N);
 
   /*
    * Bud growth
@@ -175,95 +124,95 @@ growth_out growth(int day,
       fB = (sin(2 * M_PI / parameters.sBc * (sB - parameters.sBc / 4)) + 1) / 2;
     }
   }
-  double bud_pot_growth = g * fB * parameters.LB;
+  state.bud = state.g * fB * parameters.LB;
 
   /*
    * Diameter
    */
 
-  g_sD_T = g;
   if (day == 0) {
-    sD = parameters.sD0_Trad;
+    state.sD = parameters.sD0_Trad;
   } else if (day <= parameters.diameter_start_day) {
-    sD = growth_previous.sD;
+    state.sD = state.sD;
   } else if (day >= parameters.diameter_start_day+1) {
-    if (sD_estim_T_count) {
+    if (boolsettings.sD_estim_T_count) {
       // TODO: not coded! need to add!
-      sD = growth_previous.sD + g_sD_T;
+      state.sD = state.sD + state.g;
     } else {
-      sD = growth_previous.sD + g_sD_T;
+      state.sD = state.sD + state.g;
     }
   }
-  if ((sD > 0) & (sD < pow(parameters.sDc, 2.0))) {
-    fD = (parameters.sDc*pow(sD, 0.5) - sD)/(pow(parameters.sDc, 2.0)/4);
+  if ((state.sD > 0) & (state.sD < pow(parameters.sDc, 2.0))) {
+    state.fD = (parameters.sDc*pow(state.sD, 0.5) - state.sD)/(pow(parameters.sDc, 2.0)/4);
   } else {
-    fD = 0;
+    state.fD = 0;
   }
 
   double LD = parameters.LD0 * ratio.diameter_growth_coefficient;
-  double S_GPP, dS_GPP, S_GPP_ref, dS_GPP_ref;
-  if (LD_estim) {
+  if (boolsettings.LD_estim) {
     if (day == 0) {
-      S_GPP = 0.0;
-      S_GPP_ref = 0.0;
+      state.S_GPP = 0.0;
+      state.S_GPP_ref = 0.0;
     } else {
-      S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
-      S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
+      state.S_GPP = state.S_GPP + state.dS_GPP;
+      state.S_GPP_ref = state.S_GPP_ref + state.dS_GPP_ref;
     }
-    dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
-    dS_GPP_ref = (GPP_ref - S_GPP_ref) / parameters.tau_GPP;
+    state.dS_GPP = (PF - state.S_GPP) / parameters.tau_GPP;
+    state.dS_GPP_ref = (GPP_ref - state.S_GPP_ref) / parameters.tau_GPP;
 
     // Daily LD depends on the GPP of five previous days:
     if (day > 78) { // TODO: hard coded! Should this be parameter diameter start day?
-      LD = parameters.LD0 * ratio.diameter_growth_coefficient * S_GPP / S_GPP_ref;
+      LD = parameters.LD0 * ratio.diameter_growth_coefficient * state.S_GPP / state.S_GPP_ref;
     }
   }
 
-  GD = g_sD_T * fD * LD;
-  double tot_cells_pot = GD + growth_previous.GD;
+  double old_GD = state.GD;
+  state.GD = state.g * state.fD * LD;
+  double tot_cells_pot = old_GD + state.GD;
 
-  double tau_E, tau_W;
   // "Uggla" divides cells to early and late wood
-  if (sD < pow(parameters.sDc, 2.0) / common.Uggla) {
-    tau_E = parameters.tau_Ee;
-    tau_W = parameters.tau_We;
+  if (state.sD < pow(parameters.sDc, 2.0) / common.Uggla) {
+    state.tau_E = parameters.tau_Ee;
+    state.tau_W = parameters.tau_We;
   } else {
-    tau_E = parameters.tau_El;
-    tau_W = parameters.tau_Wl;
+    state.tau_E = parameters.tau_El;
+    state.tau_W = parameters.tau_Wl;
   }
 
   // Number of cells in enlargement, wall formation and mature phases on each day
-  double n_E_pot, n_W_pot, n_M_pot;
+  // TODO: why doesn't this section use the updated variables?
+  double n_E_pot{state.n_E_pot}, n_W_pot{state.n_W_pot}, n_M_pot{state.n_M_pot};
   if (day < 1) {
-    n_E_pot = 0.0;
-    n_W_pot = 0.0;
-    n_M_pot = 0.0;
+    state.n_E_pot = 0.0;
+    state.n_W_pot = 0.0;
+    state.n_M_pot = 0.0;
   } else {
-    n_E_pot = growth_previous.n_E_pot + GD - growth_previous.n_E_pot / tau_E;
-    n_W_pot = growth_previous.n_W_pot + growth_previous.n_E_pot / tau_E - growth_previous.n_W_pot / growth_previous.tau_W;
-    n_M_pot = growth_previous.n_M_pot + growth_previous.n_W_pot / growth_previous.tau_W;
+    state.n_E_pot = n_E_pot + state.GD - n_E_pot / state.tau_E;
+    state.n_W_pot = n_W_pot + n_E_pot / state.tau_E - n_W_pot / state.tau_W;
+    state.n_M_pot = n_M_pot + n_W_pot / state.tau_W;
   }
 
   // Carbon to enlargement of one earlywood/latewood cell per one day and cell (kg C cell-1 day-1)
-  double CE_ew = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_ew / 2, 2) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000) * 12 * common.M_C / 342.296 / tau_E;
-  double CE_lw = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_lw / 2, 2) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000) * 12 * common.M_C / 342.296 / tau_E;
+  double CE_ew = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_ew / 2, 2) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000) * 12 * common.M_C / 342.296 / state.tau_E;
+  // TODO: should it be tau_W
+  double CE_lw = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_lw / 2, 2) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000) * 12 * common.M_C / 342.296 / state.tau_E;
   // The number of forming cell rows in the tree
-  double n_rows = ratio.form_factor * parameters.h0 / 0.00266 * M_PI * 0.175 / parameters.cell_d_ew;
+  state.n_rows = ratio.form_factor * parameters.h0 / 0.00266 * M_PI * 0.175 / parameters.cell_d_ew;
   double carbon_enlargement_pot;
-  if (sD < pow(parameters.sDc, 2) / common.Uggla) {
-    carbon_enlargement_pot = CE_ew * n_E_pot;
+  if (state.sD < pow(parameters.sDc, 2) / common.Uggla) {
+    carbon_enlargement_pot = CE_ew * state.n_E_pot;
   } else {
-    carbon_enlargement_pot = CE_lw * n_E_pot;
+    carbon_enlargement_pot = CE_lw * state.n_E_pot;
   }
 
   double tau_Ee_floor = std::ceil(parameters.tau_Ee);
-  double en_pot_growth = n_rows * carbon_enlargement_pot;
-  double en_pot_release = 0.0;
+  state.use = state.n_rows * carbon_enlargement_pot;
+  state.release = 0.0;
 
   // Carbon to wall formation
   // Carbon.daily.rate determined in parameters_common.R but NOTE!!!! not used at the moment, replaced by a parameter set to result in density app. 200 kg C m-3!
   double CW;
-  if (sD < pow(parameters.sDc, 2.0) / common.Uggla) {
+  if (state.sD < pow(parameters.sDc, 2.0) / common.Uggla) {
     // CW = Carbon.daily.rate.ew;
     CW = 1.8e-11;
   } else {
@@ -272,33 +221,38 @@ growth_out growth(int day,
   }
 
   // The use of carbon to wall growth kg C per day
-  double wall_pot_growth = n_rows * CW * n_W_pot;
-  double cells_pot = n_W_pot + n_M_pot;
+  state.diameter = state.n_rows * CW * state.n_W_pot;
+  double cells_pot = state.n_W_pot + state.n_M_pot;
 
   double ew_cells_pot, lw_cells_pot;
   double ew_cells_pot_max;
-  if (sD < pow(parameters.sDc, 2.0) / common.Uggla) {
+  if (state.sD < pow(parameters.sDc, 2.0) / common.Uggla) {
     ew_cells_pot = cells_pot;
-    ew_cells_pot_max = std::max(ew_cells_pot, growth_previous.ew_cells_pot_max);
+    ew_cells_pot_max = std::max(ew_cells_pot, state.ew_cells_pot_max);
   } else {
     ew_cells_pot = 0.0;
-    ew_cells_pot_max = std::max(ew_cells_pot, growth_previous.ew_cells_pot_max);
+    ew_cells_pot_max = std::max(ew_cells_pot, state.ew_cells_pot_max);
 
   }
-  if (sD > pow(parameters.sDc, 2.0) / common.Uggla) {
-    lw_cells_pot = cells_pot - ew_cells_pot - ew_cells_pot_max;
+  if (state.sD > pow(parameters.sDc, 2.0) / common.Uggla) {
+    lw_cells_pot = cells_pot - ew_cells_pot - state.ew_cells_pot_max;
   } else {
     lw_cells_pot = 0.0;
   }
   double ew_width_pot = ew_cells_pot * parameters.cell_d_ew * 1000;
   double lw_width_pot = lw_cells_pot * parameters.cell_d_lw * 1000;
-  double pot_mm, pot_mm_max;
-  if (sD < pow(parameters.sDc, 2.0) / common.Uggla) {
-    pot_mm = ew_width_pot;
-    pot_mm_max = std::max(pot_mm, growth_previous.pot_mm_max);
+
+  double ew_mass_pot = ew_cells_pot * parameters.cell_volume_growth_per_day_ew * parameters.cell_wall_density_ew * 1000;
+  double lw_mass_pot = lw_cells_pot * parameters.cell_volume_growth_per_day_lw * parameters.cell_wall_density_lw * 1000;
+
+  if (state.sD < pow(parameters.sDc, 2.0) / common.Uggla) {
+    state.pot_mm = ew_width_pot;
+    state.pot_mm_max = std::max(state.pot_mm, state.pot_mm_max);
+    // pot_mass_max = pot_mm_max * parameters.cell_volume_growth_per_day_ew * parameters.cell_wall_density_ew * 1000;
   } else {
-    pot_mm_max = std::max(pot_mm, growth_previous.pot_mm_max);
-    pot_mm = lw_width_pot + pot_mm_max;
+    state.pot_mm_max = std::max(state.pot_mm, state.pot_mm_max);
+    state.pot_mm = lw_width_pot + state.pot_mm_max;
+    // pot_mass_max = lw_width_pot * parameters.cell_volume_growth_per_day_lw * parameters.cell_wall_density_lw * 1000; // TODO: fix this!
   }
 
   /*
@@ -306,12 +260,12 @@ growth_out growth(int day,
    */
   double gR_fib, gR_pio, gR, LR;
 
-  if (root_as_Ding) {
+  if (boolsettings.root_as_Ding) {
     double fib_coef = 0.25;                                  // 0.25, 2.3  # Determines the proportion of fibrous roots (1 leads to 37 % of fibrous roots, 0.25 to 13 % of fibrous roots and 2.3 to 63 % of fibrous roots)
     if ((day >= 149) & (day < 319)) {
-      fR = 1.0/(1.0+exp(-0.038014*(day-148-56.06243)));
+      state.fR = 1.0/(1.0+exp(-0.038014*(day-148-56.06243)));
     } else {
-      fR = 0.0;
+      state.fR = 0.0;
     }
 
     gR_fib = -0.84 + 0.13 * TSoil_A - 0.44 + 2.11 * Soil_Moisture;              // growth of fibrous roots from Ding et al. 2019 (model 5)
@@ -328,158 +282,28 @@ growth_out growth(int day,
       gR = 0;
     }
 
-    double g_sR = g;
     if (day == 0) {
-      sR = parameters.sR0 + g_sR;
+      state.sR = parameters.sR0 + state.g;
     } else {
-      sR = growth_previous.sR + g_sR;
+      state.sR = state.sR + state.g;
     }
-    if ((sR > 0) & (sR < parameters.sRc)) {
-      fR = (sin(2 * M_PI / parameters.sRc * (sR - parameters.sRc / 4)) + 1) / 2;
+    if ((state.sR > 0) & (state.sR < parameters.sRc)) {
+      state.fR = (sin(2 * M_PI / parameters.sRc * (state.sR - parameters.sRc / 4)) + 1) / 2;
     }
   }
 
-  GR = fR * LR * gR;
-  double root_pot_growth;
+  double GR = state.fR * LR * gR;
   if (GR > 0) {
-    root_pot_growth = GR;
+    state.roots = GR;
   } else {
-    root_pot_growth = 0;
+    state.roots = 0;
   }
+  state.ecto = GR;
 
   /*
-   * OUT!
-   *
-   * Creating the potential growth output
+   * Save vector output
    */
 
-  growth_values_out values_out;
-  values_out.sH = sH;
-  values_out.fH = fH;
-  values_out.HH = HH;
-  values_out.sN = sN;
-  values_out.fN = fN;
-  values_out.sD = sD;
-  values_out.fD = fD;
-  values_out.fR = fR;
-  values_out.sR = sR;
-  values_out.n_rows = n_rows;
-  values_out.GH = GH;
-  values_out.GN = GN;
-  values_out.GD = GD;
-  values_out.max_N = max_N;
-  values_out.S_GPP = S_GPP;
-  values_out.dS_GPP = dS_GPP;
-  values_out.S_GPP_ref = S_GPP_ref;
-  values_out.dS_GPP_ref = dS_GPP_ref;
-  values_out.ew_cells_pot_max = ew_cells_pot_max;
-  values_out.en_pot_growth = en_pot_growth;
-  values_out.pot_mm_max = pot_mm_max;
-  values_out.wall_pot_growth = wall_pot_growth;
-  values_out.pot_mm = pot_mm;
-  values_out.n_E_pot = n_E_pot;
-  values_out.n_W_pot = n_W_pot;
-  values_out.n_M_pot = n_M_pot;
-  values_out.tau_E = tau_E;
-  values_out.tau_W = tau_W;
-
-  growth_out out;
-  out.height = height_pot_growth;
-  out.needles = needle_pot_growth;
-  out.roots = root_pot_growth;
-  out.ecto = root_pot_growth; // TODO: temporary to get seasonal variation
-  out.diameter = wall_pot_growth;
-  out.bud = bud_pot_growth;
-  out.GD = GD;
-  out.release = en_pot_release;
-  out.use = en_pot_growth;
-  out.previous_values = values_out;
-  out.g = g;
-
-  return out;
+  log_potential_growth(day, days_gone, state, out);
 }
-
-
-/*
- * Growth wrapper!
- */
-
-// [[Rcpp::export]]
-Rcpp::List growth_wrapper(int day,
-                          int year,
-                          double TAir,
-                          double TSoil_A,
-                          double TSoil_B,
-                          double Soil_Moisture,
-                          double PF,
-                          double GPP_ref,
-                          bool root_as_Ding,
-                          bool xylogenesis_option,
-                          bool environmental_effect_xylogenesis,
-                          bool sD_estim_T_count,
-                          Rcpp::DataFrame pCASSIA_common,
-                          Rcpp::DataFrame pCASSIA_parameters,
-                          Rcpp::DataFrame pCASSIA_ratios,
-                          Rcpp::DataFrame pCASSIA_sperling,
-                          std::vector<double> extras_sperling,
-
-                          double CH,
-                          double B0,
-                          double en_pot_growth_old,
-                          double GPP_mean,
-                          double GPP_previous_sum,
-
-                          bool LH_estim,
-                          bool LN_estim,
-                          bool LD_estim,
-                          bool tests,
-
-                          std::vector<double> growth_in,
-                          double last_year_HH,
-                          int no_day) {
-
-  growth_values_out growth_previous = make_growth(growth_in);
-  CASSIA_common common = make_common(pCASSIA_common);
-  CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
-  CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
-
-  growth_out out = growth(day,
-                          year,
-                          TAir,
-                          TSoil_A,
-                          TSoil_B,
-                          Soil_Moisture,
-                          PF,
-                          GPP_ref,
-                          root_as_Ding,
-                          xylogenesis_option,
-                          environmental_effect_xylogenesis,
-                          sD_estim_T_count,
-                          common,
-                          parameters,
-                          ratios,
-                          CH,
-                          B0,
-                          GPP_mean,
-                          GPP_previous_sum,
-
-                          LH_estim,
-                          LN_estim,
-                          LD_estim,
-                          tests,
-
-                          growth_previous,
-                          last_year_HH,
-                          no_day);
-
-  return Rcpp::List::create(Rcpp::_["height_growth"] = out.height,
-                            Rcpp::_["needles_growth"] = out.needles,
-                            Rcpp::_["roots_growth"] = out.roots,
-                            Rcpp::_["diameter"] = out.diameter,
-                            Rcpp::_["bud"] = out.bud);
-
-}
-
-
-
 

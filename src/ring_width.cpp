@@ -1,53 +1,81 @@
 #include "CASSIA.h"
+#include <cmath>
+#include <algorithm>
 
-ring_width_out ring_width_generator(int day,
-                                    ring_width_out previous_value,
-                                    growth_values_out growth_previous,
-                                    CASSIA_parameters parameters,
-                                    double GD_tot) {
+void ring_width_generator(int day,
+                          int days_gone,
+                          growth_state& state,
+                          output_vector& all_out,
+                          const CASSIA_parameters& parameters) {
 
-  double n_E_tot, n_W_tot, n_M_tot;
+  // double n_rows = ratios.form_factor * parameters.h0 / parameters.cell_l_ew * M_PI * parameters.D0 / parameters.cell_d_ew; // TODO: not used anywhere
+
+  // Save previous values to avoid in-place dependency issues
+  double prev_n_E = state.n_E_tot;
+  double prev_n_W = state.n_W_tot;
+  double prev_n_M = state.n_M_tot;
+  double prev_max_ew_cells = state.max_ew_cells_tot;
+  double prev_max_ew_width = state.max_ew_width_tot;
+
   if (day < 1) {
-    n_E_tot = 0;
-    n_W_tot = 0;
-    n_M_tot = 0;
+    state.n_E_tot = 0.0;
+    state.n_W_tot = 0.0;
+    state.n_M_tot = 0.0;
   } else {
-    n_E_tot = previous_value.n_E_tot + GD_tot - previous_value.n_E_tot / growth_previous.tau_E;
-    n_W_tot = previous_value.n_W_tot + previous_value.n_E_tot / growth_previous.tau_E - previous_value.n_W_tot / growth_previous.tau_W;
-    n_M_tot = previous_value.n_M_tot + previous_value.n_W_tot / growth_previous.tau_W;
+    state.n_E_tot = prev_n_E + state.GD - prev_n_E / state.tau_E;
+    state.n_W_tot = prev_n_W + prev_n_E / state.tau_E - prev_n_W / state.tau_W;
+    state.n_M_tot = prev_n_M + prev_n_W / state.tau_W;
   }
 
-  double cells_tot = n_W_tot + n_M_tot;
+  double cells_tot = state.n_W_tot + state.n_M_tot;
 
-  double ew_cells_tot, lw_cells_tot, max_ew_cells_tot, tot_mm;
-  if (growth_previous.sD < pow(parameters.sDc, 2.0) / parameters.Uggla) {
-    ew_cells_tot = cells_tot;
-    lw_cells_tot = 0.0;
-    max_ew_cells_tot = std::max(ew_cells_tot, previous_value.max_ew_cells_tot);
+  if (state.sD < std::pow(parameters.sDc, 2.0) / parameters.Uggla) {
+    state.ew_cells_tot = cells_tot;
+    state.lw_cells_tot = 0.0;
+    state.max_ew_cells_tot = std::max(state.ew_cells_tot, prev_max_ew_cells);
   } else {
-    ew_cells_tot = 0.0;
-    max_ew_cells_tot = std::max(ew_cells_tot, previous_value.max_ew_cells_tot);
-    lw_cells_tot = cells_tot - ew_cells_tot - max_ew_cells_tot;
+    state.ew_cells_tot = 0.0;
+    state.max_ew_cells_tot = std::max(state.ew_cells_tot, prev_max_ew_cells);
+    state.lw_cells_tot = cells_tot - state.ew_cells_tot - state.max_ew_cells_tot;
   }
 
-  double ew_width_tot = ew_cells_tot * parameters.cell_d_ew * 1000;
-  double lw_width_tot = lw_cells_tot * parameters.cell_d_lw * 1000;
-  double max_ew_width_tot = std::max(ew_width_tot, previous_value.max_ew_width_tot);
+  double ew_width_tot = state.ew_cells_tot * parameters.cell_d_ew * 1000.0;
+  double lw_width_tot = state.lw_cells_tot * parameters.cell_d_lw * 1000.0;
+  state.max_ew_width_tot = std::max(ew_width_tot, prev_max_ew_width);
 
-  if (growth_previous.sD < pow(parameters.sDc, 2.0) / parameters.Uggla) {
-    tot_mm = ew_width_tot;
+  if (state.sD < std::pow(parameters.sDc, 2.0) / parameters.Uggla) {
+    state.tot_mm = ew_width_tot;
   } else {
-    tot_mm = lw_width_tot + max_ew_width_tot;
+    state.tot_mm = lw_width_tot + state.max_ew_width_tot;
   }
 
-  // Output
-  ring_width_out out;
-  out.n_E_tot = n_E_tot;
-  out.n_M_tot = n_M_tot;
-  out.n_W_tot = n_W_tot;
-  out.tot_mm = tot_mm;
-  out.max_ew_cells_tot = max_ew_cells_tot;
-  out.max_ew_width_tot = max_ew_width_tot;
+  /*
+   * LOGGING
+   */
 
-  return out;
+  int index_ref = day - 1;
+  if (index_ref < 0) {
+    index_ref = 0;
+  }
+
+  // NOTE: Not cumulative
+  all_out.ring_width[day] = state.tot_mm;
+
+  all_out.culm_growth.diameter[day] = all_out.culm_growth.diameter[index_ref] + 2*state.tot_mm;
+  all_out.culm_growth.diameter_potential[day] = all_out.culm_growth.diameter_potential[index_ref] + 2*state.pot_mm;
+
+  double xylem_width{0.0}, xylem_mass{0.0};
+  double days_in_15_years = 366*4 + 365*11;
+  if (day > days_in_15_years) {
+    xylem_width = all_out.culm_growth.diameter[day] - all_out.culm_growth.diameter[index_ref - days_in_15_years];
+    xylem_mass = M_PI * pow(xylem_width/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
+  } else {
+    xylem_mass = 0.8 * M_PI * pow(all_out.ring_width[day]/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
+  }
+
+  double phloem_mass = M_PI * pow(1.5/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
+
+  all_out.culm_growth.xylem_sh[day] = all_out.culm_growth.xylem_sh[index_ref] + xylem_mass;
+  all_out.culm_growth.phloem[day] = all_out.culm_growth.xylem_sh[index_ref] + phloem_mass;
+
 }

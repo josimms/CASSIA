@@ -33,16 +33,3 @@ repola_out repola(CASSIA_parameters parameters) {
 
   return out;
 }
-
-// [[Rcpp::export]]
-Rcpp::List repola_test_cpp(Rcpp::DataFrame pCASSIA_parameters,
-                           Rcpp::DataFrame pCASSIA_sperling) {
-
-  CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
-
-  repola_out out = repola(parameters);
-  return Rcpp::List::create(Rcpp::_["needle_mass"] = out.needle_mass,
-                            Rcpp::_["m_N_tot"] = out.m_N_tot,
-                            Rcpp::_["m_R_tot"] = out.m_R_tot,
-                            Rcpp::_["m_N"] = out.m_N);
-}

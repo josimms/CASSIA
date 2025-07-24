@@ -257,7 +257,7 @@ parameters_soil parameters_initalise_test(std::vector<double> parameters_R);
 #ifndef PKG_respiration_H
 #define PKG_respiration_H
 
-double respiration(double Tmb, double Rm, double Q10);
+// double respiration(double Tmb, double Rm, double Q10);
 
 #endif
 

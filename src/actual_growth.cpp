@@ -1,63 +1,66 @@
 #include "CASSIA.h"
 
-growth_out actual_growth(CASSIA_parameters parameters,
-                         CASSIA_common common,
-                         carbo_tracker storage,
-                         growth_out potential_growth,
-                         respiration_out resp,
-                         bool sperling_sugar_model,
-                         growth_out nitrogen_capacity) {
+void actual_growth(int day,
+                   int days_gone,
+                   const CASSIA_parameters& parameters,
+                   const CASSIA_common& common,
+                   const carbo_tracker& storage,
+                   const photosynthesis_out& photosynthesis,
+                   growth_state& tree_state,
+                   output_vector& all_out,
+                   Settings boolsettings,
+                   growth_out nitrogen_capacity) {
 
-  growth_out actual_growth_out;
   double phloem_mass = 7.410537931;
   double xylem_st_mass = 8.65862069;
 
   double phloem_growth_share = phloem_mass / (phloem_mass + xylem_st_mass);
   double xylem_st_growth_share = xylem_st_mass / (phloem_mass + xylem_st_mass);
+
   /*
    * Height
    */
 
   double storage_height = 0;
-  if (sperling_sugar_model) {
+  if (boolsettings.sperling_model) {
     storage_height = (phloem_growth_share * storage.phloem + phloem_growth_share * storage.xylem_st);
   } else {
     storage_height = storage.needles;
   }
-  actual_growth_out.height = potential_growth.height * std::min(storage_height, nitrogen_capacity.height);
+  tree_state.height = tree_state.height * std::min(storage_height, nitrogen_capacity.height);
 
   /*
    * Wall
    */
 
   double storage_wall = 0;
-  if (sperling_sugar_model) {
+  if (boolsettings.sperling_model) {
     storage_wall = (phloem_growth_share * storage.phloem + xylem_st_growth_share * storage.xylem_st);
   } else {
     storage_wall = storage.needles;
   }
-  actual_growth_out.wall = potential_growth.diameter * std::min(storage_wall, nitrogen_capacity.wall);
+  tree_state.wall = tree_state.diameter * std::min(storage_wall, nitrogen_capacity.wall);
 
   /*
    * Bud
    */
-  actual_growth_out.bud = potential_growth.bud * std::min(storage.needles, nitrogen_capacity.bud);
+  tree_state.bud = tree_state.bud * std::min(storage.needles, nitrogen_capacity.bud);
 
   /*
    * Needles
    */
-  actual_growth_out.needles = potential_growth.needles * std::min(storage.needles, nitrogen_capacity.needles);
+  tree_state.needles = tree_state.needles * std::min(storage.needles, nitrogen_capacity.needles);
 
   /*
    * Roots
    */
   double storage_roots;
-  if (sperling_sugar_model) {
+  if (boolsettings.sperling_model) {
     storage_roots = storage.roots;
   } else {
     storage_roots = storage.needles;
   }
-  actual_growth_out.roots = potential_growth.roots * std::min(storage_roots, nitrogen_capacity.roots);
+  tree_state.roots = tree_state.roots * std::min(storage_roots, nitrogen_capacity.roots);
 
   /*
    * Mycorrhiza
@@ -68,20 +71,55 @@ growth_out actual_growth(CASSIA_parameters parameters,
    } else {
    storage_mycorrhiza = storage.needles;
    }
-   actual_growth_out. = potential_growth.roots * std::min(storage_mycorrhiza, nitrogen_capacity.roots);
+   actual_growth_out. = tree_state.roots * std::min(storage_mycorrhiza, nitrogen_capacity.roots);
    */
 
   /*
    * GD
    */
   double storage_GD;
-  if (sperling_sugar_model) {
+  if (boolsettings.sperling_model) {
     storage_GD = (phloem_growth_share * storage.phloem + xylem_st_growth_share * storage.xylem_st);
   } else {
     storage_GD = storage.needles;
   }
-  actual_growth_out.GD = potential_growth.GD * std::min(storage_GD, nitrogen_capacity.wall);
+  tree_state.GD = tree_state.GD * std::min(storage_GD, nitrogen_capacity.wall);
 
-  return actual_growth_out;
-};
+
+  /*
+   * Save the output to a vector
+   */
+  log_actual_growth(day, days_gone, tree_state, all_out);
+
+
+  /*
+   * Culmative Log Manual
+   */
+  int index_ref = days_gone + day - 1;
+  if (index_ref < 0) {
+    index_ref = 0;
+  }
+
+  // TODO: indexing could be wrong, but it is defined!
+  // Culmulative
+  all_out.culm_growth.height[day] = all_out.culm_growth.height[index_ref] + tree_state.height;
+
+  // Growth and mortality
+  double growth_and_mortality = tree_state.roots * (0.975 - photosynthesis.fS); // TODO: more sensible value here!
+  all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref] + growth_and_mortality;
+  all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref] + growth_and_mortality;
+
+  // Needles accumulation (potentially include drop logic later)
+  all_out.culm_growth.needles[day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;
+
+  /*
+   * Ring width and log
+   */
+
+  ring_width_generator(day,
+                       days_gone,
+                       tree_state,
+                       all_out,
+                       parameters);
+}
 

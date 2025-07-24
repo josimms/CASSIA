@@ -2,7 +2,7 @@
 
 #include "CASSIA.h"
 
-// [[Rcpp::export]]
+// // [[Rcpp::export]]
 Rcpp::List CASSIA_eeo(int start_year,
                        int end_year,
 
@@ -274,11 +274,15 @@ Rcpp::List CASSIA_eeo(int start_year,
           if (climate.TAir[weather_index] < -900) climate.TAir[weather_index] = climate.TAir[weather_index-1];
           if (climate.VPD[weather_index] < 0 || climate.VPD[weather_index] > 6) climate.VPD[weather_index] = climate.VPD[weather_index-1];
           if (climate.Precip[weather_index] <    0) climate.Precip[weather_index] = climate.Precip[weather_index-1] * 0.3;
+
+     */
           /* On avg. P+1=0.315*P
            * (in Sodis & Hyde) */
-          if (climate.CO2[weather_index] < 0) climate.CO2[weather_index] = climate.CO2[weather_index-1];
-        }
-      }
+
+          /*
+          //if (climate.CO2[weather_index] < 0) climate.CO2[weather_index] = climate.CO2[weather_index-1];
+        //}
+      //}
 
       */
 

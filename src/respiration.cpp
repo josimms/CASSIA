@@ -1,17 +1,14 @@
 #include "CASSIA.h"
 
-respiration_out respiration(int day,
-                            CASSIA_parameters parameters,
-                            CASSIA_ratios ratios,
-                            repola_out repola,
-                            double TAir,
-                            double TSoil,
-                            bool temp_rise,
-                            bool Rm_acclimation,
-                            bool mN_varies,
-
-                            // parameters that I am not sure about
-                            double B0) {
+void respiration(int day,
+                 growth_state& tree_state,
+                 output_vector& out,
+                 const CASSIA_parameters& parameters,
+                 const CASSIA_ratios& ratios,
+                 double TAir,
+                 double TSoil,
+                 const Settings& settings,
+                 double B0) {
 
 
   double m_S_tot = ratios.form_factor * B0 * parameters.h0 * parameters.density_tree * parameters.carbon_share;		// woody carbon mass
@@ -23,7 +20,7 @@ respiration_out respiration(int day,
   }
 
   double Rm_accl = 1;
-  if ((temp_rise) & (Rm_acclimation)) {
+  if ((settings.temp_rise) & (settings.Rm_acclimation)) {
     Rm_accl = 0.85;
   }
 
@@ -32,7 +29,7 @@ respiration_out respiration(int day,
   double RmN_a = parameters.Rm_N * (std::exp(log(parameters.Q10_N) / 10 * TAir) - 0.7) * m_N_tot * Rm_accl;						// Maintenance respiration of needles
 
   double m_N_tot2;
-  if (mN_varies) {
+  if (settings.mN_varies) {
     if ((day > 149) & (day < 284)) {
       m_N_tot2 = m_N_tot;
     } else {
@@ -54,52 +51,15 @@ respiration_out respiration(int day,
     RmR = RmR_a;
   }
 
-  respiration_out out;
-  out.RmN = RmN;
-  out.RmS = RmS;
-  out.RmR = RmR;
-  out.Rm_a = RmN + RmS + RmR;
+  tree_state.RmN = RmN;
+  tree_state.RmS = RmS;
+  tree_state.RmR = RmR;
+  tree_state.Rm_a = RmN + RmS + RmR;
 
-  return out;
+  out.RmN.push_back(RmN);
+  out.RmS.push_back(RmS);
+  out.RmR.push_back(RmR);
+  out.Rm_a.push_back(RmN + RmS + RmR);
+
 }
-
-/*
- * Test function
- */
-
-// [[Rcpp::export]]
-Rcpp::List respiration_test_cpp(Rcpp::DataFrame pCASSIA_parameters,
-                                Rcpp::DataFrame pCASSIA_common,
-                                Rcpp::DataFrame pCASSIA_ratios,
-                                Rcpp::DataFrame pCASSIA_sperling,
-                                std::vector<double> extras_sperling,
-                                int day,
-                                double TAir,
-                                double TSoil,
-                                bool temp_rise,
-                                bool Rm_acclimation,
-                                bool mN_varies,
-                                double B0) {
-
-  /*
-   * Building the data structures
-   */
-
-  CASSIA_common common = make_common(pCASSIA_common);
-  CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
-  CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
-  repola_out repola_values = repola(parameters);
-
-  respiration_out resp = respiration(day,
-                                     parameters, ratios, repola_values,
-                                     TAir, TSoil,
-                                     temp_rise, Rm_acclimation, mN_varies,
-                                     B0);
-
-  return Rcpp::List::create(Rcpp::_["RmN"] = resp.RmN,
-                            Rcpp::_["RmS"] = resp.RmS,
-                            Rcpp::_["RmR"] = resp.RmR,
-                            Rcpp::_["Rm_a"] = resp.Rm_a);
-}
-
 
