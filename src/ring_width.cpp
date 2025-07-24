@@ -53,7 +53,7 @@ void ring_width_generator(int day,
    * LOGGING
    */
 
-  int index_ref = day - 1;
+  int index_ref = day + days_gone - 1;
   if (index_ref < 0) {
     index_ref = 0;
   }
