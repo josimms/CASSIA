@@ -143,6 +143,7 @@ void printOutputVectorSizes(const output_vector& out) {
   std::cout << "storage_term_vector.xylem_st: " << out.storage_term_vector.xylem_st.size() << std::endl;
   std::cout << "storage_term_vector.roots: " << out.storage_term_vector.roots.size() << std::endl;
   std::cout << "nitrogen_balance: " << out.nitrogen_balance.size() << std::endl;
+  // TODO: n_E_pot isn't the right output
   std::cout << "n_E_pot (height): " << out.nitrogen_capacity_vector.height.size() << std::endl;
   std::cout << "n_W_pot (diameter): " << out.nitrogen_capacity_vector.diameter.size() << std::endl;
   std::cout << "n_M_pot (mycorrhiza): " << out.nitrogen_capacity_vector.mycorrhiza.size() << std::endl;
