@@ -100,9 +100,8 @@ void actual_growth(int day,
     index_ref = 0;
   }
 
-  // TODO: indexing could be wrong, but it is defined!
   // Culmulative
-  all_out.culm_growth.height[day] = all_out.culm_growth.height[index_ref] + tree_state.height;
+  all_out.culm_growth.height[days_gone + day] = all_out.culm_growth.height[index_ref] + tree_state.height;
 
   // Growth and mortality
   double growth_and_mortality = tree_state.roots * (0.975 - photosynthesis.fS); // TODO: more sensible value here!

@@ -59,23 +59,23 @@ void ring_width_generator(int day,
   }
 
   // NOTE: Not cumulative
-  all_out.ring_width[day] = state.tot_mm;
+  all_out.ring_width[day + days_gone] = state.tot_mm;
 
-  all_out.culm_growth.diameter[day] = all_out.culm_growth.diameter[index_ref] + 2*state.tot_mm;
-  all_out.culm_growth.diameter_potential[day] = all_out.culm_growth.diameter_potential[index_ref] + 2*state.pot_mm;
+  all_out.culm_growth.diameter[day + days_gone] = all_out.culm_growth.diameter[index_ref] + 2*state.tot_mm;
+  all_out.culm_growth.diameter_potential[day + days_gone] = all_out.culm_growth.diameter_potential[index_ref] + 2*state.pot_mm;
 
   double xylem_width{0.0}, xylem_mass{0.0};
   double days_in_15_years = 366*4 + 365*11;
-  if (day > days_in_15_years) {
-    xylem_width = all_out.culm_growth.diameter[day] - all_out.culm_growth.diameter[index_ref - days_in_15_years];
+  if (day + days_gone > days_in_15_years) {
+    xylem_width = all_out.culm_growth.diameter[day + days_gone] - all_out.culm_growth.diameter[index_ref - days_in_15_years];
     xylem_mass = M_PI * pow(xylem_width/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
   } else {
-    xylem_mass = 0.8 * M_PI * pow(all_out.ring_width[day]/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
+    xylem_mass = 0.8 * M_PI * pow(all_out.ring_width[day + days_gone]/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
   }
 
   double phloem_mass = M_PI * pow(1.5/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
 
-  all_out.culm_growth.xylem_sh[day] = all_out.culm_growth.xylem_sh[index_ref] + xylem_mass;
-  all_out.culm_growth.phloem[day] = all_out.culm_growth.xylem_sh[index_ref] + phloem_mass;
+  all_out.culm_growth.xylem_sh[day + days_gone] = all_out.culm_growth.xylem_sh[index_ref] + xylem_mass;
+  all_out.culm_growth.phloem[day + days_gone] = all_out.culm_growth.xylem_sh[index_ref] + phloem_mass;
 
 }
