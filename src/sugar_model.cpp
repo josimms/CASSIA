@@ -790,9 +790,8 @@ void sugar_model(int year,
 
         double N = 0.5;
 
-        double mycorrhizal_nitrogen_demand = 0.2; // NOTE: currently not used
         uptake = nitrogen_uptake(N,
-                                 myco_demand,
+                                 sugar.mycorrhiza + sugar.surplus,
                                  out.culm_growth.mycorrhiza[day-1],
                                  out.culm_growth.roots[day-1],
                                  mycorrhizal_nitrogen_demand,
@@ -800,8 +799,18 @@ void sugar_model(int year,
 
         // C:N ratios are from the Korhonen 2013 paper
         // TODO: real value for the roots
-        // TODO: I think the phloem share should be included here!
-        nitrogen_balance = nitrogen_balance + uptake.total_uptake - growth_resp.needles - growth_resp.phloem - growth_resp.xylem_sh - growth_resp.xylem_st - growth_resp.roots;
+        // The parameters here are the nitrogen content of each organ per biomass divided by 0.5 to get N:C
+
+        // TODO: why does the height have more nitrogen than the wall? This doesn't seem quite right...
+
+        nitrogen_balance = nitrogen_balance + uptake.total_uptake -
+          4.9/0.5 * std::min(storage_term.needles, nitrogen_capacity.needles) * tree_state.needles -
+          2.1/0.5 * std::min(storage_term.needles, nitrogen_capacity.bud) * tree_state.bud -
+          3.7/0.5 * phloem_growth_share * (std::min(storage_term.phloem, nitrogen_capacity.wall) * tree_state.wall -
+          3.7/0.5 * xylem_sh_growth_share * (std::min(storage_term.xylem_st, nitrogen_capacity.wall) * tree_state.wall -
+          4.9/0.5 * std::min(storage_term.phloem, nitrogen_capacity.height) * tree_state.height) -
+          4.9/0.5 * std::min(storage_term.xylem_st, nitrogen_capacity.height) * tree_state.height) -
+          3.0/0.5 * std::min(storage_term.roots, nitrogen_capacity.roots) * tree_state.roots;
       }
 
       /*
