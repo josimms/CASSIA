@@ -169,6 +169,13 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.starch_vector.xylem_st[0] = starch.xylem_st = parameters.starch_xylem_st00 = parameters.starch_xylem_st0;
   all_out.sugar_vector.xylem_st[0] = sugar.xylem_st = parameters.sugar_xylem_st00 = parameters.sugar_xylem_st0;
 
+  // TODO: calculate this?
+  all_out.nitrogen_capacity_vector.needles[0] = 1;
+  all_out.nitrogen_capacity_vector.diameter[0] = 1;
+  all_out.nitrogen_capacity_vector.height[0] = 1;
+  all_out.nitrogen_capacity_vector.bud[0] = 1;
+  all_out.nitrogen_capacity_vector.roots[0] = 1;
+
   /*
    * YEAR LOOP
    */
