@@ -103,39 +103,6 @@ struct growth_state {
  * Growth
  */
 
-struct growth_values_out {
-  double sH = 0.0;
-  double fH = 0.0;
-  double HH = 0.0;
-  double sN = 0.0;
-  double fN = 0.0;
-  double sD = 0.0;
-  double fD = 0.0;
-  double sR = 0.0;
-  double fR = 0.0;
-  double n_rows = 0.0;
-  double GH = 0.0;
-  double GN = 0.0;
-  double GD = 0.0;
-  double max_N = 0.0;
-  double S_GPP = 0.0;
-  double dS_GPP = 0.0;
-  double S_GPP_ref = 0.0;
-  double dS_GPP_ref = 0.0;
-  double GPP_ref = 0.0;
-  double ew_cells_pot_max = 0.0;
-  double en_pot_growth = 0.0;
-  double pot_mm_max = 0.0;
-  double pot_mm = 0.0;
-  double wall_pot_growth = 0.0;
-  double n_E_pot = 0.0;
-  double n_W_pot = 0.0;
-  double n_M_pot = 0.0;
-  double n_E = 0.0;
-  double tau_E = 0.0;
-  double tau_W = 0.0;
-};
-
 struct growth_out {
   double diameter = 0.0;
   double needles = 0.0;
@@ -150,7 +117,6 @@ struct growth_out {
   double respiration_growth = 0.0;
   double respiration_maintenance = 0.0;
   double g = 0.0;
-  growth_values_out previous_values;
 };
 
 struct growth_vector {
