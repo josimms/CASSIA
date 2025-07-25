@@ -397,7 +397,8 @@ lines(dates, CASSIA_preles_1998_2022$Sugar$storage_term_phloem, type = "l", col 
 lines(dates, CASSIA_preles_1998_2022$Sugar$storage_term_xylem_sh, type = "l", col = "red")
 lines(dates, CASSIA_preles_1998_2022$Sugar$storage_term_xylem_st, type = "l", col = "gold")
 
-plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, main = "Surgar Out Seperated by Type", col = "red", xlab = "Date", ylab = "Sugar, Kg C", type = "l")
+plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, main = "Surgar Out Seperated by Type", col = "red", 
+     xlab = "Date", ylab = "Sugar, Kg C", type = "l", ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus)))
 lines(dates, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus)
 ```
 
