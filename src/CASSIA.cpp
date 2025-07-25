@@ -407,7 +407,7 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   // Dataframes
 
-  printOutputVectorSizes(all_out);
+  // printOutputVectorSizes(all_out);
 
   if (nitrogen_change) {
     Rcpp::DataFrame df5 = Rcpp::DataFrame::create(
