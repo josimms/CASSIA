@@ -172,7 +172,6 @@ double sugar_investment_for_nitrogen_target(double nitrogen_target,
 }
 
 double nitrogen_transfer_from_sugar(double sugar_to_mycorrhiza,
-                                    double ectomycorrhizal_uptake,
                                     double sugar_half_saturation) {
   // Clamp to avoid divide-by-zero
   sugar_to_mycorrhiza = std::max(sugar_to_mycorrhiza, 0.0);
@@ -181,7 +180,7 @@ double nitrogen_transfer_from_sugar(double sugar_to_mycorrhiza,
   double transfer_fraction = sugar_to_mycorrhiza / (sugar_to_mycorrhiza + sugar_half_saturation);
 
   // Total N delivered to tree
-  return transfer_fraction * ectomycorrhizal_uptake;
+  return transfer_fraction;
 }
 
 
@@ -195,7 +194,6 @@ uptake_structre nitrogen_uptake(double N,
   double uptake_capacity_constant = 0.1;
   double root_exploration = 0.0017;
   double mycelial_exploration = 0.5; // TODO: check numbers
-  double collonialisation = 0.9; // TODO: don't make this dynamic yet! Just set values
 
   /*
    * Equations from Franklin 2014
@@ -209,13 +207,13 @@ uptake_structre nitrogen_uptake(double N,
 
   double ectomycorrhizal_transfer;
   if (mycorrhiza_passive) {
-    ectomycorrhizal_transfer = collonialisation * ectomycorrhizal_uptake;
+    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.05) * ectomycorrhizal_uptake;
   } else {
-    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, ectomycorrhizal_uptake, 0.05); // TODO: tunable value
+    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.05) * ectomycorrhizal_uptake * (1 - mycorrhizal_nitrogen_demand);
   }
 
 
-  double total_uptake = root_uptake * (1 - collonialisation) + ectomycorrhizal_transfer;
+  double total_uptake = ectomycorrhizal_transfer + (1 - nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.05)) * root_uptake;
 
   uptake_structre out;
   out.ectomycorrhizal_transfer = ectomycorrhizal_transfer;
@@ -788,14 +786,18 @@ void sugar_model(int year,
         nitrogen_capacity.height  = nitrogen_storage(nitrogen_balance/5.0, "height");
         nitrogen_capacity.roots   = nitrogen_storage(nitrogen_balance/5.0, "roots");
 
+        // TODO: make these input parameters
         double N = 0.5;
+        double mycorrhizal_nitrogen_demand = 0.2;
 
+        // TODO: make this into an input parameter
+        // TODO: consdier a different uptake rate for the sugar surplus and the sugar.mycorrhiza!
         uptake = nitrogen_uptake(N,
                                  sugar.mycorrhiza + sugar.surplus,
                                  out.culm_growth.mycorrhiza[day-1],
                                  out.culm_growth.roots[day-1],
                                  mycorrhizal_nitrogen_demand,
-                                 FALSE);
+                                 TRUE);
 
         // C:N ratios are from the Korhonen 2013 paper
         // TODO: real value for the roots
