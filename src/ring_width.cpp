@@ -65,9 +65,9 @@ void ring_width_generator(int day,
   all_out.culm_growth.diameter_potential[day + days_gone] = all_out.culm_growth.diameter_potential[index_ref] + 0.1*2.0*state.pot_mm;
 
   double xylem_width{0.0}, xylem_mass{0.0};
-  double days_in_15_years = 366*4 + 365*11;
-  if (day + days_gone > days_in_15_years) {
-    xylem_width = all_out.culm_growth.diameter[day + days_gone] - all_out.culm_growth.diameter[index_ref - days_in_15_years];
+  double days_in_16_years = 366*4 + 365*12;
+  if (day + days_gone > days_in_16_years) {
+    xylem_width = all_out.culm_growth.diameter[day + days_gone] - all_out.culm_growth.diameter[index_ref - days_in_16_years];
     xylem_mass = M_PI * pow(xylem_width/100.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
   } else {
     xylem_mass = 0.8 * M_PI * pow(all_out.ring_width[day + days_gone]/1000.0, 2.0) * all_out.culm_growth.height[index_ref] * parameters.cell_wall_density_ew;
