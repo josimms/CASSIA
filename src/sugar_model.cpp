@@ -161,14 +161,18 @@ double sugar_investment_for_nitrogen_target(double nitrogen_target,
                                             double sugar_half_saturation) {
   // Ensure safe input values
   nitrogen_target = std::max(nitrogen_target, 0.0);
-  ectomycorrhizal_uptake = std::max(ectomycorrhizal_uptake, 1e-12); // avoid divide-by-zero
+  ectomycorrhizal_uptake = std::max(ectomycorrhizal_uptake, 1e-10); // avoid divide-by-zero
 
-  // Clamp nitrogen target just below max uptake
-  double max_target = 0.999 * ectomycorrhizal_uptake;
-  double safe_target = std::min(nitrogen_target, max_target);
+  double claped_uptake = std::min(nitrogen_target/ectomycorrhizal_uptake, 1.0);
+  // Note this is justified as if the nitrogen target is larger than the ectomycorrhizal uptake
+  // If the target nitrogen is more than you need 100% of ectomycorrhizal uptake
+  // Therefore clap to 1
+
+  double numerator = claped_uptake * sugar_half_saturation;
+  double denominator = 1 - claped_uptake;
 
   // Compute sugar investment
-  return (sugar_half_saturation * safe_target) / (ectomycorrhizal_uptake - safe_target);
+  return numerator / denominator;
 }
 
 double nitrogen_transfer_from_sugar(double sugar_to_mycorrhiza,
@@ -186,9 +190,11 @@ double nitrogen_transfer_from_sugar(double sugar_to_mycorrhiza,
 
 uptake_structre nitrogen_uptake(double N,
                                 double sugar_to_mycorrhiza,
+                                double surplus_sugar,
                                 double mycorrhizal_biomass,
                                 double root_biomass,
                                 double mycorrhizal_nitrogen_demand,
+                                double sugar_half_saturation,
                                 bool mycorrhiza_passive) {
 
   double uptake_capacity_constant = 0.1;
@@ -207,13 +213,14 @@ uptake_structre nitrogen_uptake(double N,
 
   double ectomycorrhizal_transfer;
   if (mycorrhiza_passive) {
-    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.05) * ectomycorrhizal_uptake;
+    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, sugar_half_saturation) * ectomycorrhizal_uptake;
   } else {
-    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.05) * ectomycorrhizal_uptake * (1 - mycorrhizal_nitrogen_demand);
+    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, sugar_half_saturation) * ectomycorrhizal_uptake * (1 - mycorrhizal_nitrogen_demand);
   }
 
+  double free_sugar_percentage = surplus_sugar/(surplus_sugar + sugar_to_mycorrhiza + 1e-10);
 
-  double total_uptake = ectomycorrhizal_transfer + (1 - nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.05)) * root_uptake;
+  double total_uptake = ectomycorrhizal_transfer + free_sugar_percentage * root_uptake;
 
   uptake_structre out;
   out.ectomycorrhizal_transfer = ectomycorrhizal_transfer;
@@ -573,6 +580,7 @@ void sugar_model(int year,
       double total_storage = total_sugar_now + total_starch_now;
 
       double myco_demand = parameters.mycorrhiza_threshold * total_sugar_now;
+      double sugar_half_saturation = 0.05;  // tunable parameter
 
       if (surplus_c) {
         myco_demand = 0.0;
@@ -596,20 +604,15 @@ void sugar_model(int year,
 
         double normalised_nitrogen_target_increase = std::max(average_storage_term - nitrogen_capacity_average, 0.0);
 
-        // Step 2: Estimate mycorrhizal uptake capacity at current environment
-        double N = 0.5;
-        double ecto_uptake_capacity = out.culm_growth.mycorrhiza[day-1] * (
-          (0.1 * N * 0.5) / (0.1 + N * 0.5)  // from Franklin 2014
-        );
-        double ectomycorrhizal_uptake = ecto_uptake_capacity * N / (ecto_uptake_capacity + N);
+        // Step 2: Estimate mycorrhizal uptake capacity yesterday
+        double ecto_uptake_capacity = out.uptake_vector.ectomycorrhizal_uptake[days_gone + day - 1];
 
         // Step 3: Estimate sugar investment required to obtain that N increase
-        double sugar_half_saturation = 0.05;  // tunable parameter
         double nitrogen_target = normalised_nitrogen_target_increase;
 
         double sugar_required = sugar_investment_for_nitrogen_target(
           nitrogen_target,
-          ectomycorrhizal_uptake,
+          ecto_uptake_capacity,
           sugar_half_saturation
         );
 
@@ -793,10 +796,12 @@ void sugar_model(int year,
         // TODO: make this into an input parameter
         // TODO: consdier a different uptake rate for the sugar surplus and the sugar.mycorrhiza!
         uptake = nitrogen_uptake(N,
-                                 sugar.mycorrhiza + sugar.surplus,
+                                 sugar.mycorrhiza,
+                                 sugar.surplus,
                                  out.culm_growth.mycorrhiza[day-1],
                                  out.culm_growth.roots[day-1],
                                  mycorrhizal_nitrogen_demand,
+                                 sugar_half_saturation,
                                  TRUE);
 
         // C:N ratios are from the Korhonen 2013 paper
