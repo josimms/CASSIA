@@ -506,7 +506,7 @@ points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = 
 legend("topleft", legend = unique(c(as.factor(height_df$variable), as.factor(height_cl_df$variable))), 
        pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+16)), 
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.5)
-legend("bottomright", c("High", "Medium", "Low", "My Model"), col = c("blue", "gold", "red", "green"), lty = 1, bty = "n", cex = 0.75)
+legend("bottomright", c("High", "Medium", "Low", "Control"), col = c("blue", "gold", "red", "green"), lty = 1, bty = "n", cex = 0.75)
 
 ylim = range(c(CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_diameter, CASSIA_preles_1998_2022_sugar_medium$Culm_Growth$culm_growth_diameter, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter))
 plot(dates, CASSIA_preles_1998_2022_sugar_low$Culm_Growth$culm_growth_diameter, type = "l", col = "red", ylab = "Diameter (cm)", xlab = "Years", ylim = ylim)
@@ -1140,10 +1140,10 @@ ylim = range(0, c(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height,
 ylim[1] = 12
 plot(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height, col = "green", type = "l", main = "Height", ylim = ylim, ylab = "Height, m", xlab = "Years")
 lines(dates, CASSIA_preles_1998_2022_roots_surplus_c$Culm_Growth$culm_growth_height, col = "red")
-legend("bottomright", c("Control", "Conservative Carbohydrates"), col = c("green", "red"), , cex = 0.75, bty = "n", lty = 1)
+legend("topleft", c("Control", "Conservative Carbohydrates"), col = c("green", "red"), , cex = 0.75, bty = "n", lty = 1)
 points(as.Date(paste0(height_df$date, "-12-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
 points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+16)
-legend("topleft", legend = c("Tree Height\nBasal Area Weighted Mean"), 
+legend("bottomright", legend = c("Tree Height\nBasal Area Weighted Mean"), 
        pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+16)), 
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
@@ -1204,10 +1204,10 @@ plot(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height, col = "green
 lines(dates, CASSIA_preles_1998_2022_nitrogen_high$Culm_Growth$culm_growth_height, col = "blue")
 lines(dates, CASSIA_preles_1998_2022_nitrogen_medium$Culm_Growth$culm_growth_height, col = "orange")
 lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$culm_growth_height, col = "red")
-legend("bottomright", c("Control", "High Nitrogen", "Medium Nitrogen", "Low Nitrogen"), col = c("green", "blue", "orange", "red"), cex = 0.75, bty = "n", lty = 1)
+legend("topleft", c("Control", "High Nitrogen", "Medium Nitrogen", "Low Nitrogen"), col = c("green", "blue", "orange", "red"), cex = 0.75, bty = "n", lty = 1)
 points(as.Date(paste0(height_df$date, "-12-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
 points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+16)
-legend("topleft", legend = c("Tree Height\nBasal Area Weighted Mean"), 
+legend("bottomright", legend = c("Tree Height\nBasal Area Weighted Mean"), 
        pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+16)), 
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
@@ -1300,10 +1300,10 @@ ylim[1] = 12
 plot(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height, col = "green", type = "l", main = "Height", ylim = ylim, ylab = "Height, m", xlab = "Years")
 lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Culm_Growth$culm_growth_height, col = "red")
 lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Culm_Growth$culm_growth_height, col = "purple")
-legend("bottomright", c("Control", "Low Nitrogen", "Varied Nitrogen"), col = c("green", "red", "purple"), cex = 0.75, bty = "n", lty = 1)
+legend("topleft", c("Control", "Low Nitrogen", "Varied Nitrogen"), col = c("green", "red", "purple"), cex = 0.75, bty = "n", lty = 1)
 points(as.Date(paste0(height_df$date, "-12-31")), height_df$amount, col = "green", pch = as.numeric(as.factor(height_df$variable))+16)
 points(as.Date(paste0(height_cl_df$date, "-12-31")), height_cl_df$amount, col = "gold", pch = as.numeric(as.factor(height_cl_df$variable))+16)
-legend("topleft", legend = c("Tree Height\nBasal Area Weighted Mean"), 
+legend("bottomright", legend = c("Tree Height\nBasal Area Weighted Mean"), 
        pch = unique(c(as.numeric(as.factor(height_df$variable))+16, as.numeric(as.factor(height_cl_df$variable))+16)), 
        bty = "n", col = rep(c("green", "gold"),each = 4, cex = 0.75), cex = 0.75)
 
@@ -1365,9 +1365,9 @@ lines(dates, (CASSIA_preles_1998_2022$Culm_Growth$nitrogen_capacity_needles +
                 CASSIA_preles_1998_2022$Culm_Growth$nitrogen_capacity_wall + 
                 CASSIA_preles_1998_2022$Culm_Growth$nitrogen_capacity_roots)/5, col = "green")
 
-plot(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$storage/5, type = "l", xlab = "Years", ylab = "Tree Storage (between 0 and 1)", col = "red", ylim = c(0, 1))
-lines(dates, CASSIA_preles_1998_2022_nitrogen_varies$Sugar$storage/5, col = "purple")
-lines(dates, CASSIA_preles_1998_2022$Sugar$storage/5, col = "green")
+plot(dates, rep(mean(CASSIA_preles_1998_2022_nitrogen_low$Sugar$storage), length = length(dates)), type = "l", xlab = "Years", ylab = "Mean Tree Storage (between 0 and 1)", col = "red", ylim = c(0, 1))
+lines(dates, rep(mean(CASSIA_preles_1998_2022$Sugar$storage), length = length(dates)), col = "green")
+lines(dates, rep(mean(CASSIA_preles_1998_2022_nitrogen_varies$Sugar$storage), length = length(dates)), col = "purple")
 #dev.off()
 
 ###
@@ -1405,9 +1405,7 @@ lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_out_surplus
 lines(dates, cumsum(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_out_surplus), lty = 2, col = "pink")
 legend("topleft", c("Control", "Low Nitrogen", "Invested Nitrogen", "To Mycorrhiza", "Surplus C"), col = c("green", "red", "pink", "black", "black"), cex = 0.75, bty = "n", lty = c(1, 1, 1, 1, 2))
 
-legend("bottomright", c("Control", "Low Nitrogen", "Invested Nitrogen"), col = c("green", "red", "pink"), cex = 0.75, bty = "n", lty = 1)
-
-ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar), na.rm = T, ylim = ylim)
+ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_high$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar), na.rm = T)
 plot(dates, CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar in the Tree", ylab = "Sugar in Tree, kg", xlab = "Years", ylim = ylim)
 lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar, col = "red")
 lines(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar, col = "pink")
@@ -1425,12 +1423,13 @@ abline(h = mean(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$starch), lty =
 
 ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza), na.rm = T)
 plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, col = "green", type = "l", main = "Allocation to mycorrhiza", ylab = "Sugar to Mycorrhiza, kg", xlab = "Years", ylim = ylim)
-lines(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza, col = "pink")
 lines(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$sugar_to_mycorrhiza, col = "red")
+lines(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza, col = "pink")
 
 plot(dates, 100*CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022$Sugar$sugar, col = "green", type = "l", main = "Sugar % to mycorrhiza", ylab = "Sugar % to Mycorrhiza", xlab = "Years", ylim = c(0, 50))
-lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar, col = "pink")
 lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_medium$Sugar$sugar, col = "red")
+lines(dates, 100*CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar_to_mycorrhiza/CASSIA_preles_1998_2022_nitrogen_investment$Sugar$sugar, col = "pink")
+
 # TODO: add the surplus here
 
 par(mfrow = c(1, 2))
@@ -1450,9 +1449,9 @@ lines(dates, (CASSIA_preles_1998_2022$Culm_Growth$nitrogen_capacity_needles +
                 CASSIA_preles_1998_2022$Culm_Growth$nitrogen_capacity_wall + 
                 CASSIA_preles_1998_2022$Culm_Growth$nitrogen_capacity_roots)/5, col = "green")
 
-plot(dates, CASSIA_preles_1998_2022_nitrogen_low$Sugar$storage/5, type = "l", xlab = "Years", ylab = "Tree Storage (between 0 and 1)", col = "red", ylim = c(0, 1))
-lines(dates, CASSIA_preles_1998_2022_nitrogen_investment$Sugar$storage/5, col = "pink")
-lines(dates, CASSIA_preles_1998_2022$Sugar$storage/5, col = "green")
+plot(dates, rep(mean(CASSIA_preles_1998_2022_nitrogen_low$Sugar$storage/5), length = length(dates)), type = "l", xlab = "Years", ylab = "Mean Tree Storage (between 0 and 1)", col = "red", ylim = c(0, 1))
+lines(dates, rep(mean(CASSIA_preles_1998_2022_nitrogen_investment$Sugar$storage/5), length = length(dates)), col = "pink")
+lines(dates, rep(mean(CASSIA_preles_1998_2022$Sugar$storage/5), length = length(dates)), col = "green")
 ```
 
 
