@@ -150,11 +150,11 @@ Rcpp::List CASSIA_yearly(int start_year,
   }
 
   all_out.culm_growth.height[0] = parameters.h0;
-  all_out.culm_growth.diameter[0] = 1000.0 * parameters.D0;
-  all_out.culm_growth.diameter_potential[0] = 1000.0 * parameters.D0;
+  all_out.culm_growth.diameter[0] = 100.0 * parameters.D0;
+  all_out.culm_growth.diameter_potential[0] = 100.0 * parameters.D0;
   all_out.culm_growth.roots[0] = 2.0; // TODO: find a better value
   all_out.culm_growth.mycorrhiza[0] = 2.0; // TODO: make dynamic and find a better value
-  all_out.culm_growth.xylem_sh[0] = 0.8 * M_PI * pow((parameters.D0/2.0)/100.0, 2.0) * parameters.h0 * parameters.cell_wall_density_ew; // 80% of the diameter is sapwood
+  all_out.culm_growth.xylem_sh[0] = 0.8 * M_PI * pow(100.0*(parameters.D0/2.0), 2.0) * parameters.h0 * parameters.cell_wall_density_ew; // 80% of the diameter is sapwood
   all_out.culm_growth.phloem[0] = M_PI * pow(1.5/1000.0, 2.0) * parameters.h0 * parameters.cell_wall_density_ew;
 
   all_out.starch_vector.needles[0] = starch.needles = parameters.starch_needles00 = parameters.starch_needles0;
