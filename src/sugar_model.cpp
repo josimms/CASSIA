@@ -127,7 +127,7 @@ double nitrogen_storage(
   if (nitrogen_balance > storage_capcity) {
     out = 1.0;
   } else {
-    out = std::max(1.0 - pow(1.0 - nitrogen_balance/storage_capcity, 2.0), 0.0);
+    out = std::min(nitrogen_balance/storage_capcity, 1.0);
   }
 
   return(out);
