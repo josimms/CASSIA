@@ -1,0 +1,457 @@
+---
+title: "CASSIA_sugar_indervidual_functions"
+output: html_document
+---
+
+```{r}
+
+sugar_limitation <- function(s, l, g, epsilon = 1e-8) {
+  out <- ifelse(s < l,
+                0,
+                pmin(1, (s - l) / (g + epsilon)))
+  return(out)
+}
+
+sugar <- seq(0, 1, length.out = 100)
+
+par(mfrow = c(1, 2))
+
+# First plot
+plot(sugar, sugar_limitation(sugar, 0.2, 0.5), type = "l",
+     xlab = "Sugar", ylab = "Sugar Limitation (0-1)")
+lines(sugar, sugar_limitation(sugar, 0.1, 0.5), col = "blue")
+lines(sugar, sugar_limitation(sugar, 0.3, 0.5), col = "red")
+
+legend("bottomright",
+       legend = c("l = 0.2, g = 0.5",
+                  "l = 0.1, g = 0.5",
+                  "l = 0.3, g = 0.5"),
+       col = c("black", "blue", "red"),
+       lty = 1, cex = 0.8, bty = "n")
+
+# Second plot
+plot(sugar, sugar_limitation(sugar, 0.2, 0.25), type = "l",
+     xlab = "Sugar", ylab = "Sugar Limitation (0-1)")
+lines(sugar, sugar_limitation(sugar, 0.2, 0.5), col = "green")
+lines(sugar, sugar_limitation(sugar, 0.2, 0.75), col = "purple")
+
+legend("bottomright",
+       legend = c("l = 0.2, g = 0.25",
+                  "l = 0.2, g = 0.5",
+                  "l = 0.2, g = 0.75"),
+       col = c("black", "green", "purple"),
+       lty = 1, cex = 0.8, bty = "n")
+
+```
+
+```{r}
+
+w_function <- function(T_air, PAR) {
+  term1 <- 1 / (1 + exp(0.5 * (T_air - 5)))
+  term2 <- 1 / (1 + exp(0.2 * (PAR - 30)))
+  w <- 0.5 * (term1 + term2)
+  return(w)
+}
+
+plot(w_function(weather_2015$T, weather_2015$PAR), main = "Winter Scaling", xlab = "Days in 2015", ylab = "W Function")
+
+
+```
+
+```{r}
+
+F_function <- function(S, r, W, theta, A0, delta, k = 20) {
+  # logistic
+  sigma <- function(x) 1 / (1 + exp(-x))
+  
+  # effective sugar after winter cost
+  s <- S - W
+  
+  # base flux: synthesis (positive) and remobilization (negative)
+  F <- A0 * sigma(s) * s - delta * (1 - sigma(s)) * s * sigma(r)
+  
+  # soft caps using logistic "guards"
+  # k controls steepness of the guard (higher k ~ sharper clamp)
+  F <- F * sigma(k * (theta - F))    # storage capacity
+  F <- F * sigma(k * (s - F))        # sugar availability
+  F <- F * sigma(k * (r + F))        # starch availability
+  
+  return(F)
+}
+
+# Fixed parameters
+W <- 0.2
+theta <- 1.5
+A0 <- 1.2
+delta <- 1.2
+
+starch = seq(0, 1, length.out = 100)
+
+par(mfrow = c(1, 2))
+
+# --- Plot 1: Transfer to starch vs sugar ---
+plot(sugar, F_function(sugar, 0.25, W, theta, A0, delta),
+     xlab = "Sugar", ylab = "Transfered to Starch",
+     type = "l", col = "yellow")
+lines(sugar, F_function(sugar, 0.5, W, theta, A0, delta), col = "orange")
+lines(sugar, F_function(sugar, 0.75, W, theta, A0, delta), col = "red")
+
+legend("topleft",
+       legend = c("Starch = 0.25", "Starch = 0.5", "Starch = 0.75"),
+       col = c("yellow", "orange", "red"),
+       lty = 1, lwd = 2, cex = 0.8, bty = "n")
+
+# --- Plot 2: Transfer to sugar vs starch ---
+ylim <- range(F_function(0.25, starch, W, theta, A0, delta),
+              F_function(0.5, starch, W, theta, A0, delta),
+              F_function(0.75, starch, W, theta, A0, delta))
+
+plot(starch, F_function(0.25, starch, W, theta, A0, delta),
+     xlab = "Starch", ylab = "Transfered to Sugar",
+     type = "l", col = "yellow", ylim = ylim)
+lines(starch, F_function(0.5, starch, W, theta, A0, delta), col = "orange")
+lines(starch, F_function(0.75, starch, W, theta, A0, delta), col = "red")
+
+legend("topleft",
+       legend = c("Sugar = 0.25", "Sugar = 0.5", "Sugar = 0.75"),
+       col = c("yellow", "orange", "red"),
+       lty = 1, lwd = 2, cex = 0.8, bty = "n")
+
+par(mfrow = c(1, 2))  # 4 panels: W, theta, A0, delta
+
+# --- Sugar version --- #
+
+# 1. Vary W
+W_vals <- c(0.2, 0.5, 0.8)
+ylim = range(F_function(sugar, 0.5, W_vals[1], theta, A0, delta), F_function(sugar, 0.5, W_vals[2], theta, A0, delta), F_function(sugar, 0.5, W_vals[3], theta, A0, delta))
+plot(sugar, F_function(sugar, 0.5, W_vals[1], theta, A0, delta),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = "Effect of W (Starch = 0.5)")
+lines(sugar, F_function(sugar, 0.5, W_vals[2], theta, A0, delta), col = "blue")
+lines(sugar, F_function(sugar, 0.5, W_vals[3], theta, A0, delta), col = "green")
+legend("topleft", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# 1. Vary W
+plot(starch, F_function(0.5, starch, W_vals[1], theta, A0, delta),
+     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     xlab = "Starch", ylab = "F", main = "Effect of W (Sugar = 0.5)")
+lines(starch, F_function(0.5, starch, W_vals[2], theta, A0, delta, k), col = "blue")
+lines(starch, F_function(0.5, starch, W_vals[3], theta, A0, delta, k), col = "green")
+legend("topleft", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# 2. Vary theta
+theta_vals <- c(0.1, 0.5, 1.0)
+ylim = range(F_function(sugar, 0.5, W, theta_vals[1], A0, delta), F_function(sugar, 0.5,  W, theta_vals[2], A0, delta), F_function(sugar, 0.5,  W, theta_vals[3], A0, delta))
+plot(sugar, F_function(sugar, 0.5, W, theta_vals[1], A0, delta),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = "Effect of stoage (Starch = 0.5)")
+lines(sugar, F_function(sugar, 0.5, W, theta_vals[2], A0, delta), col = "blue")
+lines(sugar, F_function(sugar, 0.5, W, theta_vals[3], A0, delta), col = "green")
+legend("topleft", legend = paste("theta =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# 2. Vary theta
+plot(starch, F_function(0.5, starch, W, theta_vals[1], A0, delta),
+     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     xlab = "Starch", ylab = "F", main = "Effect of storage (Sugar = 0.5)")
+lines(starch, F_function(0.5, starch, W, theta_vals[2], A0, delta), col = "blue")
+lines(starch, F_function(0.5, starch, W, theta_vals[3], A0, delta), col = "green")
+legend("topleft", legend = paste("theta =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# 3. Vary A0
+A0_vals <- c(0.1, 0.2, 0.4)
+ylim = range(F_function(sugar, 0.5, W, theta, A0_vals[1], delta), 
+             F_function(sugar, 0.5,  W, theta, A0_vals[2], delta), 
+             F_function(sugar, 0.5,  W, theta, A0_vals[3], delta))
+plot(sugar, F_function(sugar, 0.5, W, theta, A0_vals[1], delta),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = "Effect of Synthesis Parameter\n (Starch = 0.5)")
+lines(sugar, F_function(sugar, 0.5, W, theta, A0_vals[2], delta), col = "blue")
+lines(sugar, F_function(sugar, 0.5, W, theta, A0_vals[3], delta), col = "green")
+legend("topleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# 3. Vary A0
+plot(starch, F_function(0.5, starch, W, theta, A0_vals[1], delta),
+     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     xlab = "Starch", ylab = "F", main = "Effect of Synthesis Parameter\n (Sugar = 0.5)")
+lines(starch, F_function(0.5, starch, W, theta, A0_vals[2], delta), col = "blue")
+lines(starch, F_function(0.5, starch, W, theta, A0_vals[3], delta), col = "green")
+legend("topleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# 4. Vary delta
+delta_vals <- c(0.1, 0.2, 0.4)
+ylim = range(F_function(sugar, 0.5, W, theta, A0, delta_vals[1]), 
+             F_function(sugar, 0.5,  W, theta, A0, delta_vals[2]), 
+             F_function(sugar, 0.5,  W, theta, A0, delta_vals[3]))
+plot(sugar, F_function(sugar, 0.5, W, theta, A0, delta_vals[1]),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = "Effect of Desynthesis Parameter\n (Starch = 0.5)")
+lines(sugar, F_function(sugar, 0.5, W, theta, A0, delta_vals[2]), col = "blue")
+lines(sugar, F_function(sugar, 0.5, W, theta, A0, delta_vals[3]), col = "green")
+legend("topleft", legend = paste("delta =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# 4. Vary delta
+plot(starch, F_function(0.5, starch, W, theta, A0, delta_vals[1]),
+     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     xlab = "Starch", ylab = "F", main = "Effect of Desynthesis Parameter\n (Sugar = 0.5)")
+lines(starch, F_function(0.5, starch, W, theta, A0, delta_vals[2]), col = "blue")
+lines(starch, F_function(0.5, starch, W, theta, A0, delta_vals[3]), col = "green")
+legend("topleft", legend = paste("delta =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+```
+
+```{r}
+F_capacity <- function(S, r, W = 0.5, theta_max = 0.5, 
+                       A0 = 0.2, delta = 0.2, k = 20) {
+  
+  # effective sugar after winter cost
+  s <- S - W
+  
+  # --- Hard-limit logistic functions ---
+  # Sugar availability (for synthesis)
+  sigma_s <- function(s, k) 1 / (1 + exp(k * (0 - s)))
+  
+  # Starch max capacity (synthesis stops when r -> theta_max)
+  sigma_r_max <- function(r, theta_max, k) 1 / (1 + exp(k * (r + s - theta_max)))
+  
+  # Starch minimum for remobilization
+  sigma_r_min <- function(r, k) 1 / (1 + exp(k * (0 - r)))
+  
+  # --- Fluxes ---
+  # Synthesis: sugar -> starch
+  F_syn <- A0 * s * sigma_r_max(r, theta_max, k) # sigma_s(s, k) * 
+  
+  # Remobilization: starch -> sugar
+  # Remove multiplication by sigma_s(s, k), or optionally multiply by (1 - sigma_s(s,k))
+  F_rem <- delta * r * sigma_r_min(r, k)
+  
+  # --- Combine smoothly ---
+  # alpha still interpolates between synthesis and remobilization
+  alpha <- sigma_s(s, k)
+  F <- alpha * F_syn - (1 - alpha) * F_rem
+  
+  return(F)
+}
+
+# --- Parameters ---
+W <- 0.5
+theta_max <- 1
+A0 <- 1.2
+delta <- 1.2
+k <- 20
+
+sugar <- seq(0, 1, length.out = 100)
+starch <- seq(0, 1, length.out = 100)
+
+par(mfrow = c(1, 2))
+
+ylim = range(F_capacity(sugar, 0.25, W, theta_max, A0, delta, k), 
+             F_capacity(sugar, 0.5, W, theta_max, A0, delta, k),
+             F_capacity(sugar, 0.75, W, theta_max, A0, delta, k))
+# --- Plot 1: Transfer to starch vs sugar ---
+plot(sugar, F_capacity(sugar, 0.25, W, theta_max, A0, delta, k),
+     xlab = "Sugar", ylab = "Transferred to Starch",
+     type = "l", col = "yellow", ylim = ylim)
+lines(sugar, F_capacity(sugar, 0.5, W, theta_max, A0, delta, k), col = "orange")
+lines(sugar, F_capacity(sugar, 0.75, W, theta_max, A0, delta, k), col = "red")
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max, col = "black", lty = 3)  # reference line
+
+legend("topleft",
+       legend = c("Starch = 0.25", "Starch = 0.5", "Starch = 0.75"),
+       col = c("yellow", "orange", "red"),
+       lty = 1, lwd = 2, cex = 0.8, bty = "n")
+
+# --- Plot 2: Transfer to sugar vs starch ---
+ylim <- range(F_capacity(0.25, starch, W, theta_max, A0, delta, k),
+              F_capacity(0.5, starch, W, theta_max, A0, delta, k),
+              F_capacity(0.75, starch, W, theta_max, A0, delta, k))
+
+plot(starch, F_capacity(0.25, starch, W, theta_max, A0, delta, k),
+     xlab = "Starch", ylab = "Transferred to Sugar",
+     type = "l", col = "yellow", ylim = ylim)
+lines(starch, F_capacity(0.5, starch, W, theta_max, A0, delta, k), col = "orange")
+lines(starch, F_capacity(0.75, starch, W, theta_max, A0, delta, k), col = "red")
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max, col = "black", lty = 3)  # reference line
+
+legend("topleft",
+       legend = c("Sugar = 0.25", "Sugar = 0.5", "Sugar = 0.75"),
+       col = c("yellow", "orange", "red"),
+       lty = 1, lwd = 2, cex = 0.8, bty = "n")
+
+# --- Parameter sweeps for F_capacity --- #
+
+# Fixed sugar/starch for reference
+s_ref <- 0.75
+r_ref <- 0.5
+
+par(mfrow = c(1, 2))  # 4 panels for W, theta_max, A0, delta
+
+# --- 1. Vary W ---
+W_vals <- c(0.2, 0.5, 0.8)
+
+# Sugar version
+ylim <- range(F_capacity(sugar, r_ref, W_vals[1], theta_max, A0, delta, k),
+              F_capacity(sugar, r_ref, W_vals[2], theta_max, A0, delta, k),
+              F_capacity(sugar, r_ref, W_vals[3], theta_max, A0, delta, k))
+
+plot(sugar, F_capacity(sugar, r_ref, W_vals[1], theta_max, A0, delta, k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = paste0("Effect of W \n (Starch = ", r_ref, ")"))
+lines(sugar, F_capacity(sugar, r_ref, W_vals[2], theta_max, A0, delta, k), col = "blue")
+lines(sugar, F_capacity(sugar, r_ref, W_vals[3], theta_max, A0, delta, k), col = "green")
+abline(v = W_vals[1], col = "red", lty = 2)  # reference line
+abline(v = W_vals[2], col = "blue", lty = 2)  # reference line
+abline(v = W_vals[3], col = "green", lty = 2)  # reference line
+abline(v = W, col = "black", lty = 2)  # reference line
+legend("topleft", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# Starch version
+ylim <- range(F_capacity(s_ref, starch, W_vals[1], theta_max, A0, delta, k),
+              F_capacity(s_ref, starch, W_vals[2], theta_max, A0, delta, k),
+              F_capacity(s_ref, starch, W_vals[3], theta_max, A0, delta, k))
+
+plot(starch, F_capacity(s_ref, starch, W_vals[1], theta_max, A0, delta, k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Starch", ylab = "F", main = paste0("Effect of W \n (Sugar = ", s_ref, ")"))
+lines(starch, F_capacity(s_ref, starch, W_vals[2], theta_max, A0, delta, k), col = "blue")
+lines(starch, F_capacity(s_ref, starch, W_vals[3], theta_max, A0, delta, k), col = "green")
+abline(v = W_vals[1], col = "red", lty = 2)  # reference line
+abline(v = W_vals[2], col = "blue", lty = 2)  # reference line
+abline(v = W_vals[3], col = "green", lty = 2)  # reference line
+abline(v = theta_max, col = "black", lty = 3)  # reference line
+legend("topleft", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+
+# --- 2. Vary theta_max ---
+theta_vals <- c(0.5, 1.0, 1.5)
+
+# Sugar version
+ylim <- range(F_capacity(sugar, r_ref, W, theta_vals[1], A0, delta, k),
+              F_capacity(sugar, r_ref, W, theta_vals[2], A0, delta, k),
+              F_capacity(sugar, r_ref, W, theta_vals[3], A0, delta, k))
+
+plot(sugar, F_capacity(sugar, r_ref, W, theta_vals[1], A0, delta, k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = paste0("Effect of θ_max \n (Starch = ", r_ref, ")"))
+lines(sugar, F_capacity(sugar, r_ref, W, theta_vals[2], A0, delta, k), col = "blue")
+lines(sugar, F_capacity(sugar, r_ref, W, theta_vals[3], A0, delta, k), col = "green")
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max[1], col = "red", lty = 3)  # reference line
+abline(v = theta_max[2], col = "blue", lty = 3)  # reference line
+abline(v = theta_max[3], col = "green", lty = 3)  # reference line
+legend("topleft", legend = paste("θ_max =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# Starch version
+ylim <- range(F_capacity(s_ref, starch, W, theta_vals[1], A0, delta, k),
+              F_capacity(s_ref, starch, W, theta_vals[2], A0, delta, k),
+              F_capacity(s_ref, starch, W, theta_vals[3], A0, delta, k))
+
+plot(starch, F_capacity(s_ref, starch, W, theta_vals[1], A0, delta, k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Starch", ylab = "F", main = paste0("Effect of θ_max \n (Sugar = ", s_ref, ")"))
+lines(starch, F_capacity(s_ref, starch, W, theta_vals[2], A0, delta, k), col = "blue")
+lines(starch, F_capacity(s_ref, starch, W, theta_vals[3], A0, delta, k), col = "green")
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max[1], col = "red", lty = 3)  # reference line
+abline(v = theta_max[2], col = "blue", lty = 3)  # reference line
+abline(v = theta_max[3], col = "green", lty = 3)  # reference line
+legend("topleft", legend = paste("θ_max =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+
+# --- 3. Vary A0 ---
+A0_vals <- c(0.5, 1.2, 2.0)
+
+# Sugar version
+ylim <- range(F_capacity(sugar, r_ref, W, theta_max, A0_vals[1], delta, k),
+              F_capacity(sugar, r_ref, W, theta_max, A0_vals[2], delta, k),
+              F_capacity(sugar, r_ref, W, theta_max, A0_vals[3], delta, k))
+
+plot(sugar, F_capacity(sugar, r_ref, W, theta_max, A0_vals[1], delta, k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = paste0("Effect of Synthesis Rate A0 \n (Starch = ", r_ref, ")"))
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max, col = "black", lty = 3)  # reference line
+lines(sugar, F_capacity(sugar, r_ref, W, theta_max, A0_vals[2], delta, k), col = "blue")
+lines(sugar, F_capacity(sugar, r_ref, W, theta_max, A0_vals[3], delta, k), col = "green")
+legend("topleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# Starch version
+ylim <- range(F_capacity(s_ref, starch, W, theta_max, A0_vals[1], delta, k),
+              F_capacity(s_ref, starch, W, theta_max, A0_vals[2], delta, k),
+              F_capacity(s_ref, starch, W, theta_max, A0_vals[3], delta, k))
+
+plot(starch, F_capacity(s_ref, starch, W, theta_max, A0_vals[1], delta, k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Starch", ylab = "F", main = paste0("Effect of Synthesis Rate A0 \n (Sugar = ", s_ref, ")"))
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max, col = "black", lty = 3)  # reference line
+lines(starch, F_capacity(s_ref, starch, W, theta_max, A0_vals[2], delta, k), col = "blue")
+lines(starch, F_capacity(s_ref, starch, W, theta_max, A0_vals[3], delta, k), col = "green")
+legend("topleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+
+# --- 4. Vary delta ---
+delta_vals <- c(0.5, 1.2, 2.0)
+
+# Sugar version
+ylim <- range(F_capacity(sugar, r_ref, W, theta_max, A0, delta_vals[1], k),
+              F_capacity(sugar, r_ref, W, theta_max, A0, delta_vals[2], k),
+              F_capacity(sugar, r_ref, W, theta_max, A0, delta_vals[3], k))
+
+plot(sugar, F_capacity(sugar, r_ref, W, theta_max, A0, delta_vals[1], k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = paste0("Effect of Remobilization Rate δ \n (Starch = ", r_ref, ")"))
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max, col = "black", lty = 3)  # reference line
+lines(sugar, F_capacity(sugar, r_ref, W, theta_max, A0, delta_vals[2], k), col = "blue")
+lines(sugar, F_capacity(sugar, r_ref, W, theta_max, A0, delta_vals[3], k), col = "green")
+legend("topleft", legend = paste("δ =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+# Sugar version
+ylim <- range(F_capacity(s_ref, starch, W, theta_max, A0, delta_vals[1], k),
+              F_capacity(s_ref, starch, W, theta_max, A0, delta_vals[2], k),
+              F_capacity(s_ref, starch, W, theta_max, A0, delta_vals[3], k))
+
+plot(starch, F_capacity(s_ref, starch, W, theta_max, A0, delta_vals[1], k),
+     type = "l", col = "red", ylim = ylim,
+     xlab = "Sugar", ylab = "F", main = paste0("Effect of Remobilization Rate δ \n (Sugar = ", s_ref, ")"))
+abline(v = W, col = "black", lty = 2)  # reference line
+abline(v = theta_max, col = "black", lty = 3)  # reference line
+lines(starch, F_capacity(s_ref, starch, W, theta_max, A0, delta_vals[2], k), col = "blue")
+lines(starch, F_capacity(s_ref, starch, W, theta_max, A0, delta_vals[3], k), col = "green")
+legend("topleft", legend = paste("δ =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+
+```
+```{r}
+# Define the function f_m
+f_m <- function(S_m, k_s) {
+  return(S_m / (S_m + k_s))
+}
+
+# Range of S_m values
+S_m_values <- seq(0, 1, by = 0.1)
+
+# Different k_s values to plot
+k_values <- c(0.01, 0.2, 0.5)
+
+# Colors for each curve
+colors <- c("blue", "red", "green")
+
+# Create empty plot (without title)
+plot(S_m_values, f_m(S_m_values, k_values[1]), type = "n",
+     xlab = "Sugar Transfered to Mycorrhiza", ylab = "Percentage of Nitrogen Uptake Transfered",
+     ylim = c(0, 1))  # y-axis goes from 0 to 1
+
+# Add curves for each k_s
+for(i in 1:length(k_values)) {
+  lines(S_m_values, f_m(S_m_values, k_values[i]), col = colors[i], lwd = 2)
+}
+
+# Add a legend
+legend("bottomright",
+       legend = sapply(k_values, function(k) bquote(beta[m] == .(k))),
+       col = colors, lwd = 2)
+
+```
+
