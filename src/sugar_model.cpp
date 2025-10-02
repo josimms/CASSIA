@@ -133,32 +133,12 @@ double nitrogen_storage(
   return(out);
 }
 
-double sugar_investment_for_nitrogen_target(double nitrogen_target,
-                                            double ectomycorrhizal_uptake,
-                                            double sugar_half_saturation) {
-  // Ensure safe input values
-  nitrogen_target = std::max(nitrogen_target, 0.0);
-  ectomycorrhizal_uptake = std::max(ectomycorrhizal_uptake, 1e-10); // avoid divide-by-zero
-
-  // Clamp nitrogen target just below max uptake
-  double max_target = 0.999 * ectomycorrhizal_uptake;
-  double safe_target = std::min(nitrogen_target, max_target);
-
-  double claped_uptake = std::min(nitrogen_target/ectomycorrhizal_uptake, 1.0);
-  // Note this is justified as if the nitrogen target is larger than the ectomycorrhizal uptake
-  // If the target nitrogen is more than you need 100% of ectomycorrhizal uptake
-  // Therefore clap to 1
-
-  double numerator = claped_uptake * sugar_half_saturation;
-  double denominator = 1 - claped_uptake;
-
-  // Compute sugar investment
-  return numerator / denominator;
-}
-
-double nitrogen_transfer_from_sugar(double sugar_to_mycorrhiza,
+double nitrogen_transfer_from_mycorrhiza(double sugar_to_mycorrhiza,
                                     double sugar_half_saturation) {
   // Clamp to avoid divide-by-zero
+  if (sugar_to_mycorrhiza < 0.0) {
+    std::cout << "Warning: sugar_to_mycorrhiza is less than zero, claped to avoid erros.";
+  }
   sugar_to_mycorrhiza = std::max(sugar_to_mycorrhiza, 0.0);
 
   // Saturating function: more sugar → more N transferred
@@ -193,9 +173,9 @@ uptake_structre nitrogen_uptake(double N,
 
   double ectomycorrhizal_transfer;
   if (mycorrhiza_passive) {
-    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.00005) * ectomycorrhizal_uptake;
+    ectomycorrhizal_transfer = nitrogen_transfer_from_mycorrhiza(sugar_to_mycorrhiza, 0.00005) * ectomycorrhizal_uptake;
   } else {
-    ectomycorrhizal_transfer = nitrogen_transfer_from_sugar(sugar_to_mycorrhiza, 0.00005) * ectomycorrhizal_uptake * (1 - mycorrhizal_nitrogen_demand);
+    std::cout << "Write this :)\n";
   }
 
   double free_sugar_percentage = surplus_sugar/(surplus_sugar + sugar_to_mycorrhiza + 1e-10);
@@ -211,6 +191,9 @@ uptake_structre nitrogen_uptake(double N,
   return(out);
 }
 
+double costant_excess(double nitrogen_target, double sugar_to_invest) {
+
+}
 
 
 carbo_tracker As_initiliser(carbo_tracker Ad, carbo_tracker equilibrium_temperature, double Bd, double Bs)
@@ -480,45 +463,33 @@ void sugar_model(int year,
       if (surplus_c) {
         myco_demand = 0.0;
       } else if (nitrogen_contrast) {
-        // Step 1: Compute nitrogen deficit (targeted increase)
-        double nitrogen_capacity_average = (
-          nitrogen_capacity.needles +
-            nitrogen_capacity.bud +
-            nitrogen_capacity.wall +
-            nitrogen_capacity.height +
-            nitrogen_capacity.roots
-        ) / 5.0;
+        // Calculate the difference
+        double growth_difficit = storage_term.needles - nitrogen_capacity.needles +
+          storage_term.needles - nitrogen_capacity.bud +
+          storage_term.roots - nitrogen_capacity.roots +
+          phloem_growth_share * storage_term.phloem + xylem_sh_growth_share * storage_term.xylem_sh - nitrogen_capacity.wall +
+          phloem_growth_share * storage_term.phloem + xylem_sh_growth_share * storage_term.xylem_sh - nitrogen_capacity.height;
 
-        double average_storage_term = (
-          storage_term.needles +
-            storage_term.phloem +
-            storage_term.roots +
-            storage_term.xylem_sh +
-            storage_term.xylem_st
-        ) / 5.0;
+        if (growth_difficit <= 0.0) {
+          // More sugar, so sugar is limiting the growth
+          myco_demand = 0.0;
+        } else if (growth_difficit > 0.0) {
+          // TODO: share of the organs correct
+          double nitrogen_target = 4.9/0.5 * (storage_term.needles - nitrogen_capacity.needles) * tree_state.needles -
+            2.1/0.5 * (storage_term.needles - nitrogen_capacity.bud) * tree_state.bud -
+            3.7/0.5 * phloem_growth_share * ((storage_term.phloem - nitrogen_capacity.wall) * tree_state.wall -
+            4.9/0.5 * (storage_term.phloem - nitrogen_capacity.height) * tree_state.height) -
+            3.7/0.5 * xylem_sh_growth_share * ((storage_term.xylem_st - nitrogen_capacity.wall) * tree_state.wall -
+            4.9/0.5 * (storage_term.xylem_st - nitrogen_capacity.height) * tree_state.height) -
+            3.0/0.5 * (storage_term.roots - nitrogen_capacity.roots) * tree_state.roots;
 
-        double normalised_nitrogen_target_increase = std::max(average_storage_term - nitrogen_capacity_average, 0.0);
+          double sugar_to_invest = (1 + common.Rg_N) * ((storage_term.needles - nitrogen_capacity.needles) * tree_state.bud + (storage_term.needles - nitrogen_capacity.bud) * tree_state.bud) +
+            (1 + common.Rg_R) * (storage_term.roots - nitrogen_capacity.roots) * tree_state.roots +
+            phloem_growth_share * (1 + common.Rg_S) * ((storage_term.phloem - nitrogen_capacity.wall) * tree_state.wall + (storage_term.phloem - nitrogen_capacity.height) * tree_state.height) +
+            xylem_sh_growth_share * (1 + common.Rg_S) * ((storage_term.xylem_st - nitrogen_capacity.wall) * tree_state.wall + (storage_term.xylem_st - nitrogen_capacity.height) * tree_state.height);
 
-        // Step 2: Estimate mycorrhizal uptake capacity yesterday
-        double ecto_uptake_capacity = out.uptake_vector.ectomycorrhizal_uptake[days_gone + day - 1];
-
-        // Step 3: Estimate sugar investment required to obtain that N increase
-        double sugar_half_saturation = 0.0005;  // tunable parameter
-        double nitrogen_target = normalised_nitrogen_target_increase;
-        std::cout << " nitrogen_target " << nitrogen_target;
-
-        double sugar_required = sugar_investment_for_nitrogen_target(
-          nitrogen_target,
-          ecto_uptake_capacity,
-          sugar_half_saturation
-        );
-
-        // Step 4: Cap investment by available sugar budget
-        double total_use = growth_resp.needles + growth_resp.phloem + growth_resp.xylem_sh + growth_resp.xylem_st + growth_resp.roots;
-        double sugar_extra = std::max(total_storage - total_use, 0.0);
-
-        // Step 5: Final sugar allocated to mycorrhiza, capped by what's available
-        myco_demand = std::min(sugar_required, sugar_extra);
+          myco_demand = costant_excess(nitrogen_target, sugar_to_invest);
+        }
       }
 
       /*
@@ -796,8 +767,8 @@ void sugar_model(int year,
           4.9/0.5 * std::min(storage_term.needles, nitrogen_capacity.needles) * tree_state.needles -
           2.1/0.5 * std::min(storage_term.needles, nitrogen_capacity.bud) * tree_state.bud -
           3.7/0.5 * phloem_growth_share * (std::min(storage_term.phloem, nitrogen_capacity.wall) * tree_state.wall -
-          3.7/0.5 * xylem_sh_growth_share * (std::min(storage_term.xylem_st, nitrogen_capacity.wall) * tree_state.wall -
           4.9/0.5 * std::min(storage_term.phloem, nitrogen_capacity.height) * tree_state.height) -
+          3.7/0.5 * xylem_sh_growth_share * (std::min(storage_term.xylem_st, nitrogen_capacity.wall) * tree_state.wall -
           4.9/0.5 * std::min(storage_term.xylem_st, nitrogen_capacity.height) * tree_state.height) -
           3.0/0.5 * std::min(storage_term.roots, nitrogen_capacity.roots) * tree_state.roots;
       }
