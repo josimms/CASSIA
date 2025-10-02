@@ -191,9 +191,16 @@ uptake_structre nitrogen_uptake(double N,
   return(out);
 }
 
-double costant_excess(double nitrogen_target, double sugar_to_invest) {
+double constant_excess(double excess, double nitrogen_target, double uptake_mycorrhiza, double uptake_roots, double half_sat_myco) {
+  const double c_s_Ss = excess;
+  double k = c_s_Ss / (c_s_Ss + half_sat_myco);
 
+  double numerator   = (nitrogen_target - k * uptake_mycorrhiza) * (c_s_Ss + 1e-6);
+  double denominator = uptake_roots - nitrogen_target + k * uptake_mycorrhiza;
+
+  return numerator / denominator;
 }
+
 
 
 carbo_tracker As_initiliser(carbo_tracker Ad, carbo_tracker equilibrium_temperature, double Bd, double Bs)
@@ -488,7 +495,7 @@ void sugar_model(int year,
             phloem_growth_share * (1 + common.Rg_S) * ((storage_term.phloem - nitrogen_capacity.wall) * tree_state.wall + (storage_term.phloem - nitrogen_capacity.height) * tree_state.height) +
             xylem_sh_growth_share * (1 + common.Rg_S) * ((storage_term.xylem_st - nitrogen_capacity.wall) * tree_state.wall + (storage_term.xylem_st - nitrogen_capacity.height) * tree_state.height);
 
-          myco_demand = costant_excess(nitrogen_target, sugar_to_invest);
+          myco_demand = constant_excess(excess, nitrogen_target, uptake_mycorrhiza, uptake_roots, half_sat_myco);
         }
       }
 
