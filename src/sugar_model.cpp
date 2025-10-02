@@ -192,11 +192,11 @@ uptake_structre nitrogen_uptake(double N,
 }
 
 double constant_excess(double N_T, double N_r, double N_m,
-                       double c_s_Ss, double beta_m, double epsilon) {
+                       double excess, double beta_m) {
   // Quadratic coefficients
   double A = N_T - N_m;
-  double B = N_T * (c_s_Ss + beta_m + epsilon) - c_s_Ss * N_r - c_s_Ss * N_m - N_m * epsilon;
-  double C = N_T * beta_m * (c_s_Ss + epsilon) - c_s_Ss * N_r * beta_m;
+  double B = N_T * (excess + beta_m + 1e-6) - excess * N_r - excess * N_m - N_m * 1e-6;
+  double C = N_T * beta_m * (excess + 1e-6) - excess * N_r * beta_m;
 
   // Calculate discriminant
   double discriminant = B*B - 4*A*C;
@@ -515,7 +515,9 @@ void sugar_model(int year,
             phloem_growth_share * (1 + common.Rg_S) * ((storage_term.phloem - nitrogen_capacity.wall) * tree_state.wall + (storage_term.phloem - nitrogen_capacity.height) * tree_state.height) +
             xylem_sh_growth_share * (1 + common.Rg_S) * ((storage_term.xylem_st - nitrogen_capacity.wall) * tree_state.wall + (storage_term.xylem_st - nitrogen_capacity.height) * tree_state.height);
 
-          myco_demand = constant_excess(excess, nitrogen_target, uptake_mycorrhiza, uptake_roots, half_sat_myco);
+          (double N_T, double N_r, double N_m,
+           double excess, double beta_m)
+          myco_demand = std::min(constant_excess(nitrogen_target, uptake_roots, uptake_mycorrhiza, excess, half_sat_myco), sugar_to_invest);
         }
       }
 
