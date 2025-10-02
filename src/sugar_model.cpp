@@ -191,14 +191,34 @@ uptake_structre nitrogen_uptake(double N,
   return(out);
 }
 
-double constant_excess(double excess, double nitrogen_target, double uptake_mycorrhiza, double uptake_roots, double half_sat_myco) {
-  const double c_s_Ss = excess;
-  double k = c_s_Ss / (c_s_Ss + half_sat_myco);
+double constant_excess(double N_T, double N_r, double N_m,
+                       double c_s_Ss, double beta_m, double epsilon) {
+  // Quadratic coefficients
+  double A = N_T - N_m;
+  double B = N_T * (c_s_Ss + beta_m + epsilon) - c_s_Ss * N_r - c_s_Ss * N_m - N_m * epsilon;
+  double C = N_T * beta_m * (c_s_Ss + epsilon) - c_s_Ss * N_r * beta_m;
 
-  double numerator   = (nitrogen_target - k * uptake_mycorrhiza) * (c_s_Ss + 1e-6);
-  double denominator = uptake_roots - nitrogen_target + k * uptake_mycorrhiza;
+  // Calculate discriminant
+  double discriminant = B*B - 4*A*C;
+  if (discriminant < 0) {
+    std::cerr << "No real solution exists.\n";
+    return NAN;
+  }
 
-  return numerator / denominator;
+  double sqrt_disc = std::sqrt(discriminant);
+  double x1 = (-B + sqrt_disc) / (2*A);
+  double x2 = (-B - sqrt_disc) / (2*A);
+
+  // Return only the positive solution
+  if (x1 > 0 && x2 > 0) {
+   std::cout << "Two positive solutions returned the minimum.";
+   return std::min(x1, x2);
+  }
+  if (x1 > 0) return x1;
+  if (x2 > 0) return x2;
+
+  std::cerr << "No positive solution exists.\n";
+  return NAN;
 }
 
 
