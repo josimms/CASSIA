@@ -1,0 +1,142 @@
+---
+title: "optimisation_try"
+output: html_document
+---
+
+```{r}
+library(Rsolnp)
+library(ggplot2)
+library(reshape2)
+```
+
+### Original optimisation
+
+```{r}
+# Install if needed
+# install.packages("Rsolnp")
+library(Rsolnp)
+
+# Parameters
+N_r <- 10
+N_m <- 100
+epsilon <- 1e-6
+beta_m <- 0.1
+N_T <- 8
+c_I <- 5
+
+# Objective: minimize total sugar
+objective <- function(c) {
+  return(c[1] + c[2])
+}
+
+# Equality constraint: N_T = f(c_s, c_m)
+eq_constraint <- function(c) {
+  c_s <- c[1]
+  c_m <- c[2]
+  N_calc <- (c_s / (c_s + c_m + epsilon)) * N_r + (c_m / (c_m + beta_m)) * N_m
+  return(N_calc - N_T)  # should be 0
+}
+
+# Inequality constraint: c_s + c_m <= c_I
+ineq_constraint <- function(c) {
+  return(c_I - sum(c))  # must be >= 0
+}
+
+# Initial guess
+init <- c(0.1, 0.1)
+
+# Solve optimization
+res <- solnp(pars = init,
+             fun = objective,
+             eqfun = eq_constraint,
+             eqB = 0,
+             ineqfun = ineq_constraint,
+             ineqLB = 0,   # lower bound of inequality (>=0)
+             ineqUB = Inf, # upper bound not needed
+             LB = c(0,0),  # lower bounds
+             UB = c(c_I, c_I))  # upper bounds
+
+# Results
+c_s_opt <- res$pars[1]
+c_m_opt <- res$pars[2]
+cat("Optimal carbon allocation:\n")
+cat("c_s^{Ss} =", c_s_opt, "\n")
+cat("c_m^{Ss} =", c_m_opt, "\n")
+cat("Total sugar =", c_s_opt + c_m_opt, "\n")
+
+# Check resulting N_T
+N_check <- (c_s_opt / (c_s_opt + c_m_opt + epsilon)) * N_r +
+           (c_m_opt / (c_m_opt + beta_m)) * N_m
+cat("Resulting N_T =", N_check, "\n")
+
+```
+
+### Visulisation of the N_r and N_m parameter's effect on the solution
+
+```{r}
+epsilon <- 1e-6
+beta_m <- 0.1
+N_T <- 8
+c_I <- 5
+
+N_r_vals <- seq(0, 100, length.out = 50)
+N_m_vals <- seq(0, 100, length.out = 50)
+grid <- expand.grid(N_r = N_r_vals, N_m = N_m_vals)
+
+grid$c_s_opt <- NA
+grid$c_m_opt <- NA
+
+c_m_seq <- seq(0, c_I, length.out = 500)  # finer scan for accuracy
+
+for(i in 1:nrow(grid)) {
+  N_r_i <- grid$N_r[i]
+  N_m_i <- grid$N_m[i]
+  
+  feasible <- data.frame(c_s = numeric(0), c_m = numeric(0))
+  
+  for(c_m in c_m_seq) {
+    term2 <- (c_m / (c_m + beta_m)) * N_m_i
+    if(N_r_i == 0) {
+      if(abs(term2 - N_T) < 1e-6) c_s <- 0 else next
+    } else {
+      c_s <- (N_T - term2) * (c_m + epsilon) / (N_r_i - (N_T - term2))
+    }
+    
+    if(is.na(c_s) || c_s < 0) next
+    if(c_s + c_m > c_I) next
+    
+    feasible <- rbind(feasible, data.frame(c_s = c_s, c_m = c_m))
+  }
+  
+  if(nrow(feasible) > 0) {
+    # Example: pick pair minimizing total c_s + c_m
+    best_idx <- which.min(feasible$c_s + feasible$c_m)
+    grid$c_s_opt[i] <- feasible$c_s[best_idx]
+    grid$c_m_opt[i] <- feasible$c_m[best_idx]
+  } else {
+    grid$c_s_opt[i] <- NA
+    grid$c_m_opt[i] <- NA
+  }
+}
+
+# Heatmaps
+library(ggplot2)
+library(reshape2)
+library(viridis)
+
+c_s_melt <- melt(grid, id.vars = c("N_r", "N_m"), measure.vars = "c_s_opt")
+c_m_melt <- melt(grid, id.vars = c("N_r", "N_m"), measure.vars = "c_m_opt")
+
+ggplot(c_s_melt, aes(x = N_r, y = N_m, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma", na.value = "white") +
+  labs(title = "Optimal c_s", x = "N_r", y = "N_m", fill = "c_s") +
+  theme_minimal()
+
+ggplot(c_m_melt, aes(x = N_r, y = N_m, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma", na.value = "white") +
+  labs(title = "Optimal c_m", x = "N_r", y = "N_m", fill = "c_m") +
+  theme_minimal()
+
+```
