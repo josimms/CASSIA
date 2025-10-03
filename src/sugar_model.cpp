@@ -39,9 +39,6 @@ double storage_update_organs(double growth, double sugar, double lower_limit, bo
     // Avoid division by zero in case growth is very small
     double ratio = available / (growth + 1e-6);
 
-    // Smooth sigmoid scaling — center at ratio = 1
-    // double scale = 1.0 / (1.0 + std::exp(-4.0 * (ratio - 1.0)));
-
     // Final result: limited to 1, capped so usage won't exceed available sugar
     out = std::min(1.0, ratio);
   } else {
@@ -335,10 +332,10 @@ void sugar_model(int year,
   storage_term.roots    = storage_update_organs(tree_state.RmR + (1 + common.Rg_R) * tree_state.roots, sugar.roots, parameters.lower_bound_roots, tree_alive);
 
   nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance/5, "needles");
-  nitrogen_capacity.bud = nitrogen_storage(nitrogen_balance/5, "bud");
-  nitrogen_capacity.wall = nitrogen_storage(nitrogen_balance/5, "wall");
-  nitrogen_capacity.height = nitrogen_storage(nitrogen_balance/5, "height");
-  nitrogen_capacity.roots = nitrogen_storage(nitrogen_balance/5, "roots");
+  nitrogen_capacity.bud     = nitrogen_storage(nitrogen_balance/5, "bud");
+  nitrogen_capacity.wall    = nitrogen_storage(nitrogen_balance/5, "wall");
+  nitrogen_capacity.height  = nitrogen_storage(nitrogen_balance/5, "height");
+  nitrogen_capacity.roots   = nitrogen_storage(nitrogen_balance/5, "roots");
 
   double growth = 0.0;
   // TODO: I don't think I calculate the below anymore
@@ -366,9 +363,9 @@ void sugar_model(int year,
       // Lower bound added her so the processes don't happen unless a lower bound is met
       double winter = (1.0/(1.0 + std::exp(0.5*(TAir-5))) + 1.0/(1.0 + std::exp(0.2*(PAR-30))))/2.0;
 
-      winter_costs.needles = 0.0536 * winter + parameters.lower_bound_needles;
-      winter_costs.phloem = 0.2736 * winter + parameters.lower_bound_phloem;
-      winter_costs.roots = 0.0300 * winter + parameters.lower_bound_roots;
+      winter_costs.needles  = 0.0536 * winter + parameters.lower_bound_needles;
+      winter_costs.phloem   = 0.2736 * winter + parameters.lower_bound_phloem;
+      winter_costs.roots    = 0.0300 * winter + parameters.lower_bound_roots;
       winter_costs.xylem_st = 0.0569 * winter + parameters.lower_bound_xylem_st;
       winter_costs.xylem_sh = 0.0231 * winter + parameters.lower_bound_xylem_sh;
 
@@ -494,8 +491,8 @@ void sugar_model(int year,
         double growth_difficit = storage_term.needles - nitrogen_capacity.needles +
           storage_term.needles - nitrogen_capacity.bud +
           storage_term.roots - nitrogen_capacity.roots +
-          phloem_growth_share * storage_term.phloem + xylem_sh_growth_share * storage_term.xylem_sh - nitrogen_capacity.wall +
-          phloem_growth_share * storage_term.phloem + xylem_sh_growth_share * storage_term.xylem_sh - nitrogen_capacity.height;
+          phloem_growth_share * (storage_term.phloem - nitrogen_capacity.wall) + xylem_sh_growth_share * (storage_term.xylem_sh - nitrogen_capacity.wall) +
+          phloem_growth_share * (storage_term.phloem - nitrogen_capacity.height) + xylem_sh_growth_share * (storage_term.xylem_sh - nitrogen_capacity.height);
 
         if (growth_difficit <= 0.0) {
           // More sugar, so sugar is limiting the growth
@@ -515,8 +512,6 @@ void sugar_model(int year,
             phloem_growth_share * (1 + common.Rg_S) * ((storage_term.phloem - nitrogen_capacity.wall) * tree_state.wall + (storage_term.phloem - nitrogen_capacity.height) * tree_state.height) +
             xylem_sh_growth_share * (1 + common.Rg_S) * ((storage_term.xylem_st - nitrogen_capacity.wall) * tree_state.wall + (storage_term.xylem_st - nitrogen_capacity.height) * tree_state.height);
 
-          (double N_T, double N_r, double N_m,
-           double excess, double beta_m)
           myco_demand = std::min(constant_excess(nitrogen_target, uptake_roots, uptake_mycorrhiza, excess, half_sat_myco), sugar_to_invest);
         }
       }
