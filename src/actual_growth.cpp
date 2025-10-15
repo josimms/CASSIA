@@ -11,9 +11,9 @@ void actual_growth(int day,
                    Settings boolsettings,
                    growth_out nitrogen_capacity) {
 
-  double phloem_growth_share   = all_out.culm_growth.phloem[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
-  double xylem_st_growth_share = all_out.culm_growth.xylem_st[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
-  double xylem_sh_growth_share = all_out.culm_growth.xylem_sh[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
+  double phloem_share   =   all_out.culm_growth.phloem[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
+  double xylem_st_share = all_out.culm_growth.xylem_st[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
+  double xylem_sh_share = all_out.culm_growth.xylem_sh[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
 
   /*
    * Height
@@ -21,7 +21,7 @@ void actual_growth(int day,
 
   double storage_height = 0;
   if (boolsettings.sperling_model) {
-    storage_height = (phloem_growth_share * storage.phloem + phloem_growth_share * storage.xylem_st);
+    storage_height = (phloem_share * storage.phloem + xylem_st_share * storage.xylem_st + xylem_sh_share * storage.xylem_sh);
   } else {
     storage_height = storage.needles;
   }
@@ -33,7 +33,7 @@ void actual_growth(int day,
 
   double storage_wall = 0;
   if (boolsettings.sperling_model) {
-    storage_wall = (phloem_growth_share * storage.phloem + xylem_st_growth_share * storage.xylem_st);
+    storage_wall = (phloem_share * storage.phloem + xylem_st_share * storage.xylem_st + xylem_sh_share * storage.xylem_sh);
   } else {
     storage_wall = storage.needles;
   }
@@ -77,7 +77,7 @@ void actual_growth(int day,
    */
   double storage_GD;
   if (boolsettings.sperling_model) {
-    storage_GD = (phloem_growth_share * storage.phloem + xylem_st_growth_share * storage.xylem_st);
+    storage_GD = (phloem_share * storage.phloem + xylem_st_share * storage.xylem_st + xylem_sh_share * storage.xylem_sh);
   } else {
     storage_GD = storage.needles;
   }
@@ -107,7 +107,7 @@ void actual_growth(int day,
   all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref] + growth_and_mortality;
 
   // Needles accumulation (potentially include drop logic later)
-  all_out.culm_growth.needles[day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;
+  all_out.culm_growth.needles[days_gone+day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;
 
   /*
    * Ring width and log
