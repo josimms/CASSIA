@@ -263,17 +263,16 @@ parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(fit$optim$b
 #    "percentage_roots_storage"), "Hyde"] <- c(0.1, 0.2, 0.06, 0.006, 0.15)
 # parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"][21] <- 0.3
 
-#parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(
+parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(
   # Ezymes
-  #0.7, 0.02, 0.5,   # needles
-  #0.608733, 0.001, 0.01,   # phloem
-  #0.790206, 0.002, 0.05,   # roots
-  #0.7712,   0.002, 0.05,   # xylem.sh
-  #0.768777, 0.002, 0.05,   # xylem.st
-  # Storage Capacity of each organ
-  #0.09, 0.11, 0.2, 0.01, 0.1,
-  #0.99 # myco.thresh in roots
-#)
+  0.01, 0.0, 0.01,   # needles
+  0.01, 0.0, 0.01,   # phloem
+  0.01, 0.0, 0.01,   # roots
+  0.01, 0.0, 0.01,   # xylem.sh
+  0.01, 0.0, 0.01,   # xylem.st
+  0.09, 0.11, 0.2, 0.01, 0.1,
+  0.1 # myco.thresh in all sugar
+)
 
 CASSIA_preles_2015 <- CASSIA_cpp(
     weather = weather_2015,
@@ -346,6 +345,19 @@ lines(dates_2015, CASSIA_preles_2015$Sugar$starch_xylem_st, type = "l", col = "g
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$xylem_st_starch, col = "gold")
 lines(dates_2015, CASSIA_preles_2015$Sugar$starch_roots, type = "l", col = "black")
 points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$roots_starch, col = "black")
+
+###
+# Xylem and Phloem
+###
+
+par(mfrow = c(1, 2))
+ylim = range(CASSIA_preles_2015$Culm_Growth$culm_growth_phloem, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_sh, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_st)
+plot(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_phloem, type = "l", col = "brown", main = "Organ Growth", ylab = "Culm Growth, kg", xlab = "Date", ylim = ylim)
+lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_sh, type = "l", col = "red")
+lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_st, type = "l", col = "gold")
+legend("topleft", c("Phloem", "Xylem Sh", "Xylem St", "Roots"), col = c("brown", "red", "gold", "black"), lty = 1, bty = "n", cex = 0.75)
+
+plot(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_diameter, main = "Diamater", ylab = "Diameter, cm", xlab = "Date", type = "l")
 
 ###
 # Long time graphs
