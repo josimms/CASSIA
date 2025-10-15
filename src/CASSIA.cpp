@@ -134,6 +134,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   carbo_tracker starch{};
   carbo_tracker storage_term{};
   growth_out nitrogen_capacity{};
+  uptake_structre uptake{};
   bool tree_alive = true;
 
   // Forward init values (previous day values) as first values of result vectors
@@ -154,8 +155,9 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.culm_growth.diameter_potential[0] = 100.0 * parameters.D0;
   all_out.culm_growth.roots[0] = 2.0; // TODO: find a better value
   all_out.culm_growth.mycorrhiza[0] = 2.0; // TODO: make dynamic and find a better value
-  all_out.culm_growth.xylem_sh[0] = 0.8 * M_PI * pow(100.0*(parameters.D0/2.0), 2.0) * parameters.h0 * parameters.cell_wall_density_ew; // 80% of the diameter is sapwood
-  all_out.culm_growth.phloem[0] = M_PI * pow(1.5/1000.0, 2.0) * parameters.h0 * parameters.cell_wall_density_ew;
+  all_out.culm_growth.xylem_sh[0] = 0.1 * 200 * 0.6 * M_PI/4.0 * parameters.D0 * parameters.D0 * parameters.h0;
+  all_out.culm_growth.xylem_st[0] = 0.9 * 200 * 0.6 * M_PI/4.0 * parameters.D0 * parameters.D0 * parameters.h0;
+  all_out.culm_growth.phloem[0] = 0.1 * 200 * 0.6 * M_PI/4.0 * parameters.D0 * parameters.D0 * parameters.h0;
 
   all_out.starch_vector.needles[0] = starch.needles = parameters.starch_needles00 = parameters.starch_needles0;
   all_out.sugar_vector.needles[0] = sugar.needles = parameters.sugar_needles00 = parameters.sugar_needles0;
@@ -168,7 +170,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.starch_vector.xylem_st[0] = starch.xylem_st = parameters.starch_xylem_st00 = parameters.starch_xylem_st0;
   all_out.sugar_vector.xylem_st[0] = sugar.xylem_st = parameters.sugar_xylem_st00 = parameters.sugar_xylem_st0;
 
-  // TODO: calculate this?
   all_out.nitrogen_capacity_vector.needles[0] = 1;
   all_out.nitrogen_capacity_vector.diameter[0] = 1;
   all_out.nitrogen_capacity_vector.height[0] = 1;
@@ -220,6 +221,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       repola_values.needle_mass = needle_mass_in;
     }
 
+    // TODO: sort this out!
     needle_cohorts needles_cohorts;
     if (year > start_year) {
       // TODO: parameters, add the year 5
@@ -227,6 +229,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
     }
+
     double HH, GPP_sum_yesterday, GPP_sum;
     double needles_last;
     if (year == start_year) {
@@ -252,13 +255,13 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       if (boolsettings.preles) {
         if (day > 0) {
-          if (climate.PAR[day] < -900) climate.PAR[day] = climate.PAR[day-1];
-          if (climate.TAir[day] < -900) climate.TAir[day] = climate.TAir[day-1];
-          if (climate.VPD[day] < 0 || climate.VPD[day] > 6) climate.VPD[day] = climate.VPD[day-1];
-          if (climate.Precip[day] <    0) climate.Precip[day] = climate.Precip[day-1] * 0.3;
+          if (climate.PAR[day + days_gone] < -900) climate.PAR[day + days_gone] = climate.PAR[day + days_gone -1];
+          if (climate.TAir[day + days_gone] < -900) climate.TAir[day + days_gone] = climate.TAir[day + days_gone- 1];
+          if (climate.VPD[day + days_gone] < 0 || climate.VPD[day + days_gone] > 6) climate.VPD[day + days_gone] = climate.VPD[day + days_gone -1];
+          if (climate.Precip[day + days_gone] <    0) climate.Precip[day + days_gone] = climate.Precip[day + days_gone -1] * 0.3;
           /* On avg. P+1=0.315*P
            * (in Sodis & Hyde) */
-          if (climate.CO2[day] < 0) climate.CO2[day] = climate.CO2[day-1];
+          if (climate.CO2[day + days_gone] < 0) climate.CO2[day + days_gone] = climate.CO2[day + days_gone -1];
         }
       }
 
@@ -282,18 +285,39 @@ Rcpp::List CASSIA_yearly(int start_year,
                          all_out);
 
       /*
+       *  Xylem and phloem growth from leaf foliage
+       */
+      int index_ref = days_gone + day - 1;
+      if (index_ref < 0) {
+        index_ref = 0;
+      }
+      // Note as far as possible these growth relationships are considered consistent with Pauliina's 2019 paper
+      // (Scheistl Aalto, 2019): Form factor for the tapering of the trunk
+      // (Scheistl Aalto, 2019): Mean wood density 200 kg C m−3
+      // NOTE: Could make the form factor dynamic
+      double form_factor = 0.6; //  * leaf_area/reference;
+      double xylem_mass = 200.0 * form_factor * M_PI/4.0 * (0.01 * all_out.culm_growth.diameter[index_ref]) * (0.01 * all_out.culm_growth.diameter[index_ref]) * all_out.culm_growth.height[index_ref];
+      double sapwood_mass = 0.8 * xylem_mass;
+
+      // (Scheistl Aalto, 2019): "Sapwood was further divided to 1) smaller branches and 2) bigger branches and truck with ratio 1/9"
+      all_out.culm_growth.xylem_sh[day + days_gone] = 0.1 * sapwood_mass;
+      all_out.culm_growth.xylem_st[day + days_gone] = 0.9 * sapwood_mass;
+      // (Scheistl Aalto, 2019): "phloem mass was assumed to be 10% of sapwood mass" (but not part ofthe sapwood)
+      all_out.culm_growth.phloem[day + days_gone] = 0.1 * sapwood_mass;
+
+      /*
        * Photosynthesis
        */
 
       double photosynthesis_per_stem = 0.0;
       if (boolsettings.photosynthesis_as_input) {
-        photosynthesis.GPP = climate.Photosynthesis_IN[day];
+        photosynthesis.GPP = climate.Photosynthesis_IN[day + days_gone];
         photosynthesis.ET = 0.0;
         photosynthesis.SoilWater = 0.0;
-        photosynthesis_per_stem = climate.Photosynthesis_IN[day] / 1010 * 10000/1000;
+        photosynthesis_per_stem = climate.Photosynthesis_IN[day + days_gone] / 1010 * 10000/1000;
       } else if (boolsettings.preles) {
-        photosynthesis = preles_cpp(day, climate.PAR[day], climate.TAir[day], climate.Precip[day],
-                                    climate.VPD[day], climate.CO2[day], all_out.fAPAR[day],
+        photosynthesis = preles_cpp(day, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
+                                    climate.VPD[days_gone + day], climate.CO2[days_gone + day], all_out.fAPAR[days_gone + day],
                                     parSite, parGPP, parET, parSnowRain, parWater, 0.0, 1);
         photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
       } else {
@@ -312,7 +336,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       growth(day, days_gone, year,
              tree_state,
              all_out,
-             climate.TAir[day], climate.TSoil_A[day], climate.TSoil_B[day], climate.Soil_Moisture[day], photosynthesis.GPP, GPP_ref[day],
+             climate.TAir[days_gone + day], climate.TSoil_A[days_gone + day], climate.TSoil_B[days_gone + day], climate.Soil_Moisture[days_gone + day], photosynthesis.GPP, GPP_ref[days_gone + day],
              boolsettings,
              common, parameters, ratios,
              CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
@@ -336,7 +360,7 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       respiration(day, tree_state, all_out, parameters, ratios,
-                  climate.TAir[day], climate.TSoil_A[day],
+                  climate.TAir[days_gone + day], climate.TSoil_A[days_gone + day],
                   boolsettings,
                   B0);
 
@@ -345,20 +369,24 @@ Rcpp::List CASSIA_yearly(int start_year,
        */
 
       if (!(day == 0 && year == start_year)) {
-        sugar_model(year, days_gone, day,
-                    climate.TAir[day],
-                    climate.PAR[day],
+        // Note: mycorrhiza is always passive at the moment
+        // TODO: need to add some more boolsettings!
+        sugar_model(day,
+                    days_gone,
+                    climate.TAir[days_gone + day],
+                    climate.PAR[days_gone + day],
                     photosynthesis_per_stem,
-                    common, parameters,
-                    D00,
-                    tree_state,
-                    nitrogen_balance,
+                    parameters,
+                    common,
                     nitrogen_change,
                     nitrogen_contrast,
-                    boolsettings,
-                    tree_alive,
+                    TRUE,
                     surplus_c,
-                    repola_values.needle_mass,
+                    tree_alive,
+                    boolsettings.sperling_model,
+                    tree_state,
+                    nitrogen_balance,
+                    uptake,
                     sugar,
                     starch,
                     storage_term,
