@@ -116,30 +116,26 @@ yearly_in yearly_initial_conditions(double days_per_year);
  * sugar_model.cpp
  */
 
-void sugar_model(int year,
+void sugar_model(int day,
                  int days_gone,
-                 int day,
+
                  double TAir,
                  double PAR,
                  double PF,
 
-                 const CASSIA_common& common,
-                 const CASSIA_parameters& parameters,
+                 CASSIA_parameters parameters,
+                 CASSIA_common common,
 
-                 double D00,
-                 const growth_state& tree_state,
-
-                 double& nitrogen_balance,
                  bool nitrogen_change,
                  bool nitrogen_contrast,
-
-                 Settings boolsettings,
-
-                 bool& tree_alive,
+                 bool mycorrhiza_passive,
                  bool surplus_c,
+                 bool tree_alive,
+                 bool new_sugar_model,
 
-                 double needles_mass, // Repola
-
+                 const growth_state& tree_state,
+                 double& nitrogen_balance,
+                 uptake_structre& uptake,
                  carbo_tracker& sugar,
                  carbo_tracker& starch,
                  carbo_tracker& storage_term,
