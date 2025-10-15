@@ -11,11 +11,9 @@ void actual_growth(int day,
                    Settings boolsettings,
                    growth_out nitrogen_capacity) {
 
-  double phloem_mass = 7.410537931;
-  double xylem_st_mass = 8.65862069;
-
-  double phloem_growth_share = phloem_mass / (phloem_mass + xylem_st_mass);
-  double xylem_st_growth_share = xylem_st_mass / (phloem_mass + xylem_st_mass);
+  double phloem_growth_share   = all_out.culm_growth.phloem[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
+  double xylem_st_growth_share = all_out.culm_growth.xylem_st[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
+  double xylem_sh_growth_share = all_out.culm_growth.xylem_sh[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
 
   /*
    * Height
@@ -120,5 +118,6 @@ void actual_growth(int day,
                        tree_state,
                        all_out,
                        parameters);
+
 }
 
