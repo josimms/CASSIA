@@ -300,8 +300,8 @@ Rcpp::List CASSIA_yearly(int start_year,
       double sapwood_mass = 0.8 * xylem_mass;
 
       // (Scheistl Aalto, 2019): "Sapwood was further divided to 1) smaller branches and 2) bigger branches and truck with ratio 1/9"
-      all_out.culm_growth.xylem_sh[day + days_gone] = 0.1 * sapwood_mass;
-      all_out.culm_growth.xylem_st[day + days_gone] = 0.9 * sapwood_mass;
+      all_out.culm_growth.xylem_sh[day + days_gone] = 0.1 * xylem_mass;
+      all_out.culm_growth.xylem_st[day + days_gone] = 0.9 * xylem_mass;
       // (Scheistl Aalto, 2019): "phloem mass was assumed to be 10% of sapwood mass" (but not part ofthe sapwood)
       all_out.culm_growth.phloem[day + days_gone] = 0.1 * sapwood_mass;
 
