@@ -87,6 +87,7 @@ Rcpp::DataFrame createCulmGrowthDataFrame(const output_vector& out) {
     Rcpp::_["culm_growth_xylem_sh"] = out.culm_growth.xylem_sh,
     Rcpp::_["culm_growth_xylem_st"] = out.culm_growth.xylem_st,
     Rcpp::_["culm_growth_phloem"] = out.culm_growth.phloem,
+    Rcpp::_["culm_growth_sapwood"] = out.culm_growth.sapwood,
     Rcpp::_["tree_alive"] = out.tree_alive,
     Rcpp::_["LAI"] = out.LAI,
     Rcpp::_["nitrogen_balance"] = out.nitrogen_balance,

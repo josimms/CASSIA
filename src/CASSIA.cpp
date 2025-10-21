@@ -295,8 +295,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       // (Scheistl Aalto, 2019): Form factor for the tapering of the trunk
       // (Scheistl Aalto, 2019): Mean wood density 200 kg C m−3
       // NOTE: Could make the form factor dynamic
-      double form_factor = 0.6; //  * leaf_area/reference;
-      double xylem_mass = 200.0 * form_factor * M_PI/4.0 * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.height[index_ref];
+      double xylem_mass = 200.0 * ratios.form_factor * M_PI/4.0 * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.height[index_ref];
       double sapwood_mass = 0.8 * xylem_mass;
 
       // (Scheistl Aalto, 2019): "Sapwood was further divided to 1) smaller branches and 2) bigger branches and truck with ratio 1/9"
@@ -304,6 +303,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       all_out.culm_growth.xylem_st[day + days_gone] = 0.9 * xylem_mass;
       // (Scheistl Aalto, 2019): "phloem mass was assumed to be 10% of sapwood mass" (but not part ofthe sapwood)
       all_out.culm_growth.phloem[day + days_gone] = 0.1 * sapwood_mass;
+      all_out.culm_growth.sapwood[day + days_gone] = sapwood_mass;
 
       /*
        * Photosynthesis

@@ -135,6 +135,7 @@ struct growth_vector {
   std::vector<double> xylem_sh = {0.0};
   std::vector<double> xylem_st = {0.0};
   std::vector<double> phloem = {0.0};
+  std::vector<double> sapwood = {0.0};
   std::vector<bool> tree_alive = {true};
 
   void resize(size_t new_size) {
