@@ -357,7 +357,9 @@ lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_sh, type = "l
 lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_st, type = "l", col = "gold")
 legend("topleft", c("Phloem", "Xylem Sh", "Xylem St", "Roots"), col = c("brown", "red", "gold", "black"), lty = 1, bty = "n", cex = 0.75)
 
-plot(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_diameter, main = "Diamater", ylab = "Diameter, cm", xlab = "Date", type = "l")
+par(mforw = c(2, 1))
+plot(dates_2015, CASSIA_preles_2015$Growth$ring_width, main = "Ring Width", ylab = "Ring Width, mm", xlab = "Date", type = "l")
+plot(dates_2015, 100 * CASSIA_preles_2015$Culm_Growth$culm_growth_diameter, main = "Diamater", ylab = "Diameter, cm", xlab = "Date", type = "l")
 
 ###
 # Long time graphs
