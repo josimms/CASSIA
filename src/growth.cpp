@@ -193,13 +193,16 @@ void growth(int day,
   }
 
   // Carbon to enlargement of one earlywood/latewood cell per one day and cell (kg C cell-1 day-1)
-  double CE_ew = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_ew / 2, 2) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000) * 12 * common.M_C / 342.296 / state.tau_E;
+  double CE_ew = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_ew / 2.0, 2.0) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000.0) * 12.0 * common.M_C / 342.296 / state.tau_E;
   // TODO: should it be tau_W
-  double CE_lw = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_lw / 2, 2) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000) * 12 * common.M_C / 342.296 / state.tau_E;
+  double CE_lw = common.osmotic_sugar_conc * M_PI * pow(parameters.cell_d_lw / 2.0, 2.0) * 0.00266 * 342.296 / (common.gas_const * (TAir + common.abs_zero) * 1000.0) * 12.0 * common.M_C / 342.296 / state.tau_E;
   // The number of forming cell rows in the tree
+
+  // TODO: are the cell.l parameters parameters in the original or are they these values
+  // TODO: surely this D0 isn't correct
   state.n_rows = ratio.form_factor * parameters.h0 / 0.00266 * M_PI * 0.175 / parameters.cell_d_ew;
   double carbon_enlargement_pot;
-  if (state.sD < pow(parameters.sDc, 2) / common.Uggla) {
+  if (state.sD < pow(parameters.sDc, 2.0) / common.Uggla) {
     carbon_enlargement_pot = CE_ew * state.n_E_pot;
   } else {
     carbon_enlargement_pot = CE_lw * state.n_E_pot;
@@ -221,6 +224,7 @@ void growth(int day,
   }
 
   // The use of carbon to wall growth kg C per day
+  // Wall potential growth in original code
   state.diameter = state.n_rows * CW * state.n_W_pot;
   double cells_pot = state.n_W_pot + state.n_M_pot;
 
