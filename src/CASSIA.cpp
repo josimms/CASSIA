@@ -151,8 +151,8 @@ Rcpp::List CASSIA_yearly(int start_year,
   }
 
   all_out.culm_growth.height[0] = parameters.h0;
-  all_out.culm_growth.diameter[0] = 100.0 * parameters.D0;
-  all_out.culm_growth.diameter_potential[0] = 100.0 * parameters.D0;
+  all_out.culm_growth.diameter[0] = parameters.D0;
+  all_out.culm_growth.diameter_potential[0] = parameters.D0;
   all_out.culm_growth.roots[0] = 2.0; // TODO: find a better value
   all_out.culm_growth.mycorrhiza[0] = 2.0; // TODO: make dynamic and find a better value
   all_out.culm_growth.xylem_sh[0] = 0.1 * 200 * 0.6 * M_PI/4.0 * parameters.D0 * parameters.D0 * parameters.h0;
@@ -296,7 +296,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       // (Scheistl Aalto, 2019): Mean wood density 200 kg C m−3
       // NOTE: Could make the form factor dynamic
       double form_factor = 0.6; //  * leaf_area/reference;
-      double xylem_mass = 200.0 * form_factor * M_PI/4.0 * (0.01 * all_out.culm_growth.diameter[index_ref]) * (0.01 * all_out.culm_growth.diameter[index_ref]) * all_out.culm_growth.height[index_ref];
+      double xylem_mass = 200.0 * form_factor * M_PI/4.0 * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.height[index_ref];
       double sapwood_mass = 0.8 * xylem_mass;
 
       // (Scheistl Aalto, 2019): "Sapwood was further divided to 1) smaller branches and 2) bigger branches and truck with ratio 1/9"
