@@ -69,8 +69,8 @@ void compute_fAPAR_used(int day,
   all_out.culm_growth.sapwood[day + days_gone] = sapwood_area * all_out.culm_growth.height[index_ref] * 200;
 
   // (Scheistl Aalto, 2019): "Sapwood was further divided to 1) smaller branches and 2) bigger branches and truck with ratio 1/9"
-  all_out.culm_growth.xylem_sh[day + days_gone] = 0.1 * all_out.culm_growth.sapwood[day + days_gone];
-  all_out.culm_growth.xylem_st[day + days_gone] = 0.9 * all_out.culm_growth.sapwood[day + days_gone];
-  all_out.culm_growth.phloem[day + days_gone] = (pow(all_out.culm_growth.diameter[index_ref], 2.0) - pow(all_out.culm_growth.diameter[index_ref] - 0.0015, 2.0)) * 0.25 * all_out.culm_growth.height[index_ref] * M_PI * 200.0;
+  all_out.culm_growth.xylem_sh[day + days_gone] = 1.0/9.0 * all_out.culm_growth.sapwood[day + days_gone];
+  all_out.culm_growth.xylem_st[day + days_gone] = 8.0/9.0 * all_out.culm_growth.sapwood[day + days_gone];
+  all_out.culm_growth.phloem[day + days_gone]   = 0.1 * all_out.culm_growth.sapwood[day + days_gone];
 
 }
