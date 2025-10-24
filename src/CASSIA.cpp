@@ -153,11 +153,8 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.culm_growth.height[0] = parameters.h0;
   all_out.culm_growth.diameter[0] = parameters.D0;
   all_out.culm_growth.diameter_potential[0] = parameters.D0;
-  all_out.culm_growth.roots[0] = 2.0; // TODO: find a better value
+  all_out.culm_growth.roots[0] = 2.8; // Pauliina, 2019
   all_out.culm_growth.mycorrhiza[0] = 2.0; // TODO: make dynamic and find a better value
-  all_out.culm_growth.xylem_sh[0] = 0.1 * 200 * 0.6 * M_PI/4.0 * parameters.D0 * parameters.D0 * parameters.h0;
-  all_out.culm_growth.xylem_st[0] = 0.9 * 200 * 0.6 * M_PI/4.0 * parameters.D0 * parameters.D0 * parameters.h0;
-  all_out.culm_growth.phloem[0] = 0.1 * 200 * 0.6 * M_PI/4.0 * parameters.D0 * parameters.D0 * parameters.h0;
 
   all_out.starch_vector.needles[0] = starch.needles = parameters.starch_needles00 = parameters.starch_needles0;
   all_out.sugar_vector.needles[0] = sugar.needles = parameters.sugar_needles00 = parameters.sugar_needles0;
@@ -180,7 +177,7 @@ Rcpp::List CASSIA_yearly(int start_year,
    * YEAR LOOP
    */
   int days_gone = 0;
-  double LAI = 5;
+  double LAI = 5; // TODO: check value
 
   for (int year = start_year; year <= end_year; year++) {
     /*
@@ -283,27 +280,6 @@ Rcpp::List CASSIA_yearly(int start_year,
                          photosynthesis,
                          climate,
                          all_out);
-
-      /*
-       *  Xylem and phloem growth from leaf foliage
-       */
-      int index_ref = days_gone + day - 1;
-      if (index_ref < 0) {
-        index_ref = 0;
-      }
-      // Note as far as possible these growth relationships are considered consistent with Pauliina's 2019 paper
-      // (Scheistl Aalto, 2019): Form factor for the tapering of the trunk
-      // (Scheistl Aalto, 2019): Mean wood density 200 kg C m−3
-      // NOTE: Could make the form factor dynamic
-      double xylem_mass = 200.0 * ratios.form_factor * M_PI/4.0 * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.diameter[index_ref] * all_out.culm_growth.height[index_ref];
-      double sapwood_mass = 0.8 * xylem_mass;
-
-      // (Scheistl Aalto, 2019): "Sapwood was further divided to 1) smaller branches and 2) bigger branches and truck with ratio 1/9"
-      all_out.culm_growth.xylem_sh[day + days_gone] = 0.1 * xylem_mass;
-      all_out.culm_growth.xylem_st[day + days_gone] = 0.9 * xylem_mass;
-      // (Scheistl Aalto, 2019): "phloem mass was assumed to be 10% of sapwood mass" (but not part ofthe sapwood)
-      all_out.culm_growth.phloem[day + days_gone] = 0.1 * sapwood_mass;
-      all_out.culm_growth.sapwood[day + days_gone] = sapwood_mass;
 
       /*
        * Photosynthesis

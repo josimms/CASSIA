@@ -15,8 +15,6 @@ repola_out repola(CASSIA_parameters parameters) {
 
   double dski_repo = 2 + 1.25*diameter;
 
-  std::cout << " height " << height;
-
   // NOTE: needle mas could be an input
   double needle_mass = exp(parameters.b0_repo+parameters.b1_repo*dski_repo/(dski_repo+6) + parameters.b2_repo*height/(height+1));
   double m_N_tot = needle_mass*parameters.carbon_share;		// kg C / tree

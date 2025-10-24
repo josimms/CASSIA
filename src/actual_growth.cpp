@@ -101,10 +101,9 @@ void actual_growth(int day,
   // Culmulative
   all_out.culm_growth.height[days_gone + day] = all_out.culm_growth.height[index_ref] + tree_state.height;
 
-  // Growth and mortality
-  double growth_and_mortality = tree_state.roots * (0.975 - photosynthesis.fS); // TODO: more sensible value here!
-  all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref] + growth_and_mortality;
-  all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref] + growth_and_mortality;
+  all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref];
+  all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref];
+  std::cout << ":)";
 
   // Needles accumulation (potentially include drop logic later)
   all_out.culm_growth.needles[days_gone+day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;

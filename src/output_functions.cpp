@@ -24,7 +24,9 @@ Rcpp::DataFrame createGrowthDataFrame(const output_vector& out) {
     Rcpp::_["respiration_growth"] = out.respiration_output.growth,
     Rcpp::_["respiration_maintenance"] = out.respiration_output.maintenance,
     Rcpp::_["ring_width"] = out.ring_width,
-    Rcpp::_["mm_potenital"] = out.potential_ring_width
+    Rcpp::_["mm_potenital"] = out.potential_ring_width,
+    Rcpp::_["leaf_mass"] = out.culm_growth.leaf_mass,
+    Rcpp::_["leaf_area"] = out.culm_growth.leaf_area
   );
 }
 

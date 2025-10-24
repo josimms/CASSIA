@@ -54,18 +54,13 @@ void ring_width_generator(int day,
    */
 
   int index_ref = (day + days_gone) / 365;
-  std::cout << " index_ref " << index_ref;
 
   // NOTE: Already cumulative
   all_out.ring_width[day + days_gone] = state.tot_mm;
 
-  std::cout << " state.tot_mm " << state.tot_mm;
-
   all_out.culm_growth.diameter[day + days_gone] = all_out.culm_growth.diameter[index_ref] + 2.0*state.tot_mm/1000.0;
-  std::cout << " diameter " << all_out.culm_growth.diameter[day + days_gone] << "\n";
 
   all_out.culm_growth.diameter_potential[day + days_gone] = all_out.culm_growth.diameter_potential[index_ref] + 2.0*state.pot_mm/1000.0;
-  std::cout << " diameter_pot " << all_out.culm_growth.diameter_potential[day + days_gone] << "\n";
 
   /*
    * Commented out the ring width based calculations of the xylem and phloem growth!

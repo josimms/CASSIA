@@ -50,4 +50,27 @@ void compute_fAPAR_used(int day,
   // Logging
   all_out.LAI[days_gone + day] = LAI_within_year;
   all_out.fAPAR[days_gone + day] = fAPAR_used;
+
+  /*
+   *  Xylem and phloem growth from leaf foliage
+   */
+  int index_ref = days_gone + day - 1;
+  if (index_ref < 0) {
+    index_ref = 0;
+  }
+
+  double LMA = 0.086; // kg / m-2
+  double leaf_to_sapwood = 1.0/1400; // 0.0075; // m2 m-2
+
+  all_out.culm_growth.leaf_mass[day + days_gone] = repola_values.needle_mass;
+  all_out.culm_growth.leaf_area[day + days_gone] = repola_values.needle_mass / LMA;
+  double sapwood_area = leaf_to_sapwood * all_out.culm_growth.leaf_area[day + days_gone];
+  // (Scheistl Aalto, 2019): Mean wood density 200 kg C m−3
+  all_out.culm_growth.sapwood[day + days_gone] = sapwood_area * all_out.culm_growth.height[index_ref] * 200;
+
+  // (Scheistl Aalto, 2019): "Sapwood was further divided to 1) smaller branches and 2) bigger branches and truck with ratio 1/9"
+  all_out.culm_growth.xylem_sh[day + days_gone] = 0.1 * all_out.culm_growth.sapwood[day + days_gone];
+  all_out.culm_growth.xylem_st[day + days_gone] = 0.9 * all_out.culm_growth.sapwood[day + days_gone];
+  all_out.culm_growth.phloem[day + days_gone] = (pow(all_out.culm_growth.diameter[index_ref], 2.0) - pow(all_out.culm_growth.diameter[index_ref] - 0.0015, 2.0)) * 0.25 * all_out.culm_growth.height[index_ref] * M_PI * 200.0;
+
 }
