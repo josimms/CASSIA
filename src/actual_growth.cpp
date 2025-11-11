@@ -103,7 +103,6 @@ void actual_growth(int day,
 
   all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref];
   all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref];
-  std::cout << ":)";
 
   // Needles accumulation (potentially include drop logic later)
   all_out.culm_growth.needles[days_gone+day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;
