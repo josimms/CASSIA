@@ -247,7 +247,7 @@ void respiration(int day,
  * Repola
  */
 
-repola_out repola(CASSIA_parameters parameters);
+repola_out repola(double diameter, double height, CASSIA_parameters parameters);
 
 /*
  * Actual growth
@@ -430,12 +430,16 @@ void compute_fAPAR_used(int day,
                         int days_gone,
                         double LAI,
                         double max_needles,
+                        bool& fS_reached_one,
+                        bool& fN_reached_one,
+                        repola_out repola,
                         const Settings& boolsettings,
                         const CASSIA_parameters& parameters,
                         const growth_state& tree_state,
                         const photosynthesis_out& photosynthesis,
                         const weather_all& climate,
                         output_vector& all_out);
+
 /*
  * Make dataframes
  */

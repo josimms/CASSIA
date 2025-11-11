@@ -140,21 +140,21 @@ Rcpp::List CASSIA_yearly(int start_year,
   // Forward init values (previous day values) as first values of result vectors
   double CH = parameters.density_tree * parameters.carbon_share;
   double M_suc = 12 * common.M_C + 22 * common.M_H + 11 * common.M_O;
-  double max_needles = 0.03;
-
-  repola_out repola_values;
-  // TODO: should this be like this?
-  if (needle_mass_in == 0) { // The value of this should be 0 if you want the needle value to be calculated
-    repola_values = repola(parameters); // TODO: fix
-  } else {
-    repola_values.needle_mass = needle_mass_in;
-  }
+  double max_needles = 0.6;
 
   all_out.culm_growth.height[0] = parameters.h0;
   all_out.culm_growth.diameter[0] = parameters.D0;
   all_out.culm_growth.diameter_potential[0] = parameters.D0;
   all_out.culm_growth.roots[0] = 2.8; // Pauliina, 2019
   all_out.culm_growth.mycorrhiza[0] = 2.0; // TODO: make dynamic and find a better value
+
+  repola_out repola_values;
+  if (needle_mass_in == 0) { // The value of this should be 0 if you want the needle value to be calculated
+    repola_values = repola(all_out.culm_growth.diameter[0], all_out.culm_growth.height[0], parameters);
+    std::cout << " repola_values " << repola_values.needle_mass;
+  } else {
+    repola_values.needle_mass = needle_mass_in;
+  }
 
   all_out.starch_vector.needles[0] = starch.needles = parameters.starch_needles00 = parameters.starch_needles0;
   all_out.sugar_vector.needles[0] = sugar.needles = parameters.sugar_needles00 = parameters.sugar_needles0;
@@ -186,6 +186,8 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     // TODO: think about this bit!
     photosynthesis.fS = 0.0;
+    bool fS_reached_one = false;
+    bool fN_reached_one = false;
     std::vector<double> release;
 
     /*
@@ -212,8 +214,19 @@ Rcpp::List CASSIA_yearly(int start_year,
      * if there is no growth then the needle mass stays at the originally calculated value
      */
 
+    /*
+     * Indexes
+     */
+
+    int index = days_gone - 1;
+    if (index < 0) {
+      index = 0;
+    }
+
     if (boolsettings.needle_mass_grows) {
-      repola_values = repola(parameters); // Needle mass is then calculated on the next D0 and h0 values
+      std::cout << " days_gone " << days_gone;
+      repola_values = repola(all_out.culm_growth.diameter[index], all_out.culm_growth.height[index], parameters); // Needle mass is then calculated on the next D0 and h0 values
+      std::cout << " repola_values " << repola_values.needle_mass << " diameter " << all_out.culm_growth.diameter[index] << " height " << all_out.culm_growth.height[index];
     } else {
       repola_values.needle_mass = needle_mass_in;
     }
@@ -274,6 +287,9 @@ Rcpp::List CASSIA_yearly(int start_year,
                          days_gone,
                          LAI,
                          max_needles,
+                         fS_reached_one,
+                         fN_reached_one,
+                         repola_values,
                          boolsettings,
                          parameters,
                          tree_state,
@@ -302,7 +318,6 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       log_photosynthesis(day, days_gone, photosynthesis, all_out);
 
-
       /*
        * Potential Growth
        *
@@ -312,10 +327,18 @@ Rcpp::List CASSIA_yearly(int start_year,
       growth(day, days_gone, year,
              tree_state,
              all_out,
-             climate.TAir[days_gone + day], climate.TSoil_A[days_gone + day], climate.TSoil_B[days_gone + day], climate.Soil_Moisture[days_gone + day], photosynthesis.GPP, GPP_ref[days_gone + day],
+             climate.TAir[days_gone + day],
+             climate.TSoil_A[days_gone + day],
+             climate.TSoil_B[days_gone + day],
+             climate.Soil_Moisture[days_gone + day],
+             photosynthesis.GPP,
+             GPP_ref[days_gone + day],
              boolsettings,
              common, parameters, ratios,
-             CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
+             CH,
+             B0,
+             GPP_mean,
+             GPP_previous_sum[year-start_year],
              // Last iteration value
              last_year_HH,
              days_per_year);
@@ -399,9 +422,11 @@ Rcpp::List CASSIA_yearly(int start_year,
 
     GPP_previous_sum.push_back(std::accumulate(all_out.photosynthesis.GPP.begin() + days_gone + 182, all_out.photosynthesis.GPP.begin() + days_gone + 245 + 1, 0.0));
 
-    // TOOD: should this be every year or just every other?
-    max_needles = *std::max_element(all_out.culm_growth.needles.begin() + days_gone,
-                                    all_out.culm_growth.needles.begin() + days_gone + days_per_year);
+    double start_needles = all_out.culm_growth.needles[days_gone];
+    double end_needles   = all_out.culm_growth.needles[days_gone + days_per_year - 1];
+    double max_needles   = end_needles - start_needles;
+
+    std::cout << " max_needles " << max_needles << "\n";
 
     days_gone = days_gone + days_per_year;
 
