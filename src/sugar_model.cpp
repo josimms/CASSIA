@@ -521,8 +521,8 @@ void sugar_model(int day,
     double phloem_to_cover_sinks = std::max(total_effective_demand - available_phloem, 0.0);
 
     // --- STEP 3: Determine needle-to-phloem transfer (capped by reserve and phloem need) ---
-    // Note:
-    double needle_reserve = std::max(sugar_needles - winter_costs.needles - growth_resp.needles, 0.0);
+    // Note: 1.2 added to give a buffer
+    double needle_reserve = std::max(sugar_needles - 2.0 * winter_costs.needles - growth_resp.needles, 0.0);
     double needle_to_phloem = std::min(needle_reserve, phloem_to_cover_sinks);
 
     // Apply transfer
