@@ -99,7 +99,7 @@ void actual_growth(int day,
   }
 
   // Culmulative
-  all_out.culm_growth.height[days_gone + day] = all_out.culm_growth.height[index_ref] + tree_state.height;
+  all_out.culm_growth.height[days_gone + day]   = all_out.culm_growth.height[index_ref] + tree_state.height;
 
   all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref];
   all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref];
