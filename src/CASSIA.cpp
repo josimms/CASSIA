@@ -147,7 +147,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.culm_growth.roots[0] = 2.8; // Pauliina, 2019
   all_out.culm_growth.mycorrhiza[0] = 2.0; // TODO: make dynamic and find a better value
 
-  repola_out repola_values;
+  repola_out repola_values{};
   if (needle_mass_in == 0) { // The value of this should be 0 if you want the needle value to be calculated
     repola_values = repola(all_out.culm_growth.diameter[0], all_out.culm_growth.height[0], parameters);
   } else {
