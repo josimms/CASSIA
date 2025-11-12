@@ -142,6 +142,10 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   dataset_cds_raw_all[, Hour := as.numeric(format(date, "%H"))]
   dataset_cds_raw_all[, Minute := as.numeric(format(date, "%M"))]
 
+  # Yearly aggregation
+  yearly_dataset <- dataset_cds_raw_all[, lapply(.SD, mean), by = Year, .SDcols = -c("YMD", "YM", "Day", "Hour", "Minute", "date")]
+  yearly_dataset[, PPFD_max := dataset_cds_raw_all[, .(PPFD_max = max(PPFD)), by = Year]$PPFD_max]
+
   # Monthly aggregation
   monthy_dataset <- dataset_cds_raw_all[, lapply(.SD, mean), by = YM, .SDcols = -c("YMD", "date")]
   monthy_dataset[, PPFD_max := dataset_cds_raw_all[, .(PPFD_max = max(PPFD)), by = YM]$PPFD_max]
@@ -185,13 +189,23 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   names(gpp) <- gsub("HYY_EDDY233.", "", names(gpp))
 
   # Monthly aggregation - for only one year!
+  soil_water_potential_yearly <- soil_water_potential[, lapply(.SD, mean, na.rm = T), by = Year, .SDcols = -c("MD", "YM", "YMD")]
+
+  # Monthly aggregation - for only one year!
   soil_water_potential_montly <- soil_water_potential[, lapply(.SD, mean, na.rm = T), by = Month, .SDcols = -c("MD", "YM", "YMD")]
 
   # Daily aggregation
   soil_water_potential_daily <- soil_water_potential[, lapply(.SD, mean, na.rm = T), by = MD,  .SDcols = -c("YM", "YMD")]
 
   # Load the data
-  Hyytiala <- data.table::fread("./data/daily_dataframe.csv")
+  Hyytiala <- data.table::fread("/home/josimms/Documents/CASSIA/data/daily_dataframe.csv")
+
+  # Yearly data
+  Hyytiala_yearly <- Hyytiala %>%
+    summarise(Mean_Temp = mean(T336_mean, na.rm = T), # 'C
+              Mean_VPD = mean(VPD, na.rm = T), # hPa
+              Mean_PPFD = mean(PAR_mean, na.rm = T), # µmol m⁻² s⁻¹
+              Mean_PPFD_max = mean(PAR_max[is.finite(PAR_max)], na.rm = T)) # max µmol m⁻² s⁻¹
 
   # Extract year and month, and calculate the monthly max Glob for each year
   Hyytiala_monthly <- Hyytiala %>%
@@ -203,7 +217,7 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
     mutate_all(~replace(., is.infinite(.), NA)) %>%
     group_by(Month) %>%
     summarise(Mean_Temp = mean(Mean_Temp, na.rm = TRUE), # 'C
-              Mean_VPD = mean(Mean_VPD, na.rm = TRUE), # kPa
+              Mean_VPD = mean(Mean_VPD, na.rm = TRUE), # hPa
               Mean_PPFD = mean(Mean_PPFD, na.rm = TRUE), # µmol m⁻² s⁻¹
               Mean_PPFD_max = mean(Mean_PPFD_max, na.rm = TRUE)) # max µmol m⁻² s⁻¹
 
@@ -288,6 +302,26 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
               Mean_PPFD = mean(Mean_PPFD, na.rm = TRUE), # µmol m⁻² s⁻¹
               Mean_Glob = mean(Mean_Glob, na.rm = T), # W m⁻²
               Mean_Precip = mean(Mean_Precip, na.rm = T)) # mm
+
+  # Yearly
+  plantfate_yearly_dataset <- yearly_dataset
+  plantfate_yearly_dataset$CO2 <- 380 # ppm TODO: if time get the values from Hyytiala like in the SWP
+  plantfate_yearly_dataset$SWP <- - 0.001 * rep(mean(soil_water_potential_yearly$HYY_META.wpsoil_B, na.rm = T),
+                                                length.out = nrow(plantfate_yearly_dataset)) # Soil water potential kPa to - MPa
+  plantfate_yearly_dataset$Decimal_year <- seq(plantfate_yearly_dataset$Year[1],
+                                               plantfate_yearly_dataset$Year[nrow(plantfate_yearly_dataset)],
+                                               length.out = nrow(plantfate_yearly_dataset))
+
+  yearly_means <- plantfate_yearly_dataset %>%
+    group_by(Year) %>%
+    summarise(Mean_Temp = mean(Temp, na.rm = TRUE),
+              Mean_VPD = mean(VPD, na.rm = TRUE),
+              Mean_PPFD = mean(PPFD, na.rm = TRUE),
+              Mean_PPFD_max = mean(PPFD_max, na.rm = TRUE))
+
+  cols = c("Mean_Temp", "Mean_VPD", "Mean_PPFD", "Mean_PPFD_max")
+  Hyytiala_repeated <- Hyytiala_yearly[rep(1:nrow(Hyytiala_yearly), length.out = nrow(yearly_means)), cols]
+  error = Hyytiala_repeated - yearly_means[,cols]
 
   # Monthly
 
@@ -411,6 +445,20 @@ ERAS_reading_nc <- function(path_nc = "/home/josimms/Documents/Austria/eras_data
   error_spp_daily = Hyytiala_hourly[,cols] - hourly_means_spp[,cols]
 
   ### Bias correct
+
+  # PlantFATE Yearly
+
+  plantfate_yearly_dataset$Temp = plantfate_yearly_dataset$Temp + rep(error$Mean_Temp, length.out = nrow(plantfate_yearly_dataset))
+  plantfate_yearly_dataset$VPD = plantfate_yearly_dataset$VPD + rep(error$Mean_VPD, length.out = nrow(plantfate_yearly_dataset))
+  plantfate_yearly_dataset$VPD[plantfate_yearly_dataset$VPD < 0] = 0
+  plantfate_yearly_dataset$PPFD = plantfate_yearly_dataset$PPFD + rep(error$Mean_PPFD, length.out = nrow(plantfate_yearly_dataset))
+  plantfate_yearly_dataset$PPFD_max = plantfate_yearly_dataset$PPFD_max + rep(error$Mean_PPFD_max, length.out = nrow(plantfate_yearly_dataset))
+  plantfate_yearly_dataset$PPFD_max[plantfate_yearly_dataset$PPFD_max < 0] = 0
+
+  data.table::fwrite(plantfate_yearly_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max")],
+                     file = file.path(path_test, "ERAS_Yearly.csv"))
+  data.table::fwrite(plantfate_yearly_dataset[,c("Year", "Month", "Decimal_year", "Temp", "VPD", "PPFD", "PPFD_max")],
+                     file = file.path("./data/ERAS_Yearly.csv"))
 
   # PlantFATE Monthly
 
