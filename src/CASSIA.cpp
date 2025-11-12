@@ -116,13 +116,12 @@ Rcpp::List CASSIA_yearly(int start_year,
   // days_per_year not defined as is later
 
   // Old
-  needle_cohorts last_cohorts;
-  double last_year_HH;
-  double last_year_maxN;
-  double GPP_mean;
-  std::vector<double> GPP_previous_sum;
-  GPP_previous_sum.push_back(parameters.GPP_initial);
-  std::vector<double> potenital_growth_use;
+  needle_cohorts last_cohorts{};
+  double last_year_HH{};
+  double last_year_maxN{};
+  double GPP_mean{};
+  std::vector<double> GPP_previous_sum = {parameters.GPP_initial};
+  std::vector<double> potenital_growth_use{};
 
   /*
    * Structures set up
@@ -151,7 +150,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   repola_out repola_values;
   if (needle_mass_in == 0) { // The value of this should be 0 if you want the needle value to be calculated
     repola_values = repola(all_out.culm_growth.diameter[0], all_out.culm_growth.height[0], parameters);
-    std::cout << " repola_values " << repola_values.needle_mass;
   } else {
     repola_values.needle_mass = needle_mass_in;
   }
@@ -224,24 +222,21 @@ Rcpp::List CASSIA_yearly(int start_year,
     }
 
     if (boolsettings.needle_mass_grows) {
-      std::cout << " days_gone " << days_gone;
       repola_values = repola(all_out.culm_growth.diameter[index], all_out.culm_growth.height[index], parameters); // Needle mass is then calculated on the next D0 and h0 values
-      std::cout << " repola_values " << repola_values.needle_mass << " diameter " << all_out.culm_growth.diameter[index] << " height " << all_out.culm_growth.height[index];
     } else {
       repola_values.needle_mass = needle_mass_in;
     }
 
-    // TODO: sort this out!
+    // NOTE: not used anywhere!
     needle_cohorts needles_cohorts;
     if (year > start_year) {
-      // TODO: parameters, add the year 5
       needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3.0;
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
     }
 
-    double HH, GPP_sum_yesterday, GPP_sum;
-    double needles_last;
+    double HH{}, GPP_sum_yesterday{}, GPP_sum{};
+    double needles_last{};
     if (year == start_year) {
       last_year_HH = 275.4137;
     }
@@ -281,7 +276,6 @@ Rcpp::List CASSIA_yearly(int start_year,
        * There are yearly, but not daily dependencies other than environmental states here!
        */
 
-      // TODO: where are LAI and max needles defined?
       // At the start, have a think about this! Isn't it also in tree state?
       compute_fAPAR_used(day,
                          days_gone,
