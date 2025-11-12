@@ -270,7 +270,7 @@ parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(
   0.01, 0.0, 0.01,   # roots
   0.01, 0.0, 0.01,   # xylem.sh
   0.01, 0.0, 0.01,   # xylem.st
-  0.09, 0.11, 0.2, 0.01, 0.1,
+  0.07, 0.11, 0.2, 0.01, 0.1,
   0.1 # myco.thresh in all sugar
 )
 
@@ -282,12 +282,13 @@ CASSIA_preles_2015 <- CASSIA_cpp(
     common = common_p,
     ratios = ratios_p,
     sperling = parameters_2015$sperling_test,
-    needle_mass_in = parameters_2015$needle_mass_in,
+    needle_mass_in = 0,
     Throughfall = parameters_2015$Throughfall,
     photosynthesis_as_input = FALSE,
     preles = TRUE,
     fAPAR_Tian = TRUE,
-    sperling_model = TRUE
+    sperling_model = TRUE,
+    needle_mass_grows = TRUE
   )
 
 CASSIA_preles_1998_2022 <- CASSIA_cpp(
@@ -298,12 +299,13 @@ CASSIA_preles_1998_2022 <- CASSIA_cpp(
     common = common_p,
     ratios = ratios_p,
     sperling = parameters_2015$sperling_test,
-    needle_mass_in = parameters_2015$needle_mass_in,
+    needle_mass_in = 0,
     Throughfall = parameters_2015$Throughfall,
     photosynthesis_as_input = FALSE,
     preles = TRUE,
     fAPAR_Tian = TRUE,
-    sperling_model = TRUE
+    sperling_model = TRUE,
+    needle_mass_grows = TRUE
   )
 ```
 
@@ -350,16 +352,34 @@ points(as.Date(rownames(loaded_data$original_data)), loaded_data$original_data$r
 # Xylem and Phloem
 ###
 
-par(mfrow = c(1, 2))
-ylim = range(CASSIA_preles_2015$Culm_Growth$culm_growth_phloem, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_sh, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_st)
-plot(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_phloem, type = "l", col = "brown", main = "Organ Growth", ylab = "Culm Growth, kg", xlab = "Date", ylim = ylim)
-lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_sh, type = "l", col = "red")
-lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_st, type = "l", col = "gold")
-legend("topleft", c("Phloem", "Xylem Sh", "Xylem St", "Roots"), col = c("brown", "red", "gold", "black"), lty = 1, bty = "n", cex = 0.75)
+# One year
 
-par(mforw = c(2, 1))
-plot(dates_2015, CASSIA_preles_2015$Growth$ring_width, main = "Ring Width", ylab = "Ring Width, mm", xlab = "Date", type = "l")
-plot(dates_2015, 100 * CASSIA_preles_2015$Culm_Growth$culm_growth_diameter, main = "Diamater", ylab = "Diameter, cm", xlab = "Date", type = "l")
+par(mfrow = c(1, 2))
+ylim = range(CASSIA_preles_2015$Culm_Growth$culm_growth_phloem, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_sh, CASSIA_preles_2015$Culm_Growth$culm_growth_roots, CASSIA_preles_2015$Growth$leaf_mass)
+plot(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_phloem, type = "l", col = "brown", main = "Organ Growth", ylab = "kg", xlab = "Date", ylim = ylim)
+lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_sh, type = "l", col = "red")
+lines(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_roots, type = "l", col = "black")
+lines(dates_2015, CASSIA_preles_2015$Growth$leaf_mass, type = "l", col = "green")
+
+plot(dates_2015, CASSIA_preles_2015$Culm_Growth$culm_growth_xylem_st, type = "l", col = "gold", main = "Organ Growth", ylab = "kg", xlab = "Date", )
+legend("topleft", c("Phloem", "Xylem Sh", "Xylem St", "Roots", "Needles"), col = c("brown", "red", "gold", "black", "green"), lty = 1, bty = "n", cex = 0.75)
+
+plot(CASSIA_preles_2015$Culm_Growth$culm_growth_sapwood + CASSIA_preles_2015$Culm_Growth$culm_growth_phloem, CASSIA_preles_2015$Growth$leaf_mass, xlab = "Sapwood + Phloem Mass, kg", ylab = "Leaf Mass, kg")
+plot(dates_2015, CASSIA_preles_2015$Growth$leaf_area, ylab = "Leaf Area, m²", xlab = "Dates")
+
+# Multiple years
+par(mfrow = c(1, 2))
+ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_phloem, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_xylem_sh, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots, CASSIA_preles_1998_2022$Growth$leaf_mass, na.rm = T)
+plot(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_phloem, type = "l", col = "brown", main = "Organ Growth", ylab = "kg", xlab = "Date", ylim = ylim)
+lines(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_xylem_sh, type = "l", col = "red")
+lines(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots, type = "l", col = "black")
+lines(dates, CASSIA_preles_1998_2022$Growth$leaf_mass, type = "l", col = "green")
+
+plot(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_xylem_st, type = "l", col = "gold", main = "Organ Growth", ylab = "kg", xlab = "Date", )
+legend("topleft", c("Phloem", "Xylem Sh", "Xylem St", "Roots", "Needles"), col = c("brown", "red", "gold", "black", "green"), lty = 1, bty = "n", cex = 0.75)
+
+plot(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_sapwood + CASSIA_preles_1998_2022$Culm_Growth$culm_growth_phloem, CASSIA_preles_1998_2022$Growth$leaf_mass, xlab = "Sapwood + Phloem Mass, kg", ylab = "Leaf Mass, kg")
+plot(dates, CASSIA_preles_1998_2022$Growth$leaf_area, ylab = "Leaf Area, m²", xlab = "Dates")
 
 ###
 # Long time graphs
@@ -416,6 +436,9 @@ lines(dates, CASSIA_preles_1998_2022$Sugar$storage_term_xylem_st, type = "l", co
 plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, main = "Surgar Out Seperated by Type", col = "red", 
      xlab = "Date", ylab = "Sugar, Kg C", type = "l", ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus)))
 lines(dates, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus)
+
+CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter
+
 ```
 
 # Import biomass data
