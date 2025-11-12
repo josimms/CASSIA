@@ -1,6 +1,32 @@
 #include "CASSIA.h"
 
 /*
+ * == Check for NaN ==
+ */
+
+void check_tracker_for_nan(const carbo_tracker& tracker, const std::string& name, int day) {
+  auto check_value = [&](double val, const std::string& label) {
+    if (std::isnan(val) || std::isinf(val)) {
+      std::cout << "⚠️ Day " << day << " - " << name << "." << label
+                << " is NaN or Inf! Value: " << val << "\n";
+    } else if (val == 0.0) {
+      std::cout << "⚠️ Day " << day << " - " << name << "." << label
+                << " is ZERO. Value: " << val << "\n";
+    } else if (val < 0.0) {
+      std::cout << "⚠️ Day " << day << " - " << name << "." << label
+                << " is NEGATIVE! Value: " << val << "\n";
+    }
+  };
+
+  check_value(tracker.needles,  " needles");
+  check_value(tracker.phloem,   " phloem");
+  check_value(tracker.roots,    " roots");
+  check_value(tracker.xylem_sh, " xylem_sh");
+  check_value(tracker.xylem_st, " xylem_st");
+}
+
+
+/*
  * === Sugar Storage ===
  */
 
@@ -108,23 +134,55 @@ double safe_to_starch_transfer(
     double delta,
     double max_capacity
 ) {
-  double zeta = 100;
+  double zeta = 5;
 
   // Sugar surplus after winter needs
   double S = sugar - winter;
+  if (std::isnan(S) || std::isinf(S))
+    std::cout << "⚠️ safe_to_starch_transfer: S (sugar-winter) is NaN/Inf! "
+              << "sugar=" << sugar << " winter=" << winter << "\n";
 
   double sugar_limitation = sigma(S, zeta);
+  if (std::isnan(sugar_limitation) || std::isinf(sugar_limitation))
+    std::cout << "⚠️ safe_to_starch_transfer: sugar_limitation is NaN/Inf! "
+              << "S=" << S << "\n";
+
   double starch_limitation = sigma(starch, zeta);
+  if (std::isnan(starch_limitation) || std::isinf(starch_limitation))
+    std::cout << "⚠️ safe_to_starch_transfer: starch_limitation is NaN/Inf! "
+              << "starch=" << starch << "\n";
 
   double exponent = max_capacity - S - starch;
+  if (std::isnan(exponent) || std::isinf(exponent))
+    std::cout << "⚠️ safe_to_starch_transfer: exponent is NaN/Inf! "
+          << "max_capacity=" << max_capacity
+          << " S=" << S << " starch=" << starch << "\n";
+
   double max_capacity_limitation = sigma(exponent, zeta);
+  if (std::isnan(max_capacity_limitation) || std::isinf(max_capacity_limitation))
+    std::cout << "⚠️ safe_to_starch_transfer: max_capacity_limitation is NaN/Inf! "
+              << "exponent=" << exponent << "\n";
 
   double synthesis = Ad0 * S * max_capacity_limitation;
+  if (std::isnan(synthesis) || std::isinf(synthesis))
+    std::cout << "⚠️ safe_to_starch_transfer: synthesis is NaN/Inf! "
+            << "Ad0=" << Ad0 << " S=" << S
+            << " max_capacity_limitation=" << max_capacity_limitation << "\n";
+
   double remobilisation = delta * starch * starch_limitation;
+  if (std::isnan(remobilisation) || std::isinf(remobilisation))
+    std::cout << "⚠️ safe_to_starch_transfer: remobilisation is NaN/Inf! "
+              << "delta=" << delta << " starch=" << starch
+              << " starch_limitation=" << starch_limitation << "\n";
 
   double proposed_flux = sugar_limitation * synthesis - (1 - sugar_limitation) * remobilisation;
+  if (std::isnan(proposed_flux) || std::isinf(proposed_flux))
+                std::cout << "⚠️ safe_to_starch_transfer: proposed_flux is NaN/Inf! "
+                          << "sugar_limitation=" << sugar_limitation
+                          << " synthesis=" << synthesis
+                          << " remobilisation=" << remobilisation << "\n";
 
-  return proposed_flux;
+                  return proposed_flux;
 }
 
 /*
@@ -319,7 +377,7 @@ void sugar_model(int day,
 
     double winter = (1.0/(1.0 + std::exp(0.5*(TAir-5))) + 1.0/(1.0 + std::exp(0.2*(PAR-30))))/2.0;
 
-    carbo_tracker winter_costs;
+    carbo_tracker winter_costs{};
     winter_costs.needles  = 0.0536 * winter + parameters.lower_bound_needles;
     winter_costs.phloem   = 0.2736 * winter + parameters.lower_bound_phloem;
     winter_costs.roots    = 0.0300 * winter + parameters.lower_bound_roots;
@@ -404,7 +462,7 @@ void sugar_model(int day,
      */
 
     // CALCULATE THE GROWTH WITH THE LAST ITERATIONS SUGAR AND NITROGEN
-    carbo_tracker growth_resp;
+    carbo_tracker growth_resp{};
     growth_resp.needles =                   tree_state.RmN * storage_term.needles  +                  (1 + common.Rg_N) * (std::min(storage_term.needles, nitrogen_capacity.needles)  * tree_state.needles + std::min(storage_term.needles, nitrogen_capacity.bud) * tree_state.bud);
     growth_resp.roots =                     tree_state.RmR * storage_term.roots    +                  (1 + common.Rg_R) * std::min(storage_term.roots, nitrogen_capacity.roots)       * tree_state.roots;
     growth_resp.phloem =     phloem_share * tree_state.RmS * storage_term.phloem   + phloem_share   * (1 + common.Rg_S) * (std::min(storage_term.phloem, nitrogen_capacity.wall)      * tree_state.wall    + std::min(storage_term.phloem, nitrogen_capacity.height) * tree_state.height) + tree_state.use - tree_state.release;
@@ -452,6 +510,9 @@ void sugar_model(int day,
     } else if (after_growth - before_growth < -1e-7) {
       std::cout << "Warning: Growth pools are not consistant, beofre growth is more than after!\n";
     }
+
+    check_tracker_for_nan(sugar, "Sugar, after growth", day);
+    check_tracker_for_nan(starch, "Starch, after growth", day);
 
     // NITROGEN BALANCE CHANGE IF LINKED WITH GROWTH
 
@@ -582,13 +643,17 @@ void sugar_model(int day,
       std::cout << "Day " << day + 1 << ": More carbs after internal transfer: " << difference_2 << "\n";
     }
 
+    check_tracker_for_nan(sugar, "Sugar, after transfer", day);
+    check_tracker_for_nan(starch, "Starch, after transfer", day);
+
     /*
      * Starch
      */
-    carbo_tracker to_starch;
+    carbo_tracker to_starch{};
 
     // === NEEDLES ===
     {
+      // TODO: leaf mass rather than needles
       double capacity = parameters.percentage_needle_storage * out.culm_growth.needles[day + days_gone -1];
 
       to_starch.needles = safe_to_starch_transfer(
@@ -667,6 +732,9 @@ void sugar_model(int day,
       if (starch.xylem_st < 0.0) std::cout << "Day " << day + days_gone + 1 << " starch.xylem_st is negative after starch\n";
     }
 
+    check_tracker_for_nan(sugar, "Sugar, after starch", day);
+    check_tracker_for_nan(starch, "Starch, after starch", day);
+
     /*
      * === Excess sugar export beyond capacity ===
      */
@@ -699,6 +767,9 @@ void sugar_model(int day,
     // --- STEP 7: Finalize export ---
     double total_exported = export_from_needles + export_from_phloem;
     sugar.surplus = total_exported;  // For tracking in output
+
+    check_tracker_for_nan(sugar, "Sugar, after export", day);
+    check_tracker_for_nan(starch, "Starch, after export", day);
 
     /*
      * Uptake
