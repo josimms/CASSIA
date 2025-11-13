@@ -265,12 +265,12 @@ parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(fit$optim$b
 
 parameters_2015$sperling_test[names(fit$optim$bestmem), "Hyde"] <- c(
   # Ezymes
-  0.01, 0.0, 0.01,   # needles
-  0.01, 0.0, 0.01,   # phloem
-  0.01, 0.0, 0.01,   # roots
-  0.01, 0.0, 0.01,   # xylem.sh
-  0.01, 0.0, 0.01,   # xylem.st
-  0.07, 0.11, 0.2, 0.01, 0.1,
+  0.00, 0.0, 0.00,   # needles
+  0.00, 0.0, 0.00,   # phloem
+  0.00, 0.0, 0.00,   # roots
+  0.00, 0.0, 0.00,   # xylem.sh
+  0.00, 0.0, 0.00,   # xylem.st
+  0.09, 0.11, 0.2, 0.01, 0.1,
   0.1 # myco.thresh in all sugar
 )
 
@@ -307,6 +307,7 @@ CASSIA_preles_1998_2022 <- CASSIA_cpp(
     sperling_model = TRUE,
     needle_mass_grows = TRUE
   )
+
 ```
 
 # Plot for a year
@@ -434,10 +435,10 @@ lines(dates, CASSIA_preles_1998_2022$Sugar$storage_term_xylem_sh, type = "l", co
 lines(dates, CASSIA_preles_1998_2022$Sugar$storage_term_xylem_st, type = "l", col = "gold")
 
 plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, main = "Surgar Out Seperated by Type", col = "red", 
-     xlab = "Date", ylab = "Sugar, Kg C", type = "l", ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus)))
+     xlab = "Date", ylab = "Sugar, Kg C", type = "l", ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus), na.rm = T))
 lines(dates, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus)
 
-CASSIA_preles_1998_2022$Culm_Growth$culm_growth_diameter
+CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height
 
 ```
 
