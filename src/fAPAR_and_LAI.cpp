@@ -70,7 +70,7 @@ void compute_fAPAR_used(int day,
     }
 
   } else if (!boolsettings.photosynthesis_as_input && !boolsettings.fAPAR_Tian && boolsettings.preles) {
-    fAPAR_used = climate.fAPAR[day];
+    fAPAR_used = climate.fAPAR[day + days_gone];
   } else {
     fAPAR_used = 0.0;
   }
