@@ -106,10 +106,9 @@ Rcpp::List CASSIA_yearly(int start_year,
   /*
    * Output structure set up
    */
-  int simulation_time = days_inclusive(start_year, 1, 1, end_year, 12, 31); // TODO: create a function that creates this size output
+  int simulation_time = days_inclusive(start_year, 1, 1, end_year, 12, 31);
   output_vector all_out{};
   initialize_output_vector(all_out, simulation_time);
-
 
   // TODO: add / change the original initialization!
   // Set up the initial conditions
@@ -117,11 +116,17 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   // Old
   needle_cohorts last_cohorts{};
-  double last_year_HH{};
-  double last_year_maxN{};
-  double GPP_mean{};
-  std::vector<double> GPP_previous_sum = {parameters.GPP_initial};
-  std::vector<double> potenital_growth_use{};
+  needle_cohorts needles_cohorts{};
+  double last_year_HH{275.4137};
+  double last_year_maxN = 0.0;
+  double GPP_mean = 0.0;
+  double HH = 0.0;
+  double GPP_sum_yesterday = 0.0;
+  double GPP_sum = 0.0;
+  double needles_last = 0.0;
+  std::vector<double> GPP_previous_sum(end_year - start_year + 2, parameters.GPP_initial);
+  std::vector<double> potenital_growth_use(simulation_time, 0.0);
+  std::vector<double> release(simulation_time, 0.0);
 
   /*
    * Structures set up
@@ -171,6 +176,8 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.nitrogen_capacity_vector.bud[0] = 1;
   all_out.nitrogen_capacity_vector.roots[0] = 1;
 
+  std::cout << "GPP_ref length: " << GPP_ref.size() << std::endl;
+
   /*
    * YEAR LOOP
    */
@@ -178,6 +185,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   double LAI = 5; // TODO: check value
 
   for (int year = start_year; year <= end_year; year++) {
+
     /*
      * Daily output
      */
@@ -186,7 +194,6 @@ Rcpp::List CASSIA_yearly(int start_year,
     photosynthesis.fS = 0.0;
     bool fS_reached_one = false;
     bool fN_reached_one = false;
-    std::vector<double> release;
 
     /*
      * Yearly initialization
@@ -222,23 +229,17 @@ Rcpp::List CASSIA_yearly(int start_year,
     }
 
     if (boolsettings.needle_mass_grows) {
-      repola_values = repola(all_out.culm_growth.diameter[index], all_out.culm_growth.height[index], parameters); // Needle mass is then calculated on the next D0 and h0 values
+      repola_values = repola(all_out.culm_growth.diameter[index],
+                             all_out.culm_growth.height[index], parameters); // Needle mass is then calculated on the net D and h values
     } else {
       repola_values.needle_mass = needle_mass_in;
     }
 
     // NOTE: not used anywhere!
-    needle_cohorts needles_cohorts;
     if (year > start_year) {
       needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3.0;
       needles_cohorts.year_2 = last_cohorts.year_1;
       needles_cohorts.year_3 = last_cohorts.year_2;
-    }
-
-    double HH{}, GPP_sum_yesterday{}, GPP_sum{};
-    double needles_last{};
-    if (year == start_year) {
-      last_year_HH = 275.4137;
     }
 
     /*
@@ -261,9 +262,9 @@ Rcpp::List CASSIA_yearly(int start_year,
       if (boolsettings.preles) {
         if (day > 0) {
           if (climate.PAR[day + days_gone] < -900) climate.PAR[day + days_gone] = climate.PAR[day + days_gone -1];
-          if (climate.TAir[day + days_gone] < -900) climate.TAir[day + days_gone] = climate.TAir[day + days_gone- 1];
+          if (climate.TAir[day + days_gone] < -900) climate.TAir[day + days_gone] = climate.TAir[day + days_gone - 1];
           if (climate.VPD[day + days_gone] < 0 || climate.VPD[day + days_gone] > 6) climate.VPD[day + days_gone] = climate.VPD[day + days_gone -1];
-          if (climate.Precip[day + days_gone] <    0) climate.Precip[day + days_gone] = climate.Precip[day + days_gone -1] * 0.3;
+          if (climate.Precip[day + days_gone] < 0) climate.Precip[day + days_gone] = climate.Precip[day + days_gone -1] * 0.3;
           /* On avg. P+1=0.315*P
            * (in Sodis & Hyde) */
           if (climate.CO2[day + days_gone] < 0) climate.CO2[day + days_gone] = climate.CO2[day + days_gone -1];
@@ -318,6 +319,8 @@ Rcpp::List CASSIA_yearly(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
+      double day_gpp = day;
+      if (day_gpp > 364) day_gpp = 364;
       growth(day, days_gone, year,
              tree_state,
              all_out,
@@ -326,7 +329,7 @@ Rcpp::List CASSIA_yearly(int start_year,
              climate.TSoil_B[days_gone + day],
              climate.Soil_Moisture[days_gone + day],
              photosynthesis.GPP,
-             GPP_ref[days_gone + day],
+             GPP_ref[day_gpp],
              boolsettings,
              common, parameters, ratios,
              CH,
@@ -338,10 +341,10 @@ Rcpp::List CASSIA_yearly(int start_year,
              days_per_year);
 
       // Saved for the next iteration
-      release.push_back(tree_state.en_pot_growth);
-      double lim = std::ceil(parameters.tau_Ee);
-      if (day > (lim-1)) {
-        tree_state.release = release[day-lim];
+      release[days_gone + day] = tree_state.en_pot_growth;
+      int lim = static_cast<int>(std::ceil(parameters.tau_Ee));
+      if (day > (lim - 1)) {
+        tree_state.release = release[days_gone + day - lim];
       } else {
         tree_state.release = 0.0;
       }
@@ -405,22 +408,30 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       // TODO: what does this do?
       HH = tree_state.HH;
-      potenital_growth_use.push_back(tree_state.use);
+      potenital_growth_use[days_gone + day] = tree_state.use;
 
       GPP_sum_yesterday = GPP_sum;
+
+      if (day == 0 || day == days_per_year-1) {
+        all_out.sugar_vector.print(day + days_gone, "sugar");
+        all_out.starch_vector.print(day + days_gone, "starch");
+        all_out.culm_growth.print(day + days_gone, "culm");
+      }
+
     } // End of the days loop
 
     // Updating parameters!
 
     last_year_HH = HH;
 
-    GPP_previous_sum.push_back(std::accumulate(all_out.photosynthesis.GPP.begin() + days_gone + 182, all_out.photosynthesis.GPP.begin() + days_gone + 245 + 1, 0.0));
+    GPP_previous_sum[year - start_year + 1] = std::accumulate(all_out.photosynthesis.GPP.begin() + days_gone + 182,
+                                                              all_out.photosynthesis.GPP.begin() + days_gone + 245 + 1, 0.0);
+
+    std::cout << " GPP_previous_sum " << GPP_previous_sum[year - start_year + 1];
 
     double start_needles = all_out.culm_growth.needles[days_gone];
     double end_needles   = all_out.culm_growth.needles[days_gone + days_per_year - 1];
-    double max_needles   = end_needles - start_needles;
-
-    std::cout << " max_needles " << max_needles << "\n";
+    max_needles          = end_needles - start_needles;
 
     days_gone = days_gone + days_per_year;
 
@@ -429,6 +440,7 @@ Rcpp::List CASSIA_yearly(int start_year,
     last_cohorts.year_3 = needles_cohorts.year_3;
     // TODO: make it possible to make this for 5 years?
   } // End of the years loop
+
 
   ///////////////////////
   // Output
