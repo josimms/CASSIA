@@ -53,7 +53,10 @@ void ring_width_generator(int day,
    * LOGGING
    */
 
-  int index_ref = (day + days_gone) / 365;
+  int index_ref = day + days_gone - 1;
+  if (index_ref < 0) {
+    index_ref = 0;
+  }
 
   // NOTE: Already cumulative
   all_out.ring_width[day + days_gone] = state.tot_mm;
