@@ -161,6 +161,44 @@ struct growth_vector {
     leaf_area.assign(new_size, 0.0);
     tree_alive.assign(new_size, true);
   }
+
+  void print(int day, const std::string& name = "growth_vector") const {
+    std::cout << "\n=== " << name << " (Day " << day << ") ===\n";
+
+    auto print_value = [&](const auto& vec, const std::string& label) {
+      if (day >= 0 && static_cast<size_t>(day) < vec.size()) {
+        std::cout << label << ": " << vec[day] << "\n";
+      } else {
+        std::cout << label << ": [Out of range index: " << day << "]\n";
+      }
+    };
+
+    print_value(height, "height");
+    print_value(needles, "needles");
+    print_value(roots, "roots");
+    print_value(diameter, "diameter");
+    print_value(diameter_potential, "diameter_potential");
+    print_value(bud, "bud");
+    print_value(mycorrhiza, "mycorrhiza");
+    print_value(ring_width, "ring_width");
+    print_value(height_tot, "height_tot");
+    print_value(wall_tot, "wall_tot");
+    print_value(g, "g");
+    print_value(en_pot_growth, "en_pot_growth");
+    print_value(xylem_sh, "xylem_sh");
+    print_value(xylem_st, "xylem_st");
+    print_value(phloem, "phloem");
+    print_value(sapwood, "sapwood");
+    print_value(leaf_mass, "leaf_mass");
+    print_value(leaf_area, "leaf_area");
+    if (day >= 0 && static_cast<size_t>(day) < tree_alive.size()) {
+      std::cout << "tree_alive: " << (tree_alive[day] ? "true" : "false") << "\n";
+    } else {
+      std::cout << "tree_alive: [Out of range index: " << day << "]\n";
+    }
+
+    std::cout << "=====================================\n";
+  }
 };
 
 
@@ -189,6 +227,31 @@ struct carbo_tracker_vector {
     surplus.assign(new_size, 0.0);
     // Note: initial_amount and B remain unchanged
   }
+
+  void print(int day, const std::string& name = "carbo_tracker_vector") const {
+    std::cout << "\n=== " << name << " (Day " << day << ") ===\n";
+
+    auto print_value = [&](const std::vector<double>& vec, const std::string& label) {
+      if (day >= 0 && static_cast<size_t>(day) < vec.size()) {
+        std::cout << label << ": " << vec[day] << "\n";
+      } else {
+        std::cout << label << ": [Out of range index: " << day << "]\n";
+      }
+    };
+
+    print_value(needles,       "needles");
+    print_value(phloem,        "phloem");
+    print_value(xylem_sh,      "xylem_sh");
+    print_value(xylem_st,      "xylem_st");
+    print_value(roots,         "roots");
+    print_value(to_mycorrhiza,"to_mycorrhiza");
+    print_value(surplus,       "surplus");
+
+    std::cout << "initial_amount: " << initial_amount << "\n";
+    std::cout << "B: " << B << "\n";
+    std::cout << "=====================================\n";
+  }
+
 };
 
 
