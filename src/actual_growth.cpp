@@ -105,7 +105,15 @@ void actual_growth(int day,
   all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref];
 
   // Needles accumulation (potentially include drop logic later)
-  all_out.culm_growth.needles[days_gone+day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;
+
+  if (day == 0) {
+    all_out.culm_growth.needles[days_gone+day] = 0.0;
+  } else {
+    all_out.culm_growth.needles[days_gone+day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;
+  }
+
+
+  std::cout << " tree_state.needles " << tree_state.needles;
 
   /*
    * Ring width and log
