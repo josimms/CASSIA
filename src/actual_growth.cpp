@@ -11,10 +11,11 @@ void actual_growth(int day,
                    Settings boolsettings,
                    growth_out nitrogen_capacity) {
 
-  double phloem_share   =   all_out.culm_growth.phloem[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
-  double xylem_st_share = all_out.culm_growth.xylem_st[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
-  double xylem_sh_share = all_out.culm_growth.xylem_sh[day + days_gone] / (all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone]);
+  double denom = all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone];
 
+  double phloem_share   = denom > 0 ? all_out.culm_growth.phloem[day + days_gone] / denom : 0.0;
+  double xylem_st_share = denom > 0 ? all_out.culm_growth.xylem_st[day + days_gone] / denom : 0.0;
+  double xylem_sh_share = denom > 0 ? all_out.culm_growth.xylem_sh[day + days_gone] / denom : 0.0;
   /*
    * Height
    */
@@ -111,9 +112,6 @@ void actual_growth(int day,
   } else {
     all_out.culm_growth.needles[days_gone+day] = all_out.culm_growth.needles[index_ref] + tree_state.needles;
   }
-
-
-  std::cout << " tree_state.needles " << tree_state.needles;
 
   /*
    * Ring width and log
