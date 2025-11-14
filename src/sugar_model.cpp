@@ -346,8 +346,8 @@ void sugar_model(int day,
   double respiration_maintainence = 0.0;
 
   if (new_sugar_model) {
-    // check_tracker_for_nan(sugar, "Sugar, before anything", day + days_gone + 1);
-    // check_tracker_for_nan(starch, "Starch, before anything", day + days_gone + 1);
+    check_tracker_for_nan(sugar, "Sugar, before anything", day + days_gone + 1);
+    check_tracker_for_nan(starch, "Starch, before anything", day + days_gone + 1);
 
     double denom = out.culm_growth.phloem[day + days_gone] + out.culm_growth.xylem_sh[day + days_gone] + out.culm_growth.xylem_st[day + days_gone];
 
@@ -498,8 +498,8 @@ void sugar_model(int day,
       std::cout << "Warning: Growth pools are not consistant, beofre growth is more than after!\n";
     }
 
-    // check_tracker_for_nan(sugar, "Sugar, after growth", day + days_gone + 1);
-    // check_tracker_for_nan(starch, "Starch, after growth", day + days_gone + 1);
+    check_tracker_for_nan(sugar, "Sugar, after growth", day + days_gone + 1);
+    check_tracker_for_nan(starch, "Starch, after growth", day + days_gone + 1);
 
     // NITROGEN BALANCE CHANGE IF LINKED WITH GROWTH
 
@@ -630,8 +630,8 @@ void sugar_model(int day,
      std::cout << "Day " << day + days_gone + 1 << ": More carbs after internal transfer: " << difference_2 << "\n";
     }
 
-    // check_tracker_for_nan(sugar, "Sugar, after transfer", day + days_gone + 1);
-    // check_tracker_for_nan(starch, "Starch, after transfer", day + days_gone + 1);
+    check_tracker_for_nan(sugar, "Sugar, after transfer", day + days_gone + 1);
+    check_tracker_for_nan(starch, "Starch, after transfer", day + days_gone + 1);
 
     /*
      * Starch
@@ -719,8 +719,8 @@ void sugar_model(int day,
       if (starch.xylem_st < 0.0) std::cout << "Day " << day + days_gone + 1 << " starch.xylem_st is negative after starch. Starch " << starch.xylem_st << " to_starch.xylem_st " << to_starch.xylem_st << "\n";
     }
 
-    // check_tracker_for_nan(sugar, "Sugar, after starch", day + days_gone + 1);
-    // check_tracker_for_nan(starch, "Starch, after starch", day + days_gone + 1);
+    check_tracker_for_nan(sugar, "Sugar, after starch", day + days_gone + 1);
+    check_tracker_for_nan(starch, "Starch, after starch", day + days_gone + 1);
 
     /*
      * === Excess sugar export beyond capacity ===
@@ -755,8 +755,8 @@ void sugar_model(int day,
     double total_exported = export_from_needles + export_from_phloem;
     sugar.surplus = total_exported;  // For tracking in output
 
-    // check_tracker_for_nan(sugar, "Sugar, after export", day + days_gone + 1);
-    // check_tracker_for_nan(starch, "Starch, after export", day + days_gone + 1);
+    check_tracker_for_nan(sugar, "Sugar, after export", day + days_gone + 1);
+    check_tracker_for_nan(starch, "Starch, after export", day + days_gone + 1);
 
     /*
      * Uptake
