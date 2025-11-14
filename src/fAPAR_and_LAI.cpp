@@ -31,7 +31,7 @@ void compute_fAPAR_used(int day,
 
   double fAPAR_used = 0.0;
   double LAI_within_year = 0.0;
-  double LMA = 0.086; // kg / m-2
+  double LMA = 0.06; // 0.086; // kg / m-2
   double leaf_to_sapwood = 1.0 / 1400.0; // m2 m-2
   double needle_mass = repola.needle_mass; // TODO units?
   double needle_mass_sapwood = repola.needle_mass;
@@ -52,11 +52,11 @@ void compute_fAPAR_used(int day,
   double senescence = 0.0;
   // Day 50 added below as the first few days can give 1 which ruins the logic!
   if (photosynthesis.fS >= 1.0 && day > 50) fS_reached_one = true;
-  if (fS_reached_one) senescence = 1.0 - photosynthesis.fS;
+  if (fS_reached_one) senescence = photosynthesis.fS;
 
   // Calculated first as needle_mass changed otherwise
-  needle_mass_sapwood = needle_mass * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * f_modifer * needle_mass;
-  needle_mass = needle_mass * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * needle_mass * (f_modifer - senescence);
+  needle_mass_sapwood = needle_mass * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * needle_mass * f_modifer;
+  needle_mass         = needle_mass * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * needle_mass * f_modifer * senescence;
 
   if (!boolsettings.photosynthesis_as_input && boolsettings.fAPAR_Tian) {
     LAI_within_year = LAI * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * f_modifer * LAI - (1.0 / parameters.n_age) * senescence * LAI;
@@ -96,7 +96,7 @@ void compute_fAPAR_used(int day,
   // Wood growth
 
   // (Scheistl Aalto, 2019): Mean wood density 200 kg C m−3
-  all_out.culm_growth.sapwood[day + days_gone] = sapwood_area * all_out.culm_growth.height[index_ref] * 200.0;
+  all_out.culm_growth.sapwood[day + days_gone] = std::max(sapwood_area * all_out.culm_growth.height[index_ref] * 200.0, all_out.culm_growth.sapwood[index_ref]);
 
   // (Scheistl Aalto, 2019): "Sapwood was further divided to
   // 1) smaller branches and 2) bigger branches and trunk with ratio 1/9"
