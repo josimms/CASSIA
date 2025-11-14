@@ -427,8 +427,6 @@ Rcpp::List CASSIA_yearly(int start_year,
     GPP_previous_sum[year - start_year + 1] = std::accumulate(all_out.photosynthesis.GPP.begin() + days_gone + 182,
                                                               all_out.photosynthesis.GPP.begin() + days_gone + 245 + 1, 0.0);
 
-    std::cout << " GPP_previous_sum " << GPP_previous_sum[year - start_year + 1];
-
     double start_needles = all_out.culm_growth.needles[days_gone];
     double end_needles   = all_out.culm_growth.needles[days_gone + days_per_year - 1];
     max_needles          = end_needles - start_needles;
