@@ -144,7 +144,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   // Forward init values (previous day values) as first values of result vectors
   double CH = parameters.density_tree * parameters.carbon_share;
   double M_suc = 12 * common.M_C + 22 * common.M_H + 11 * common.M_O;
-  double max_needles = 0.6;
+  double max_needles = 0.22;
 
   all_out.culm_growth.height[0] = parameters.h0;
   all_out.culm_growth.diameter[0] = parameters.D0;
@@ -412,11 +412,11 @@ Rcpp::List CASSIA_yearly(int start_year,
 
       GPP_sum_yesterday = GPP_sum;
 
-      if (day == 0 || day == days_per_year-1) {
-        all_out.sugar_vector.print(day + days_gone, "sugar");
-        all_out.starch_vector.print(day + days_gone, "starch");
-        all_out.culm_growth.print(day + days_gone, "culm");
-      }
+      //if (day == 0 || day == days_per_year-1) {
+        //all_out.sugar_vector.print(day + days_gone, "sugar");
+        //all_out.starch_vector.print(day + days_gone, "starch");
+        //all_out.culm_growth.print(day + days_gone, "culm");
+      //}
 
     } // End of the days loop
 
