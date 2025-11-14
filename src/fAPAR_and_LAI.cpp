@@ -41,7 +41,11 @@ void compute_fAPAR_used(int day,
   all_out.fAPAR[days_gone + day] = fAPAR_used;
 
   // Tian 2021 method
-  double f_modifer = all_out.culm_growth.needles[index_ref]/max_needles;
+  double culm_needle = 0.0;
+  if (day > 0) {
+    culm_needle = all_out.culm_growth.needles[index_ref];
+  }
+  double f_modifer = culm_needle/max_needles;
   if (f_modifer > 0.99) fN_reached_one = true;
   if (fN_reached_one) f_modifer = 1.0;
 
@@ -52,7 +56,7 @@ void compute_fAPAR_used(int day,
 
   // Calculated first as needle_mass changed otherwise
   needle_mass_sapwood = needle_mass * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * f_modifer * needle_mass;
-  needle_mass = needle_mass * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * f_modifer * needle_mass - (1.0 / parameters.n_age) * senescence * needle_mass;
+  needle_mass = needle_mass * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * needle_mass * (f_modifer - senescence);
 
   if (!boolsettings.photosynthesis_as_input && boolsettings.fAPAR_Tian) {
     LAI_within_year = LAI * (parameters.n_age - 1.0) / parameters.n_age + (1.0 / parameters.n_age) * f_modifer * LAI - (1.0 / parameters.n_age) * senescence * LAI;
