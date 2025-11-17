@@ -49,7 +49,7 @@ void compute_fAPAR_used(int day,
   if (f_modifer > 0.99) fN_reached_one = true;
   if (fN_reached_one) f_modifer = 1.0;
 
-  double senescence = 0.0;
+  double senescence = 1.0;
   // Day 50 added below as the first few days can give 1 which ruins the logic!
   if (photosynthesis.fS >= 1.0 && day > 50) fS_reached_one = true;
   if (fS_reached_one) senescence = photosynthesis.fS;
