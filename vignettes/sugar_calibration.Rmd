@@ -369,12 +369,16 @@ plot(CASSIA_preles_2015$Culm_Growth$culm_growth_sapwood + CASSIA_preles_2015$Cul
 plot(dates_2015, CASSIA_preles_2015$Growth$leaf_area, ylab = "Leaf Area, m²", xlab = "Dates")
 
 # Multiple years
+needle_mass = c("pine_foliage_biomass", "pine_foliage_biomass_ICOS")
+needle_mass_data = loaded_data$smearII_data[loaded_data$smearII_data$variable %in% needle_mass,]
+
 par(mfrow = c(1, 2))
 ylim = range(CASSIA_preles_1998_2022$Culm_Growth$culm_growth_phloem, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_xylem_sh, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots, CASSIA_preles_1998_2022$Growth$leaf_mass, na.rm = T)
 plot(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_phloem, type = "l", col = "brown", main = "Organ Growth", ylab = "kg", xlab = "Date", ylim = ylim)
 lines(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_xylem_sh, type = "l", col = "red")
 lines(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_roots, type = "l", col = "black")
 lines(dates, CASSIA_preles_1998_2022$Growth$leaf_mass, type = "l", col = "green")
+points(as.Date(paste0(needle_mass_data$date, "-01-01")), needle_mass_data$amount/1010, col = "blue", pch = "x")
 
 plot(dates, CASSIA_preles_1998_2022$Culm_Growth$culm_growth_xylem_st, type = "l", col = "gold", main = "Organ Growth", ylab = "kg", xlab = "Date", )
 legend("topleft", c("Phloem", "Xylem Sh", "Xylem St", "Roots", "Needles"), col = c("brown", "red", "gold", "black", "green"), lty = 1, bty = "n", cex = 0.75)
@@ -437,8 +441,6 @@ lines(dates, CASSIA_preles_1998_2022$Sugar$storage_term_xylem_st, type = "l", co
 plot(dates, CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, main = "Surgar Out Seperated by Type", col = "red", 
      xlab = "Date", ylab = "Sugar, Kg C", type = "l", ylim = range(c(CASSIA_preles_1998_2022$Sugar$sugar_to_mycorrhiza, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus), na.rm = T))
 lines(dates, CASSIA_preles_1998_2022$Sugar$sugar_out_surplus)
-
-CASSIA_preles_1998_2022$Culm_Growth$culm_growth_height
 
 ```
 
