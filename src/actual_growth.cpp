@@ -84,12 +84,10 @@ void actual_growth(int day,
   }
   tree_state.GD = tree_state.GD * std::min(storage_GD, nitrogen_capacity.wall);
 
-
   /*
    * Save the output to a vector
    */
   log_actual_growth(day, days_gone, tree_state, all_out);
-
 
   /*
    * Culmative Log Manual
