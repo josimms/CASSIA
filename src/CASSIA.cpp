@@ -124,6 +124,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   double GPP_sum_yesterday = 0.0;
   double GPP_sum = 0.0;
   double needles_last = 0.0;
+  double winter_state = 1.0;
   std::vector<double> GPP_previous_sum(end_year - start_year + 2, parameters.GPP_initial);
   std::vector<double> potenital_growth_use(simulation_time, 0.0);
   std::vector<double> release(simulation_time, 0.0);
@@ -382,6 +383,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                     boolsettings.sperling_model,
                     tree_state,
                     nitrogen_balance,
+                    winter_state,
                     uptake,
                     sugar,
                     starch,

@@ -135,6 +135,7 @@ void sugar_model(int day,
 
                  const growth_state& tree_state,
                  double& nitrogen_balance,
+                 double& winter_state,
                  uptake_structre& uptake,
                  carbo_tracker& sugar,
                  carbo_tracker& starch,
