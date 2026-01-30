@@ -46,44 +46,118 @@ legend("bottomright",
 
 ```{r}
 
-w_function <- function(T_air, PAR) {
-  term1 <- 1 / (1 + exp(0.5 * (T_air - 5)))
-  term2 <- 1 / (1 + exp(0.2 * (PAR - 30)))
-  w <- 0.5 * (term1 + term2)
-  return(w)
+w_target <- function(T_air, PAR,
+                     T_crit = 5, PAR_crit = 30,
+                     kT = 2, kPAR = 10) {
+
+  f_T   <- 1 / (1 + exp(-(T_air - T_crit) / kT))
+  f_PAR <- 1 / (1 + exp(-(PAR - PAR_crit) / kPAR))
+
+  1 - f_T * f_PAR
 }
 
-plot(w_function(weather_2015$T, weather_2015$PAR), main = "Winter Scaling", xlab = "Days in 2015", ylab = "W Function")
+update_w <- function(w_prev, T_air, PAR, tau = 7) {
+  w_star <- w_target(T_air, PAR)
+  w_new  <- w_prev + (w_star - w_prev) / tau
+  return(w_new)
+}
 
+w_star <- w_target(weather_2015$T, weather_2015$PAR)
+
+w <- numeric(length(w_star))
+w[1] <- w_star[1]  # initialise
+
+for (i in 2:length(w_star)) {
+  w[i] <- update_w(w[i - 1],
+                   weather_2015$T[i],
+                   weather_2015$PAR[i],
+                   tau = 7)
+}
+
+plot(w_star,
+     type = "l",
+     col = "grey",
+     lwd = 1,
+     ylim = c(0, 1),
+     xlab = "Day of year (2025)",
+     ylab = "Winter scaling (w)",
+     main = "Winter scaling with physiological delay (2025)")
+
+lines(w,
+      col = "blue",
+      lwd = 2)
+
+legend("bottomright",
+       legend = c("Instantaneous response", "Delayed response (τ = 7 days)"),
+       col = c("grey", "blue"),
+       lwd = c(1, 2),
+       bty = "n",
+       cex = 0.75)
+
+```
+
+```{r}
+# 1️⃣ Sugar availability (bottom limit)
+sigma_s <- function(s, s_crit) {
+  out <- s / s_crit
+  out <- pmin(pmax(out, 0), 1)
+  return(out)
+}
+
+# 2️⃣ Max storage capacity (top limit)
+sigma_max <- function(c_st, s, theta_max) {
+  out <- 1 - (c_st + s - (theta_max/2)) / (theta_max/2)  # 1 when empty, 0 when full
+  out <- pmin(pmax(out, 0), 1)                           # clip to [0,1]
+  return(out)
+}
+
+s_vals <- seq(-1, 1, length.out = 200)
+r_vals <- seq(-1, 1, length.out = 200)
+theta_max <- 1
+zeta <- 5
+
+# Sigma_s with shift
+plot(s_vals, sigma_s(s_vals, theta_max/2), type="l",
+     main="Sigma_s (Sugar availability, x_shift=1.5)",
+     xlab="Sugar (s)", ylab="Sigma_s(s)")
+
+# Sigma_max with shift
+plot(r_vals, sigma_max(r_vals, s = 0.5, theta_max), type="l",
+     main="Sigma_max (Max storage)",
+     xlab="Starch (c_st)", ylab="Sigma_max")
 
 ```
 
 ```{r}
 
-F_function <- function(S, r, W, theta, A0, delta, k = 20) {
-  # logistic
-  sigma <- function(x) 1 / (1 + exp(-x))
-  
-  # effective sugar after winter cost
-  s <- S - W
-  
-  # base flux: synthesis (positive) and remobilization (negative)
-  F <- A0 * sigma(s) * s - delta * (1 - sigma(s)) * s * sigma(r)
-  
-  # soft caps using logistic "guards"
-  # k controls steepness of the guard (higher k ~ sharper clamp)
-  F <- F * sigma(k * (theta - F))    # storage capacity
-  F <- F * sigma(k * (s - F))        # sugar availability
-  F <- F * sigma(k * (r + F))        # starch availability
-  
+F_function <- function(Ss, St, V, Theta, A0, delta, eps = 1e-6) {
+
+  # Effective sugar above lower bound
+  s <- pmax(0, Ss - V)
+
+  # Sugar availability (1 if s > 0, else 0)
+  K_s = 0.25 * Theta
+  sigma_s <- s / (s + K_s)
+
+  # Remaining shared storage capacity
+  Theta_free <- pmax(0, Theta - (St))
+  sigma_Theta <- Theta_free / (Theta_free + eps)
+
+  # Fluxes
+  F_syn <- A0 * sigma_s * sigma_Theta
+  F_rem <- delta * St * (1 - sigma_s)
+
+  # Net flux (positive: sugar -> starch)
+  F <- F_syn - F_rem
+
   return(F)
 }
 
 # Fixed parameters
-W <- 0.2
-theta <- 1.5
-A0 <- 1.2
-delta <- 1.2
+W <- 0.1
+theta <- 1.0
+A0 <- 0.9
+delta <- 0.9
 
 starch = seq(0, 1, length.out = 100)
 
@@ -92,7 +166,7 @@ par(mfrow = c(1, 2))
 # --- Plot 1: Transfer to starch vs sugar ---
 plot(sugar, F_function(sugar, 0.25, W, theta, A0, delta),
      xlab = "Sugar", ylab = "Transfered to Starch",
-     type = "l", col = "yellow")
+     type = "l", col = "yellow", ylim = c(-1, 1))
 lines(sugar, F_function(sugar, 0.5, W, theta, A0, delta), col = "orange")
 lines(sugar, F_function(sugar, 0.75, W, theta, A0, delta), col = "red")
 
@@ -107,12 +181,12 @@ ylim <- range(F_function(0.25, starch, W, theta, A0, delta),
               F_function(0.75, starch, W, theta, A0, delta))
 
 plot(starch, F_function(0.25, starch, W, theta, A0, delta),
-     xlab = "Starch", ylab = "Transfered to Sugar",
+     xlab = "Starch", ylab = "Transfered to Starch",
      type = "l", col = "yellow", ylim = ylim)
 lines(starch, F_function(0.5, starch, W, theta, A0, delta), col = "orange")
 lines(starch, F_function(0.75, starch, W, theta, A0, delta), col = "red")
 
-legend("topleft",
+legend("bottomleft",
        legend = c("Sugar = 0.25", "Sugar = 0.5", "Sugar = 0.75"),
        col = c("yellow", "orange", "red"),
        lty = 1, lwd = 2, cex = 0.8, bty = "n")
@@ -129,33 +203,42 @@ plot(sugar, F_function(sugar, 0.5, W_vals[1], theta, A0, delta),
      xlab = "Sugar", ylab = "F", main = "Effect of W (Starch = 0.5)")
 lines(sugar, F_function(sugar, 0.5, W_vals[2], theta, A0, delta), col = "blue")
 lines(sugar, F_function(sugar, 0.5, W_vals[3], theta, A0, delta), col = "green")
-legend("topleft", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomright", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 # 1. Vary W
+ylim = range(F_function(0.5, starch, W_vals[1], theta, A0, delta),
+             F_function(0.5, starch, W_vals[2], theta, A0, delta),
+             F_function(0.5, starch, W_vals[3], theta, A0, delta))
 plot(starch, F_function(0.5, starch, W_vals[1], theta, A0, delta),
-     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     type = "l", col = "red", ylim = ylim,
      xlab = "Starch", ylab = "F", main = "Effect of W (Sugar = 0.5)")
 lines(starch, F_function(0.5, starch, W_vals[2], theta, A0, delta, k), col = "blue")
 lines(starch, F_function(0.5, starch, W_vals[3], theta, A0, delta, k), col = "green")
-legend("topleft", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomleft", legend = paste("W =", W_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 # 2. Vary theta
-theta_vals <- c(0.1, 0.5, 1.0)
+theta_vals <- c(0.5, 1, 1.5)
+ylim = range(F_function(sugar, 0.5, W, theta_vals[1], A0, delta), 
+             F_function(sugar, 0.5, W, theta_vals[2], A0, delta), 
+             F_function(sugar, 0.5, W, theta_vals[3], A0, delta))
 ylim = range(F_function(sugar, 0.5, W, theta_vals[1], A0, delta), F_function(sugar, 0.5,  W, theta_vals[2], A0, delta), F_function(sugar, 0.5,  W, theta_vals[3], A0, delta))
 plot(sugar, F_function(sugar, 0.5, W, theta_vals[1], A0, delta),
      type = "l", col = "red", ylim = ylim,
      xlab = "Sugar", ylab = "F", main = "Effect of stoage (Starch = 0.5)")
 lines(sugar, F_function(sugar, 0.5, W, theta_vals[2], A0, delta), col = "blue")
 lines(sugar, F_function(sugar, 0.5, W, theta_vals[3], A0, delta), col = "green")
-legend("topleft", legend = paste("theta =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomleft", legend = paste("theta =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 # 2. Vary theta
+ylim = range(F_function(0.5, starch, W, theta_vals[1], A0, delta), 
+             F_function(0.5, starch, W, theta_vals[2], A0, delta), 
+             F_function(0.5, starch, W, theta_vals[3], A0, delta))
 plot(starch, F_function(0.5, starch, W, theta_vals[1], A0, delta),
-     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     type = "l", col = "red", ylim = ylim,
      xlab = "Starch", ylab = "F", main = "Effect of storage (Sugar = 0.5)")
 lines(starch, F_function(0.5, starch, W, theta_vals[2], A0, delta), col = "blue")
 lines(starch, F_function(0.5, starch, W, theta_vals[3], A0, delta), col = "green")
-legend("topleft", legend = paste("theta =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomleft", legend = paste("theta =", theta_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 # 3. Vary A0
 A0_vals <- c(0.1, 0.2, 0.4)
@@ -167,15 +250,18 @@ plot(sugar, F_function(sugar, 0.5, W, theta, A0_vals[1], delta),
      xlab = "Sugar", ylab = "F", main = "Effect of Synthesis Parameter\n (Starch = 0.5)")
 lines(sugar, F_function(sugar, 0.5, W, theta, A0_vals[2], delta), col = "blue")
 lines(sugar, F_function(sugar, 0.5, W, theta, A0_vals[3], delta), col = "green")
-legend("topleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 # 3. Vary A0
+ylim = range(F_function(0.5, starch, W, theta, A0_vals[1], delta), 
+             F_function(0.5, starch,  W, theta, A0_vals[2], delta), 
+             F_function(0.5, starch,  W, theta, A0_vals[3], delta))
 plot(starch, F_function(0.5, starch, W, theta, A0_vals[1], delta),
-     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     type = "l", col = "red", ylim = ylim,
      xlab = "Starch", ylab = "F", main = "Effect of Synthesis Parameter\n (Sugar = 0.5)")
 lines(starch, F_function(0.5, starch, W, theta, A0_vals[2], delta), col = "blue")
 lines(starch, F_function(0.5, starch, W, theta, A0_vals[3], delta), col = "green")
-legend("topleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomleft", legend = paste("A0 =", A0_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 # 4. Vary delta
 delta_vals <- c(0.1, 0.2, 0.4)
@@ -187,15 +273,18 @@ plot(sugar, F_function(sugar, 0.5, W, theta, A0, delta_vals[1]),
      xlab = "Sugar", ylab = "F", main = "Effect of Desynthesis Parameter\n (Starch = 0.5)")
 lines(sugar, F_function(sugar, 0.5, W, theta, A0, delta_vals[2]), col = "blue")
 lines(sugar, F_function(sugar, 0.5, W, theta, A0, delta_vals[3]), col = "green")
-legend("topleft", legend = paste("delta =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomleft", legend = paste("delta =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 # 4. Vary delta
+ylim = range(F_function(0.5, starch, W, theta, A0, delta_vals[1]), 
+             F_function(0.5, starch,  W, theta, A0, delta_vals[2]), 
+             F_function(0.5, starch,  W, theta, A0, delta_vals[3]))
 plot(starch, F_function(0.5, starch, W, theta, A0, delta_vals[1]),
-     type = "l", col = "red", ylim = c(-0.2, 0.2),
+     type = "l", col = "red", ylim = ylim,
      xlab = "Starch", ylab = "F", main = "Effect of Desynthesis Parameter\n (Sugar = 0.5)")
 lines(starch, F_function(0.5, starch, W, theta, A0, delta_vals[2]), col = "blue")
 lines(starch, F_function(0.5, starch, W, theta, A0, delta_vals[3]), col = "green")
-legend("topleft", legend = paste("delta =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n")
+legend("bottomleft", legend = paste("delta =", delta_vals), col = c("red","blue","green"), lty = 1, bty = "n", cex = 0.8)
 
 ```
 
@@ -452,6 +541,49 @@ for(i in 1:length(k_values)) {
 legend("bottomright",
        legend = sapply(k_values, function(k) bquote(beta[m] == .(k))),
        col = colors, lwd = 2)
+
+```
+
+### Model states
+
+```{r}
+
+myco_seasonality_smooth <- function(TAir, temp_threshold = 5,
+                                    window = 5,  # moving average window in days
+                                    peak_length = 40,
+                                    end_day = 220,
+                                    slope = 0.075) {
+  
+  n_days <- length(TAir)
+  days <- 1:n_days
+  
+  # --- Smooth temperature using moving average ---
+  smooth_T <- stats::filter(TAir, rep(1/window, window), sides = 1)
+  smooth_T[is.na(smooth_T)] <- TAir[is.na(smooth_T)]  # fallback for first days
+  
+  # --- Determine start day based on smoothed temperature ---
+  start_day <- which(smooth_T >= temp_threshold)[1]
+  if (is.na(start_day)) start_day <- n_days / 4  # fallback if threshold never reached
+  
+  # --- Spring ramp: smooth sigmoid from 0 to 1 ---
+  spring <- 1 / (1 + exp(-slope * (days - start_day)))
+  
+  # --- Autumn taper: smooth sigmoid from 1 to 0 ---
+  autumn <- 1 / (1 + exp(slope * (days - end_day)))
+  
+  # --- Combine ---
+  myco_factor <- spring * autumn
+
+  return(myco_factor)
+}
+
+# Example usage
+myco_factor <- myco_seasonality_smooth(weather_2015$T)
+
+plot(myco_factor, type="l",
+     ylab="Mycorrhizal activity",
+     xlab="Day of year",
+     main="Smooth Temperature-Dependent Mycorrhizal Activity")
 
 ```
 
