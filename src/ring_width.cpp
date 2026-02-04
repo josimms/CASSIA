@@ -3,6 +3,7 @@
 ring_width_out ring_width_generator(int day,
                                     ring_width_out previous_value,
                                     growth_values_out growth_previous,
+                                    CASSIA_common common,
                                     CASSIA_parameters parameters,
                                     double GD_tot) {
 
@@ -34,7 +35,7 @@ ring_width_out ring_width_generator(int day,
   double lw_width_tot = lw_cells_tot * parameters.cell_d_lw * 1000;
   double max_ew_width_tot = std::max(ew_width_tot, previous_value.max_ew_width_tot);
 
-  if (growth_previous.sD < pow(parameters.sDc, 2.0) / parameters.Uggla) {
+  if (growth_previous.sD < pow(parameters.sDc, 2.0) / common.Uggla) {
     tot_mm = ew_width_tot;
   } else {
     tot_mm = lw_width_tot + max_ew_width_tot;
