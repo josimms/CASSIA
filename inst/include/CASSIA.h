@@ -469,8 +469,9 @@ struct ring_width_out {
 ring_width_out ring_width_generator(int day,
                                     ring_width_out previous_value,
                                     growth_values_out growth_previous,
+                                    CASSIA_common common,
                                     CASSIA_parameters parameters,
-                                    double GD_tot);
+                                    double GD_tot)
 
 /*
  * Settings defined
