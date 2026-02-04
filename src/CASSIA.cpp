@@ -24,6 +24,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                          Rcpp::DataFrame pCASSIA_ratios,
                          Rcpp::DataFrame pCASSIA_sperling,
 
+                         int no_trees,
+
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
 
@@ -245,7 +247,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       photosynthesis_out photosynthesis;
       if (boolsettings.photosynthesis_as_input) {
         photosynthesis.GPP = Photosynthesis_IN[weather_index];
-        photosynthesis_per_stem = Photosynthesis_IN[weather_index] / 1010 * 10000/1000;
+        photosynthesis_per_stem = Photosynthesis_IN[weather_index] / no_trees * 10000/1000;
       } else {
         photosynthesis.GPP = 0;
         photosynthesis.ET = 0;

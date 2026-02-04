@@ -96,6 +96,9 @@ CASSIA_cpp <- function(
   # Is the site is the known sites?
   validate_site(site)
 
+  no_trees = 1010
+  if (site == "HF_China") {no_trees = 1044}
+
   # make the model settings into a list
   settings = list("storage_reset" = storage_reset,
                   "storage_grows" = storage_grows,
@@ -159,7 +162,7 @@ CASSIA_cpp <- function(
                       updated_settings)
   } else {
     out <- CASSIA_yearly(start_year, end_year, weather, GPP_ref_in,
-                         pPREL, t(parameters), common, t(ratios), t(sperling), # site,
+                         pPREL, t(parameters), common, t(ratios), t(sperling), no_trees,
                          needle_mass_in,
                          Throughfall,
                          updated_settings)
