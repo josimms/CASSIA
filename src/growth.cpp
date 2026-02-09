@@ -62,6 +62,9 @@ growth_out growth(int day,
                   bool LN_estim,
                   bool LD_estim,
                   bool tests,
+                  bool soil_moisture_effect_on_shoot,
+                  bool soil_moisture_effect_on_needles,
+                  bool soil_moisture_effect_on_diameter,
 
                   growth_values_out growth_previous,
                   double last_year_HH,
@@ -82,6 +85,21 @@ growth_out growth(int day,
   GH = GN = GD = GR = 0;
   height_pot_growth = needle_pot_growth = 0;
 
+  std::vector<double> driver_N = {1.0, 1.0};
+  std::vector<double> driver_H = {0.0, 2.0};
+  std::vector<double> driver_D = {1.0, 1.0};
+
+  double soil_moisture_effect = ((Soil_Moisture - 0.07)/(0.25 - 0.07))/0.449;
+  if (soil_moisture_effect > 1.0) {soil_moisture_effect = 1.0;}
+  if (soil_moisture_effect < 0.0) {soil_moisture_effect = 0.0;}
+
+  double soil_moisture_effect_growth = ((Soil_Moisture - 0.07)/(0.25 - 0.07))/0.7;
+  if (soil_moisture_effect_growth > 1.0) {
+    soil_moisture_effect_growth = 1.0;
+  } else if (soil_moisture_effect_growth < 0.0) {
+    soil_moisture_effect_growth = 0.0;
+  }
+
   if (TAir > 0) {
     /*
      * Growth
@@ -101,15 +119,44 @@ growth_out growth(int day,
   } else {
     sH = growth_previous.sH + g_sH;
   }
+
   if ((sH > 0) & (sH < parameters.sHc)) {
     fH = (sin(2 * M_PI/parameters.sHc * (sH - parameters.sHc / 4)) + 1) / 2;
   } else {
     fH = 0;
   }
+
   double LH = parameters.LH0 * ratio.height_growth_coefficient;
+  double soil_moisture_effect_s_growth = 0;
+
+  double sH_days = 0;
   if (LH_estim) {
     LH = LH * GPP_previous_sum / GPP_mean;
+  } else if (soil_moisture_effect_s_growth) {
+    if (sH > 0) {
+      sH_days = 1;
+      if (driver_H[1] == 0) {
+        // Current year summer / all years summer
+        LH = LH * pow(mean(env_array[183:245,driver_H[1], which(year==years)]) / mean(env_array[183:245,driver_H[1],]), 2.0);
+      }
+      if (driver_H[0] == 1 & driver_H[1] == 1) {
+        // A function driven by the phase of the annual cycle [0,1]
+        if (sH_days > 0.0 & sH_days < parameters.sHc) {
+          fH = (sin(2.0 * M_PI / parameters.sHc * (sH_days - parameters.sHc / 4.0)) + 1.0) / 2.0;
+        }
+      }
+      if (driver_H[0] == 1 & driver_H[1] == 2) {
+        LH <- LH * S.GPP / S.GPP_comp
+        if (LH > 80) {LH = 0;}
+      }
+    }
   }
+
+  soil_moisture_effect_s_growth = 1;
+  if (soil_moisture_effect_on_shoot){
+    soil_moisture_effect_s_growth = soil_moisture_effect_growth;
+  }
+
   if (tests) {
     if ( year== 2016) {
       LH = 37.70821;
@@ -119,7 +166,7 @@ growth_out growth(int day,
       LH = 36.93803;
     }
   }
-  GH = g_sH * fH * LH;
+  GH = g_sH * fH * LH * soil_moisture_effect_s_growth;
   height_pot_growth = 0.02405282 * 200.0 * GH / 1000.0 * ratio.form_factor;
 
   if (day == 0) {
@@ -146,6 +193,30 @@ growth_out growth(int day,
   if (LN_estim) {
     LN = parameters.LN0 * GPP_previous_sum / GPP_mean;
   }
+
+  double sN_days = 0;
+  if (soil_moisture_effect_on_needles) {
+    if (sN > 0) {
+      sN_days = 1.0;
+    }
+    if(driver_N[0] == 0) {
+      // Current year summer / all years summer
+      LN <- LN * mean(env_array[183:245,driver_N[1], which(year==years)]) / mean(env_array[183:245,driver_N[1],])
+    }
+    if(driver_N[0] == 1 & driver_N[1] == 1) {
+      // A function driven by the phase of the annual cycle [0,1] (annual pattern of growth)
+      if (sN_days > 0 & sN_days < pow(parameters.sNc, 2.0)) {
+        fN = (parameters.sNc * pow(sN_days, 0.5) - sN_days) / (pow(parameters.sNc, 2.0) / 4.0);
+      }
+    }
+    if(driver_N[0] == 1 & driver_N[1] == 2) {
+      LN <- LN * S_GPP / S_GPP_ref
+    }
+    if (LN > 10.0) {
+      LN = 0.0;
+    }
+  }
+
   if (tests) {
     if ( year== 2016) {
       LN = 1.971561;
@@ -172,7 +243,7 @@ growth_out growth(int day,
   double sB = day + 1 - parameters.sB0;
   if (day >= parameters.sB0) { // This value should come from the sugar model
     if (sB < parameters.sBc) {
-      fB = (sin(2 * M_PI / parameters.sBc * (sB - parameters.sBc / 4)) + 1) / 2;
+      fB = (sin(2.0 * M_PI / parameters.sBc * (sB - parameters.sBc / 4.0)) + 1.0) / 2.0;
     }
   }
   double bud_pot_growth = g * fB * parameters.LB;
@@ -194,14 +265,23 @@ growth_out growth(int day,
       sD = growth_previous.sD + g_sD_T;
     }
   }
+
+  double sD_days = 0;
+  if (soil_moisture_effect_on_diameter) {
+    if (sD > 0 & driver_D[0] == 1 & driver_D[1] == 1) {
+      sD = 1;
+    }
+  }
+
   if ((sD > 0) & (sD < pow(parameters.sDc, 2.0))) {
-    fD = (parameters.sDc*pow(sD, 0.5) - sD)/(pow(parameters.sDc, 2.0)/4);
+    fD = (parameters.sDc*pow(sD, 0.5) - sD)/(pow(parameters.sDc, 2.0)/4.0);
   } else {
     fD = 0;
   }
 
   double LD = parameters.LD0 * ratio.diameter_growth_coefficient;
   double S_GPP, dS_GPP, S_GPP_ref, dS_GPP_ref;
+  double soil_moisture_effect_d_growth = 1;
   if (LD_estim) {
     LD = parameters.LD0 * ratio.diameter_growth_coefficient;
     if (day == 0) {
@@ -209,18 +289,22 @@ growth_out growth(int day,
       S_GPP_ref = 0.0;
     } else {
       S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
+      // TODO: for every day of the year
       S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
     }
     dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
+    // TODO: this isn't quite the same
     dS_GPP_ref = (GPP_ref - S_GPP_ref) / parameters.tau_GPP;
 
     // Daily LD depends on the GPP of five previous days:
     if (day > 78) {
       LD = parameters.LD0 * ratio.diameter_growth_coefficient * S_GPP / S_GPP_ref;
     }
+  } else if (soil_moisture_effect_on_diameter) {
+    soil_moisture_effect_d_growth = soil_moisture_effect_growth;
   }
 
-  GD = g_sD_T * fD * LD;
+  GD = g_sD_T * fD * LD * soil_moisture_effect_d_growth;
   double tot_cells_pot = GD + growth_previous.GD;
 
   double tau_E, tau_W;
