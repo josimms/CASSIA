@@ -42,6 +42,9 @@ Rcpp::List CASSIA_eeo(int start_year,
   phydro_canopy_parameters phydro_parameters; // TODO: make this into the inputs
 
   Settings boolsettings = parseSettings(settings);
+  bool soil_moisture_effect_on_shoot = true;
+  bool soil_moisture_effect_on_needles = true;
+  bool soil_moisture_effect_on_diameter = true;
 
   /*
    * Weather input made into vectors
@@ -60,6 +63,83 @@ Rcpp::List CASSIA_eeo(int start_year,
   std::vector<double> CO2 = weather["CO2"];
   // TODO: make the PA value input or remove it from the code!
   // std::vector<double> PA = weather["PA"];
+
+  // Create soil moisture effects
+  std::vector<double> Soil_Moisture_Effect(Soil_Moisture.size());
+  std::vector<double> Soil_Moisture_Effect_Growth(Soil_Moisture.size());
+
+  for (size_t i = 0; i < Soil_Moisture.size(); ++i) {
+
+    double normalized = (Soil_Moisture[i] - 0.07) / (0.25 - 0.07);
+
+    double effect = normalized / 0.449;
+    double effect_growth = normalized / 0.7;
+
+    Soil_Moisture_Effect[i] = std::clamp(effect, 0.0, 1.0);
+    Soil_Moisture_Effect_Growth[i] = std::clamp(effect_growth, 0.0, 1.0);
+  }
+
+  /*
+   * Yearly average
+   */
+
+  // output of yearly loop
+  std::vector<double> means_TAir(2);
+  std::vector<double> means_Photosynthesis(2);
+  std::vector<double> means_Soil_Moisture(2);
+  std::vector<double> GPP_ref_average(366, 0.0), photosyn_count(366, 0.0), photosyn_sum(366, 0.0);
+
+  double total_summer_sum_TAir(0.0), total_summer_sum_Soil_Moisture(0.0), total_summer_sum_Photosynthesis(0.0);
+  int total_summer_days(0), days_pointer(0);
+  for (int year = start_year; year <= end_year; ++year) {
+
+    // TOTAL SUMMER MEAN
+    int days_per_year = leap_year(year);
+
+    int summer_start = days_pointer + 182;
+    int summer_end   = days_pointer + 245;
+
+    total_summer_sum_TAir += std::accumulate(
+      TAir.begin() + summer_start,
+      TAir.begin() + summer_end,
+      0.0
+    );
+    total_summer_sum_Soil_Moisture += std::accumulate(
+      Soil_Moisture_Effect.begin() + summer_start,
+      Soil_Moisture_Effect.begin() + summer_end,
+      0.0
+    );
+    total_summer_sum_Photosynthesis += std::accumulate(
+      Soil_Moisture_Effect.begin() + summer_start,
+      Soil_Moisture_Effect.begin() + summer_end,
+      0.0
+    );
+
+    total_summer_days += (summer_end - summer_start);
+
+    // ACROSS YEAR DAILY MEAN
+    for (int d = 0; d < days_per_year; ++d) {
+
+      double val = Photosynthesis_IN[days_pointer + d];
+
+      if (!std::isnan(val)) {
+        photosyn_sum[d] += val;
+        photosyn_count[d] += 1;
+      }
+    }
+
+    days_pointer += days_per_year;
+  }
+
+  for (int d = 0; d < 366; ++d) {
+    if (photosyn_count[d] > 0) {
+      GPP_ref_average[d] = photosyn_sum[d] / photosyn_count[d];
+    }
+  }
+
+  means_TAir[0] = total_summer_sum_TAir / total_summer_days;
+  means_Photosynthesis[0] = total_summer_sum_Photosynthesis / total_summer_days;
+  means_Soil_Moisture[0] = total_summer_sum_Soil_Moisture / total_summer_days;
 
   /*
    * Structures set up
@@ -365,14 +445,17 @@ Rcpp::List CASSIA_eeo(int start_year,
       }
 
       GPP_mean = 463.8833; // TODO: move when I understand GPP_sum
-      growth_out potential_growth = growth(day, year, TAir[day], TSoil_A[day], TSoil_B[day], Soil_Moisture[day], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[day], TSoil_A[day], TSoil_B[day], Soil_Moisture[day], Soil_Moisture_Effect_Growth[day],
+                                           photosynthesis.GPP, GPP_ref[day], GPP_ref_average[day],
+                                           means_TAir, means_Photosynthesis, means_Soil_Moisture,
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
-                                                                                                boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim, boolsettings.tests,
-                                                                                                // Last iteration value
-                                                                                                growth_values_for_next_iteration, last_year_HH,
-                                                                                                days_per_year);
+                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim, boolsettings.tests,
+                                           soil_moisture_effect_on_shoot, soil_moisture_effect_on_needles, soil_moisture_effect_on_diameter,
+                                           // Last iteration value
+                                           growth_values_for_next_iteration, last_year_HH,
+                                           days_per_year);
       // Saved for the next iteration
       growth_values_for_next_iteration = potential_growth.previous_values;
 

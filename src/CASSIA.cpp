@@ -10,6 +10,11 @@ int leap_year(int year)
   }
 }
 
+double meanRange(const std::vector<double>& v, int start, int end) {
+  double sum = std::accumulate(v.begin() + start, v.begin() + end, 0.0);
+  return sum / (end - start);
+}
+
 //' @export
 // [[Rcpp::export]]
 Rcpp::List CASSIA_yearly(int start_year,
@@ -47,6 +52,13 @@ Rcpp::List CASSIA_yearly(int start_year,
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
 
   Settings boolsettings = parseSettings(settings);
+  bool soil_moisture_effect_on_shoot = true;
+  bool soil_moisture_effect_on_needles = true;
+  bool soil_moisture_effect_on_diameter = true;
+
+  /*
+   * Weather processing for water effects on growth
+   */
 
   /*
    * Weather input made into vectors
@@ -63,6 +75,83 @@ Rcpp::List CASSIA_yearly(int start_year,
   std::vector<double> Soil_Moisture = weather["MB"];
   std::vector<double> Precip  = weather["Rain"];
   std::vector<double> CO2 = weather["CO2"];
+
+  // Create soil moisture effects
+  std::vector<double> Soil_Moisture_Effect(Soil_Moisture.size());
+  std::vector<double> Soil_Moisture_Effect_Growth(Soil_Moisture.size());
+
+  for (size_t i = 0; i < Soil_Moisture.size(); ++i) {
+
+    double normalized = (Soil_Moisture[i] - 0.07) / (0.25 - 0.07);
+
+    double effect = normalized / 0.449;
+    double effect_growth = normalized / 0.7;
+
+    Soil_Moisture_Effect[i] = std::clamp(effect, 0.0, 1.0);
+    Soil_Moisture_Effect_Growth[i] = std::clamp(effect_growth, 0.0, 1.0);
+  }
+
+  /*
+   * Yearly average
+   */
+
+  // output of yearly loop
+  std::vector<double> means_TAir(2);
+  std::vector<double> means_Photosynthesis(2);
+  std::vector<double> means_Soil_Moisture(2);
+  std::vector<double> GPP_ref_average(366, 0.0), photosyn_count(366, 0.0), photosyn_sum(366, 0.0);
+
+  double total_summer_sum_TAir(0.0), total_summer_sum_Soil_Moisture(0.0), total_summer_sum_Photosynthesis(0.0);
+  int total_summer_days(0), days_pointer(0);
+  for (int year = start_year; year <= end_year; ++year) {
+
+    // TOTAL SUMMER MEAN
+    int days_per_year = leap_year(year);
+
+    int summer_start = days_pointer + 182;
+    int summer_end   = days_pointer + 245;
+
+    total_summer_sum_TAir += std::accumulate(
+      TAir.begin() + summer_start,
+      TAir.begin() + summer_end,
+      0.0
+    );
+    total_summer_sum_Soil_Moisture += std::accumulate(
+      Soil_Moisture_Effect.begin() + summer_start,
+      Soil_Moisture_Effect.begin() + summer_end,
+      0.0
+    );
+    total_summer_sum_Photosynthesis += std::accumulate(
+      Soil_Moisture_Effect.begin() + summer_start,
+      Soil_Moisture_Effect.begin() + summer_end,
+      0.0
+    );
+
+    total_summer_days += (summer_end - summer_start);
+
+    // ACROSS YEAR DAILY MEAN
+    for (int d = 0; d < days_per_year; ++d) {
+
+      double val = Photosynthesis_IN[days_pointer + d];
+
+      if (!std::isnan(val)) {
+        photosyn_sum[d] += val;
+        photosyn_count[d] += 1;
+      }
+    }
+
+    days_pointer += days_per_year;
+  }
+
+  for (int d = 0; d < 366; ++d) {
+    if (photosyn_count[d] > 0) {
+      GPP_ref_average[d] = photosyn_sum[d] / photosyn_count[d];
+    }
+  }
+
+  means_TAir[0] = total_summer_sum_TAir / total_summer_days;
+  means_Photosynthesis[0] = total_summer_sum_Photosynthesis / total_summer_days;
+  means_Soil_Moisture[0] = total_summer_sum_Soil_Moisture / total_summer_days;
 
   /*
    * Structures set up
@@ -206,6 +295,24 @@ Rcpp::List CASSIA_yearly(int start_year,
      */
 
     int days_per_year = leap_year(year);
+
+    /*
+     * Weather Means
+     */
+    int summer_start = days_gone + 182;  // 183rd day
+    int summer_end   = days_gone + 245;  // exclusive end for accumulate
+
+    // Mean range
+    means_TAir[1] = meanRange(TAir, summer_start, summer_end);
+    means_Soil_Moisture[1] = meanRange(Soil_Moisture_Effect, summer_start, summer_end);
+    means_Photosynthesis[1] = 0.0;
+    if (boolsettings.photosynthesis_as_input) {
+      means_Photosynthesis[1] = meanRange(Photosynthesis_IN, summer_start, summer_end);
+    } else {
+      std::cout << "Note that moisture is only possible with the photosynthetic input at the moment\n";
+      means_Photosynthesis[1] = 0.1;
+    }
+
     /*
      * Yearly initial conditions updated
      */
@@ -279,15 +386,19 @@ Rcpp::List CASSIA_yearly(int start_year,
        * In terms of the adaptation from the R code, the potential values are not altered by daily processes so still calculate them for a year
        */
 
-      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], photosynthesis.GPP, GPP_ref[day],
+      growth_out potential_growth = growth(day, year, TAir[weather_index], TSoil_A[weather_index], TSoil_B[weather_index], Soil_Moisture[weather_index], Soil_Moisture_Effect_Growth[weather_index],
+                                           photosynthesis.GPP, GPP_ref[day], GPP_ref_average[day],
+                                           means_TAir, means_Photosynthesis, means_Soil_Moisture,
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
                                            boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
                                            boolsettings.tests,
+                                           soil_moisture_effect_on_shoot, soil_moisture_effect_on_needles, soil_moisture_effect_on_diameter,
                                            // Last iteration value
                                            growth_values_for_next_iteration, last_year_HH,
                                            days_per_year);
+
       // Saved for the next iteration
       growth_values_for_next_iteration = potential_growth.previous_values;
       release.push_back(potential_growth.previous_values.en_pot_growth);

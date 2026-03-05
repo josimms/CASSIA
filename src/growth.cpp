@@ -44,8 +44,13 @@ growth_out growth(int day,
                   double TSoil_A,
                   double TSoil_B,
                   double Soil_Moisture,
+                  double Soil_Moisture_Effect_Growth,
                   double PF,
                   double GPP_ref,
+                  double GPP_ref_average,
+                  std::vector<double> means_TAir,
+                  std::vector<double> means_Photosynthesis,
+                  std::vector<double> means_Soil_Moisture,
                   bool root_as_Ding,
                   bool xylogenesis_option,
                   bool environmental_effect_xylogenesis,
@@ -89,17 +94,6 @@ growth_out growth(int day,
   std::vector<double> driver_H = {0.0, 2.0};
   std::vector<double> driver_D = {1.0, 1.0};
 
-  double soil_moisture_effect = ((Soil_Moisture - 0.07)/(0.25 - 0.07))/0.449;
-  if (soil_moisture_effect > 1.0) {soil_moisture_effect = 1.0;}
-  if (soil_moisture_effect < 0.0) {soil_moisture_effect = 0.0;}
-
-  double soil_moisture_effect_growth = ((Soil_Moisture - 0.07)/(0.25 - 0.07))/0.7;
-  if (soil_moisture_effect_growth > 1.0) {
-    soil_moisture_effect_growth = 1.0;
-  } else if (soil_moisture_effect_growth < 0.0) {
-    soil_moisture_effect_growth = 0.0;
-  }
-
   if (TAir > 0) {
     /*
      * Growth
@@ -108,6 +102,38 @@ growth_out growth(int day,
     if (g < 0) {
       g = 0;
     }
+  }
+
+  /*
+   * GPP ref
+   */
+
+  double S_GPP{0.0}, dS_GPP{0.0}, S_GPP_ref{0.0}, dS_GPP_ref{0.0};
+  if (LD_estim) {
+    if (day == 0) {
+      S_GPP = 0.0;
+      S_GPP_ref = 0.0;
+    } else {
+      S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
+      // TODO: for every day of the year
+      S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
+    }
+    dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
+    // TODO: this isn't quite the same
+    // GPP_ref should be the average of all of the years?
+    dS_GPP_ref = (GPP_ref - S_GPP_ref) / parameters.tau_GPP;
+  } else {
+    if (day == 0) {
+      S_GPP = 0.0;
+      S_GPP_ref = 0.0;
+    } else {
+      S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
+      // TODO: for every day of the year
+      S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
+    }
+    dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
+    // TODO: this isn't quite the same
+    dS_GPP_ref = (GPP_ref_average - S_GPP_ref) / parameters.tau_GPP;
   }
 
   /*
@@ -121,7 +147,7 @@ growth_out growth(int day,
   }
 
   if ((sH > 0) & (sH < parameters.sHc)) {
-    fH = (sin(2 * M_PI/parameters.sHc * (sH - parameters.sHc / 4)) + 1) / 2;
+    fH = (sin(2.0 * M_PI/parameters.sHc * (sH - parameters.sHc / 4.0)) + 1.0) / 2.0;
   } else {
     fH = 0;
   }
@@ -137,7 +163,7 @@ growth_out growth(int day,
       sH_days = 1;
       if (driver_H[1] == 0) {
         // Current year summer / all years summer
-        LH = LH * pow(mean(env_array[183:245,driver_H[1], which(year==years)]) / mean(env_array[183:245,driver_H[1],]), 2.0);
+        LH = LH * pow(means_TAir[1] / means_TAir[0], 2.0);
       }
       if (driver_H[0] == 1 & driver_H[1] == 1) {
         // A function driven by the phase of the annual cycle [0,1]
@@ -146,7 +172,7 @@ growth_out growth(int day,
         }
       }
       if (driver_H[0] == 1 & driver_H[1] == 2) {
-        LH <- LH * S.GPP / S.GPP_comp
+        LH = LH * S_GPP / S_GPP_ref; //  TODO: what should be here?
         if (LH > 80) {LH = 0;}
       }
     }
@@ -154,7 +180,7 @@ growth_out growth(int day,
 
   soil_moisture_effect_s_growth = 1;
   if (soil_moisture_effect_on_shoot){
-    soil_moisture_effect_s_growth = soil_moisture_effect_growth;
+    soil_moisture_effect_s_growth = Soil_Moisture_Effect_Growth;
   }
 
   if (tests) {
@@ -201,7 +227,7 @@ growth_out growth(int day,
     }
     if(driver_N[0] == 0) {
       // Current year summer / all years summer
-      LN <- LN * mean(env_array[183:245,driver_N[1], which(year==years)]) / mean(env_array[183:245,driver_N[1],])
+      LN = LN * means_TAir[1] / means_TAir[0];
     }
     if(driver_N[0] == 1 & driver_N[1] == 1) {
       // A function driven by the phase of the annual cycle [0,1] (annual pattern of growth)
@@ -210,7 +236,7 @@ growth_out growth(int day,
       }
     }
     if(driver_N[0] == 1 & driver_N[1] == 2) {
-      LN <- LN * S_GPP / S_GPP_ref
+      LN = LN * S_GPP / S_GPP_ref; // TODO: check that these values are correct
     }
     if (LN > 10.0) {
       LN = 0.0;
@@ -269,7 +295,7 @@ growth_out growth(int day,
   double sD_days = 0;
   if (soil_moisture_effect_on_diameter) {
     if (sD > 0 & driver_D[0] == 1 & driver_D[1] == 1) {
-      sD = 1;
+      sD = sD_days;
     }
   }
 
@@ -280,28 +306,30 @@ growth_out growth(int day,
   }
 
   double LD = parameters.LD0 * ratio.diameter_growth_coefficient;
-  double S_GPP, dS_GPP, S_GPP_ref, dS_GPP_ref;
+
+  // Moisture code
+  if (driver_D[1] == 0) {
+    LD = LD * means_TAir[1] / means_TAir[0];
+  }
+  if (driver_D[1] == 1 && driver_D[2] == 1) {
+    LD = LD; //* 0.8
+  }
+  if(driver_D[1] == 1 && driver_D[2] == 2) {
+    LD = LD * S_GPP / S_GPP_ref;
+    if (LD > 10 || std::isnan(LD)) {
+      LD = 0;
+    }
+  }
+
   double soil_moisture_effect_d_growth = 1;
   if (LD_estim) {
     LD = parameters.LD0 * ratio.diameter_growth_coefficient;
-    if (day == 0) {
-      S_GPP = 0.0;
-      S_GPP_ref = 0.0;
-    } else {
-      S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
-      // TODO: for every day of the year
-      S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
-    }
-    dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
-    // TODO: this isn't quite the same
-    dS_GPP_ref = (GPP_ref - S_GPP_ref) / parameters.tau_GPP;
-
     // Daily LD depends on the GPP of five previous days:
     if (day > 78) {
       LD = parameters.LD0 * ratio.diameter_growth_coefficient * S_GPP / S_GPP_ref;
     }
   } else if (soil_moisture_effect_on_diameter) {
-    soil_moisture_effect_d_growth = soil_moisture_effect_growth;
+    soil_moisture_effect_d_growth = Soil_Moisture_Effect_Growth;
   }
 
   GD = g_sD_T * fD * LD * soil_moisture_effect_d_growth;
@@ -488,81 +516,81 @@ growth_out growth(int day,
  * Growth wrapper!
  */
 
-// [[Rcpp::export]]
-Rcpp::List growth_wrapper(int day,
-                          int year,
-                          double TAir,
-                          double TSoil_A,
-                          double TSoil_B,
-                          double Soil_Moisture,
-                          double PF,
-                          double GPP_ref,
-                          bool root_as_Ding,
-                          bool xylogenesis_option,
-                          bool environmental_effect_xylogenesis,
-                          bool sD_estim_T_count,
-                          Rcpp::DataFrame pCASSIA_common,
-                          Rcpp::DataFrame pCASSIA_parameters,
-                          Rcpp::DataFrame pCASSIA_ratios,
-                          Rcpp::DataFrame pCASSIA_sperling,
-                          std::vector<double> extras_sperling,
-
-                          double CH,
-                          double B0,
-                          double en_pot_growth_old,
-                          double GPP_mean,
-                          double GPP_previous_sum,
-
-                          bool LH_estim,
-                          bool LN_estim,
-                          bool LD_estim,
-                          bool tests,
-
-                          std::vector<double> growth_in,
-                          double last_year_HH,
-                          int no_day) {
-
-  growth_values_out growth_previous = make_growth(growth_in);
-  CASSIA_common common = make_common(pCASSIA_common);
-  CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
-  CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
-
-  growth_out out = growth(day,
-                          year,
-                          TAir,
-                          TSoil_A,
-                          TSoil_B,
-                          Soil_Moisture,
-                          PF,
-                          GPP_ref,
-                          root_as_Ding,
-                          xylogenesis_option,
-                          environmental_effect_xylogenesis,
-                          sD_estim_T_count,
-                          common,
-                          parameters,
-                          ratios,
-                          CH,
-                          B0,
-                          GPP_mean,
-                          GPP_previous_sum,
-
-                          LH_estim,
-                          LN_estim,
-                          LD_estim,
-                          tests,
-
-                          growth_previous,
-                          last_year_HH,
-                          no_day);
-
-  return Rcpp::List::create(Rcpp::_["height_growth"] = out.height,
-                            Rcpp::_["needles_growth"] = out.needles,
-                            Rcpp::_["roots_growth"] = out.roots,
-                            Rcpp::_["diameter"] = out.diameter,
-                            Rcpp::_["bud"] = out.bud);
-
-}
+// // [[Rcpp::export]]
+// Rcpp::List growth_wrapper(int day,
+//                           int year,
+//                           double TAir,
+//                           double TSoil_A,
+//                           double TSoil_B,
+//                           double Soil_Moisture,
+//                           double PF,
+//                           double GPP_ref,
+//                           bool root_as_Ding,
+//                           bool xylogenesis_option,
+//                           bool environmental_effect_xylogenesis,
+//                           bool sD_estim_T_count,
+//                           Rcpp::DataFrame pCASSIA_common,
+//                           Rcpp::DataFrame pCASSIA_parameters,
+//                           Rcpp::DataFrame pCASSIA_ratios,
+//                           Rcpp::DataFrame pCASSIA_sperling,
+//                           std::vector<double> extras_sperling,
+//
+//                           double CH,
+//                           double B0,
+//                           double en_pot_growth_old,
+//                           double GPP_mean,
+//                           double GPP_previous_sum,
+//
+//                           bool LH_estim,
+//                           bool LN_estim,
+//                           bool LD_estim,
+//                           bool tests,
+//
+//                           std::vector<double> growth_in,
+//                           double last_year_HH,
+//                           int no_day) {
+//
+//   growth_values_out growth_previous = make_growth(growth_in);
+//   CASSIA_common common = make_common(pCASSIA_common);
+//   CASSIA_parameters parameters = make_CASSIA_parameters(pCASSIA_parameters, pCASSIA_sperling);
+//   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
+//
+//   growth_out out = growth(day,
+//                           year,
+//                           TAir,
+//                           TSoil_A,
+//                           TSoil_B,
+//                           Soil_Moisture,
+//                           PF,
+//                           GPP_ref,
+//                           root_as_Ding,
+//                           xylogenesis_option,
+//                           environmental_effect_xylogenesis,
+//                           sD_estim_T_count,
+//                           common,
+//                           parameters,
+//                           ratios,
+//                           CH,
+//                           B0,
+//                           GPP_mean,
+//                           GPP_previous_sum,
+//
+//                           LH_estim,
+//                           LN_estim,
+//                           LD_estim,
+//                           tests,
+//
+//                           growth_previous,
+//                           last_year_HH,
+//                           no_day);
+//
+//   return Rcpp::List::create(Rcpp::_["height_growth"] = out.height,
+//                             Rcpp::_["needles_growth"] = out.needles,
+//                             Rcpp::_["roots_growth"] = out.roots,
+//                             Rcpp::_["diameter"] = out.diameter,
+//                             Rcpp::_["bud"] = out.bud);
+//
+// }
 
 
 

@@ -154,45 +154,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// growth_wrapper
-Rcpp::List growth_wrapper(int day, int year, double TAir, double TSoil_A, double TSoil_B, double Soil_Moisture, double PF, double GPP_ref, bool root_as_Ding, bool xylogenesis_option, bool environmental_effect_xylogenesis, bool sD_estim_T_count, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, std::vector<double> extras_sperling, double CH, double B0, double en_pot_growth_old, double GPP_mean, double GPP_previous_sum, bool LH_estim, bool LN_estim, bool LD_estim, bool tests, std::vector<double> growth_in, double last_year_HH, int no_day);
-RcppExport SEXP _CASSIA_growth_wrapper(SEXP daySEXP, SEXP yearSEXP, SEXP TAirSEXP, SEXP TSoil_ASEXP, SEXP TSoil_BSEXP, SEXP Soil_MoistureSEXP, SEXP PFSEXP, SEXP GPP_refSEXP, SEXP root_as_DingSEXP, SEXP xylogenesis_optionSEXP, SEXP environmental_effect_xylogenesisSEXP, SEXP sD_estim_T_countSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP extras_sperlingSEXP, SEXP CHSEXP, SEXP B0SEXP, SEXP en_pot_growth_oldSEXP, SEXP GPP_meanSEXP, SEXP GPP_previous_sumSEXP, SEXP LH_estimSEXP, SEXP LN_estimSEXP, SEXP LD_estimSEXP, SEXP testsSEXP, SEXP growth_inSEXP, SEXP last_year_HHSEXP, SEXP no_daySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
-    Rcpp::traits::input_parameter< int >::type year(yearSEXP);
-    Rcpp::traits::input_parameter< double >::type TAir(TAirSEXP);
-    Rcpp::traits::input_parameter< double >::type TSoil_A(TSoil_ASEXP);
-    Rcpp::traits::input_parameter< double >::type TSoil_B(TSoil_BSEXP);
-    Rcpp::traits::input_parameter< double >::type Soil_Moisture(Soil_MoistureSEXP);
-    Rcpp::traits::input_parameter< double >::type PF(PFSEXP);
-    Rcpp::traits::input_parameter< double >::type GPP_ref(GPP_refSEXP);
-    Rcpp::traits::input_parameter< bool >::type root_as_Ding(root_as_DingSEXP);
-    Rcpp::traits::input_parameter< bool >::type xylogenesis_option(xylogenesis_optionSEXP);
-    Rcpp::traits::input_parameter< bool >::type environmental_effect_xylogenesis(environmental_effect_xylogenesisSEXP);
-    Rcpp::traits::input_parameter< bool >::type sD_estim_T_count(sD_estim_T_countSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_common(pCASSIA_commonSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_parameters(pCASSIA_parametersSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_ratios(pCASSIA_ratiosSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_sperling(pCASSIA_sperlingSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type extras_sperling(extras_sperlingSEXP);
-    Rcpp::traits::input_parameter< double >::type CH(CHSEXP);
-    Rcpp::traits::input_parameter< double >::type B0(B0SEXP);
-    Rcpp::traits::input_parameter< double >::type en_pot_growth_old(en_pot_growth_oldSEXP);
-    Rcpp::traits::input_parameter< double >::type GPP_mean(GPP_meanSEXP);
-    Rcpp::traits::input_parameter< double >::type GPP_previous_sum(GPP_previous_sumSEXP);
-    Rcpp::traits::input_parameter< bool >::type LH_estim(LH_estimSEXP);
-    Rcpp::traits::input_parameter< bool >::type LN_estim(LN_estimSEXP);
-    Rcpp::traits::input_parameter< bool >::type LD_estim(LD_estimSEXP);
-    Rcpp::traits::input_parameter< bool >::type tests(testsSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type growth_in(growth_inSEXP);
-    Rcpp::traits::input_parameter< double >::type last_year_HH(last_year_HHSEXP);
-    Rcpp::traits::input_parameter< int >::type no_day(no_daySEXP);
-    rcpp_result_gen = Rcpp::wrap(growth_wrapper(day, year, TAir, TSoil_A, TSoil_B, Soil_Moisture, PF, GPP_ref, root_as_Ding, xylogenesis_option, environmental_effect_xylogenesis, sD_estim_T_count, pCASSIA_common, pCASSIA_parameters, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, CH, B0, en_pot_growth_old, GPP_mean, GPP_previous_sum, LH_estim, LN_estim, LD_estim, tests, growth_in, last_year_HH, no_day));
-    return rcpp_result_gen;
-END_RCPP
-}
 // myco_growth
 Rcpp::List myco_growth(double C_fungal, double N_fungal, double C_fungal_biomass, double C_ecto, double a, double b, double CN_ratio);
 RcppExport SEXP _CASSIA_myco_growth(SEXP C_fungalSEXP, SEXP N_fungalSEXP, SEXP C_fungal_biomassSEXP, SEXP C_ectoSEXP, SEXP aSEXP, SEXP bSEXP, SEXP CN_ratioSEXP) {
@@ -444,7 +405,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_plant_decision", (DL_FUNC) &_CASSIA_plant_decision, 5},
     {"_CASSIA_myco_decision", (DL_FUNC) &_CASSIA_myco_decision, 4},
     {"_CASSIA_CASSIA_eeo", (DL_FUNC) &_CASSIA_CASSIA_eeo, 14},
-    {"_CASSIA_growth_wrapper", (DL_FUNC) &_CASSIA_growth_wrapper, 29},
     {"_CASSIA_myco_growth", (DL_FUNC) &_CASSIA_myco_growth, 7},
     {"_CASSIA_mycofon_balence", (DL_FUNC) &_CASSIA_mycofon_balence, 18},
     {"_CASSIA_uptake_N", (DL_FUNC) &_CASSIA_uptake_N, 6},
