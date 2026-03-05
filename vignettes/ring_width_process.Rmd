@@ -1,0 +1,367 @@
+---
+title: "ring_width_process"
+output: html_document
+---
+
+## Parameters
+
+```{r}
+# TODO: replace with your own data!
+set.seed(42)
+
+n_days <- 365
+
+weather <- data.frame(
+  day = 0:(n_days - 1),
+  TAir = 10 + 10 * sin(2 * pi * (1:n_days) / 365),   # seasonal temperature
+  PF = pmax(0, 5 + 3 * sin(2 * pi * (1:n_days - 80) / 365)),  # photosynthesis
+  GPP_ref = 6
+)
+
+
+parameters <- list(
+  sD0_Trad = 0,
+  diameter_start_day = 60,
+  sDc = 0.02,
+  LD0 = 1,
+  tau_GPP = 5,
+  tau_Ee = 10,
+  tau_We = 20,
+  tau_El = 5,
+  tau_Wl = 10,
+  cell_d_ew = 30e-6,
+  cell_d_lw = 15e-6,
+  h0 = 20
+)
+
+common <- list(
+  Uggla = 2,
+  osmotic_sugar_conc = 0.5,
+  gas_const = 8.314,
+  abs_zero = 273.15,
+  M_C = 12,
+
+  ## temperature–growth response
+  a = 0.4,
+  b = 5
+)
+
+
+ratio <- list(
+  diameter_growth_coefficient = 1,
+  form_factor = 0.5
+)
+
+init_state <- list(
+  sD = 0,
+  GD = 0,
+  g = 0,
+  fD = 0,
+  n_E_pot = 0,
+  n_W_pot = 0,
+  n_M_pot = 0,
+  tau_W = parameters$tau_We,
+  tau_E = parameters$tau_Ee,
+  ew_cells_pot_max = 0,
+  pot_mm_max = 0
+)
+
+```
+
+### R function
+
+```{r}
+grow_one_day <- function(day, weather, state, parameters, common, ratio,
+                         LD_estim = TRUE, sD_estim_T_count = FALSE) {
+
+  TAir     <- weather$TAir[day + 1]
+  PF       <- weather$PF[day + 1]
+  GPP_ref <- weather$GPP_ref[day + 1]
+
+  ## ---- Temperature driven growth (g) ----
+  if (TAir > 0) {
+    g <- 1 / (1 + exp(-common$a * (TAir - common$b)))
+    if (g < 0) g <- 0
+  } else {
+    g <- 0
+  }
+
+  g_sD_T <- g
+
+  ## ---- Diameter state ----
+  if (day == 0) {
+    sD <- parameters$sD0_Trad
+  } else if (day <= parameters$diameter_start_day) {
+    sD <- state$sD
+  } else {
+    sD <- state$sD + g_sD_T
+  }
+
+  if (sD > 0 && sD < parameters$sDc^2) {
+    fD <- (parameters$sDc * sqrt(sD) - sD) / (parameters$sDc^2 / 4)
+  } else {
+    fD <- 0
+  }
+
+  ## ---- LD & GPP smoothing ----
+  LD <- parameters$LD0 * ratio$diameter_growth_coefficient
+
+  ## ---- Growth driver ----
+  GD <- g_sD_T * fD * LD
+
+  ## ---- Uggla switch ----
+  if (sD < parameters$sDc^2 / common$Uggla) {
+    tau_E <- parameters$tau_Ee
+    tau_W <- parameters$tau_We
+  } else {
+    tau_E <- parameters$tau_El
+    tau_W <- parameters$tau_Wl
+  }
+
+  ## ---- Cell pools ----
+  if (day < 1) {
+    n_E_pot <- n_W_pot <- n_M_pot <- 0
+  } else {
+    n_E_pot <- state$n_E_pot + GD - state$n_E_pot / tau_E
+    n_W_pot <- state$n_W_pot + state$n_E_pot / tau_E -
+      state$n_W_pot / state$tau_W
+    n_M_pot <- state$n_M_pot + state$n_W_pot / state$tau_W
+  }
+
+  ## ---- Carbon to enlargement ----
+  CE <- function(cell_d) {
+    common$osmotic_sugar_conc * pi * (cell_d / 2)^2 * 0.00266 *
+      342.296 / (common$gas_const * (TAir + common$abs_zero) * 1000) *
+      12 * common$M_C / 342.296 / tau_E
+  }
+
+  CE_ew <- CE(parameters$cell_d_ew)
+  CE_lw <- CE(parameters$cell_d_lw)
+
+  n_rows <- ratio$form_factor * parameters$h0 / 0.00266 * pi * 0.175 /
+    parameters$cell_d_ew
+
+  carbon_enlargement_pot <- if (sD < parameters$sDc^2 / common$Uggla) {
+    CE_ew * n_E_pot
+  } else {
+    CE_lw * n_E_pot
+  }
+
+  ## ---- Wall formation ----
+  CW <- 1.8e-11
+  wall_pot_growth <- n_rows * CW * n_W_pot
+
+  cells_pot <- n_W_pot + n_M_pot
+
+  if (sD < parameters$sDc^2 / common$Uggla) {
+    ew_cells_pot <- cells_pot
+    ew_cells_pot_max <- max(ew_cells_pot, state$ew_cells_pot_max)
+    lw_cells_pot <- 0
+  } else {
+    ew_cells_pot <- 0
+    ew_cells_pot_max <- state$ew_cells_pot_max
+    lw_cells_pot <- cells_pot - ew_cells_pot - ew_cells_pot_max
+  }
+
+  ew_width_pot <- ew_cells_pot * parameters$cell_d_ew * 1000
+  lw_width_pot <- lw_cells_pot * parameters$cell_d_lw * 1000
+
+  if (sD < parameters$sDc^2 / common$Uggla) {
+    pot_mm <- ew_width_pot
+    pot_mm_max <- max(pot_mm, state$pot_mm_max)
+  } else {
+    pot_mm_max <- state$pot_mm_max
+    pot_mm <- lw_width_pot + pot_mm_max
+  }
+
+  ## ---- Return updated state ----
+  list(
+    sD = sD,
+    GD = GD,
+    g = g,
+    fD = fD,
+    n_E_pot = n_E_pot,
+    n_W_pot = n_W_pot,
+    n_M_pot = n_M_pot,
+    tau_E = tau_E,
+    tau_W = tau_W,
+    ew_cells_pot_max = ew_cells_pot_max,
+    pot_mm_max = pot_mm_max,
+    pot_mm = pot_mm
+  )
+}
+
+run_growth <- function(weather, parameters, common, ratio) {
+  n_days <- nrow(weather)
+  states <- vector("list", n_days)
+
+  states[[1]] <- init_state
+
+  for (d in 1:(n_days - 1)) {
+    states[[d + 1]] <- grow_one_day(
+      day = d,
+      weather = weather,
+      state = states[[d]],
+      parameters = parameters,
+      common = common,
+      ratio = ratio
+    )
+  }
+
+  states
+}
+
+```
+
+### Run for a year
+
+```{r}
+
+states <- run_growth(
+  weather = weather,
+  parameters = parameters,
+  common = common,
+  ratio = ratio
+)
+
+```
+
+### Output
+
+```{r}
+output <- data.frame(
+  day = weather$day,
+  g = vapply(states, function(x) x$g, numeric(1)),
+  sD = vapply(states, function(x) x$sD, numeric(1)),
+  fD = vapply(states, function(x) x$fD, numeric(1)),
+  GD = vapply(states, function(x) x$GD, numeric(1)),
+  n_E_pot = vapply(states, function(x) x$n_E_pot, numeric(1)),
+  n_W_pot = vapply(states, function(x) x$n_W_pot, numeric(1)),
+  n_M_pot = vapply(states, function(x) x$n_M_pot, numeric(1)),
+  tau_W =  vapply(states, function(x) x$tau_W, numeric(1)),
+  tau_E =  vapply(states, function(x) x$tau_E, numeric(1)),
+  pot_mm = vapply(states, function(x) x$pot_mm, numeric(1)),
+  TAir = weather$TAir
+)
+
+plot(output$day, output$g, type = "l", lwd = 2,
+     xlab = "Day", ylab = "g",
+     main = "Temperature-driven growth response")
+title(sub = "Common: a, b")
+mtext(
+  "Growth anytime this function is larger than 0",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+plot(output$day, output$sD, type = "l", lwd = 2,
+     xlab = "Day", ylab = "sD",
+     main = "sD")
+abline(h = parameters$sDc^2)
+title(sub = "Parameters: diameter_start_day, sD0_Trad")
+mtext(
+  "Growth only when sD is less than line",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+plot(output$day, output$fD, type = "l", lwd = 2,
+     xlab = "Day", ylab = "fD",
+     main = "fD")
+title(sub = "Parameters: sDc")
+mtext(
+  "Multiplier for GD",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+plot(output$day, output$GD, type = "l", lwd = 2,
+     xlab = "Day", ylab = "GD",
+     main = "GD")
+title(sub = "Parameters: diameter_growth_coefficient, LD0 (controls height)")
+mtext(
+  "Used in the n_E_pot process",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+par(mfrow = c(1, 2))
+plot(output$day, output$tau_E, type = "l", lwd = 2,
+     xlab = "Day", ylab = "tau_E",
+     main = "tau_E")
+title(sub = "Parameters: tau_Ee, tau_El. Change is when sD < sDc^2 / uggla")
+mtext(
+  "Used in the n_E_pot and n_W_pot process",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+plot(output$day, output$tau_W, type = "l", lwd = 2,
+     xlab = "Day", ylab = "tau_W",
+     main = "tau_W")
+title(sub = "Parameters: tau_We, tau_Wl. Change is when sD < sDc^2 / uggla")
+mtext(
+  "Used in the n_W_pot and n_M_pot process",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+par(mfrow = c(1, 3))
+plot(output$day, output$n_E_pot, type = "l", lwd = 2,
+     xlab = "Day", ylab = "n_E_pot",
+     main = "n_E_pot")
+title(sub = "Previous state, GD and tau_E control this")
+mtext(
+  "Used in the carbon_enlargement_pot ",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+plot(output$day, output$n_W_pot, type = "l", lwd = 2,
+     xlab = "Day", ylab = "n_W_pot",
+     main = "n_W_pot")
+title(sub = "Previous state, n_E_pot, n_W_pot, tau_W and tau_E control this")
+mtext(
+  "Used in wall_pot_growth",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+plot(output$day, output$n_M_pot, type = "l", lwd = 2,
+     xlab = "Day", ylab = "n_M_pot",
+     main = "n_M_pot")
+title(sub = "Previous state, n_W_pot and tau_W control this")
+mtext(
+  "Used in cells_pot",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+## ew_cells_pot and lw_cells_pot are not plotted as they rely so heavily on the other processes, but can be checked if there isn't a problem up to this point!
+
+par(mfrow = c(1, 1))
+plot(output$day, output$pot_mm, type = "l", lwd = 2,
+     xlab = "Day", ylab = "POTENTIAL ring width (mm)",
+     main = "POTENTIAL ring growth")
+title(sub = "Parameters sDc and Uggla control this")
+mtext(
+  "ew_cells_pot and lw_cells_pot also control this",
+  side = 3,
+  line = 0.5,
+  cex = 0.9
+)
+
+
+```
+
+
+
