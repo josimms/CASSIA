@@ -70,9 +70,9 @@ growth_out growth(int day,
                   bool soil_moisture_effect_on_shoot,
                   bool soil_moisture_effect_on_needles,
                   bool soil_moisture_effect_on_diameter,
-                  std::vector<double> driver_N,
-                  std::vector<double> driver_H,
-                  std::vector<double> driver_D,
+                  std::vector<int> driver_N,
+                  std::vector<int> driver_H,
+                  std::vector<int> driver_D,
 
                   growth_values_out growth_previous,
                   double last_year_HH,
@@ -290,8 +290,8 @@ growth_out growth(int day,
 
   double sD_days = 0;
   if (soil_moisture_effect_on_diameter) {
-    if (sD > 0 & driver_D[0] == 1 & driver_D[1] == 1) {
-      sD = sD_days;
+    if (sD > 0) {
+      sD_days = 1;
     }
   }
 
@@ -304,16 +304,18 @@ growth_out growth(int day,
   double LD = parameters.LD0 * ratio.diameter_growth_coefficient;
 
   // Moisture code
-  if (driver_D[1] == 0) {
-    LD = LD * means_TAir[1] / means_TAir[0];
-  }
-  if (driver_D[1] == 1 && driver_D[2] == 1) {
-    LD = LD; //* 0.8
-  }
-  if(driver_D[1] == 1 && driver_D[2] == 2) {
-    LD = LD * S_GPP / S_GPP_ref;
-    if (LD > 10 || std::isnan(LD)) {
-      LD = 0;
+  if (soil_moisture_effect_on_diameter) {
+    if (driver_D[0] == 0) {
+      LD = LD * means_TAir[1] / means_TAir[0];
+    }
+    if (driver_D[0] == 1 && driver_D[1] == 1) {
+      LD = LD; //* 0.8
+    }
+    if(driver_D[0] == 1 && driver_D[1] == 2) {
+      LD = LD * S_GPP / S_GPP_ref;
+      if (LD > 10 || std::isnan(LD)) {
+        LD = 0;
+      }
     }
   }
 
