@@ -451,8 +451,10 @@ Rcpp::List CASSIA_eeo(int start_year,
                                            boolsettings.root_as_Ding, boolsettings.xylogensis_option, boolsettings.environmental_effect_xylogenesis, boolsettings.sD_estim_T_count,
                                            common, parameters, ratios,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
-                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim, boolsettings.tests,
-                                           soil_moisture_effect_on_shoot, soil_moisture_effect_on_needles, soil_moisture_effect_on_diameter,
+                                           boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
+                                           boolsettings.tests,
+                                           boolsettings.soil_moisture_effect_on_shoot, boolsettings.soil_moisture_effect_on_needles, boolsettings.soil_moisture_effect_on_diameter,
+                                           boolsettings.driver_N, boolsettings.driver_H, boolsettings.driver_D,
                                            // Last iteration value
                                            growth_values_for_next_iteration, last_year_HH,
                                            days_per_year);
