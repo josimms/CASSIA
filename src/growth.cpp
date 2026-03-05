@@ -70,6 +70,9 @@ growth_out growth(int day,
                   bool soil_moisture_effect_on_shoot,
                   bool soil_moisture_effect_on_needles,
                   bool soil_moisture_effect_on_diameter,
+                  std::vector<double> driver_N,
+                  std::vector<double> driver_H,
+                  std::vector<double> driver_D,
 
                   growth_values_out growth_previous,
                   double last_year_HH,
@@ -89,10 +92,6 @@ growth_out growth(int day,
   fH = fN = fD = fR = 0;
   GH = GN = GD = GR = 0;
   height_pot_growth = needle_pot_growth = 0;
-
-  std::vector<double> driver_N = {1.0, 1.0};
-  std::vector<double> driver_H = {0.0, 2.0};
-  std::vector<double> driver_D = {1.0, 1.0};
 
   if (TAir > 0) {
     /*
@@ -119,7 +118,6 @@ growth_out growth(int day,
       S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
     }
     dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
-    // TODO: this isn't quite the same
     // GPP_ref should be the average of all of the years?
     dS_GPP_ref = (GPP_ref - S_GPP_ref) / parameters.tau_GPP;
   } else {
@@ -128,11 +126,9 @@ growth_out growth(int day,
       S_GPP_ref = 0.0;
     } else {
       S_GPP = growth_previous.S_GPP + growth_previous.dS_GPP;
-      // TODO: for every day of the year
       S_GPP_ref = growth_previous.S_GPP_ref + growth_previous.dS_GPP_ref;
     }
     dS_GPP = (PF - S_GPP) / parameters.tau_GPP;
-    // TODO: this isn't quite the same
     dS_GPP_ref = (GPP_ref_average - S_GPP_ref) / parameters.tau_GPP;
   }
 

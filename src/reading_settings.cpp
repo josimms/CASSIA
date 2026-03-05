@@ -44,5 +44,12 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.etmodel = Rcpp::as<bool>(settingsList["etmodel"]);
   settings.LOGFLAG = Rcpp::as<bool>(settingsList["LOGFLAG"]);
 
+  settings.soil_moisture_effect_on_shoot = Rcpp::as<bool>(settingsList["soil_moisture_effect_on_shoot"]);
+  settings.soil_moisture_effect_on_needles = Rcpp::as<bool>(settingsList["soil_moisture_effect_on_needles"]);
+  settings.soil_moisture_effect_on_diameter = Rcpp::as<bool>(settingsList["soil_moisture_effect_on_diameter"]);
+  settings.driver_N = Rcpp::as<std::vector<int>>(settingsList["driver_N"]);
+  settings.driver_H = Rcpp::as<std::vector<int>>(settingsList["driver_H"]);
+  settings.driver_D = Rcpp::as<std::vector<int>>(settingsList["driver_D"]);
+
   return settings;
 }

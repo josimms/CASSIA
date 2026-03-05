@@ -50,6 +50,13 @@ CASSIA_cpp <- function(
 
     LH_estim = TRUE,
 
+    soil_moisture_effect_on_shoot = FALSE,
+    soil_moisture_effect_on_needles = FALSE,
+    soil_moisture_effect_on_diameter = FALSE,
+    driver_N = c(1, 1),
+    driver_H = c(0, 2),
+    driver_D = c(1, 1),
+
     trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
     growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
     needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
@@ -127,8 +134,13 @@ CASSIA_cpp <- function(
                   "tests" = tests,
                   "etmodel" = etmodel,
                   "LOGFLAG" = LOGFLAG,
-                  "ecoevolutionary" = ecoevolutionary
-  )
+                  "ecoevolutionary" = ecoevolutionary,
+                  "soil_moisture_effect_on_shoot" = soil_moisture_effect_on_shoot,
+                  "soil_moisture_effect_on_needles" = soil_moisture_effect_on_needles,
+                  "soil_moisture_effect_on_diameter" = soil_moisture_effect_on_diameter,
+                  "driver_N" = driver_N,
+                  "driver_H" = driver_H,
+                  "driver_D" = driver_D)
 
   # Are the model settings valid?
   # If not update them

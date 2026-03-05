@@ -175,39 +175,13 @@ growth_out growth(int day,
                   bool soil_moisture_effect_on_shoot,
                   bool soil_moisture_effect_on_needles,
                   bool soil_moisture_effect_on_diameter,
+                  std::vector<double> driver_N,
+                  std::vector<double> driver_H,
+                  std::vector<double> driver_D,
 
                   growth_values_out growth_previous,
                   double last_year_HH,
                   int no_day);
-
-Rcpp::List growth_wrapper(int day,
-                          int year,
-                          double TAir,
-                          double TSoil_A,
-                          double TSoil_B,
-                          double Soil_Moisture,
-                          double PF,
-                          double GPP_ref,
-                          bool root_as_Ding,
-                          bool xylogenesis_option,
-                          bool environmental_effect_xylogenesis,
-                          bool sD_estim_T_count,
-                          CASSIA_common pCASSIA_common,
-                          CASSIA_parameters pCASSIA_parameters,
-                          CASSIA_ratios pCASSIA_ratios,
-                          Rcpp::DataFrame pCASSIA_sperling,
-                          std::vector<double> extras_sperling,
-
-                          double CH,
-                          double B0,
-
-                          bool LH_estim,
-                          bool LN_estim,
-                          bool LD_estim,
-
-                          growth_values_out growth_in,
-                          double last_year_HH,
-                          int no_day);
 
 
 /*
@@ -479,7 +453,7 @@ ring_width_out ring_width_generator(int day,
                                     growth_values_out growth_previous,
                                     CASSIA_common common,
                                     CASSIA_parameters parameters,
-                                    double GD_tot)
+                                    double GD_tot);
 
 /*
  * Settings defined
@@ -524,6 +498,13 @@ struct Settings {
   bool tests;
   bool etmodel;
   bool LOGFLAG;
+
+  bool soil_moisture_effect_on_shoot;
+  bool soil_moisture_effect_on_needles;
+  bool soil_moisture_effect_on_diameter;
+  std::vector<int> driver_N;
+  std::vector<int> driver_H;
+  std::vector<int> driver_D;
 };
 
 // Inporting settings function

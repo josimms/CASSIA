@@ -52,9 +52,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
 
   Settings boolsettings = parseSettings(settings);
-  bool soil_moisture_effect_on_shoot = true;
-  bool soil_moisture_effect_on_needles = true;
-  bool soil_moisture_effect_on_diameter = true;
 
   /*
    * Weather processing for water effects on growth
@@ -394,7 +391,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                                            CH, B0, GPP_mean, GPP_previous_sum[year-start_year],
                                            boolsettings.LH_estim, boolsettings.LN_estim, boolsettings.LD_estim,
                                            boolsettings.tests,
-                                           soil_moisture_effect_on_shoot, soil_moisture_effect_on_needles, soil_moisture_effect_on_diameter,
+                                           boolsettings.soil_moisture_effect_on_shoot, boolsettings.soil_moisture_effect_on_needles, boolsettings.soil_moisture_effect_on_diameter,
+                                           boolsettings.driver_N, boolsettings.driver_H, boolsettings.driver_D,
                                            // Last iteration value
                                            growth_values_for_next_iteration, last_year_HH,
                                            days_per_year);
