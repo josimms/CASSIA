@@ -1,8 +1,11 @@
 ---
-title: "photosynthesis_model_comparison"
+title: "Photosynthesis Model Comparison"
 author: "Joanna"
-date: "2025-01-23"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Photosynthesis Model Comparison}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}

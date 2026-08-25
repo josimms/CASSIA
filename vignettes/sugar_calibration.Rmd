@@ -1,6 +1,10 @@
 ---
-title: "sugar_calibration"
-output: html_document
+title: "Sugar Calibration"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Sugar Calibration}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r}

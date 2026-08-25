@@ -1,6 +1,10 @@
 ---
-title: "optimisation_try"
-output: html_document
+title: "Optimisation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Optimisation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r}

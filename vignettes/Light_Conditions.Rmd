@@ -1,6 +1,10 @@
 ---
-title: "Light_Conditions"
-output: html_document
+title: "Light Conditions"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Light Conditions}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r}

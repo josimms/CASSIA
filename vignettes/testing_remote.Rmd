@@ -1,8 +1,11 @@
 ---
-title: "testing_remote"
+title: "Testing Remote"
 author: "Joanna"
-date: "2025-01-23"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Testing Remote}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}

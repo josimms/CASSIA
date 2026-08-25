@@ -5,9 +5,7 @@
 \description{
   Function that contains the xylogenesis effect of the model. \cr
 
-  Not yet integrated into the CASSIA model. \cr
-
-  TODO: should have a deeper explaination when it is actualy included in the model and when the function itself is finished.
+  Not yet integrated into the CASSIA model.
 }
 \arguments{
  \item{g.sD.T}{

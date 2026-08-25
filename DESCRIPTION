@@ -1,11 +1,15 @@
 Package: CASSIA
 Type: Package
-Title: Ecophysiological Model for Sugar Transfer
+Title: Ecophysiological Model for Intra-Annual Tree Growth
 Version: 0.1.0
 Author: Pauliina Schiestl-Aalto (CASSIA), Joanna Simms (Mycorrhizal additions)
 Maintainer: Joanna Simms <joanna.x.simms@helsinki.fi>
-Description: See README.Rmd
-License: What license is it under?
+Description: CASSIA (Carbon Allocation Sink Source Interactions and Allocation)
+    is an intra-annual growth model for individual Scots pine trees in boreal
+    conditions. It models seasonal organ-level cell growth, sugar dynamics, and
+    water balance. Optional extensions include xylogenesis, mycorrhizal
+    interactions, and linkage to soil and photosynthesis models (PRELES, p-hydro).
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
@@ -15,5 +19,5 @@ Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
-VingetteBuilder: knitr
+VignetteBuilder: knitr
 Config/testthat/edition: 3

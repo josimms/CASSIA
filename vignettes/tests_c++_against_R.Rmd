@@ -1,8 +1,11 @@
 ---
-title: 'Tests: C++ against R'
+title: "Tests: C++ against R"
 author: "Joanna"
-date: "2025-01-23"
-output: html_document
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tests: C++ against R}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
