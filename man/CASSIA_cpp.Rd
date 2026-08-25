@@ -8,11 +8,22 @@ CASSIA_cpp(
   weather,
   site,
   GPP_ref_in = GPP_ref,
+  ratio_sugar = c(11, 1/3, 11, 11),
+  tau.myco = 3,
+  tau.t.needles = 3,
+  tau.t.phloem = 3,
+  tau.t.roots = 3,
+  tau.t.xylem.sh = 3,
+  tau.t.xylem.st = 3,
   ratios = ratios_p,
   parameters = parameters_p,
+  parameters_R_in = parameters_R,
   common = common_p,
   sperling = sperling_p,
   repo = repo_p,
+  pPREL = c(413, 0.45, 0.118, 3, 0.748464, 12.74915, -3.566967, 18.4513, -0.136732,
+    0.033942, 0.448975, 0.5, -0.364, 0.33271, 0.857291, 0.041781, 0.474173, 0.278332,
+    1.5, 0.33, 4.824704, 0, 0, 180, 0, 0, 10, -999.9, -999.9, -999.9, 1/0.012, 0),
   storage_reset = TRUE,
   storage_grows = FALSE,
   LN_estim = TRUE,
@@ -23,6 +34,9 @@ CASSIA_cpp(
   soil_moisture_effect_on_shoot = FALSE,
   soil_moisture_effect_on_needles = FALSE,
   soil_moisture_effect_on_diameter = FALSE,
+  driver_N = c(1, 1),
+  driver_H = c(0, 2),
+  driver_D = c(1, 1),
   trees_grow = FALSE,
   growth_decreases = FALSE,
   needle_mass_grows = FALSE,
@@ -33,14 +47,18 @@ CASSIA_cpp(
   myco_model = FALSE,
   xylogenesis = FALSE,
   PRELES_GPP = FALSE,
+  environment_effect_xylogenesis = FALSE,
   photosynthesis_as_input = TRUE,
   photoparameters = 3,
   temp_rise = FALSE,
   drought = FALSE,
   Rm_acclimation = TRUE,
   CASSIA_graphs = TRUE,
+  etmodel = F,
+  LOGFLAG = F,
   s.D0 = 79,
   s.H0 = 1,
+  growth_photo_coef = 1,
   needle_mass_in = 4.467638,
   Throughfall = 1,
   trenching_year = NA,
@@ -70,15 +88,44 @@ extending the \code{parameters_p} dataframe.}
 \item{GPP_ref_in}{Reference GPP table used when \code{LN_estim = TRUE}.
 Defaults to the built-in \code{GPP_ref}.}
 
+\item{ratio_sugar}{Numeric vector of length 4. Concentration ratios between
+organs used in the sugar transport equations (needles, phloem, roots,
+xylem). Default \code{c(11, 1/3, 11, 11)}.}
+
+\item{tau.myco}{Numeric. Time constant (days) for mycorrhizal carbon
+transfer in the sugar model. Default \code{3}.}
+
+\item{tau.t.needles}{Numeric. Sugar transport time constant (days) for
+needles. Default \code{3}.}
+
+\item{tau.t.phloem}{Numeric. Sugar transport time constant (days) for
+phloem. Default \code{3}.}
+
+\item{tau.t.roots}{Numeric. Sugar transport time constant (days) for
+roots. Default \code{3}.}
+
+\item{tau.t.xylem.sh}{Numeric. Sugar transport time constant (days) for
+shoot xylem. Default \code{3}.}
+
+\item{tau.t.xylem.st}{Numeric. Sugar transport time constant (days) for
+stem xylem. Default \code{3}.}
+
 \item{ratios}{Dataframe of growth ratio parameters. Defaults to \code{ratios_p}.}
 
 \item{parameters}{Dataframe of site-specific parameters. Defaults to \code{parameters_p}.}
+
+\item{parameters_R_in}{Numeric vector of soil and nitrogen sub-model
+parameters. Defaults to the built-in \code{parameters_R}.}
 
 \item{common}{Dataframe of parameters shared across sites. Defaults to \code{common_p}.}
 
 \item{sperling}{Dataframe of sugar model parameters. Defaults to \code{sperling_p}.}
 
 \item{repo}{Dataframe of Repola allometric parameters. Defaults to \code{repo_p}.}
+
+\item{pPREL}{Numeric vector of PRELES photosynthesis model parameters
+(length 32). Only used when \code{PRELES_GPP = TRUE}. Default is the
+published Hyytiälä calibration.}
 
 \item{storage_reset}{Logical. If \code{TRUE} (default), sugar and starch stores
 reset to initial values at the start of each year. If \code{FALSE}, carry
@@ -91,26 +138,35 @@ with tree height and diameter. Default \code{FALSE}.}
 scaled by the previous year's July-August GPP. If \code{FALSE}, a fixed
 coefficient is used.}
 
-\item{mN_varies}{Logical. If \code{TRUE} (default), needle mass in maintenance
-respiration uses the Repola model. If \code{FALSE}, a constant is used.}
+\item{mN_varies}{Logical. If \code{TRUE} (default), needle mass in
+maintenance respiration uses the Repola model. If \code{FALSE}, constant.}
 
-\item{LD_estim}{Logical. If \code{TRUE} (default), LD is modified by GPP over
-the preceding March-August period.}
+\item{LD_estim}{Logical. If \code{TRUE} (default), LD is modified by GPP
+over the preceding March-August period.}
 
 \item{sD_estim_T_count}{Logical. If \code{TRUE}, sD is the cumulative count
-of days with positive growth. If \code{FALSE} (default), sD is derived from
-the temperature-driven growth integral.}
+of days with positive growth. If \code{FALSE} (default), sD is derived
+from the temperature-driven growth integral.}
 
 \item{LH_estim}{Logical. If \code{TRUE} (default), LH is modified by GPP.}
 
 \item{soil_moisture_effect_on_shoot}{Logical. Enable soil moisture limitation
 on shoot growth. Default \code{FALSE}.}
 
-\item{soil_moisture_effect_on_needles}{Logical. Enable soil moisture limitation
-on needle growth. Default \code{FALSE}.}
+\item{soil_moisture_effect_on_needles}{Logical. Enable soil moisture
+limitation on needle growth. Default \code{FALSE}.}
 
-\item{soil_moisture_effect_on_diameter}{Logical. Enable soil moisture limitation
-on diameter growth. Default \code{FALSE}.}
+\item{soil_moisture_effect_on_diameter}{Logical. Enable soil moisture
+limitation on diameter growth. Default \code{FALSE}.}
+
+\item{driver_N}{Numeric vector of length 2. Scaling parameters controlling
+the effect of nitrogen availability on growth. Default \code{c(1, 1)}.}
+
+\item{driver_H}{Numeric vector of length 2. Scaling parameters controlling
+height growth. Default \code{c(0, 2)}.}
+
+\item{driver_D}{Numeric vector of length 2. Scaling parameters controlling
+diameter growth. Default \code{c(1, 1)}.}
 
 \item{trees_grow}{Logical. If \code{TRUE}, D0 and h0 are updated year-to-year
 from modelled growth. Automatically \code{TRUE} when
@@ -119,9 +175,9 @@ from modelled growth. Automatically \code{TRUE} when
 \item{growth_decreases}{Logical. If \code{TRUE}, height and diameter growth
 coefficients decline linearly from 1997 to 2020. Default \code{FALSE}.}
 
-\item{needle_mass_grows}{Logical. If \code{TRUE}, needle mass is updated
-dynamically each year via the Repola model. If \code{FALSE} (default),
-needle mass is fixed after the first iteration.}
+\item{needle_mass_grows}{Logical. If \code{TRUE}, needle mass is dynamic
+(updated annually via Repola). If \code{FALSE} (default), needle mass is
+constant after the first iteration.}
 
 \item{phloem_trigger}{Logical. If \code{TRUE}, bud burst is triggered when
 phloem sugar first drops below a threshold (requires
@@ -132,12 +188,11 @@ mycorrhiza is included. Automatically \code{FALSE} when
 \code{sperling_model = TRUE}.}
 
 \item{root_as_Ding}{Logical. If \code{TRUE} (default), root growth follows
-Ding et al. (2020) with fibrous/non-fibrous root stages.}
+Ding et al. (2020) with fibrous/non-fibrous stages.}
 
 \item{sperling_model}{Logical. If \code{TRUE}, uses the enzyme-driven sugar
-model (Sperling et al. 2019) with organ-level concentration pools.
-If \code{FALSE} (default), uses the Schiestl-Aalto (2019) equilibrium
-approach.}
+model (Sperling et al. 2019). If \code{FALSE} (default), uses the
+Schiestl-Aalto (2019) equilibrium approach.}
 
 \item{myco_model}{Logical. Enable experimental mycorrhizal model.
 Default \code{FALSE}.}
@@ -148,27 +203,41 @@ with early/late-wood stages. Default \code{FALSE}.}
 \item{PRELES_GPP}{Logical. If \code{TRUE}, GPP is calculated via PRELES.
 Default \code{FALSE}.}
 
+\item{environment_effect_xylogenesis}{Logical. If \code{TRUE}, temperature
+and moisture affect xylogenesis cell dynamics directly. Only relevant when
+\code{xylogenesis = TRUE}. Default \code{FALSE}.}
+
 \item{photosynthesis_as_input}{Logical. If \code{TRUE} (default), the
-\code{P} column in \code{weather} is used directly as GPP input.}
+\code{P} column in \code{weather} is used directly as GPP.}
 
 \item{photoparameters}{Integer (1-4). PRELES parameter set selector.
 Default \code{3}.}
 
 \item{temp_rise}{Logical. If \code{TRUE} and \code{Rm_acclimation = TRUE},
-acclimation factor Rm_accl is set to 0.85. Default \code{FALSE}.}
+acclimation factor is set to 0.85. Default \code{FALSE}.}
 
 \item{drought}{Logical. Currently unused. Default \code{FALSE}.}
 
 \item{Rm_acclimation}{Logical. Apply maintenance respiration acclimation
 when \code{temp_rise = TRUE}. Default \code{TRUE}.}
 
-\item{CASSIA_graphs}{Logical. Produce diagnostic plots during the run.
-Default \code{TRUE}.}
+\item{CASSIA_graphs}{Logical. If \code{TRUE} (default), produce diagnostic
+plots during the run.}
+
+\item{etmodel}{Logical. If \code{TRUE}, use the Penman-Monteith
+evapotranspiration model inside PRELES. Only relevant when
+\code{PRELES_GPP = TRUE}. Default \code{FALSE}.}
+
+\item{LOGFLAG}{Logical. If \code{TRUE}, write internal diagnostic output to
+the console. Intended for debugging. Default \code{FALSE}.}
 
 \item{s.D0}{Integer. Day-of-year to start the temperature sum for diameter
 growth (default 79, approx. March 20; valid for Finland).}
 
 \item{s.H0}{Integer. Day-of-year to start shoot growth. Default \code{1}.}
+
+\item{growth_photo_coef}{Numeric. Coefficient scaling the photosynthesis
+signal to organ growth. Default \code{1} (no scaling).}
 
 \item{needle_mass_in}{Numeric. Initial needle mass (kg C). Default
 \code{4.467638} (calibrated for Hyytiälä).}
@@ -188,13 +257,14 @@ variant \code{CASSIA_eeo}. Default \code{FALSE}.}
 }
 \value{
 A named list with three elements:
-\describe{
-  \item{Growth}{Dataframe of daily carbon fluxes and organ growth (bud, wall,
-    needle, root, height growth; respiration; storage; mycorrhiza).}
-  \item{Sugar}{Dataframe of daily sugar and starch pool values per organ.
-    Populated when the sugar model is active.}
-  \item{Preles}{Dataframe of daily photosynthesis outputs: GPP, ET, SoilWater.}
-}
+  \describe{
+    \item{Growth}{Dataframe of daily carbon fluxes and organ growth (bud,
+      wall, needle, root, height growth; respiration; storage; mycorrhiza).}
+    \item{Sugar}{Dataframe of daily sugar and starch pool values per organ.
+      Populated when the sugar model is active.}
+    \item{Preles}{Dataframe of daily photosynthesis outputs: GPP, ET,
+      SoilWater.}
+  }
 }
 \description{
 Simulates daily carbon allocation, organ growth, and optionally sugar
@@ -218,16 +288,15 @@ out2 <- CASSIA_cpp(weather_original, site = "Hyde", parameters = p_new)
 }
 \references{
 Schiestl-Aalto et al. (2015) CASSIA - a dynamic model for predicting
-intra-annual sink demand. \emph{New Phytologist} 206(2):647-659.
+  intra-annual sink demand. \emph{New Phytologist} 206(2):647-659.
 
-Schiestl-Aalto et al. (2019) Analysis of NSC storage dynamics in tree
-organs. \emph{Frontiers in Forests and Global Change} 2:17.
+  Schiestl-Aalto et al. (2019) Analysis of NSC storage dynamics in tree
+  organs. \emph{Frontiers in Forests and Global Change} 2:17.
 
-Ding et al. (2020) Temperature and moisture dependence of daily growth of
-Scots pine roots. \emph{Tree Physiology} 40(2):272-283.
+  Ding et al. (2020) Temperature and moisture dependence of daily growth of
+  Scots pine roots. \emph{Tree Physiology} 40(2):272-283.
 
-Sperling et al. (2019) Predicting bloom dates by temperature mediated
-kinetics of carbohydrate metabolism. \emph{Agricultural and Forest
-Meteorology} 276:107643.
+  Sperling et al. (2019) Predicting bloom dates by temperature mediated
+  kinetics of carbohydrate metabolism. \emph{Agricultural and Forest
+  Meteorology} 276:107643.
 }
-\author{Documentation: Joanna Simms}

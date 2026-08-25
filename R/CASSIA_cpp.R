@@ -22,11 +22,31 @@
 #'   extending the \code{parameters_p} dataframe.
 #' @param GPP_ref_in Reference GPP table used when \code{LN_estim = TRUE}.
 #'   Defaults to the built-in \code{GPP_ref}.
+#' @param ratio_sugar Numeric vector of length 4. Concentration ratios between
+#'   organs used in the sugar transport equations (needles, phloem, roots,
+#'   xylem). Default \code{c(11, 1/3, 11, 11)}.
+#' @param tau.myco Numeric. Time constant (days) for mycorrhizal carbon
+#'   transfer in the sugar model. Default \code{3}.
+#' @param tau.t.needles Numeric. Sugar transport time constant (days) for
+#'   needles. Default \code{3}.
+#' @param tau.t.phloem Numeric. Sugar transport time constant (days) for
+#'   phloem. Default \code{3}.
+#' @param tau.t.roots Numeric. Sugar transport time constant (days) for
+#'   roots. Default \code{3}.
+#' @param tau.t.xylem.sh Numeric. Sugar transport time constant (days) for
+#'   shoot xylem. Default \code{3}.
+#' @param tau.t.xylem.st Numeric. Sugar transport time constant (days) for
+#'   stem xylem. Default \code{3}.
 #' @param ratios Dataframe of growth ratio parameters. Defaults to \code{ratios_p}.
 #' @param parameters Dataframe of site-specific parameters. Defaults to \code{parameters_p}.
+#' @param parameters_R_in Numeric vector of soil and nitrogen sub-model
+#'   parameters. Defaults to the built-in \code{parameters_R}.
 #' @param common Dataframe of parameters shared across sites. Defaults to \code{common_p}.
 #' @param sperling Dataframe of sugar model parameters. Defaults to \code{sperling_p}.
 #' @param repo Dataframe of Repola allometric parameters. Defaults to \code{repo_p}.
+#' @param pPREL Numeric vector of PRELES photosynthesis model parameters
+#'   (length 32). Only used when \code{PRELES_GPP = TRUE}. Default is the
+#'   published Hyytiälä calibration.
 #' @param storage_reset Logical. If \code{TRUE} (default), sugar and starch stores
 #'   reset to initial values at the start of each year. If \code{FALSE}, carry
 #'   over from the previous simulated year.
@@ -49,6 +69,12 @@
 #'   limitation on needle growth. Default \code{FALSE}.
 #' @param soil_moisture_effect_on_diameter Logical. Enable soil moisture
 #'   limitation on diameter growth. Default \code{FALSE}.
+#' @param driver_N Numeric vector of length 2. Scaling parameters controlling
+#'   the effect of nitrogen availability on growth. Default \code{c(1, 1)}.
+#' @param driver_H Numeric vector of length 2. Scaling parameters controlling
+#'   height growth. Default \code{c(0, 2)}.
+#' @param driver_D Numeric vector of length 2. Scaling parameters controlling
+#'   diameter growth. Default \code{c(1, 1)}.
 #' @param trees_grow Logical. If \code{TRUE}, D0 and h0 are updated year-to-year
 #'   from modelled growth. Automatically \code{TRUE} when
 #'   \code{xylogenesis = TRUE}. Default \code{FALSE}.
@@ -74,6 +100,9 @@
 #'   with early/late-wood stages. Default \code{FALSE}.
 #' @param PRELES_GPP Logical. If \code{TRUE}, GPP is calculated via PRELES.
 #'   Default \code{FALSE}.
+#' @param environment_effect_xylogenesis Logical. If \code{TRUE}, temperature
+#'   and moisture affect xylogenesis cell dynamics directly. Only relevant when
+#'   \code{xylogenesis = TRUE}. Default \code{FALSE}.
 #' @param photosynthesis_as_input Logical. If \code{TRUE} (default), the
 #'   \code{P} column in \code{weather} is used directly as GPP.
 #' @param photoparameters Integer (1-4). PRELES parameter set selector.
@@ -85,9 +114,16 @@
 #'   when \code{temp_rise = TRUE}. Default \code{TRUE}.
 #' @param CASSIA_graphs Logical. If \code{TRUE} (default), produce diagnostic
 #'   plots during the run.
+#' @param etmodel Logical. If \code{TRUE}, use the Penman-Monteith
+#'   evapotranspiration model inside PRELES. Only relevant when
+#'   \code{PRELES_GPP = TRUE}. Default \code{FALSE}.
+#' @param LOGFLAG Logical. If \code{TRUE}, write internal diagnostic output to
+#'   the console. Intended for debugging. Default \code{FALSE}.
 #' @param s.D0 Integer. Day-of-year to start the temperature sum for diameter
 #'   growth (default 79, approx. March 20; valid for Finland).
 #' @param s.H0 Integer. Day-of-year to start shoot growth. Default \code{1}.
+#' @param growth_photo_coef Numeric. Coefficient scaling the photosynthesis
+#'   signal to organ growth. Default \code{1} (no scaling).
 #' @param needle_mass_in Numeric. Initial needle mass (kg C). Default
 #'   \code{4.467638} (calibrated for Hyytiälä).
 #' @param Throughfall Numeric. Throughfall fraction. Default \code{1}.
