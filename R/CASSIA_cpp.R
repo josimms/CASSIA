@@ -48,6 +48,9 @@
 #'   \code{sperling_p}.
 #' @param repo Dataframe of Repola allometric parameters. Defaults to
 #'   \code{repo_p}.
+#' @param pPREL Numeric vector of PRELES photosynthesis model parameters
+#'   (length 32). Only used when \code{preles = TRUE}. Default is the
+#'   published Hyytiälä calibration.
 #' @param phydro_param Numeric vector. Parameters for the p-hydro photosynthesis
 #'   model. Only used when \code{phydro = TRUE}.
 #' @param storage_reset Logical. If \code{TRUE} (default), sugar and starch
@@ -103,6 +106,11 @@
 #'   when \code{temp_rise = TRUE}. Default \code{TRUE}.
 #' @param CASSIA_graphs Logical. Produce diagnostic plots during the run.
 #'   Default \code{TRUE}.
+#' @param etmodel Logical. If \code{TRUE}, use the Penman-Monteith
+#'   evapotranspiration model inside PRELES. Only relevant when
+#'   \code{preles = TRUE}. Default \code{FALSE}.
+#' @param LOGFLAG Logical. If \code{TRUE}, write internal diagnostic output to
+#'   the console. Intended for debugging. Default \code{FALSE}.
 #' @param s.D0 Integer. Day-of-year to start the temperature sum for diameter
 #'   growth (default 79, approx. March 20; valid for Finland).
 #' @param s.H0 Integer. Day-of-year to start shoot growth. Default \code{1}.
