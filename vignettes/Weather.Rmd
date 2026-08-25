@@ -91,7 +91,8 @@ Key SMEAR variables and their CASSIA equivalents:
 ```{r, eval=FALSE}
 library(data.table)
 
-# After loading raw sub-daily data into 'raw', add a date column and aggregate
+# fread() returns a data.table directly, which supports the .() aggregation syntax
+raw <- fread(url)
 raw$date <- as.Date(paste(raw$Year, raw$Month, raw$Day, sep = "-"))
 
 daily <- raw[, .(

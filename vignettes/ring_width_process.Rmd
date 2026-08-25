@@ -323,7 +323,7 @@ early-wood values (`tau_Ee`, `tau_We`) to their late-wood values (`tau_El`,
 `tau_Wl`). Late-wood cells are smaller and have shorter transit times, producing
 the denser, narrower cells characteristic of late-season growth.
 
-```{r}
+```{r, fig.width=8, fig.height=4}
 par(mfrow = c(1, 2))
 plot(output$day, output$tau_E, type = "l", lwd = 2,
      xlab = "Day of year", ylab = "tau_E",
@@ -351,7 +351,7 @@ growth driver — cells produced at the peak of summer continue moving through t
 pipeline for weeks afterwards, which is why ring width measurements often show
 later peaks than temperature alone would predict.
 
-```{r}
+```{r, fig.width=10, fig.height=4}
 par(mfrow = c(1, 3))
 plot(output$day, output$n_E_pot, type = "l", lwd = 2,
      xlab = "Day of year", ylab = "n_E_pot",

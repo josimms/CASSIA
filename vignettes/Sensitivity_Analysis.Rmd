@@ -9,7 +9,6 @@ vignette: >
 
 ```{r, message=FALSE}
 library(CASSIA)
-library(purrr)
 library(dplyr)
 ```
 
@@ -45,7 +44,7 @@ list of results, one per run.
 
 ```{r}
 run_sensitivity <- function(param_name, range, weather) {
-  map(range, function(i) {
+  lapply(range, function(i) {
     parameters_p_new <- parameters_p
     if (param_name %in% rownames(parameters_p_new)) {
       parameters_p_new["Hyde"][rownames(parameters_p_new) == param_name, ] <- i
