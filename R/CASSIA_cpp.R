@@ -8,7 +8,7 @@
 #' @param weather Daily dataframe. Required columns depend on the photosynthesis
 #'   mode. At minimum:
 #'   \describe{
-#'     \item{date}{Date in YYYY-MM-DD format}
+#'     \item{dates}{Date in YYYY-MM-DD format}
 #'     \item{T}{Air temperature (°C)}
 #'     \item{P}{Photosynthesis per tree (g C m-2 day-1); required when
 #'       \code{photosynthesis_as_input = TRUE}}
@@ -350,9 +350,9 @@ CASSIA_cpp <- function(
   ## Model conditions derived from model inputs
   #####
   # years from weather data
-  date_range = as.numeric(substring(weather$date[c(1, nrow(weather))], 1, 4))
+  date_range = as.numeric(substring(weather$dates[c(1, nrow(weather))], 1, 4))
   if (sum(date_range %in% 0:2500) < 2) {
-    stop("Dates are not between 0 and 2500. Is the column called date?")
+    stop("Dates are not between 0 and 2500. Is the column called dates?")
   }
   start_year <- date_range[1]
   end_year <- date_range[2]

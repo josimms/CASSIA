@@ -73,7 +73,7 @@ out3 <- CASSIA_cpp(weather = weather_original, site = "Hyde",
 ```
 
 The meaning of each parameter is explained in the CASSIA instruction booklet
-(`man/CASSIA+_Instruction_And_Plans_Booklet.pdf`).
+(`CASSIA_Instruction_Booklet.pdf` in the package root, or on GitHub).
 
 ## Weather data format
 
