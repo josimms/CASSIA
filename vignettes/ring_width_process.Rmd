@@ -1,5 +1,5 @@
 ---
-title: "Ring Width Process"
+title: "Model Investigation: Ring Width Formation"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Ring Width Process}
@@ -7,92 +7,103 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## Parameters
+## Overview
+
+This vignette walks through the xylogenesis sub-model that underlies ring width
+formation in CASSIA. Rather than running the full `CASSIA_cpp()` model, it uses
+a transparent R implementation of the same mathematics so that each state
+variable can be inspected step by step.
+
+Ring width forms through a sequential cell pipeline: temperature drives a pool
+of potential cambial cells into enlargement, then into wall thickening, and
+finally into mature cells. The total width of early-wood and late-wood cells at
+the end of the season is the potential ring width. Understanding how each stage
+responds to parameters and climate helps with calibration and with interpreting
+model behaviour.
+
+The weather data here is synthetic — a smooth seasonal temperature cycle with a
+corresponding photosynthesis signal. This makes it easy to see how the model
+responds to climate signals without the noise of real data. Substitute your own
+dataframe to explore site-specific behaviour.
+
+## Parameters and synthetic weather
 
 ```{r}
-# TODO: replace with your own data!
 set.seed(42)
-
 n_days <- 365
 
 weather <- data.frame(
-  day = 0:(n_days - 1),
-  TAir = 10 + 10 * sin(2 * pi * (1:n_days) / 365),   # seasonal temperature
-  PF = pmax(0, 5 + 3 * sin(2 * pi * (1:n_days - 80) / 365)),  # photosynthesis
+  day    = 0:(n_days - 1),
+  TAir   = 10 + 10 * sin(2 * pi * (1:n_days) / 365),
+  PF     = pmax(0, 5 + 3 * sin(2 * pi * (1:n_days - 80) / 365)),
   GPP_ref = 6
 )
 
-
 parameters <- list(
-  sD0_Trad = 0,
+  sD0_Trad           = 0,
   diameter_start_day = 60,
-  sDc = 0.02,
-  LD0 = 1,
-  tau_GPP = 5,
-  tau_Ee = 10,
-  tau_We = 20,
-  tau_El = 5,
-  tau_Wl = 10,
-  cell_d_ew = 30e-6,
-  cell_d_lw = 15e-6,
-  h0 = 20
+  sDc                = 0.02,
+  LD0                = 1,
+  tau_GPP            = 5,
+  tau_Ee             = 10,
+  tau_We             = 20,
+  tau_El             = 5,
+  tau_Wl             = 10,
+  cell_d_ew          = 30e-6,
+  cell_d_lw          = 15e-6,
+  h0                 = 20
 )
 
 common <- list(
-  Uggla = 2,
+  Uggla             = 2,
   osmotic_sugar_conc = 0.5,
-  gas_const = 8.314,
-  abs_zero = 273.15,
-  M_C = 12,
-
-  ## temperature–growth response
-  a = 0.4,
-  b = 5
+  gas_const         = 8.314,
+  abs_zero          = 273.15,
+  M_C               = 12,
+  a                 = 0.4,
+  b                 = 5
 )
-
 
 ratio <- list(
   diameter_growth_coefficient = 1,
-  form_factor = 0.5
+  form_factor                 = 0.5
 )
 
 init_state <- list(
-  sD = 0,
-  GD = 0,
-  g = 0,
-  fD = 0,
-  n_E_pot = 0,
-  n_W_pot = 0,
-  n_M_pot = 0,
-  tau_W = parameters$tau_We,
-  tau_E = parameters$tau_Ee,
+  sD              = 0,
+  GD              = 0,
+  g               = 0,
+  fD              = 0,
+  n_E_pot         = 0,
+  n_W_pot         = 0,
+  n_M_pot         = 0,
+  tau_W           = parameters$tau_We,
+  tau_E           = parameters$tau_Ee,
   ew_cells_pot_max = 0,
-  pot_mm_max = 0
+  pot_mm_max      = 0
 )
-
 ```
 
-### R function
+## R implementation of the growth process
 
 ```{r}
 grow_one_day <- function(day, weather, state, parameters, common, ratio,
                          LD_estim = TRUE, sD_estim_T_count = FALSE) {
 
-  TAir     <- weather$TAir[day + 1]
-  PF       <- weather$PF[day + 1]
+  TAir    <- weather$TAir[day + 1]
+  PF      <- weather$PF[day + 1]
   GPP_ref <- weather$GPP_ref[day + 1]
 
-  ## ---- Temperature driven growth (g) ----
+  ## Temperature-driven growth function (g)
   if (TAir > 0) {
     g <- 1 / (1 + exp(-common$a * (TAir - common$b)))
     if (g < 0) g <- 0
   } else {
     g <- 0
   }
-
   g_sD_T <- g
 
-  ## ---- Diameter state ----
+  ## Diameter state (sD)
   if (day == 0) {
     sD <- parameters$sD0_Trad
   } else if (day <= parameters$diameter_start_day) {
@@ -101,19 +112,18 @@ grow_one_day <- function(day, weather, state, parameters, common, ratio,
     sD <- state$sD + g_sD_T
   }
 
+  ## Potential diameter growth shape function (fD)
   if (sD > 0 && sD < parameters$sDc^2) {
     fD <- (parameters$sDc * sqrt(sD) - sD) / (parameters$sDc^2 / 4)
   } else {
     fD <- 0
   }
 
-  ## ---- LD & GPP smoothing ----
+  ## Growth driver (GD)
   LD <- parameters$LD0 * ratio$diameter_growth_coefficient
-
-  ## ---- Growth driver ----
   GD <- g_sD_T * fD * LD
 
-  ## ---- Uggla switch ----
+  ## Early/late wood switch (Uggla threshold)
   if (sD < parameters$sDc^2 / common$Uggla) {
     tau_E <- parameters$tau_Ee
     tau_W <- parameters$tau_We
@@ -122,28 +132,27 @@ grow_one_day <- function(day, weather, state, parameters, common, ratio,
     tau_W <- parameters$tau_Wl
   }
 
-  ## ---- Cell pools ----
+  ## Cell pools
   if (day < 1) {
     n_E_pot <- n_W_pot <- n_M_pot <- 0
   } else {
     n_E_pot <- state$n_E_pot + GD - state$n_E_pot / tau_E
     n_W_pot <- state$n_W_pot + state$n_E_pot / tau_E -
-      state$n_W_pot / state$tau_W
+               state$n_W_pot / state$tau_W
     n_M_pot <- state$n_M_pot + state$n_W_pot / state$tau_W
   }
 
-  ## ---- Carbon to enlargement ----
+  ## Carbon cost of cell enlargement
   CE <- function(cell_d) {
     common$osmotic_sugar_conc * pi * (cell_d / 2)^2 * 0.00266 *
       342.296 / (common$gas_const * (TAir + common$abs_zero) * 1000) *
       12 * common$M_C / 342.296 / tau_E
   }
-
   CE_ew <- CE(parameters$cell_d_ew)
   CE_lw <- CE(parameters$cell_d_lw)
 
   n_rows <- ratio$form_factor * parameters$h0 / 0.00266 * pi * 0.175 /
-    parameters$cell_d_ew
+            parameters$cell_d_ew
 
   carbon_enlargement_pot <- if (sD < parameters$sDc^2 / common$Uggla) {
     CE_ew * n_E_pot
@@ -151,221 +160,281 @@ grow_one_day <- function(day, weather, state, parameters, common, ratio,
     CE_lw * n_E_pot
   }
 
-  ## ---- Wall formation ----
+  ## Wall formation carbon cost
   CW <- 1.8e-11
   wall_pot_growth <- n_rows * CW * n_W_pot
 
+  ## Cell counts and ring width
   cells_pot <- n_W_pot + n_M_pot
 
   if (sD < parameters$sDc^2 / common$Uggla) {
-    ew_cells_pot <- cells_pot
+    ew_cells_pot     <- cells_pot
     ew_cells_pot_max <- max(ew_cells_pot, state$ew_cells_pot_max)
-    lw_cells_pot <- 0
+    lw_cells_pot     <- 0
   } else {
-    ew_cells_pot <- 0
+    ew_cells_pot     <- 0
     ew_cells_pot_max <- state$ew_cells_pot_max
-    lw_cells_pot <- cells_pot - ew_cells_pot - ew_cells_pot_max
+    lw_cells_pot     <- cells_pot - ew_cells_pot - ew_cells_pot_max
   }
 
   ew_width_pot <- ew_cells_pot * parameters$cell_d_ew * 1000
   lw_width_pot <- lw_cells_pot * parameters$cell_d_lw * 1000
 
   if (sD < parameters$sDc^2 / common$Uggla) {
-    pot_mm <- ew_width_pot
+    pot_mm     <- ew_width_pot
     pot_mm_max <- max(pot_mm, state$pot_mm_max)
   } else {
     pot_mm_max <- state$pot_mm_max
-    pot_mm <- lw_width_pot + pot_mm_max
+    pot_mm     <- lw_width_pot + pot_mm_max
   }
 
-  ## ---- Return updated state ----
   list(
-    sD = sD,
-    GD = GD,
-    g = g,
-    fD = fD,
-    n_E_pot = n_E_pot,
-    n_W_pot = n_W_pot,
-    n_M_pot = n_M_pot,
-    tau_E = tau_E,
-    tau_W = tau_W,
+    sD = sD, GD = GD, g = g, fD = fD,
+    n_E_pot = n_E_pot, n_W_pot = n_W_pot, n_M_pot = n_M_pot,
+    tau_E = tau_E, tau_W = tau_W,
     ew_cells_pot_max = ew_cells_pot_max,
-    pot_mm_max = pot_mm_max,
-    pot_mm = pot_mm
+    pot_mm_max = pot_mm_max, pot_mm = pot_mm
   )
 }
 
 run_growth <- function(weather, parameters, common, ratio) {
-  n_days <- nrow(weather)
-  states <- vector("list", n_days)
-
+  n_days   <- nrow(weather)
+  states   <- vector("list", n_days)
   states[[1]] <- init_state
-
   for (d in 1:(n_days - 1)) {
     states[[d + 1]] <- grow_one_day(
-      day = d,
-      weather = weather,
-      state = states[[d]],
-      parameters = parameters,
-      common = common,
-      ratio = ratio
+      day = d, weather = weather, state = states[[d]],
+      parameters = parameters, common = common, ratio = ratio
     )
   }
-
   states
 }
-
 ```
 
-### Run for a year
+## Run and collect output
 
 ```{r}
+states <- run_growth(weather = weather, parameters = parameters,
+                     common = common, ratio = ratio)
 
-states <- run_growth(
-  weather = weather,
-  parameters = parameters,
-  common = common,
-  ratio = ratio
-)
-
-```
-
-### Output
-
-```{r}
 output <- data.frame(
-  day = weather$day,
-  g = vapply(states, function(x) x$g, numeric(1)),
-  sD = vapply(states, function(x) x$sD, numeric(1)),
-  fD = vapply(states, function(x) x$fD, numeric(1)),
-  GD = vapply(states, function(x) x$GD, numeric(1)),
+  day     = weather$day,
+  g       = vapply(states, function(x) x$g,       numeric(1)),
+  sD      = vapply(states, function(x) x$sD,      numeric(1)),
+  fD      = vapply(states, function(x) x$fD,      numeric(1)),
+  GD      = vapply(states, function(x) x$GD,      numeric(1)),
   n_E_pot = vapply(states, function(x) x$n_E_pot, numeric(1)),
   n_W_pot = vapply(states, function(x) x$n_W_pot, numeric(1)),
   n_M_pot = vapply(states, function(x) x$n_M_pot, numeric(1)),
-  tau_W =  vapply(states, function(x) x$tau_W, numeric(1)),
-  tau_E =  vapply(states, function(x) x$tau_E, numeric(1)),
-  pot_mm = vapply(states, function(x) x$pot_mm, numeric(1)),
-  TAir = weather$TAir
+  tau_W   = vapply(states, function(x) x$tau_W,   numeric(1)),
+  tau_E   = vapply(states, function(x) x$tau_E,   numeric(1)),
+  pot_mm  = vapply(states, function(x) x$pot_mm,  numeric(1)),
+  TAir    = weather$TAir
 )
-
-plot(output$day, output$g, type = "l", lwd = 2,
-     xlab = "Day", ylab = "g",
-     main = "Temperature-driven growth response")
-title(sub = "Common: a, b")
-mtext(
-  "Growth anytime this function is larger than 0",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-plot(output$day, output$sD, type = "l", lwd = 2,
-     xlab = "Day", ylab = "sD",
-     main = "sD")
-abline(h = parameters$sDc^2)
-title(sub = "Parameters: diameter_start_day, sD0_Trad")
-mtext(
-  "Growth only when sD is less than line",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-plot(output$day, output$fD, type = "l", lwd = 2,
-     xlab = "Day", ylab = "fD",
-     main = "fD")
-title(sub = "Parameters: sDc")
-mtext(
-  "Multiplier for GD",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-plot(output$day, output$GD, type = "l", lwd = 2,
-     xlab = "Day", ylab = "GD",
-     main = "GD")
-title(sub = "Parameters: diameter_growth_coefficient, LD0 (controls height)")
-mtext(
-  "Used in the n_E_pot process",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-par(mfrow = c(1, 2))
-plot(output$day, output$tau_E, type = "l", lwd = 2,
-     xlab = "Day", ylab = "tau_E",
-     main = "tau_E")
-title(sub = "Parameters: tau_Ee, tau_El. Change is when sD < sDc^2 / uggla")
-mtext(
-  "Used in the n_E_pot and n_W_pot process",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-plot(output$day, output$tau_W, type = "l", lwd = 2,
-     xlab = "Day", ylab = "tau_W",
-     main = "tau_W")
-title(sub = "Parameters: tau_We, tau_Wl. Change is when sD < sDc^2 / uggla")
-mtext(
-  "Used in the n_W_pot and n_M_pot process",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-par(mfrow = c(1, 3))
-plot(output$day, output$n_E_pot, type = "l", lwd = 2,
-     xlab = "Day", ylab = "n_E_pot",
-     main = "n_E_pot")
-title(sub = "Previous state, GD and tau_E control this")
-mtext(
-  "Used in the carbon_enlargement_pot ",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-plot(output$day, output$n_W_pot, type = "l", lwd = 2,
-     xlab = "Day", ylab = "n_W_pot",
-     main = "n_W_pot")
-title(sub = "Previous state, n_E_pot, n_W_pot, tau_W and tau_E control this")
-mtext(
-  "Used in wall_pot_growth",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-plot(output$day, output$n_M_pot, type = "l", lwd = 2,
-     xlab = "Day", ylab = "n_M_pot",
-     main = "n_M_pot")
-title(sub = "Previous state, n_W_pot and tau_W control this")
-mtext(
-  "Used in cells_pot",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-## ew_cells_pot and lw_cells_pot are not plotted as they rely so heavily on the other processes, but can be checked if there isn't a problem up to this point!
-
-par(mfrow = c(1, 1))
-plot(output$day, output$pot_mm, type = "l", lwd = 2,
-     xlab = "Day", ylab = "POTENTIAL ring width (mm)",
-     main = "POTENTIAL ring growth")
-title(sub = "Parameters sDc and Uggla control this")
-mtext(
-  "ew_cells_pot and lw_cells_pot also control this",
-  side = 3,
-  line = 0.5,
-  cex = 0.9
-)
-
-
 ```
 
+---
 
+## Step 1: Temperature-driven growth response (g)
 
+`g` is a logistic function of air temperature, controlled by the shape
+parameters `a` and `b` in `common`. It is zero when temperature is at or below
+zero, and approaches 1 at high temperatures. This represents the physiological
+readiness of the cambium to divide — no growth is possible when the tree is too
+cold. The `b` parameter sets the inflection temperature (default 5 °C), and `a`
+controls the steepness of the response.
+
+```{r}
+plot(output$day, output$g, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "g",
+     main = "Temperature-driven growth response (g)")
+title(sub = "Controlled by common parameters: a (steepness), b (inflection temperature)")
+mtext("g > 0 whenever growth is temperature-permissive", side = 3, line = 0.5, cex = 0.9)
+```
+
+---
+
+## Step 2: Cumulative growth state (sD)
+
+`sD` accumulates `g` each day, but only after `diameter_start_day`. This
+represents the cumulative thermal stimulus driving cambial activity — analogous
+to growing-degree days. The starting value `sD0_Trad` can be negative,
+reflecting a "debt" of thermal stimulus that must be overcome before growth
+begins. Growth only occurs while `sD` is between 0 and `sDc²` (shown by the
+horizontal line); outside that range the potential growth function `fD` returns
+zero.
+
+```{r}
+plot(output$day, output$sD, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "sD",
+     main = "Cumulative thermal growth state (sD)")
+abline(h = parameters$sDc^2, lty = 2, col = "red")
+title(sub = "Controlled by: diameter_start_day, sD0_Trad")
+mtext("Diameter growth is active when sD is between 0 and the dashed line", side = 3, line = 0.5, cex = 0.9)
+```
+
+---
+
+## Step 3: Potential growth shape function (fD)
+
+`fD` is a bell-shaped function of `sD`, peaking in the middle of the growing
+season and returning to zero at the ends. It is parameterised by `sDc`, which
+controls both the width and height of the bell. A larger `sDc` gives a broader,
+taller growth pulse (more total growth over the season). `fD` is a multiplier
+on the growth driver `GD` — it ensures that the growth rate is highest at the
+peak of the season and tapers off naturally.
+
+```{r}
+plot(output$day, output$fD, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "fD",
+     main = "Potential growth shape function (fD)")
+title(sub = "Controlled by: sDc")
+mtext("fD is the seasonal modulator on GD", side = 3, line = 0.5, cex = 0.9)
+```
+
+---
+
+## Step 4: Daily growth driver (GD)
+
+`GD` is the product of the temperature response `g`, the seasonal shape `fD`,
+and a scaling factor `LD` (itself derived from `LD0` and the
+`diameter_growth_coefficient`). It represents the daily input of new potential
+cells into the enlargement pool. `GD` has a single peak in early summer when
+both temperature and the seasonal bell function are near their maxima.
+
+```{r}
+plot(output$day, output$GD, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "GD",
+     main = "Daily growth driver (GD)")
+title(sub = "Controlled by: diameter_growth_coefficient, LD0")
+mtext("GD is the daily input to the enlargement cell pool (n_E_pot)", side = 3, line = 0.5, cex = 0.9)
+```
+
+---
+
+## Step 5: Cell transit times and the early/late wood switch
+
+Cells move through three pools — enlargement (n_E_pot), wall thickening
+(n_W_pot), and maturation (n_M_pot) — each with a residence time `tau_E` and
+`tau_W` respectively. The Uggla threshold (`sD < sDc² / Uggla`) determines
+whether early-wood or late-wood cell dimensions and transit times apply. When
+`sD` crosses this threshold, both `tau_E` and `tau_W` switch from their
+early-wood values (`tau_Ee`, `tau_We`) to their late-wood values (`tau_El`,
+`tau_Wl`). Late-wood cells are smaller and have shorter transit times, producing
+the denser, narrower cells characteristic of late-season growth.
+
+```{r}
+par(mfrow = c(1, 2))
+plot(output$day, output$tau_E, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "tau_E",
+     main = "Enlargement transit time (tau_E)")
+title(sub = "tau_Ee → tau_El at the Uggla threshold")
+mtext("Controls rate of flow from n_E_pot to n_W_pot", side = 3, line = 0.5, cex = 0.9)
+
+plot(output$day, output$tau_W, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "tau_W",
+     main = "Wall-thickening transit time (tau_W)")
+title(sub = "tau_We → tau_Wl at the Uggla threshold")
+mtext("Controls rate of flow from n_W_pot to n_M_pot", side = 3, line = 0.5, cex = 0.9)
+par(mfrow = c(1, 1))
+```
+
+---
+
+## Step 6: Cell pools
+
+The three cell pools track how many cells are currently in each stage of
+development. `n_E_pot` (enlargement) is fed by `GD` and drained into `n_W_pot`
+(wall thickening) at rate `1/tau_E`. `n_W_pot` is drained into `n_M_pot`
+(maturation) at rate `1/tau_W`. This creates a lagged, smoothed response to the
+growth driver — cells produced at the peak of summer continue moving through the
+pipeline for weeks afterwards, which is why ring width measurements often show
+later peaks than temperature alone would predict.
+
+```{r}
+par(mfrow = c(1, 3))
+plot(output$day, output$n_E_pot, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "n_E_pot",
+     main = "Enlargement pool (n_E_pot)")
+title(sub = "Driven by GD, drained by tau_E")
+mtext("Carbon cost: cell enlargement", side = 3, line = 0.5, cex = 0.9)
+
+plot(output$day, output$n_W_pot, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "n_W_pot",
+     main = "Wall-thickening pool (n_W_pot)")
+title(sub = "Fed from n_E_pot, drained by tau_W")
+mtext("Carbon cost: wall formation", side = 3, line = 0.5, cex = 0.9)
+
+plot(output$day, output$n_M_pot, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "n_M_pot",
+     main = "Mature cell pool (n_M_pot)")
+title(sub = "Fed from n_W_pot")
+mtext("Contributes to total cell count (cells_pot)", side = 3, line = 0.5, cex = 0.9)
+par(mfrow = c(1, 1))
+```
+
+---
+
+## Step 7: Potential ring width (pot_mm)
+
+The final output is `pot_mm`, the cumulative potential ring width in millimetres.
+During the early-wood phase, it grows as early-wood cells (diameter `cell_d_ew`)
+accumulate. Once the Uggla threshold is crossed, late-wood cells (smaller
+diameter `cell_d_lw`) begin forming, and `pot_mm` continues to increase but more
+slowly. The value at the end of the year is the model's prediction of annual ring
+width under these conditions.
+
+Note that this is the *potential* ring width — it assumes no carbon limitation.
+In the full `CASSIA_cpp()` model, actual ring width is additionally constrained
+by available carbon, linking it to the sugar and photosynthesis sub-models.
+
+```{r}
+par(mfrow = c(1, 1))
+plot(output$day, output$pot_mm, type = "l", lwd = 2,
+     xlab = "Day of year", ylab = "Potential ring width (mm)",
+     main = "Potential ring width over the growing season")
+title(sub = "Controlled by sDc, Uggla, cell_d_ew, cell_d_lw")
+mtext("Early wood (fast increase) transitions to late wood (slower increase) at the Uggla threshold",
+      side = 3, line = 0.5, cex = 0.9)
+```
+
+---
+
+## Summary of the cell pipeline
+
+```
+Temperature (TAir)
+      │
+      ▼
+   g (logistic response)
+      │
+      ▼
+   sD (cumulative thermal state)  ──── diameter_start_day, sD0_Trad
+      │
+      ▼
+   fD (seasonal bell function)    ──── sDc
+      │
+      ▼
+   GD (daily growth driver)       ──── LD0, diameter_growth_coefficient
+      │
+      ▼
+  n_E_pot (enlargement)           ──── tau_Ee / tau_El (Uggla threshold)
+      │
+      ▼
+  n_W_pot (wall thickening)       ──── tau_We / tau_Wl
+      │
+      ▼
+  n_M_pot (mature)
+      │
+      ▼
+  pot_mm (ring width)             ──── cell_d_ew, cell_d_lw, Uggla
+```
+
+To understand how a parameter affects ring width, trace it forward through this
+pipeline. For example, `sDc` affects `fD`, which affects `GD`, which drives all
+three cell pools, and finally `pot_mm`. `tau_Ee` only affects the lag between
+`n_E_pot` and `n_W_pot` — it shifts the timing of wall growth without changing
+the total cells produced.
+
+See `vignette("Sensitivity_Analysis")` for how to quantify these effects
+systematically.
