@@ -1,10 +1,6 @@
 ---
 title: "CASSIA Sugar Individual Functions"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{CASSIA Sugar Individual Functions}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output: html_document
 ---
 
 ```{r}

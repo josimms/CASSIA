@@ -1,11 +1,7 @@
 ---
 title: "Sugar Model Comparison"
 author: "Joanna"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Sugar Model Comparison}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
