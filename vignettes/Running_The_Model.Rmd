@@ -7,66 +7,86 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-## Import libraries
+## Setup
 
-First, download the package from github.
+Install the package from GitHub if you haven't already, then load it.
+
+```{r, eval=FALSE}
+install.packages("devtools")
+devtools::install_github("josimms/CASSIA")
+```
 
 ```{r}
-library(devtools)
-# install_github("josimms/CASSIA")
 library(CASSIA)
 ```
 
 ## Run the model
 
-The model has automatic settings which produces the results as in the 2015 paper in Hyytiälä. The parameters and input weather for Hyytiälä are automatically included in the package.
+The package includes built-in weather data for Hyytiälä (2015–2017) so you can
+run a basic simulation straight away. The model produces results comparable to
+Schiestl-Aalto et al. (2015).
 
 ```{r}
-# import the package
-library(CASSIA)
-
-# Get the weather data
-photosynthesis_as_input = TRUE
-processed_data = process_weather_data(photosynthesis_as_input)
+# Built-in Hyytiälä weather data (2015-2017)
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+           format = "%Y %j"))
 
 # Run the model
-out = CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
+out <- CASSIA_cpp(weather = weather_original, site = "Hyde")
 ```
 
-The model has a list datasets for the output. These are for the growth, sugar model and preles (photosynthesis model) respectively.
+The output is a list with three dataframes:
 
-The original model or basic settings mainly has results in the Growth database.
+- `out$Growth` — daily carbon fluxes and organ growth
+- `out$Sugar`  — daily sugar and starch pool values (when sugar model is active)
+- `out$Preles` — daily photosynthesis outputs (GPP, ET, soil water)
 
 ```{r}
 head(out$Growth)
 ```
 
-The other settings of the model can be accessed by the function argument switches. These settings can be found in the help function for the CASSIA model.
+## Changing model settings
 
-The following example means that the trees growth, so that the model uses the previous year's growth as the initial conditions for the next year.
+Settings are controlled by toggle arguments. For example, `LN_estim = TRUE`
+(the default) scales needle elongation by the previous year's GPP. To turn it
+off:
 
 ```{r}
-out2 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", LN_estim = TRUE)
-
-# To check the possible options
-?CASSIA_cpp
+out2 <- CASSIA_cpp(weather = weather_original, site = "Hyde", LN_estim = FALSE)
 ```
 
-To change the parameters they must be in a table form as the preloaded ratios_p, parameters_p, common_p. sperling_p and repo_p. The easiest way of doing this could be to redefine the parameters from the default objects.
+See `?CASSIA_cpp` for the full list of toggles and what they do.
 
-The meaning of the parameters can be found in the CASSIA instruction booklet.
+## Changing parameters
+
+Parameters are stored in dataframes (`ratios_p`, `parameters_p`, `common_p`,
+`sperling_p`, `repo_p`). The easiest way to modify them is to copy a default
+dataframe and change the value you want:
 
 ```{r}
 parameters_updated <- parameters_p
-parameters_updated[c("root.lifetime"), c("Hyde")] <- 2
+parameters_updated["root.lifetime", "Hyde"] <- 2
 
-out3 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", parameters = parameters_updated)
+out3 <- CASSIA_cpp(weather = weather_original, site = "Hyde",
+                   parameters = parameters_updated)
 ```
 
-Finally, the weather data should be considered. Due to the linking with different photosynthesis models the weather needed in the model currently takes two forms. One for the basic model which includes the photosynthesis values as an input and the other the environmental variables needed for the PRELES model.
+The meaning of each parameter is explained in the CASSIA instruction booklet
+(`man/CASSIA+_Instruction_And_Plans_Booklet.pdf`).
 
-Due to the current definition of the model the weather data should be in the same format as the default Hyytiälä data even if the PRELES model is not used to calculate the photosynthesis input. However the values in these columns can just be NA values.
+## Weather data format
+
+The weather dataframe must have these columns (column `X` is the day-of-year):
 
 ```{r}
-head(processed_data$weather_original)
+names(weather_original)
 ```
+
+If you are using your own weather data, match these column names exactly. The
+units are: T (°C), P (g C m-2 day-1), TSA/TSB (°C), MB (m3 m-3), Rain
+(mm day-1). The `dates` column must be class `Date`.
+
+The model will give an informative error if the weather data is wrongly named
+or contains NAs. See `vignette("Sensitivity_Analysis")` for guidance on fitting
+the model to a new site.

@@ -133,12 +133,14 @@
 #'   Default \code{FALSE}.
 #' @param tests Logical. Enable internal diagnostic tests. Default \code{FALSE}.
 #'
-#' @return A named list with two elements:
+#' @return A named list with three elements:
 #'   \describe{
-#'     \item{daily}{Dataframe of daily outputs: growth fluxes, sugar and
-#'       starch pools, respiration, photosynthesis. See
-#'       \code{vignette("Running_The_Model")} for column descriptions.}
-#'     \item{yearly}{Dataframe of annually cumulated carbon pools and fluxes.}
+#'     \item{Growth}{Dataframe of daily carbon fluxes and organ growth (bud,
+#'       wall, needle, root, height growth; respiration; storage; mycorrhiza).}
+#'     \item{Sugar}{Dataframe of daily sugar and starch pool values per organ.
+#'       Populated when the sugar model is active.}
+#'     \item{Preles}{Dataframe of daily photosynthesis outputs: GPP, ET,
+#'       SoilWater.}
 #'   }
 #'
 #' @references
