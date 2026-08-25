@@ -9,15 +9,26 @@ vignette: >
 
 ```{r, message=FALSE}
 library(CASSIA)
-library(purrr)
 library(dplyr)
 ```
 
-When fitting the model to a new site you need to understand how sensitive the
-outputs are to each parameter. The function below runs the model repeatedly
-over a range of values for one parameter at a time.
+## Why run a sensitivity analysis?
+
+CASSIA has many parameters, most of which come pre-calibrated for Hyytiälä
+(`"Hyde"`). If you want to use the model at a new site, you first need to know
+which parameters actually matter for the output you care about. A sensitivity
+analysis answers this by running the model repeatedly, varying one parameter at
+a time across a plausible range, and observing how much the output changes.
+
+Parameters that produce large output changes are the ones worth calibrating
+carefully with observations. Parameters that have little effect can be left at
+their default values.
 
 ## Setup weather data
+
+The built-in Hyytiälä weather data covers 2015–2017 and is a reasonable
+starting point for a sensitivity analysis even if your site is different — the
+goal at this stage is to rank parameter importance, not to match observations.
 
 ```{r}
 weather_original$dates <- as.Date(
@@ -25,11 +36,15 @@ weather_original$dates <- as.Date(
            format = "%Y %j"))
 ```
 
-## Sensitivity analysis function
+## The sensitivity function
+
+The function below runs the model once for each value in `range`, changing only
+the named parameter while keeping all others at their defaults. It returns a
+list of results, one per run.
 
 ```{r}
 run_sensitivity <- function(param_name, range, weather) {
-  map(range, function(i) {
+  lapply(range, function(i) {
     parameters_p_new <- parameters_p
     if (param_name %in% rownames(parameters_p_new)) {
       parameters_p_new["Hyde"][rownames(parameters_p_new) == param_name, ] <- i
@@ -45,7 +60,42 @@ run_sensitivity <- function(param_name, range, weather) {
 }
 ```
 
-Run it for a few parameters:
+## Choosing which parameters to test
+
+Start with the parameters that control the timing and magnitude of diameter
+growth, as these have the most direct link to ring width observations:
+
+| Parameter | What it controls | Typical range |
+|-----------|-----------------|---------------|
+| `sDc` | Peak potential diameter growth rate | 0 – 10 |
+| `sD0.Trad` | Starting value of the temperature-driven growth state | −7 – 0 |
+| `diameter_start_day` | Day of year when diameter growth begins accumulating | 50 – 200 |
+
+`sDc` controls the overall magnitude of the growing season growth pulse.
+`sD0.Trad` shifts when that pulse begins relative to the spring temperature
+signal. `diameter_start_day` sets the earliest possible start of growth
+regardless of temperature.
+
+This branch (`adding_externals`) also exposes additional experimental parameters
+as direct arguments to `CASSIA_cpp()`. These can be varied by passing them
+directly rather than through `parameters_p`:
+
+| Parameter | What it controls | Typical range |
+|-----------|-----------------|---------------|
+| `ratio_sugar` | Concentration difference ratios between organs (sugar transfer model) | vector `c(1–20, 0.1–1, 1–20, 1–20)` |
+| `tau.myco` | Sugar transfer time constant to mycorrhiza (days) | 1 – 30 |
+| `tau.t.needles` | Sugar transfer time constant to needles (days) | 1 – 30 |
+| `nitrogen_balance` | Baseline nitrogen balance | 10 – 50 |
+
+Pass these directly to `CASSIA_cpp()` when running sensitivity analyses on the
+sugar or nitrogen sub-models, e.g.:
+```{r, eval=FALSE}
+results_tau <- lapply(seq(1, 20, length.out = 10), function(tau) {
+  out <- CASSIA_cpp(weather_original, site = "Hyde",
+                    sperling_model = TRUE, tau.myco = tau)
+  list(tau = tau, result = out)
+})
+```
 
 ```{r, eval=FALSE}
 sensitivity_sDc      <- run_sensitivity("sDc",           seq(0, 10, length.out = 10), weather_original)
@@ -55,7 +105,10 @@ sensitivity_dgs      <- run_sensitivity("diameter_start_day", seq(50, 200, lengt
 
 ## Plotting the results
 
-Extract a single output column across all runs to compare:
+Extract annual totals of a chosen output column across all runs. Here we use
+`wall.tot.growth` (total carbon allocated to wall formation, kg C yr⁻¹), which
+is closely related to ring width. You could substitute any column from
+`out$Growth`.
 
 ```{r, eval=FALSE}
 extract_yearly <- function(sensitivity_list, param_name, output_col) {
@@ -84,3 +137,29 @@ ggplot(plot_data, aes(x = param_value, y = value, colour = factor(year))) +
   facet_wrap(~param_name, scales = "free_x") +
   labs(y = "Total wall growth (kg C)", colour = "Year")
 ```
+
+## Interpreting the results
+
+A steep slope in a sensitivity plot means a small change in that parameter
+produces a large change in output — this parameter is important to get right.
+A flat line means the output is insensitive to that parameter and it can be
+left at its default.
+
+Also check whether the sensitivity is consistent across years (coloured lines
+parallel) or interacts with inter-annual climate variability (lines crossing).
+Year-dependent sensitivity usually means the parameter interacts with a
+temperature or drought signal and should be treated with extra care when
+calibrating.
+
+## Next steps: calibration
+
+Once you know which parameters matter, calibrate them by comparing modelled
+outputs against observations. Useful observation types for the diameter growth
+parameters above are:
+
+- **Dendrometer data**: daily or weekly diameter measurements — compare directly with cumulative growth from `out$Growth`
+- **Ring width measurements**: annual ring widths — compare with annual totals of `wall.tot.growth`
+- **Onset of cambial activity**: phenological observations of when growth begins — compare with the day when `wall.tot.growth` first exceeds zero
+
+See `vignette("ring_width_process")` for a step-by-step walkthrough of how
+CASSIA models ring width formation internally.

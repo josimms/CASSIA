@@ -1,0 +1,243 @@
+---
+title: "Preparing Weather Data for CASSIA"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Weather Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, message=FALSE}
+library(CASSIA)
+```
+
+## What CASSIA needs
+
+CASSIA requires a daily weather dataframe with these columns:
+
+| Column | Description | Units | Notes |
+|--------|-------------|-------|-------|
+| `X` | Day of year | integer (1–366) | |
+| `T` | Air temperature | °C | Typically measured at 2–4 m height |
+| `TSA` | Soil temperature, A horizon | °C | ~5 cm depth |
+| `TSB` | Soil temperature, B horizon | °C | ~10 cm depth |
+| `MB` | Volumetric soil moisture, B horizon | m³ m⁻³ | |
+| `Rain` | Precipitation | mm day⁻¹ | Daily total |
+| `P` | Photosynthesis per tree | g C m⁻² day⁻¹ | Required when `photosynthesis_as_input = TRUE` |
+| `dates` | Calendar date | `Date` class | Created from year + `X` |
+
+The model will give an informative error if column names are wrong, values
+are outside expected bounds, or the dataframe contains `NA`s.
+
+## Option 1: Use the built-in Hyytiälä data
+
+The fastest way to get started is to use `weather_original`, which contains
+pre-processed daily weather for Hyytiälä (SMEAR II station) covering 2015–2017.
+It just needs a `dates` column added:
+
+```{r}
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+           format = "%Y %j"))
+
+str(weather_original)
+```
+
+All the columns CASSIA needs are already present. See `vignette("Running_The_Model")`
+for how to use this to run your first simulation.
+
+---
+
+## Option 2: Local weather station data
+
+If you have your own station data, the general pipeline is:
+
+1. **Download** raw sub-daily records (typically hourly or half-hourly)
+2. **Aggregate** to daily means (or sums for precipitation)
+3. **Rename** columns to match CASSIA's expected names
+4. **Gap-fill** any missing values
+5. **Validate** with plots before running the model
+
+### Downloading from the SMEAR portal (Hyytiälä users)
+
+The SMEAR II station data is available via a REST API. The URL pattern below
+downloads daily records for a single variable:
+
+```{r, eval=FALSE}
+# Replace HYY_META.T168 with the variable you need, and adjust the date range
+url <- paste0(
+  "https://smear-backend.rahtiapp.fi/search/timeseries/csv",
+  "?tablevariable=HYY_META.T168",
+  "&from=2015-01-01T00:00:00.000",
+  "&to=2017-12-31T23:59:59.999",
+  "&quality=ANY&aggregation=NONE&interval=1"
+)
+raw <- read.csv(url)
+```
+
+Key SMEAR variables and their CASSIA equivalents:
+
+| SMEAR variable | CASSIA column | Aggregation |
+|---------------|---------------|-------------|
+| `HYY_META.T168` | `T` | daily mean |
+| `HYY_META.tsoil_5` | `TSA` | daily mean |
+| `HYY_META.tsoil_10` | `TSB` | daily mean |
+| `HYY_META.wpsoil_B` | `MB` | daily mean |
+| `HYY_META.Precip` | `Rain` | daily sum |
+| `HYY_EDDY233.GPP` | `P` | daily mean |
+
+### Aggregating to daily values
+
+```{r, eval=FALSE}
+library(data.table)
+
+# fread() returns a data.table directly, which supports the .() aggregation syntax
+raw <- fread(url)
+raw$date <- as.Date(paste(raw$Year, raw$Month, raw$Day, sep = "-"))
+
+daily <- raw[, .(
+  T    = mean(HYY_META.T168,    na.rm = TRUE),
+  TSA  = mean(HYY_META.tsoil_5, na.rm = TRUE),
+  TSB  = mean(HYY_META.tsoil_10, na.rm = TRUE),
+  MB   = mean(HYY_META.wpsoil_B, na.rm = TRUE),
+  Rain = sum(HYY_META.Precip,   na.rm = TRUE)
+), by = date]
+
+daily$X     <- as.integer(format(daily$date, "%j"))
+daily$dates <- daily$date
+```
+
+### Gap-filling missing values
+
+CASSIA will error on `NA`s. A simple approach for isolated gaps is to fill
+with the long-term mean for that day of year (mean-bias imputation):
+
+```{r, eval=FALSE}
+# Calculate the day-of-year mean across all years
+doy_mean <- tapply(daily$T, daily$X, mean, na.rm = TRUE)
+
+# Fill gaps
+daily$T[is.na(daily$T)] <- doy_mean[daily$X[is.na(daily$T)]]
+```
+
+For longer gaps (> 1–2 weeks), consider using ERA5 reanalysis data to fill
+in the missing period and then bias-correct as described in Option 3 below.
+
+---
+
+## Option 3: ERA5 reanalysis data
+
+ERA5 is useful when you have no local station data, or when you need long
+historical records. It is globally available at 0.25° resolution from the
+[Copernicus Climate Data Store](https://cds.climate.copernicus.eu/).
+
+The ERA5 pipeline in `R/ERAS_weather_processing.R` covers this in full.
+The key steps are:
+
+### 1. Download ERA5 NetCDF files
+
+Download the following variables at your site coordinates using the CDS API
+or web interface: `t2m` (2 m temperature), `ssrd` (surface solar radiation
+downwards), `swvl2` (volumetric soil water layer 2), `d2m` (2 m dew point).
+
+### 2. Extract and convert units
+
+```{r, eval=FALSE}
+library(ncdf4)
+library(data.table)
+
+nc <- nc_open("download.nc")
+
+# Extract at your site (adjust lon/lat indices)
+lon_index <- which.min(abs(ncvar_get(nc, "longitude") - YOUR_LON))
+lat_index <- which.min(abs(ncvar_get(nc, "latitude")  - YOUR_LAT))
+
+daily <- data.table(
+  T    = ncvar_get(nc, "t2m",  start = c(lon_index, lat_index, 1), count = c(1,1,-1)) - 273.15,
+  MB   = ncvar_get(nc, "swvl2", start = c(lon_index, lat_index, 1), count = c(1,1,-1)),
+  PAR  = bigleaf::Rg.to.PPFD(
+           ncvar_get(nc, "ssrd", start = c(lon_index, lat_index, 1), count = c(1,1,-1)) / 3600)
+)
+nc_close(nc)
+```
+
+ERA5 does not provide soil temperature at the CASSIA depths. A practical
+substitute is to smooth the 2 m air temperature with a lag to approximate
+the thermal damping at depth:
+
+```{r, eval=FALSE}
+# Simple lagged smoother — adjust lag and width to match your soil depth
+daily$TSA <- stats::filter(daily$T, rep(1/7,  7),  sides = 1)  # ~5 cm depth
+daily$TSB <- stats::filter(daily$T, rep(1/14, 14), sides = 1)  # ~10 cm depth
+```
+
+### 3. Bias correct against local observations
+
+ERA5 has systematic biases at fine spatial scales. Correct by calculating
+the monthly mean error between ERA5 and any local observations you have,
+then subtracting it from the ERA5 record:
+
+```{r, eval=FALSE}
+library(dplyr)
+
+# 'obs' is a dataframe of local observations; 'era' is the ERA5 data
+# Both must have Month and T columns
+obs_monthly <- obs  %>% group_by(Month) %>% summarise(T_obs  = mean(T, na.rm = TRUE))
+era_monthly  <- era %>% group_by(Month) %>% summarise(T_era  = mean(T, na.rm = TRUE))
+
+bias <- left_join(obs_monthly, era_monthly, by = "Month") %>%
+  mutate(T_bias = T_obs - T_era)
+
+# Apply correction
+era <- left_join(era, bias[, c("Month", "T_bias")], by = "Month")
+era$T <- era$T + era$T_bias
+```
+
+Repeat for each variable (`T`, `MB`, and precipitation if available).
+If no local observations exist, skip bias correction but note the uncertainty
+this introduces, particularly for soil moisture.
+
+---
+
+## Checking your data before running CASSIA
+
+Before passing any weather dataframe to `CASSIA_cpp()`, plot each column
+to check for outliers, implausible values, and gaps:
+
+```{r, fig.width=7, fig.height=9}
+# Using the built-in data as an example
+par(mfrow = c(3, 2))
+plot(weather_original$dates, weather_original$T,
+     type = "l", xlab = "", ylab = "Temperature (°C)", main = "Air temperature")
+plot(weather_original$dates, weather_original$TSA,
+     type = "l", xlab = "", ylab = "°C", main = "Soil temperature A")
+plot(weather_original$dates, weather_original$TSB,
+     type = "l", xlab = "", ylab = "°C", main = "Soil temperature B")
+plot(weather_original$dates, weather_original$MB,
+     type = "l", xlab = "", ylab = "m³ m⁻³", main = "Soil moisture B")
+plot(weather_original$dates, weather_original$Rain,
+     type = "l", xlab = "", ylab = "mm day⁻¹", main = "Precipitation")
+plot(weather_original$dates, weather_original$P,
+     type = "l", xlab = "", ylab = "g C m⁻² day⁻¹", main = "Photosynthesis (P)")
+par(mfrow = c(1, 1))
+```
+
+Also check for missing values — CASSIA will error on any `NA`:
+
+```{r}
+colSums(is.na(weather_original[, c("T", "TSA", "TSB", "MB", "Rain", "P")]))
+```
+
+Expected units and approximate ranges for a boreal site:
+
+| Column | Min | Max | Notes |
+|--------|-----|-----|-------|
+| `T` | −30 | 30 | °C; seasonal cycle clear |
+| `TSA` | −5 | 25 | °C; smaller amplitude than air temperature |
+| `TSB` | −2 | 20 | °C; more damped than TSA |
+| `MB` | 0 | 0.6 | m³ m⁻³; never negative |
+| `Rain` | 0 | 60 | mm day⁻¹; all values ≥ 0 |
+| `P` | 0 | 15 | g C m⁻² day⁻¹; near-zero in winter |
+
+Values persistently outside these ranges usually indicate a unit conversion
+error or a sensor fault in the raw data.
