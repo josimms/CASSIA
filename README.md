@@ -182,7 +182,7 @@ Access these on the R side as `out$Growth`, `out$Sugar`, `out$Preles`.
 ### Ongoing projects
 
 - **Lettosuo parameterisation** — Alexis Lehtonen
-- **Enzyme-driven sugar model + mycorrhizal coupling** (SYMPHONY / MYCOFON) — Joanna Simms
+- **Enzyme-driven sugar model + mycorrhizal coupling** — Joanna Simms
 
 ---
 
@@ -201,10 +201,6 @@ tree carbon balance. *Frontiers in Forests and Global Change* 2: 17.
 
 Ding, Y., et al. (2020). Temperature and moisture dependence of daily growth of
 Scots pine roots in Southern Finland. *Tree Physiology* 40(2): 272–283.
-
-Sperling, O., et al. (2019). Predicting bloom dates by temperature mediated
-kinetics of carbohydrate metabolism in deciduous trees. *Agricultural and Forest
-Meteorology* 276: 107643.
 
 ## Used in
 
