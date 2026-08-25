@@ -203,7 +203,7 @@ this introduces, particularly for soil moisture.
 Before passing any weather dataframe to `CASSIA_cpp()`, plot each column
 to check for outliers, implausible values, and gaps:
 
-```{r}
+```{r, fig.width=7, fig.height=9}
 # Using the built-in data as an example
 par(mfrow = c(3, 2))
 plot(weather_original$dates, weather_original$T,
