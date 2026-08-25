@@ -163,15 +163,16 @@
 #'
 #' @examples
 #' \dontrun{
-#' processed_data <- process_weather_data(photosynthesis_as_input = TRUE)
-#' out <- CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
-#' head(out$daily)
+#' weather_original$dates <- as.Date(
+#'   strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+#'            format = "%Y %j"))
+#' out <- CASSIA_cpp(weather = weather_original, site = "Hyde")
+#' head(out$Growth)
 #'
 #' # Modify a parameter
 #' p_new <- parameters_p
 #' p_new["root.lifetime", "Hyde"] <- 2
-#' out2 <- CASSIA_cpp(processed_data$weather_original, site = "Hyde",
-#'                    parameters = p_new)
+#' out2 <- CASSIA_cpp(weather_original, site = "Hyde", parameters = p_new)
 #' }
 #' @export
 CASSIA_cpp <- function(
