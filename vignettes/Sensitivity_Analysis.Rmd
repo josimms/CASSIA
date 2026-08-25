@@ -7,75 +7,80 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, echo = FALSE}
+```{r, message=FALSE}
 library(CASSIA)
-library(data.table)
-library(ggplot2)
 library(purrr)
 library(dplyr)
-library(tidyr)
-library(viridis)
-library(gridExtra)
+```
 
-# Get the weather data
-photosynthesis_as_input = TRUE
-processed_data = process_weather_data(photosynthesis_as_input)
+When fitting the model to a new site you need to understand how sensitive the
+outputs are to each parameter. The function below runs the model repeatedly
+over a range of values for one parameter at a time.
+
+## Setup weather data
+
+```{r}
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+           format = "%Y %j"))
 ```
 
 ## Sensitivity analysis function
 
-When fitting a model for a new site you need to do some sensitivity analysis. This is done parameter per parameter with the function below.
-
 ```{r}
-run_sensitivity <- function(param_name, range) {
+run_sensitivity <- function(param_name, range, weather) {
   map(range, function(i) {
     parameters_p_new <- parameters_p
     if (param_name %in% rownames(parameters_p_new)) {
-      parameters_p_new$HF_China[rownames(parameters_p_new) == param_name] <- i
-      result <- CASSIA_cpp(processed_data$weather_original, site = "Hyde",
-                           parameters = parameters_p_G_new)
+      parameters_p_new["Hyde"][rownames(parameters_p_new) == param_name, ] <- i
+      result <- CASSIA_cpp(weather, site = "Hyde",
+                           parameters = parameters_p_new)
       list(param_value = i, result = result)
     } else {
-    print("Parameter not in the row names, is it spelt correctly? Is there an underscore rather than a dot?")
+      message("Parameter '", param_name,
+              "' not found. Check spelling — underscore vs dot matters.")
+      NULL
     }
   })
 }
+```
 
-sensitivity_sDc <- run_sensitivity("sDc", seq(0, 10, length.out = 20))
-sensitivity_sD0_Trad <- run_sensitivity("sD0.Trad", seq(-7, 0, length.out = 20))
-sensitivity_dgs <- run_sensitivity("diameter_start_day", seq(50, 200, length.out = 20))
-sensitivity_uggla <- run_sensitivity("Uggla", seq(1, 10, length.out = 20))
+Run it for a few parameters:
+
+```{r, eval=FALSE}
+sensitivity_sDc      <- run_sensitivity("sDc",           seq(0, 10, length.out = 10), weather_original)
+sensitivity_sD0_Trad <- run_sensitivity("sD0.Trad",      seq(-7, 0,  length.out = 10), weather_original)
+sensitivity_dgs      <- run_sensitivity("diameter_start_day", seq(50, 200, length.out = 10), weather_original)
 ```
 
 ## Plotting the results
 
-To understand the results it is usually easier to plot them. An example of plotting is below!
+Extract a single output column across all runs to compare:
 
-``` {r}
-# Prepare plot data
+```{r, eval=FALSE}
+extract_yearly <- function(sensitivity_list, param_name, output_col) {
+  bind_rows(lapply(sensitivity_list, function(x) {
+    if (is.null(x)) return(NULL)
+    yearly <- x$result$Growth
+    data.frame(
+      param_name  = param_name,
+      param_value = x$param_value,
+      year        = unique(as.numeric(format(as.Date(yearly$date), "%Y"))),
+      value       = tapply(yearly[[output_col]],
+                           as.numeric(format(as.Date(yearly$date), "%Y")), sum)
+    )
+  }))
+}
+
 plot_data <- bind_rows(
-  prepare_plot_data(sensitivity_sDc, "sDc", seq(4, 6, length.out = 20)),
-  prepare_plot_data(sensitivity_sD0_Trad, "sD0.Trad", seq(-7, 0, length.out = 20)),
-  prepare_plot_data(sensitivity_dgs, "diameter_start_day", seq(50, 100, length.out = 20)),
-  prepare_plot_data(sensitivity_uggla, "Uggla", seq(1, 10, length.out = 20))
+  extract_yearly(sensitivity_sDc,      "sDc",                "wall.tot.growth"),
+  extract_yearly(sensitivity_sD0_Trad, "sD0.Trad",           "wall.tot.growth"),
+  extract_yearly(sensitivity_dgs,      "diameter_start_day", "wall.tot.growth")
 )
 
-par(mfrow = c(2, 2))
-for (param in unique(plot_data$param_name)) {
-  to_plot = plot_data[plot_data$param_name == param,]
-  cols = rainbow(20)
-  plot(NULL,
-       xlim = c(min(to_plot$days),
-                max(to_plot$days)),
-       ylim = c(min(to_plot$ring_width),
-                max(to_plot$ring_width)), main = param,
-       xlab = "Days",
-       ylab = "Ring Width")
-  count = 1
-  for (value in unique(to_plot$param_value)) {
-    lines = to_plot[to_plot$param_value == value,]
-    points(lines$days, lines$ring_width, col = cols[count], pch = "-")
-    count = count + 1
-  }
-}
+library(ggplot2)
+ggplot(plot_data, aes(x = param_value, y = value, colour = factor(year))) +
+  geom_line() +
+  facet_wrap(~param_name, scales = "free_x") +
+  labs(y = "Total wall growth (kg C)", colour = "Year")
 ```
