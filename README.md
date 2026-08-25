@@ -1,117 +1,220 @@
-## CASSIA Model
+# CASSIA — Intra-Annual Tree Growth Model
 
-NOTE: for the basic model use this. For development of the model use the Adding Externals branch. This should be used on linux (but other systems if requested). If used this version of the model is used contact Joanna (joanna.x.simms@helsinki.fi) for support.
+CASSIA simulates daily carbon allocation and organ-level growth for an individual
+Scots pine in boreal conditions. Seasonal growth of needles, shoots, diameter, and
+roots is modelled, with optional sugar dynamics, xylogenesis, and mycorrhizal
+interactions. Built-in parameters and weather data for Hyytiälä (SMEAR II) allow
+the model to run out of the box.
 
-### Ideas and structure
+> **This is the stable branch.** Experimental features (enzyme-driven sugar model,
+> p-hydro photosynthesis, mycorrhizal coupling) are developed on the
+> `adding_externals` branch. For support contact Joanna Simms:
+> joanna.x.simms@helsinki.fi
 
-CASSIA model is an intra-annual growth model for an individual tree in boreal conditions. Seasonal organ level cell growth is modelled, as well as sugar and water when the appropriate settings are chosen. Further deatails for the indervidual functions can be found with the functions themselves.
+---
 
-The main mathematical structure and equations are found in Schiestl‐Aalto 2015 where the science behind this model as well as the basic principle and structure are clearly explained. The variable links in the papers and the model are written in the vingette section of this package. This basic equations have been added to and reported in later publications listed below. This package also has newer developments not yet published in papers such as a sugar internal allocation model and xylogenesis.
+## For Users
 
-This model has been used in numerous papers (see Literature) - mainly considering Hyytiälä (SMEAR II Station, University of Helsinki). Most of the code has been written by Schiestl‐Aalto, with small additions by others. Note: future developments of the CASSIA model will seperate different versions of the model into different functions.
+### Install
 
-### Downloading Package for Use
-
-```{r}
-install.packages("devtools")  # source: https://github.com/hoxo-m/githubinstall
-library(devtools)
-install_github("josimms/CASSIA")
+```r
+install.packages("devtools")
+devtools::install_github("josimms/CASSIA")
 ```
 
-### Example R
+### Quick start
 
-**markdown files cover using the model, also sensitivity analysis and weather processing**
+The package includes built-in Hyytiälä weather data (2015–2017), so you can run
+the model immediately after installing:
 
-The CASSIA model (function: CASSIA_cpp) can be simply run with two arguments, as the package includes preprocessed parameters and weather data from Hyytiälä (via SPP model further information in vingettes). This will run the model with its most basic functions, although additional functions can be easily added by toggles as seen in the second example. Toggles are found in the documentation. 
-
-Some weather data is included in the package and formated by "process_weather_data". Other functions such as Hyde_Data_Creation and raw_to_daily_monthly_hyytiala, are used to get the weather data in the correct form. These can also be used as a reference for building your own weather data. NOTE: currently the weather processes are being rewritten for the new photosynthesis functionalities. 
-
-Wather data format also depends on the photsynthesis model used, the basic input of the model is that photosynthesis per tree is an input, but it can also be calculated in the CASSIA package if needed. The different photosynthesis input methods need different weather data formats. The weather data needed is detailed in the represctive photosynthesis models.
-1. PRELES
-2. p-hydro
-The R function will give an error if the weather data is wrongly named, within unexpected bounds or if it has NAs.
-
-```{r}
-# import the package
+```r
 library(CASSIA)
 
-# Get the weather data
-photosynthesis_as_input = TRUE
-processed_data = process_weather_data(photosynthesis_as_input)
+# Add a date column to the built-in weather data
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+           format = "%Y %j"))
 
-# Run the model
-CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
+# Run the model with default settings
+out <- CASSIA_cpp(weather = weather_original, site = "Hyde")
 ```
 
-To use a different model setting you can use a toggle. An example that doesn't require changing any of the rest of the inputs is LN.estim. This means that a GPP correction is not applied to the potenital needle growth claculations.
+The output is a list with three dataframes:
 
-```{r}
-CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", LN.estim = FALSE)
-```
-There should be an error or a warning if you have choosen a set of toggles that cannot coexit. Usually the model will assume which combination you ment and run with the corrected toggles, so these should be checked carefully.
+| Element | Contents |
+|---------|----------|
+| `out$Growth` | Daily carbon fluxes and organ growth (bud, wall, needle, root, height; respiration; storage; mycorrhiza) |
+| `out$Sugar` | Daily sugar and starch pool values per organ (populated when the sugar model is active) |
+| `out$Preles` | Daily photosynthesis outputs: GPP, ET, soil water |
 
-The package automatically has tables of parameters included. These are notated with a _p after the argument name as in the function. The easiest way to reformulate the model is thus take these as a base and change the parameters you would like to accordingly. All of the parameters are named in the code objects and then are explained further in the CASSIA instruction booklet and the original articles.
-
-In the data-raw folder you can also see how the _p objects are made if you would prefer this as a basis for your new parameters. An example of the first method is:
-
-```{r}
-ratios_new = ratios_p
-ratios_new[1,c("Hyde")] = 0.65
-CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde", ratios = ratios_new)
+```r
+head(out$Growth)
 ```
 
-If you are using the model in Hyytiälä or Väriö then the model is calibrated. If not the model is not yet calibrated for your site. This means that you need to calibrate the model! To do this look at the markdown files for advice.
+See `?CASSIA_cpp` for the full list of arguments and what they do.
+See `vignette("Running_The_Model")` for a guided walkthrough.
 
-**markdown files cover using the model again, also sensitivity analysis and weather processing**
+### Changing settings (toggles)
 
-Sidenote: If you have an error along the lines of 
+Model behaviour is controlled by logical toggle arguments. For example, to turn
+off the GPP correction on needle elongation:
 
-```{r}
-Error in if GENERIC ARGUMENT missing value where TRUE/FALSE needed
+```r
+out2 <- CASSIA_cpp(weather = weather_original, site = "Hyde", LN_estim = FALSE)
 ```
-It is likely that the values you have chosen for the parameters have caused one of the outputs to not make sense. Thus the bounds of the parameters should be considered very carefully. If the problem persists, then report then send joanna.x.simms@helsinki.fi an email.
 
-(Code working as of 19th Nov 2024 - contact Joanna if not working)
+The full list of toggles is in `?CASSIA_cpp`. If you choose a combination of
+toggles that cannot coexist, the model will warn you and adjust automatically —
+check those warnings carefully.
 
-### Ongoing Projects
+### Changing parameters
 
-#### Parameterisation for the CASSIA Lehtosuo site
-Alexis Lehtonen
+Default parameters are stored in built-in dataframes (`parameters_p`, `ratios_p`,
+`common_p`, `sperling_p`, `repo_p`). Copy and modify the one you need:
 
-#### Addition of a enzyme driven sugar model and mycorrhizal interactions. Thus linking with a soil model and mycorrhizal model. 
-Joanna Simms
+```r
+parameters_updated <- parameters_p
+parameters_updated["root.lifetime", "Hyde"] <- 2
+out3 <- CASSIA_cpp(weather = weather_original, site = "Hyde",
+                   parameters = parameters_updated)
+```
 
-![kuva](https://github.com/josimms/MycoModel/assets/102613042/1a465070-6995-4f73-bef7-4e7920bca289)
+All parameters are explained in the CASSIA instruction booklet
+(`man/CASSIA+_Instruction_And_Plans_Booklet.pdf`) and in the original articles
+listed below.
 
-The full details should be added when the code is finished, but indervidual functions are included in the package with relevent help files.
+### Using your own weather data
 
+The weather dataframe must have these columns (in these units):
+
+| Column | Description | Units |
+|--------|-------------|-------|
+| `X` | Day of year | integer |
+| `T` | Air temperature | °C |
+| `P` | Photosynthesis per tree (when `photosynthesis_as_input = TRUE`) | g C m⁻² day⁻¹ |
+| `TSA` | Soil temperature, A horizon | °C |
+| `TSB` | Soil temperature, B horizon | °C |
+| `MB` | Soil moisture, B horizon | m³ m⁻³ |
+| `Rain` | Precipitation | mm day⁻¹ |
+| `dates` | Calendar date | `Date` class |
+
+The scripts `R/Hyytiala_Weather_Fast.R` and `R/ERAS_weather_processing.R` show
+how raw station and ERA5 data are formatted. The model will give an informative
+error if column names are wrong or NAs are present.
+
+### Calibrating for a new site
+
+If you are not using Hyytiälä (`"Hyde"`) or Lettosuo, the model is not yet
+calibrated for your site. See `vignette("Sensitivity_Analysis")` for guidance on
+sensitivity analysis and parameter fitting.
+
+### Vignettes
+
+| Vignette | Topic |
+|----------|-------|
+| `vignette("Running_The_Model")` | Full walkthrough: install, run, interpret output, change parameters |
+| `vignette("Sensitivity_Analysis")` | How to test parameter sensitivity and calibrate for a new site |
+
+---
+
+## For Developers and Contributors
+
+### Package layout
+
+```
+CASSIA/
+├── R/           # Exported R functions + roxygen2 documentation blocks
+├── src/         # C++ model core, compiled via Rcpp
+├── data/        # Built-in datasets (weather_original, parameters_p, …)
+├── data-raw/    # Scripts that built the data/ objects
+├── man/         # Auto-generated help files — do not edit by hand
+└── vignettes/   # User-facing tutorials (rendered on CRAN/GitHub)
+```
+
+The C++ model (`src/`) is compiled by Rcpp on install. The R wrapper
+`R/CASSIA_cpp.R` handles argument validation and calls the compiled function.
+
+### Regenerating documentation
+
+Documentation is written as roxygen2 `#'` blocks directly above each function in
+the `R/` files. **Never edit `man/*.Rd` files by hand** — they are auto-generated.
+After editing any `#'` block, regenerate with:
+
+```r
+devtools::document()
+```
+
+### Adding a new site
+
+1. Add a column to `parameters_p`, `ratios_p`, and `common_p` with the site name.
+2. Rebuild the data objects:
+   ```r
+   usethis::use_data(parameters_p, overwrite = TRUE)
+   usethis::use_data(ratios_p, overwrite = TRUE)
+   usethis::use_data(common_p, overwrite = TRUE)
+   ```
+3. Pass the new site name to `CASSIA_cpp(..., site = "YourSite")`.
+
+The `data-raw/` scripts show how the built-in parameter tables were constructed —
+use them as templates.
+
+### Adding a new toggle
+
+1. Add the argument to `CASSIA_cpp()` in `R/CASSIA_cpp.R` with a default of `FALSE`.
+2. Add a `#' @param your_toggle Logical. ...` roxygen2 line to the documentation block.
+3. Pass the argument through to the C++ function in `src/` and implement the behaviour.
+4. Run `devtools::document()` to update `man/CASSIA_cpp.Rd`.
+
+### C++/R interface
+
+The model core is a single Rcpp function defined in `src/`. It returns a named
+list:
+
+```cpp
+return Rcpp::List::create(Rcpp::_["Growth"] = df,
+                           Rcpp::_["Sugar"]  = df2,
+                           Rcpp::_["Preles"] = df3);
+```
+
+Access these on the R side as `out$Growth`, `out$Sugar`, `out$Preles`.
+
+### Ongoing projects
+
+- **Lettosuo parameterisation** — Alexis Lehtonen
+- **Enzyme-driven sugar model + mycorrhizal coupling** (SYMPHONY / MYCOFON) — Joanna Simms
+
+---
 
 ## Literature
-Ding, Yiyang, et al. "Temperature and moisture dependence of daily growth of Scots pine (Pinus sylvestris L.) roots in Southern Finland." Tree Physiology 40.2 (2020): 272-283.
 
-Schiestl-Aalto, Pauliina, et al. "Analysis of the NSC storage dynamics in tree organs reveals the allocation to belowground symbionts in the framework of whole tree carbon balance." Frontiers in Forests and Global Change 2 (2019): 17.
+Schiestl-Aalto, P., et al. (2015). CASSIA — a dynamic model for predicting
+intra-annual sink demand and interannual growth variation in Scots pine.
+*New Phytologist* 206(2): 647–659.
 
-Schiestl-Aalto, Pauliina, and Annikki Mäkelä. "Temperature dependence of needle and shoot elongation before bud break in Scots pine." Tree Physiology 37.3 (2017): 316-325.
+Schiestl-Aalto, P., and Mäkelä, A. (2017). Temperature dependence of needle and
+shoot elongation before bud break in Scots pine. *Tree Physiology* 37(3): 316–325.
 
-Schiestl‐Aalto, Pauliina, et al. "CASSIA–a dynamic model for predicting intra‐annual sink demand and interannual growth variation in S cots pine." New Phytologist 206.2 (2015): 647-659.
+Schiestl-Aalto, P., et al. (2019). Analysis of the NSC storage dynamics in tree
+organs reveals the allocation to belowground symbionts in the framework of whole
+tree carbon balance. *Frontiers in Forests and Global Change* 2: 17.
 
-Schiestl-Aalto, Pauliina, et al. "Physiological growth model CASSIA predicts carbon allocation and wood formation of Scots pine." CyberPlantS: a European initiative towards collaborative plant modeling (2013): 159.
+Ding, Y., et al. (2020). Temperature and moisture dependence of daily growth of
+Scots pine roots in Southern Finland. *Tree Physiology* 40(2): 272–283.
+
+Sperling, O., et al. (2019). Predicting bloom dates by temperature mediated
+kinetics of carbohydrate metabolism in deciduous trees. *Agricultural and Forest
+Meteorology* 276: 107643.
 
 ## Used in
-Ding, Yiyang, et al. "Distinct patterns of below-and aboveground growth phenology and litter carbon inputs along a boreal site type gradient." Forest Ecology and Management 489 (2021): 119081.
 
-Hellén, Heidi, et al. "Sesquiterpenes and oxygenated sesquiterpenes dominate the VOC (C 5–C 20) emissions of downy birches." Atmospheric Chemistry and Physics 21.10 (2021): 8045-8066.
+Ding, Y., et al. (2021). Distinct patterns of below- and aboveground growth
+phenology and litter carbon inputs along a boreal site type gradient.
+*Forest Ecology and Management* 489: 119081.
 
-Taipale, Ditte, et al. "The importance of accounting for enhanced emissions of monoterpenes from new Scots pine foliage in models-A Finnish case study." Atmospheric Environment: X 8 (2020): 100097.
+Tian, X., et al. (2021). Disaggregating the effects of nitrogen addition on gross
+primary production in a boreal Scots pine forest. *Agricultural and Forest
+Meteorology* 301: 108337.
 
-Taipale, Ditte, et al. "Emissions of monoterpenes from new Scots pine foliage: dependency on season, stand age and location and importance for models." Biogeosciences Discussions (2020): 1-42.
-
-Tian, Xianglin, et al. "Disaggregating the effects of nitrogen addition on gross primary production in a boreal Scots pine forest." Agricultural and Forest Meteorology 301 (2021): 108337.
-
-## Related Literature
-Meyer, Astrid, et al. "Simulating mycorrhiza contribution to forest C-and N cycling-the MYCOFON model." Plant and soil 327 (2010): 493-517.
-
-Perveen, Nazia, et al. "Priming effect and microbial diversity in ecosystem functioning and response to global change: a modeling approach using the SYMPHONY model." Global change biology 20.4 (2014): 1174-1190.
-
-Sperling, Or, et al. "Predicting bloom dates by temperature mediated kinetics of carbohydrate metabolism in deciduous trees." Agricultural and Forest Meteorology 276 (2019): 107643.
-
+Taipale, D., et al. (2020). The importance of accounting for enhanced emissions of
+monoterpenes from new Scots pine foliage in models — a Finnish case study.
+*Atmospheric Environment: X* 8: 100097.
