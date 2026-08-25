@@ -53,6 +53,131 @@ downloading_data <- function(raw.directory = "/home/josimms/Documents/CASSIA_Cal
   # Doesn't return as it is downloading the files
 }
 
+###
+# Downloading RAD data
+###
+
+downloading_rad_data <- function(
+    raw.directory = "/home/josimms/Documents/Austria/Light Data/",
+    year_start = 1995,
+    year_end = 2026
+) {
+  http.origin <- "https://smear-backend-avaa-smear-prod.2.rahtiapp.fi/search/timeseries/csv?tablevariable=HYY_RAD."
+
+  variables <- c("PAR", "Glob67", "maaPAR")
+
+  # Build year pairs for chunked downloads (2-year chunks as in original)
+  year1 <- seq(year_start, year_end, by = 2)
+  year2 <- seq(year_start + 1, year_end, by = 2)
+  if (length(year2) != length(year1)) year2 <- c(year2, year_end)
+
+  for (variable in variables) {
+    urls <- paste0(
+      http.origin, variable,
+      "&from=", year1, "-01-01T00%3A00%3A00.000",
+      "&to=",   year2, "-12-31T23%3A59%3A59.999",
+      "&quality=ANY&aggregation=NONE&interval=1"
+    )
+    dest_files <- paste0(raw.directory, "HYY_RAD.", variable, "_", year1, "to", year2, ".csv")
+
+    mapply(download.file, urls, dest_files)
+  }
+}
+
+###
+# Read and plot RAD data: above-canopy PAR vs understory maaPAR (0.6 m)
+###
+
+plot_rad_comparison <- function(
+    raw.directory = "/home/josimms/Documents/Austria/Light Data/",
+    year_start    = NULL,
+    year_end      = NULL
+) {
+  read_rad_variable <- function(dir, variable) {
+    files <- list.files(dir, pattern = paste0("HYY_RAD\\.", variable, "_"), full.names = TRUE)
+    if (length(files) == 0) stop("No files found for variable: ", variable)
+
+    dt <- data.table::rbindlist(lapply(files, function(f) {
+      d <- data.table::fread(f)
+      data.table::setnames(d, gsub("HYY_RAD\\.", "", names(d)))
+      d
+    }), fill = TRUE)
+
+    # Build a POSIXct timestamp for merging and plotting
+    dt[, datetime := as.POSIXct(
+      paste(Year, Month, Day, Hour, Minute, sep = "-"),
+      format = "%Y-%m-%d-%H-%M", tz = "UTC"
+    )]
+    dt
+  }
+
+  par_dt    <- read_rad_variable(raw.directory, "PAR")
+  maapar_dt <- read_rad_variable(raw.directory, "maaPAR")
+
+  # Merge on the five time columns so we keep only matched rows
+  merged <- merge(
+    par_dt[,    .(Year, Month, Day, Hour, Minute, datetime, PAR)],
+    maapar_dt[, .(Year, Month, Day, Hour, Minute, maaPAR)],
+    by = c("Year", "Month", "Day", "Hour", "Minute")
+  )
+
+  # Optional year filter
+  if (!is.null(year_start)) merged <- merged[Year >= year_start]
+  if (!is.null(year_end))   merged <- merged[Year <= year_end]
+
+  # Drop rows where both sensors are NA or negative (sensor off / night)
+  merged <- merged[!is.na(PAR) & !is.na(maaPAR) & PAR >= 0 & maaPAR >= 0]
+
+  # Daily means for cleaner time-series panels
+  daily <- merged[, .(PAR    = mean(PAR,    na.rm = TRUE),
+                      maaPAR = mean(maaPAR, na.rm = TRUE)),
+                  by = .(Year, Month, Day)]
+  daily[, date := as.Date(paste(Year, Month, Day, sep = "-"))]
+  daily[, transmission := maaPAR / PAR]  # fraction of above-canopy light reaching 0.6 m
+  data.table::setorder(daily, date)
+
+  # --- Plots ---
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
+
+  par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+  # 1. Time series – daily mean PAR above canopy
+  plot(daily$date, daily$PAR,
+       type = "l", col = "darkorange",
+       xlab = "Date", ylab = expression(PAR ~ (mu*mol ~ m^{-2} ~ s^{-1})),
+       main = "Above-canopy PAR (daily mean)")
+
+  # 2. Time series – daily mean maaPAR at 0.6 m
+  plot(daily$date, daily$maaPAR,
+       type = "l", col = "steelblue",
+       xlab = "Date", ylab = expression(maaPAR ~ (mu*mol ~ m^{-2} ~ s^{-1})),
+       main = "Understory maaPAR at 0.6 m (daily mean)")
+
+  # 3. Scatter: maaPAR vs PAR (all matched half-hourly / hourly points)
+  plot(merged$PAR, merged$maaPAR,
+       pch = 16, cex = 0.3, col = adjustcolor("forestgreen", alpha.f = 0.15),
+       xlab = expression(PAR ~ (mu*mol ~ m^{-2} ~ s^{-1})),
+       ylab = expression(maaPAR ~ (mu*mol ~ m^{-2} ~ s^{-1})),
+       main = "maaPAR vs PAR (all observations)")
+  abline(lm(maaPAR ~ PAR, data = merged), col = "red", lwd = 2)
+
+  # 4. Daily canopy light-transmission fraction (maaPAR / PAR)
+  # Exclude near-zero PAR to avoid division noise at dawn/dusk
+  daily_filt <- daily[PAR > 10]
+  plot(daily_filt$date, daily_filt$transmission,
+       type = "l", col = "purple",
+       ylim = c(0, 1),
+       xlab = "Date", ylab = "maaPAR / PAR  (fraction)",
+       main = "Canopy light transmission to 0.6 m")
+  abline(h = median(daily_filt$transmission, na.rm = TRUE),
+         col = "grey40", lty = 2)
+  legend("topright", legend = paste0("median = ",
+         round(median(daily_filt$transmission, na.rm = TRUE), 3)),
+         bty = "n", text.col = "grey40")
+
+  invisible(list(merged = merged, daily = daily))
+}
 
 ###
 # Memory efficient way of getting the dataframe with mean daily values - with max for a few variables
