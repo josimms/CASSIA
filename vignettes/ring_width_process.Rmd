@@ -1,6 +1,10 @@
 ---
-title: "ring_width_process"
-output: html_document
+title: "Ring Width Process"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Ring Width Process}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ## Parameters

@@ -1,0 +1,12 @@
+---
+title: "Weather Data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Weather Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+library(CASSIA)
+```

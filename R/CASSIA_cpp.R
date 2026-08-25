@@ -1,3 +1,139 @@
+#' Run the CASSIA intra-annual tree growth model
+#'
+#' Simulates daily carbon allocation, organ growth, and optionally sugar
+#' dynamics and mycorrhizal interactions for an individual Scots pine in boreal
+#' conditions. Built-in parameter sets and weather data are included for
+#' Hyytiälä (\code{"Hyde"}) and Lettosuo.
+#'
+#' @param weather Daily dataframe. Required columns depend on the photosynthesis
+#'   mode. At minimum:
+#'   \describe{
+#'     \item{dates}{Date in YYYY-MM-DD format}
+#'     \item{T}{Air temperature (°C)}
+#'     \item{P}{Photosynthesis per tree (g C m-2 day-1); required when
+#'       \code{photosynthesis_as_input = TRUE}}
+#'     \item{TSA}{Soil temperature, A horizon (°C)}
+#'     \item{TSB}{Soil temperature, B horizon (°C)}
+#'     \item{MB}{Soil moisture, B horizon (m3 m-3)}
+#'     \item{Rain}{Precipitation (mm day-1)}
+#'   }
+#' @param site Site name for built-in parameterisations: \code{"Hyde"}
+#'   (Hyytiälä), \code{"Lettosuo"}, or \code{"HF_China"}. Add new sites by
+#'   extending the \code{parameters_p} dataframe.
+#' @param GPP_ref_in Reference GPP table used when \code{LN_estim = TRUE}.
+#'   Defaults to the built-in \code{GPP_ref}.
+#' @param ratios Dataframe of growth ratio parameters. Defaults to \code{ratios_p}.
+#' @param parameters Dataframe of site-specific parameters. Defaults to \code{parameters_p}.
+#' @param common Dataframe of parameters shared across sites. Defaults to \code{common_p}.
+#' @param sperling Dataframe of sugar model parameters. Defaults to \code{sperling_p}.
+#' @param repo Dataframe of Repola allometric parameters. Defaults to \code{repo_p}.
+#' @param storage_reset Logical. If \code{TRUE} (default), sugar and starch stores
+#'   reset to initial values at the start of each year. If \code{FALSE}, carry
+#'   over from the previous simulated year.
+#' @param storage_grows Logical. If \code{TRUE}, potential storage space grows
+#'   with tree height and diameter. Default \code{FALSE}.
+#' @param LN_estim Logical. If \code{TRUE} (default), needle elongation (LN) is
+#'   scaled by the previous year's July-August GPP. If \code{FALSE}, a fixed
+#'   coefficient is used.
+#' @param mN_varies Logical. If \code{TRUE} (default), needle mass in
+#'   maintenance respiration uses the Repola model. If \code{FALSE}, constant.
+#' @param LD_estim Logical. If \code{TRUE} (default), LD is modified by GPP
+#'   over the preceding March-August period.
+#' @param sD_estim_T_count Logical. If \code{TRUE}, sD is the cumulative count
+#'   of days with positive growth. If \code{FALSE} (default), sD is derived
+#'   from the temperature-driven growth integral.
+#' @param LH_estim Logical. If \code{TRUE} (default), LH is modified by GPP.
+#' @param soil_moisture_effect_on_shoot Logical. Enable soil moisture limitation
+#'   on shoot growth. Default \code{FALSE}.
+#' @param soil_moisture_effect_on_needles Logical. Enable soil moisture
+#'   limitation on needle growth. Default \code{FALSE}.
+#' @param soil_moisture_effect_on_diameter Logical. Enable soil moisture
+#'   limitation on diameter growth. Default \code{FALSE}.
+#' @param trees_grow Logical. If \code{TRUE}, D0 and h0 are updated year-to-year
+#'   from modelled growth. Automatically \code{TRUE} when
+#'   \code{xylogenesis = TRUE}. Default \code{FALSE}.
+#' @param growth_decreases Logical. If \code{TRUE}, height and diameter growth
+#'   coefficients decline linearly from 1997 to 2020. Default \code{FALSE}.
+#' @param needle_mass_grows Logical. If \code{TRUE}, needle mass is dynamic
+#'   (updated annually via Repola). If \code{FALSE} (default), needle mass is
+#'   constant after the first iteration.
+#' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
+#'   phloem sugar first drops below a threshold (requires
+#'   \code{sperling_model = TRUE}). Default \code{FALSE}.
+#' @param mycorrhiza Logical. If \code{TRUE} (default), carbon allocation to
+#'   mycorrhiza is included. Automatically \code{FALSE} when
+#'   \code{sperling_model = TRUE}.
+#' @param root_as_Ding Logical. If \code{TRUE} (default), root growth follows
+#'   Ding et al. (2020) with fibrous/non-fibrous stages.
+#' @param sperling_model Logical. If \code{TRUE}, uses the enzyme-driven sugar
+#'   model (Sperling et al. 2019). If \code{FALSE} (default), uses the
+#'   Schiestl-Aalto (2019) equilibrium approach.
+#' @param myco_model Logical. Enable experimental mycorrhizal model.
+#'   Default \code{FALSE}.
+#' @param xylogenesis Logical. If \code{TRUE}, xylogenesis controls cell growth
+#'   with early/late-wood stages. Default \code{FALSE}.
+#' @param PRELES_GPP Logical. If \code{TRUE}, GPP is calculated via PRELES.
+#'   Default \code{FALSE}.
+#' @param photosynthesis_as_input Logical. If \code{TRUE} (default), the
+#'   \code{P} column in \code{weather} is used directly as GPP.
+#' @param photoparameters Integer (1-4). PRELES parameter set selector.
+#'   Default \code{3}.
+#' @param temp_rise Logical. If \code{TRUE} and \code{Rm_acclimation = TRUE},
+#'   acclimation factor is set to 0.85. Default \code{FALSE}.
+#' @param drought Logical. Currently unused. Default \code{FALSE}.
+#' @param Rm_acclimation Logical. Apply maintenance respiration acclimation
+#'   when \code{temp_rise = TRUE}. Default \code{TRUE}.
+#' @param CASSIA_graphs Logical. If \code{TRUE} (default), produce diagnostic
+#'   plots during the run.
+#' @param s.D0 Integer. Day-of-year to start the temperature sum for diameter
+#'   growth (default 79, approx. March 20; valid for Finland).
+#' @param s.H0 Integer. Day-of-year to start shoot growth. Default \code{1}.
+#' @param needle_mass_in Numeric. Initial needle mass (kg C). Default
+#'   \code{4.467638} (calibrated for Hyytiälä).
+#' @param Throughfall Numeric. Throughfall fraction. Default \code{1}.
+#' @param trenching_year Integer or \code{NA}. Year to apply trenching
+#'   (mycorrhiza cut-off). Default \code{NA}.
+#' @param soil Logical. If \code{TRUE}, runs the soil-coupled variant
+#'   \code{CASSIA_soil}. Default \code{FALSE}.
+#' @param ecoevolutionary Logical. If \code{TRUE}, runs the eco-evolutionary
+#'   variant \code{CASSIA_eeo}. Default \code{FALSE}.
+#' @param tests Logical. Enable internal diagnostic tests. Default \code{FALSE}.
+#'
+#' @return A named list with two elements:
+#'   \describe{
+#'     \item{daily}{Dataframe of daily outputs: growth fluxes, sugar and
+#'       starch pools, respiration, photosynthesis. See
+#'       \code{vignette("Running_The_Model")} for column descriptions.}
+#'     \item{yearly}{Dataframe of annually cumulated carbon pools and fluxes.}
+#'   }
+#'
+#' @references
+#'   Schiestl-Aalto et al. (2015) CASSIA - a dynamic model for predicting
+#'   intra-annual sink demand. \emph{New Phytologist} 206(2):647-659.
+#'
+#'   Schiestl-Aalto et al. (2019) Analysis of NSC storage dynamics in tree
+#'   organs. \emph{Frontiers in Forests and Global Change} 2:17.
+#'
+#'   Ding et al. (2020) Temperature and moisture dependence of daily growth of
+#'   Scots pine roots. \emph{Tree Physiology} 40(2):272-283.
+#'
+#'   Sperling et al. (2019) Predicting bloom dates by temperature mediated
+#'   kinetics of carbohydrate metabolism. \emph{Agricultural and Forest
+#'   Meteorology} 276:107643.
+#'
+#' @examples
+#' \dontrun{
+#' processed_data <- process_weather_data(photosynthesis_as_input = TRUE)
+#' out <- CASSIA_cpp(weather = processed_data$weather_original, site = "Hyde")
+#' head(out$daily)
+#'
+#' # Modify a parameter
+#' p_new <- parameters_p
+#' p_new["root.lifetime", "Hyde"] <- 2
+#' out2 <- CASSIA_cpp(processed_data$weather_original, site = "Hyde",
+#'                    parameters = p_new)
+#' }
+#' @export
 CASSIA_cpp <- function(
     #####
     ## Weather Inputs - input in a dataframe with date, temperature, Photosynthesis, soil temperature a and b horizon, soil moisture and precipitation

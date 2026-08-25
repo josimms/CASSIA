@@ -1,4 +1,11 @@
-# Sensitivity Analysis
+---
+title: "Sensitivity Analysis"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Sensitivity Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
 ```{r, echo = FALSE}
 library(CASSIA)
@@ -60,7 +67,7 @@ for (param in unique(plot_data$param_name)) {
   plot(NULL,
        xlim = c(min(to_plot$days),
                 max(to_plot$days)),
-       ylim = c(min(to_plot$ring_width), 
+       ylim = c(min(to_plot$ring_width),
                 max(to_plot$ring_width)), main = param,
        xlab = "Days",
        ylab = "Ring Width")
@@ -72,5 +79,3 @@ for (param in unique(plot_data$param_name)) {
   }
 }
 ```
-
-

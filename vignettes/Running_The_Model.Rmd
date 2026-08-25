@@ -1,6 +1,13 @@
-# Running the Model
+---
+title: "Running the CASSIA Model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Running the CASSIA Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-## Inport libraries
+## Import libraries
 
 First, download the package from github.
 
@@ -34,15 +41,15 @@ The original model or basic settings mainly has results in the Growth database.
 head(out$Growth)
 ```
 
-The other settings of the model an be accessed by the function argument switches. These settings can be found in the help function for the CASSIA model. 
+The other settings of the model an be accessed by the function argument switches. These settings can be found in the help function for the CASSIA model.
 
 The following example means that the trees growth, so that the model uses the previous year's growth as the initial conditions for the next year.
 
 ```{r}
 out2 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", LN_estim = TRUE)
 
-# To ccheck the possible options
-?CASSIA
+# To check the possible options
+?CASSIA_cpp
 ```
 
 To change the parameters they must be in a table form as the preloaded ratios_p, parameters_p, common_p. sperling_p and repo_p. The easiest way of doing this could be to redefine the parameters from the default objects.
@@ -51,14 +58,14 @@ The meaning of the parameters can be found in the CASSIA instruction booklet.
 
 ```{r}
 parameters_updated <- parameters_p
-parameters_updated[c("root.lifetime	"),c("Hyde")] <- 2
+parameters_updated[c("root.lifetime"), c("Hyde")] <- 2
 
-out3 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", parameters = parameters_updated) # TODO: make this work
+out3 = CASSIA_cpp(processed_data$weather_original, site = "Hyde", parameters = parameters_updated)
 ```
 
 Finally, the weather data should be considered. Due to the linking with different photosynthesis models the weather needed in the model currently takes two forms. One for the basic model which includes the photosynthesis values as an input and the other the environmental variables needed for the PRELES model.
 
-Due to the current definition of the model the weather data should be in the same format as the default Hyyyiälä data even if the PRELES model is not used to calculate the photosynthesis input. However the values in these columns can just be NA values.
+Due to the current definition of the model the weather data should be in the same format as the default Hyytiälä data even if the PRELES model is not used to calculate the photosynthesis input. However the values in these columns can just be NA values.
 
 ```{r}
 head(processed_data$weather_original)
