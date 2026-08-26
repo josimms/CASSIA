@@ -2,7 +2,7 @@
 title: "Preparing Weather Data for CASSIA"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Weather Data}
+  %\VignetteIndexEntry{Preparing Weather Data for CASSIA}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
