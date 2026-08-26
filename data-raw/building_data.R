@@ -188,7 +188,6 @@ parameters_p[72,] <- c(79, NA, NA) # diameter_start_day
 
 parameters_p[73,] <- c(4.5, NA, NA) # If we assume that the growth is around linear before 2001 and the value 15 years before 1998 is taken
 
-
 row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R", "sR0", "sRc", "growth.myco", "root.lifetime",
 "HH0", "sH0", "LH", "LH0", "sHc", "sN0", "LN", "LN0", "sNc", "HN0", "sD0.Trad", "LD", "LD0", "sDc", "sDc.T.count",
 "tau.Ee", "tau.El", "tau.We", "tau.Wl", "tau.GPP", "Uggla", "sB0", "sBc", "LB",

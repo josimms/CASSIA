@@ -74,7 +74,7 @@ CASSIA_cpp(
 \item{weather}{Daily dataframe. Required columns depend on the photosynthesis
 mode. At minimum:
 \describe{
-  \item{date}{Date in YYYY-MM-DD format}
+  \item{dates}{Date in YYYY-MM-DD format}
   \item{T}{Air temperature (°C)}
   \item{P}{Photosynthesis per tree (g C m-2 day-1); required when
     \code{photosynthesis_as_input = TRUE}}

@@ -14,6 +14,21 @@ weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool 
   weatherVariables.Soil_Moisture = Rcpp::as<std::vector<double>>(weather["MB"]);
   weatherVariables.Precip = Rcpp::as<std::vector<double>>(weather["Rain"]);
 
+  int n = weatherVariables.TAir.size();
+
+  // Initialise all optional vectors to zero so they are safe to index regardless
+  // of which photosynthesis mode is active (PAR is read in sugar_model even when
+  // photosynthesis_as_input=TRUE and preles=FALSE).
+  weatherVariables.Photosynthesis_IN.assign(n, 0.0);
+  weatherVariables.PAR.assign(n, 0.0);
+  weatherVariables.VPD.assign(n, 0.0);
+  weatherVariables.CO2.assign(n, 400.0);
+  weatherVariables.fAPAR.assign(n, 0.7);
+  weatherVariables.PAR_max.assign(n, 0.0);
+  weatherVariables.Nitrogen.assign(n, 0.0);
+  weatherVariables.PA.assign(n, 101325.0);
+  weatherVariables.SWP.assign(n, 0.0);
+
   if (spp) {
     weatherVariables.Photosynthesis_IN = Rcpp::as<std::vector<double>>(weather["P"]);
   }
