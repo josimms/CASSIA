@@ -77,16 +77,32 @@ The meaning of each parameter is explained in the CASSIA instruction booklet
 
 ## Weather data format
 
-The weather dataframe must have these columns (column `X` is the day-of-year):
+The required columns depend on which photosynthesis sub-model is active.
+Columns not needed by the active sub-model may be `NA`.
+
+**Always required:**
+
+| Column | Description | Units |
+|--------|-------------|-------|
+| `dates` | Date (class `Date`) | YYYY-MM-DD |
+| `T` | Air temperature | °C |
+| `TSA` | Soil temperature, A horizon | °C |
+| `TSB` | Soil temperature, B horizon | °C |
+| `MB` | Soil moisture, B horizon | m³ m⁻³ |
+| `Rain` | Precipitation | mm day⁻¹ |
+
+**Additional columns by sub-model:**
+
+| Sub-model toggle | Extra columns needed | Units |
+|-----------------|----------------------|-------|
+| `photosynthesis_as_input = TRUE` *(default)* | `P` — GPP per tree | g C m⁻² day⁻¹ |
+| `PRELES_GPP = TRUE` | `PAR`, `VPD`, `CO2`, `fAPAR` | mol m⁻² day⁻¹, kPa, ppm, 0–1 |
+
+The built-in `weather_original` includes all columns used by any sub-model:
 
 ```{r}
 names(weather_original)
 ```
 
-If you are using your own weather data, match these column names exactly. The
-units are: T (°C), P (g C m-2 day-1), TSA/TSB (°C), MB (m3 m-3), Rain
-(mm day-1). The `dates` column must be class `Date`.
-
-The model will give an informative error if the weather data is wrongly named
-or contains NAs. See `vignette("Sensitivity_Analysis")` for guidance on fitting
-the model to a new site.
+See `?CASSIA_cpp` for the full parameter list and `vignette("Weather")` for
+guidance on preparing your own weather data.
