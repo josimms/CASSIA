@@ -84,37 +84,36 @@ sensitivity_dgs      <- run_sensitivity("diameter_start_day", seq(50, 200, lengt
 
 ## Plotting the results
 
-Extract annual totals of a chosen output column across all runs. Here we use
-`wall.tot.growth` (total carbon allocated to wall formation, kg C yr⁻¹), which
-is closely related to ring width. You could substitute any column from
+Extract the annual peak ring width across all runs. Here we use
+`ring_width` (cumulative ring width within the year, mm), taking the maximum
+per year as the final annual value. You could substitute any column from
 `out$Growth`.
 
 ```{r, eval=FALSE}
-extract_yearly <- function(sensitivity_list, param_name, output_col) {
+extract_yearly <- function(sensitivity_list, param_name, output_col, fun = max) {
   bind_rows(lapply(sensitivity_list, function(x) {
     if (is.null(x)) return(NULL)
     daily <- x$result$Growth
     data.frame(
       param_name  = param_name,
       param_value = x$param_value,
-      year        = unique(as.numeric(format(as.Date(daily$date), "%Y"))),
-      value       = tapply(daily[[output_col]],
-                           as.numeric(format(as.Date(daily$date), "%Y")), sum)
+      year        = unique(daily$year),
+      value       = tapply(daily[[output_col]], daily$year, fun)
     )
   }))
 }
 
 plot_data <- bind_rows(
-  extract_yearly(sensitivity_sDc,      "sDc",                "wall.tot.growth"),
-  extract_yearly(sensitivity_sD0_Trad, "sD0.Trad",           "wall.tot.growth"),
-  extract_yearly(sensitivity_dgs,      "diameter_start_day", "wall.tot.growth")
+  extract_yearly(sensitivity_sDc,      "sDc",                "ring_width"),
+  extract_yearly(sensitivity_sD0_Trad, "sD0.Trad",           "ring_width"),
+  extract_yearly(sensitivity_dgs,      "diameter_start_day", "ring_width")
 )
 
 library(ggplot2)
 ggplot(plot_data, aes(x = param_value, y = value, colour = factor(year))) +
   geom_line() +
   facet_wrap(~param_name, scales = "free_x") +
-  labs(y = "Total wall growth (kg C)", colour = "Year")
+  labs(y = "Annual ring width (mm)", colour = "Year")
 ```
 
 ## Interpreting the results
@@ -137,8 +136,8 @@ outputs against observations. Useful observation types for the diameter growth
 parameters above are:
 
 - **Dendrometer data**: daily or weekly diameter measurements — compare directly with cumulative growth from `out$Growth`
-- **Ring width measurements**: annual ring widths — compare with annual totals of `wall.tot.growth`
-- **Onset of cambial activity**: phenological observations of when growth begins — compare with the day when `wall.tot.growth` first exceeds zero
+- **Ring width measurements**: annual ring widths — compare with annual peak `ring_width`
+- **Onset of cambial activity**: phenological observations of when growth begins — compare with the day when `ring_width` first exceeds zero
 
 See `vignette("ring_width_process")` for a step-by-step walkthrough of how
 CASSIA models ring width formation internally.
