@@ -158,7 +158,7 @@ parameters above are:
 
 - **Dendrometer data**: daily or weekly diameter measurements — compare directly with cumulative growth from `out$Growth`
 - **Ring width measurements**: annual ring widths — compare with annual peak `ring_width`
-- **Onset of cambial activity**: phenological observations of when growth begins — compare with the day when `wall.tot.growth` first exceeds zero
+- **Onset of cambial activity**: phenological observations of when growth begins — compare with the day when `ring_width` first exceeds zero
 
 See `vignette("ring_width_process")` for a step-by-step walkthrough of how
 CASSIA models ring width formation internally.
