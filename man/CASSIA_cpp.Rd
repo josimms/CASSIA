@@ -71,17 +71,30 @@ CASSIA_cpp(
 )
 }
 \arguments{
-\item{weather}{Daily dataframe. Required columns depend on the photosynthesis
-mode. At minimum:
+\item{weather}{Daily dataframe. Which columns are required depends on the
+photosynthesis sub-model selected; columns not needed by the active
+sub-model may be \code{NA} or absent. Always required:
 \describe{
-  \item{dates}{Date in YYYY-MM-DD format}
+  \item{dates}{Date (class \code{Date}, YYYY-MM-DD)}
   \item{T}{Air temperature (°C)}
-  \item{P}{Photosynthesis per tree (g C m-2 day-1); required when
-    \code{photosynthesis_as_input = TRUE}}
   \item{TSA}{Soil temperature, A horizon (°C)}
   \item{TSB}{Soil temperature, B horizon (°C)}
   \item{MB}{Soil moisture, B horizon (m3 m-3)}
   \item{Rain}{Precipitation (mm day-1)}
+}
+Additional columns required by each sub-model:
+\describe{
+  \item{P}{GPP per tree (g C m-2 day-1) —
+    \code{photosynthesis_as_input = TRUE} (default)}
+  \item{PAR, VPD, CO2, fAPAR}{Photosynthetically active radiation
+    (mol m-2 day-1), vapour pressure deficit (kPa), CO2 concentration
+    (ppm), fraction of absorbed PAR (0–1) —
+    \code{preles = TRUE}}
+  \item{PPFD, PPFD_max, VPD, CO2, Nitrogen, PA, SWP}{Photosynthetic
+    photon flux density and daily maximum (µmol m-2 s-1), VPD (kPa),
+    CO2 (ppm), leaf nitrogen (g m-2), atmospheric pressure (Pa),
+    soil water potential (MPa) —
+    \code{phydro = TRUE}}
 }}
 
 \item{site}{Site name for built-in parameterisations: \code{"Hyde"}

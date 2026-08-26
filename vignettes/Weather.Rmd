@@ -13,21 +13,33 @@ library(CASSIA)
 
 ## What CASSIA needs
 
-CASSIA requires a daily weather dataframe with these columns:
+Which columns are required depends on the photosynthesis sub-model selected
+via the toggle arguments to `CASSIA_cpp()`. Columns not used by the active
+sub-model may be `NA`.
+
+**Always required:**
 
 | Column | Description | Units | Notes |
 |--------|-------------|-------|-------|
+| `dates` | Calendar date | `Date` class | Created from year + `X` |
 | `X` | Day of year | integer (1–366) | |
-| `T` | Air temperature | °C | Typically measured at 2–4 m height |
+| `T` | Air temperature | °C | Typically at 2–4 m height |
 | `TSA` | Soil temperature, A horizon | °C | ~5 cm depth |
 | `TSB` | Soil temperature, B horizon | °C | ~10 cm depth |
 | `MB` | Volumetric soil moisture, B horizon | m³ m⁻³ | |
 | `Rain` | Precipitation | mm day⁻¹ | Daily total |
-| `P` | Photosynthesis per tree | g C m⁻² day⁻¹ | Required when `photosynthesis_as_input = TRUE` |
-| `dates` | Calendar date | `Date` class | Created from year + `X` |
 
+**Additional columns by photosynthesis sub-model:**
+
+| Toggle | Extra columns required | Units |
+|--------|------------------------|-------|
+| `photosynthesis_as_input = TRUE` *(default)* | `P` — GPP per tree | g C m⁻² day⁻¹ |
+| `preles = TRUE` | `PAR`, `VPD`, `CO2`, `fAPAR` | mol m⁻² day⁻¹, kPa, ppm, 0–1 |
+| `phydro = TRUE` | `PPFD`, `PPFD_max`, `VPD`, `CO2`, `Nitrogen`, `PA`, `SWP` | µmol m⁻² s⁻¹, µmol m⁻² s⁻¹, kPa, ppm, g m⁻², Pa, MPa |
+
+The built-in `weather_original` includes all columns for all sub-models.
 The model will give an informative error if column names are wrong, values
-are outside expected bounds, or the dataframe contains `NA`s.
+are outside expected bounds, or required columns contain `NA`s.
 
 ## Option 1: Use the built-in Hyytiälä data
 
