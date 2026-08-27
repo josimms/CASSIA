@@ -1,91 +1,539 @@
 ---
-title: "P-Hydro Version Comparison"
+title: "Photosynthesis Sub-model Comparison: Original vs PRELES vs p-hydro (Boreal)"
 author: "Joanna"
-output: html_document
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 10, fig.height = 5)
 ```
 
-## Weather data impot
+## Overview
 
-```{r}
+This notebook compares CASSIA output when driven by three different sources
+of photosynthesis on the same boreal (ERA5) weather data:
 
+| Sub-model | Toggle | Approach |
+|-----------|--------|----------|
+| **Photosynthesis (Original)** | `photosynthesis_as_input = TRUE` | GPP taken directly from the `P` column of the weather data, which was pre-computed by the SPP (Scots Pine Process) model. This is the standard baseline used throughout CASSIA development. |
+| **PRELES** | `preles = TRUE` | Empirical light-use efficiency; driven by PAR, VPD, CO₂, fAPAR |
+| **p-hydro** | `phydro = TRUE` | Hydraulic optimality; driven by PPFD, VPD, SWP, atmospheric pressure |
+
+The key questions are:
+
+1. How well do PRELES and p-hydro reproduce the SPP-generated baseline GPP?
+2. Does any GPP difference between models propagate into growth and ring width?
+3. Where do PRELES and p-hydro diverge from the original — early season,
+   late season, drought events?
+
+The comparison plots use synthetic output that reflects the expected character
+of each model. Replace with real runs once the ERA5 input file is available.
+
+## Setup
+
+```{r setup-params}
+library(CASSIA)
+library(ggplot2)
+library(patchwork)
+
+parameters_all <- initialize_parameters()
+
+organ_cols <- c(
+  diameter = "#8B4513",
+  needle   = "#228B22",
+  root     = "#D2691E",
+  height   = "#4169E1"
+)
+model_cols <- c(
+  "Original" = "#009E73",
+  "PRELES"   = "#E69F00",
+  "phydro"   = "#0072B2"
+)
 ```
 
-## Amazon
+---
 
-```{r cars}
+## Weather data
 
-weather_Amazon <- read.delim("~/Documents/Austria/Plant-FATE/tests/data/MetData_AmzFACE_Monthly_2000_2015_PlantFATE_new.csv", sep = ",")
-  weather_Amazon$VPD <- 100 * weather_Amazon$VPD # Pa
-  weather_Amazon$PAR <- weather_Amazon$PAR # umol m-2 s-1
-  weather_Amazon$SWP <- - weather_Amazon$SWP
-  # NOTE! Dates are absolutely not right! Just to see if the photosynthesis would work!
-  weather_Amazon$dates <- seq(as.Date("1960-01-01"), as.Date("1960-07-10"), by = "day")
-  names(weather_Amazon) <- c("Year", "Month", "Decimal_year", "T", "VPD", "PAR", "PAR_max", "SWP", "dates")
-  weather_Amazon$fAPAR = 0.7
-  weather_Amazon$Nitrogen = 1
-  weather_Amazon$P = NA
-  weather_Amazon$TSA = NA
-  weather_Amazon$TSB = NA
-  weather_Amazon$MB = NA
-  weather_Amazon$Rain = NA
-  weather_Amazon$CO2 = 365
-  weather_Amazon$PA = 101325
+ERA5 daily data for the boreal site. All three runs use the same weather
+file. The `P` column contains daily GPP (g C m⁻² day⁻¹) pre-computed by
+the SPP model; it is the photosynthesis source for the Original run.
+PRELES and p-hydro compute their own GPP internally so `P` is not used
+in those runs.
 
-  weather_Amazon_2013 <- weather_Amazon[weather_Amazon$Year > 2012,]
+```{r weather, eval=FALSE}
+weather_ERAS <- read.delim("~/Documents/ERAS_dataset.csv", sep = ",")
 
-  # PAR [umol m-2 s-1], PAR Net radiation [W m-2], - MPa
-  summary(weather_Amazon)
+names(weather_ERAS) <- c("Year", "Month", "Decimal_year", "T", "VPD",
+                         "PPFD", "PPFD_max", "SWP", "dates")
 
-  CASSIA_phydro_amazon <- CASSIA_cpp(weather = weather_Amazon_2013,
-                                     site = "Hyde",
-                                     pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                     parameters = parameters_all$parameters_test,
-                                     common = common_p,
-                                     ratios = ratios_p,
-                                     sperling = parameters_all$sperling_test,
-                                     needle_mass_in = parameters_all$needle_mass_in,
-                                     Throughfall = parameters_all$Throughfall,
-                                     photosynthesis_as_input = FALSE,
-                                     ecoevolutionary = TRUE)
+weather_ERAS$VPD   <- 0.1 * weather_ERAS$VPD   # hPa → kPa
+weather_ERAS$dates <- as.Date(
+  paste(weather_ERAS$Year, weather_ERAS$Month, "01", sep = "-")
+)
 
+# P: SPP-generated GPP (g C m-2 day-1) — used by the Original run only
+# Load from the SPP output file matched to this ERA5 period
+weather_ERAS$P     <- spp_gpp_timeseries   # replace with the actual object/read
+
+# Columns for PRELES (PAR in mol m-2 day-1; convert from PPFD in umol m-2 s-1)
+weather_ERAS$PAR   <- weather_ERAS$PPFD * 0.0864
+weather_ERAS$fAPAR <- 0.7
+weather_ERAS$CO2   <- 421.38
+
+# Shared columns
+weather_ERAS$Nitrogen <- 1
+weather_ERAS$TSA      <- NA
+weather_ERAS$TSB      <- NA
+weather_ERAS$MB       <- NA
+weather_ERAS$Rain     <- NA
+weather_ERAS$PA       <- 101325
 ```
 
-## Boreal
+---
 
+## Model runs
 
-```{r pressure, echo=FALSE}
-weather_ERAS_phydro <- read.delim("~/Documents/ERAS_dataset.csv", sep =",")
-  weather_ERAS_phydro$VPD <- 0.1 * weather_ERAS_phydro$VPD # kPa
-  weather_ERAS_phydro$dates <- seq(as.Date(paste(weather_ERAS_phydro$Year[1], weather_ERAS_phydro$Month[1], "01", sep = "-")),
-                                   as.Date(paste(weather_ERAS_phydro$Year[nrow(weather_ERAS_phydro)], weather_ERAS_phydro$Month[nrow(weather_ERAS_phydro)], "31", sep = "-")),
-                                   by = "day")
-  names(weather_ERAS_phydro) <- c("Year", "Month", "Decimal_year", "T", "VPD", "PAR", "PAR_max", "SWP", "dates")
-  weather_ERAS_phydro$fAPAR = 0.7
-  weather_ERAS_phydro$Nitrogen = 1
-  weather_ERAS_phydro$P = NA
-  weather_ERAS_phydro$TSA = NA
-  weather_ERAS_phydro$TSB = NA
-  weather_ERAS_phydro$MB = NA
-  weather_ERAS_phydro$Rain = NA
-  weather_ERAS_phydro$CO2 = 421.38
-  weather_ERAS_phydro$PA = 101325
+### Photosynthesis (Original)
 
-  CASSIA_phydro_ecoevolutionary <- CASSIA_cpp(weather = weather_ERAS_phydro,
-                                              site = "Hyde",
-                                              pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                              parameters = parameters_all$parameters_test,
-                                              common = common_p,
-                                              ratios = ratios_p,
-                                              sperling = parameters_all$sperling_test,
-                                              needle_mass_in = parameters_all$needle_mass_in,
-                                              Throughfall = parameters_all$Throughfall,
-                                              photosynthesis_as_input = FALSE,
-                                              ecoevolutionary = TRUE)
+GPP comes directly from the `P` column in the weather data, which was
+generated by the SPP model. This is the standard input used throughout
+CASSIA development and acts as the baseline for this comparison.
 
-  plot(CASSIA_phydro_ecoevolutionary$Preles$GPP)
+```{r original-run, eval=FALSE}
+CASSIA_original <- CASSIA_cpp(
+  weather                 = weather_ERAS,
+  site                    = "Hyde",
+  pPREL                   = c(parameters_all$pPREL, parameters_all$N_parameters),
+  parameters              = parameters_all$parameters_test,
+  common                  = common_p,
+  ratios                  = ratios_p,
+  sperling                = parameters_all$sperling_test,
+  needle_mass_in          = parameters_all$needle_mass_in,
+  Throughfall             = parameters_all$Throughfall,
+  photosynthesis_as_input = TRUE,
+  CASSIA_graphs           = FALSE
+)
 ```
 
+### PRELES
+
+```{r preles-run, eval=FALSE}
+CASSIA_preles <- CASSIA_cpp(
+  weather                 = weather_ERAS,
+  site                    = "Hyde",
+  pPREL                   = c(parameters_all$pPREL, parameters_all$N_parameters),
+  parameters              = parameters_all$parameters_test,
+  common                  = common_p,
+  ratios                  = ratios_p,
+  sperling                = parameters_all$sperling_test,
+  needle_mass_in          = parameters_all$needle_mass_in,
+  Throughfall             = parameters_all$Throughfall,
+  photosynthesis_as_input = FALSE,
+  preles                  = TRUE,
+  CASSIA_graphs           = FALSE
+)
+```
+
+### p-hydro
+
+```{r phydro-run, eval=FALSE}
+CASSIA_phydro <- CASSIA_cpp(
+  weather                 = weather_ERAS,
+  site                    = "Hyde",
+  pPREL                   = c(parameters_all$pPREL, parameters_all$N_parameters),
+  parameters              = parameters_all$parameters_test,
+  common                  = common_p,
+  ratios                  = ratios_p,
+  sperling                = parameters_all$sperling_test,
+  needle_mass_in          = parameters_all$needle_mass_in,
+  Throughfall             = parameters_all$Throughfall,
+  photosynthesis_as_input = FALSE,
+  phydro                  = TRUE,
+  ecoevolutionary         = TRUE,
+  CASSIA_graphs           = FALSE
+)
+```
+
+---
+
+## Synthetic example output
+
+Synthetic boreal output for 2015–2017. The three GPP series reflect the
+expected character of each source:
+
+- **Original (SPP)**: smooth, process-based seasonal curve calibrated to
+  Hyytiälä; treated as the reference.
+- **PRELES**: similar shape to Original but independently driven by radiation
+  and LUE; slight offset due to different calibration.
+- **p-hydro**: responds additionally to VPD and soil water potential, causing
+  a 35% mid-summer depression in the dry year 2016.
+
+Replace `CASSIA_original`, `CASSIA_preles`, and `CASSIA_phydro` with real
+model output once the ERA5 file is available.
+
+```{r synthetic-data}
+set.seed(42)
+n    <- 1096
+year <- rep(2015:2017, times = c(365, 366, 365))
+doy  <- c(1:365, 1:366, 1:365)
+
+# ── Original (SPP): process-based reference ───────────────────────────────────
+gpp_original <- pmax(0,
+  10.2 * exp(-((doy - 192)^2) / (2 * 62^2)) + rnorm(n, 0, 0.20)
+)
+
+# ── PRELES: light-use efficiency, similar shape with its own calibration ──────
+gpp_preles <- pmax(0,
+  9.5 * exp(-((doy - 190)^2) / (2 * 60^2)) + rnorm(n, 0, 0.25)
+)
+
+# ── p-hydro: hydraulic optimality, drought-sensitive ─────────────────────────
+drought_penalty <- ifelse(
+  year == 2016 & doy >= 170 & doy <= 220,
+  0.65,   # 35% suppression during mid-summer dry spell in 2016
+  1.0
+)
+gpp_phydro <- pmax(0,
+  8.8 * exp(-((doy - 188)^2) / (2 * 58^2)) * drought_penalty +
+    rnorm(n, 0, 0.30)
+)
+
+# ── Growth: same allocation logic for all three, scaled by GPP ───────────────
+make_output <- function(gpp_vec) {
+  set.seed(1)
+  diam   <- pmax(0, 0.012 * exp(-((doy - 175)^2) / (2 * 30^2)) + rnorm(n, 0, 5e-4))
+  needle <- pmax(0, 0.018 * exp(-((doy - 165)^2) / (2 * 25^2)) + rnorm(n, 0, 6e-4))
+  root   <- pmax(0, 0.010 * exp(-((doy - 185)^2) / (2 * 40^2)) + rnorm(n, 0, 4e-4))
+  height <- pmax(0, 0.008 * exp(-((doy - 160)^2) / (2 * 20^2)) + rnorm(n, 0, 3e-4))
+
+  scale  <- gpp_vec / mean(gpp_vec, na.rm = TRUE)
+  diam   <- diam * scale; needle <- needle * scale
+  root   <- root * scale; height <- height * scale
+
+  rw <- numeric(n); running <- 0; prev_yr <- year[1]
+  for (i in seq_len(n)) {
+    if (year[i] != prev_yr) { running <- 0; prev_yr <- year[i] }
+    running <- running + diam[i] * 0.12
+    rw[i]  <- running
+  }
+
+  list(
+    Preles = data.frame(
+      GPP       = gpp_vec,
+      ET        = pmax(0, 2.5 * gpp_vec / 9 + rnorm(n, 0, 0.1)),
+      SoilWater = 0.25 + 0.05 * sin(2 * pi * doy / 365) + rnorm(n, 0, 0.01),
+      fAPAR     = rep(0.7, n)
+    ),
+    Growth = data.frame(
+      year                    = year, day = doy,
+      g                       = pmax(0, 1 / (1 + exp(-0.185 * (doy - 285)))),
+      bud_growth_potential    = diam * 0.3,
+      wall_growth_potential   = diam * 1.2,
+      needle_growth_potential = needle * 1.2,
+      roots_growth_potential  = root   * 1.1,
+      height_growth_potential = height * 1.1,
+      bud_growth              = diam * 0.3,
+      diameter_growth         = diam,  needle_growth = needle,
+      root_growth             = root,  height_growth = height,
+      respiration_growth      = pmax(0, 0.15 * gpp_vec + rnorm(n, 0, 0.03)),
+      respiration_maintenance = pmax(0, 0.20 * gpp_vec + rnorm(n, 0, 0.02)),
+      ring_width              = rw,    mm_potenital  = rw * 1.2,
+      leaf_mass               = rep(3.8, n),
+      leaf_area               = rep(7.5, n)
+    )
+  )
+}
+
+CASSIA_original <- make_output(gpp_original)
+CASSIA_preles   <- make_output(gpp_preles)
+CASSIA_phydro   <- make_output(gpp_phydro)
+```
+
+---
+
+## Comparison
+
+### 1. GPP time series
+
+All three GPP sources overlaid. The Original (SPP) series is the reference.
+PRELES and p-hydro should track it closely during normal conditions; p-hydro
+should diverge during the 2016 mid-summer drought.
+
+```{r gpp-timeseries, fig.height=4}
+gpp_df <- data.frame(
+  day      = seq_len(n),
+  Original = CASSIA_original$Preles$GPP,
+  PRELES   = CASSIA_preles$Preles$GPP,
+  phydro   = CASSIA_phydro$Preles$GPP
+)
+
+gpp_long <- reshape(gpp_df,
+  varying = c("Original", "PRELES", "phydro"), v.names = "GPP",
+  timevar = "model", times = c("Original", "PRELES", "phydro"),
+  direction = "long"
+)
+gpp_long$model <- factor(gpp_long$model, levels = c("Original", "PRELES", "phydro"))
+
+ggplot(gpp_long, aes(x = day, y = GPP, colour = model, linewidth = model)) +
+  geom_line(alpha = 0.85) +
+  scale_colour_manual(values = model_cols) +
+  scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
+  scale_x_continuous(
+    breaks = c(1, 366, 731),
+    labels = c("2015", "2016", "2017")
+  ) +
+  labs(title = "Daily GPP: Original (SPP) vs PRELES vs p-hydro (2015–2017)",
+       subtitle = "Original is the SPP-generated reference; p-hydro shows drought suppression in 2016",
+       x = NULL, y = "GPP (g C m⁻² day⁻¹)", colour = "Model") +
+  guides(linewidth = "none") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+### 2. GPP difference from Original
+
+How much does each model deviate from the SPP baseline? Positive = model
+predicts more GPP than Original; negative = less.
+
+```{r gpp-difference, fig.height=5}
+diff_df <- data.frame(
+  day    = seq_len(n),
+  PRELES = CASSIA_preles$Preles$GPP   - CASSIA_original$Preles$GPP,
+  phydro = CASSIA_phydro$Preles$GPP   - CASSIA_original$Preles$GPP
+)
+
+diff_long <- reshape(diff_df,
+  varying = c("PRELES", "phydro"), v.names = "diff",
+  timevar = "model", times = c("PRELES", "phydro"), direction = "long"
+)
+diff_long$model <- factor(diff_long$model, levels = c("PRELES", "phydro"))
+
+ggplot(diff_long, aes(x = day, y = diff, fill = diff > 0)) +
+  geom_col(width = 1, show.legend = FALSE) +
+  geom_hline(yintercept = 0, linewidth = 0.4) +
+  scale_fill_manual(values = c("TRUE" = "#56B4E9", "FALSE" = "#D55E00")) +
+  scale_x_continuous(
+    breaks = c(1, 366, 731),
+    labels = c("2015", "2016", "2017")
+  ) +
+  facet_wrap(~model, ncol = 1) +
+  labs(title = "GPP deviation from Original (SPP baseline)",
+       subtitle = "Blue = model higher than Original; orange = model lower than Original",
+       x = NULL, y = "Δ GPP (g C m⁻² day⁻¹)") +
+  theme_bw()
+```
+
+### 3. Seasonal GPP pattern
+
+DOY-averaged GPP removes inter-annual variability and shows whether the
+models agree on the shape and timing of the growing season. A mismatch in
+peak timing or width would indicate a structural difference between models.
+
+```{r seasonal-gpp, fig.height=4}
+doy_gpp <- data.frame(
+  doy      = doy,
+  Original = CASSIA_original$Preles$GPP,
+  PRELES   = CASSIA_preles$Preles$GPP,
+  phydro   = CASSIA_phydro$Preles$GPP
+)
+doy_agg <- aggregate(cbind(Original, PRELES, phydro) ~ doy,
+                     data = doy_gpp, FUN = mean)
+
+doy_long <- reshape(doy_agg,
+  varying = c("Original", "PRELES", "phydro"), v.names = "GPP",
+  timevar = "model", times = c("Original", "PRELES", "phydro"),
+  direction = "long"
+)
+doy_long$model <- factor(doy_long$model, levels = c("Original", "PRELES", "phydro"))
+
+ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
+  geom_line() +
+  scale_colour_manual(values = model_cols) +
+  scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
+  labs(title = "Mean GPP by day of year (averaged 2015–2017)",
+       x = "Day of year", y = "GPP (g C m⁻² day⁻¹)", colour = "Model") +
+  guides(linewidth = "none") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+### 4. Annual carbon budget
+
+Annual totals of GPP, growth, and respiration for each model. If the carbon
+allocation logic works correctly, differences in GPP between models should
+scale through to proportional differences in growth.
+
+```{r annual-budget, fig.height=5}
+budget_model <- function(model_out, model_name) {
+  g <- model_out$Growth
+  data.frame(
+    model        = model_name,
+    year         = g$year,
+    GPP          = model_out$Preles$GPP,
+    growth_total = g$diameter_growth + g$needle_growth +
+                   g$root_growth + g$height_growth,
+    resp_growth  = g$respiration_growth,
+    resp_maint   = g$respiration_maintenance
+  )
+}
+
+budget <- rbind(
+  budget_model(CASSIA_original, "Original"),
+  budget_model(CASSIA_preles,   "PRELES"),
+  budget_model(CASSIA_phydro,   "phydro")
+)
+
+budget_annual <- aggregate(
+  cbind(GPP, growth_total, resp_growth, resp_maint) ~ model + year,
+  data = budget, FUN = sum, na.rm = TRUE
+)
+budget_annual$model <- factor(budget_annual$model,
+                               levels = c("Original", "PRELES", "phydro"))
+
+budget_long <- reshape(budget_annual,
+  varying   = c("GPP", "growth_total", "resp_growth", "resp_maint"),
+  v.names   = "value",
+  timevar   = "flux",
+  times     = c("GPP", "Total growth", "Growth resp.", "Maint. resp."),
+  direction = "long"
+)
+
+ggplot(budget_long,
+       aes(x = factor(year), y = value, fill = flux)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~model) +
+  scale_fill_manual(values = c(
+    "GPP"          = "#E69F00",
+    "Total growth" = "#009E73",
+    "Growth resp." = "#CC79A7",
+    "Maint. resp." = "#D55E00"
+  )) +
+  labs(title = "Annual carbon budget by photosynthesis source",
+       x = "Year", y = "g C m⁻² year⁻¹", fill = NULL) +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+### 5. Growth components by year
+
+Organ-level breakdown of annual growth carbon. If allocation is functioning
+correctly across all three runs, the proportions (diameter : needle : root :
+height) should be similar even when total growth differs.
+
+```{r growth-components, fig.height=5}
+growth_model <- function(model_out, model_name) {
+  g <- model_out$Growth
+  data.frame(
+    model    = model_name,
+    year     = g$year,
+    diameter = g$diameter_growth,
+    needle   = g$needle_growth,
+    root     = g$root_growth,
+    height   = g$height_growth
+  )
+}
+
+growth <- rbind(
+  growth_model(CASSIA_original, "Original"),
+  growth_model(CASSIA_preles,   "PRELES"),
+  growth_model(CASSIA_phydro,   "phydro")
+)
+
+growth_annual <- aggregate(
+  cbind(diameter, needle, root, height) ~ model + year,
+  data = growth, FUN = sum, na.rm = TRUE
+)
+growth_annual$model <- factor(growth_annual$model,
+                               levels = c("Original", "PRELES", "phydro"))
+
+growth_long <- reshape(growth_annual,
+  varying   = c("diameter", "needle", "root", "height"),
+  v.names   = "value",
+  timevar   = "organ",
+  times     = c("diameter", "needle", "root", "height"),
+  direction = "long"
+)
+
+ggplot(growth_long,
+       aes(x = factor(year), y = value, fill = organ)) +
+  geom_col() +
+  facet_wrap(~model) +
+  scale_fill_manual(values = organ_cols) +
+  labs(title = "Annual growth by organ and photosynthesis source",
+       x = "Year", y = "g C m⁻² year⁻¹", fill = "Organ") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+### 6. Cumulative ring width
+
+Ring width is the most directly observable output that can be checked against
+dendrometer or core data. Do the models agree on the final annual ring width,
+or does the GPP difference translate into a measurable divergence?
+
+```{r ring-width, fig.height=5}
+rw_df <- rbind(
+  data.frame(model = "Original", year = year, doy = doy,
+             rw = CASSIA_original$Growth$ring_width),
+  data.frame(model = "PRELES",   year = year, doy = doy,
+             rw = CASSIA_preles$Growth$ring_width),
+  data.frame(model = "phydro",   year = year, doy = doy,
+             rw = CASSIA_phydro$Growth$ring_width)
+)
+rw_df$model <- factor(rw_df$model, levels = c("Original", "PRELES", "phydro"))
+
+ggplot(rw_df, aes(x = doy, y = rw,
+                  colour = factor(year), linetype = model,
+                  group  = interaction(model, year))) +
+  geom_line(linewidth = 0.9) +
+  scale_colour_manual(values = c("2015" = "#1b7837",
+                                 "2016" = "#762a83",
+                                 "2017" = "#e08214")) +
+  scale_linetype_manual(values = c(Original = "solid",
+                                   PRELES   = "dashed",
+                                   phydro   = "dotted")) +
+  labs(title = "Cumulative ring width by year and photosynthesis source",
+       subtitle = "Solid = Original (SPP), dashed = PRELES, dotted = p-hydro",
+       x = "Day of year", y = "Ring width (mm)",
+       colour = "Year", linetype = "Model") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```
+
+### 7. Summary table
+
+```{r summary-table}
+summary_model <- function(model_out, model_name) {
+  g   <- model_out$Growth
+  gpp <- model_out$Preles$GPP
+
+  total_growth <- sum(g$diameter_growth + g$needle_growth +
+                      g$root_growth + g$height_growth, na.rm = TRUE)
+
+  annual_rw <- tapply(g$ring_width, g$year, max, na.rm = TRUE)
+
+  data.frame(
+    Model                        = model_name,
+    `Mean GPP (g C m-2 day-1)`  = round(mean(gpp, na.rm = TRUE), 2),
+    `Total growth (g C m-2)`    = round(total_growth, 1),
+    `Growth / GPP (%)`          = round(total_growth / sum(gpp, na.rm = TRUE) * 100, 1),
+    `Mean annual ring width (mm)` = round(mean(annual_rw), 3),
+    check.names = FALSE
+  )
+}
+
+knitr::kable(
+  rbind(
+    summary_model(CASSIA_original, "Original (SPP)"),
+    summary_model(CASSIA_preles,   "PRELES"),
+    summary_model(CASSIA_phydro,   "p-hydro")
+  ),
+  caption = "Summary statistics across 2015–2017"
+)
+```
