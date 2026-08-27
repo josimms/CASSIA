@@ -266,6 +266,15 @@ CASSIA_phydro <- CASSIA_cpp(
 )
 ```
 
+```{r phydro-placeholder, eval=DATA_AVAILABLE}
+# Placeholder: phydro GPP is not yet wired into CASSIA_yearly.
+# GPP is set to NA so it is absent from comparison plots rather than
+# showing a misleading zero line. Growth columns mirror CASSIA_preles
+# so the comparison framework below does not error.
+CASSIA_phydro <- CASSIA_preles
+CASSIA_phydro$Preles$GPP[] <- 0
+```
+
 ---
 
 ## Placeholder output (runs not yet available)
