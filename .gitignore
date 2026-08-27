@@ -8,3 +8,4 @@ src/*.dll
 .RDataTmp
 Instruction_Booklet
 *.html
+development_notebooks/cache/

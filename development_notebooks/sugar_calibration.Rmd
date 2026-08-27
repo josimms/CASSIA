@@ -216,8 +216,9 @@ p_sens_st <- ggplot(make_sensitivity_long("starch", "Starch"),
 
 ## 3  Calibration helpers
 
-The parameter vector and DEoptim boilerplate are defined once and reused for all
-calibration runs.
+The parameter vector and objective function are defined once and reused for all
+calibration runs.  The cluster is created and destroyed *inside* each calibration
+chunk so it cannot leak between knit sessions.
 
 ```{r calibration-helpers}
 par_names <- c(
@@ -231,95 +232,66 @@ par_names <- c(
   "percentage_roots_storage",   "myco.thresh"
 )
 
-initial_guess <- c(
-  0.438024, 0.002, 0.05,   # needles
-  0.608733, 0.001, 0.01,   # phloem
-  0.790206, 0.002, 0.05,   # roots
-  0.7712,   0.002, 0.05,   # xylem shoot
-  0.768777, 0.002, 0.05,   # xylem stem
-  0.11, 0.11, 0.00001, 0.5, 0.5,
-  0.9
-)
-
-lower_bounds <- rep(0, length(initial_guess))
-upper_bounds <- c(rep(1, length(initial_guess) - 1), 1)
-
-# Build parallel cluster once; reused for all DEoptim calls
-ncores <- detectCores() - 1
-cl     <- makeCluster(ncores)
-clusterEvalQ(cl, library(CASSIA))
-clusterExport(cl, varlist = c(
-  "CASSIA_cpp", "parameters_2015", "weather_2015",
-  "validate_sugar", "common_p", "ratios_p", "autumn_indices",
-  "par_names"
-))
+lower_bounds <- rep(0, length(par_names))
+upper_bounds <- rep(1, length(par_names))
 
 make_objective <- function(surplus_c = FALSE) {
   force(surplus_c)
+  pn  <- par_names          # capture in closure so workers see it
+  p15 <- parameters_2015
+  w15 <- weather_2015
+  vs  <- validate_sugar
+  ai  <- autumn_indices
   function(par) {
-    names(par) <- par_names
-    sp_local   <- parameters_2015$sperling_test
-    sp_local[par_names, "Hyde"] <- par
-
+    names(par) <- pn
+    sp_local   <- p15$sperling_test
+    sp_local[pn, "Hyde"] <- par
     tryCatch({
       out <- CASSIA_cpp(
-        weather                 = weather_2015,
+        weather                 = w15,
         site                    = "Hyde",
-        pPREL                   = c(parameters_2015$pPREL,
-                                    parameters_2015$N_parameters),
-        parameters              = parameters_2015$parameters_test,
+        pPREL                   = c(p15$pPREL, p15$N_parameters),
+        parameters              = p15$parameters_test,
         common                  = common_p,
         ratios                  = ratios_p,
         sperling                = sp_local,
-        needle_mass_in          = parameters_2015$needle_mass_in,
-        Throughfall             = parameters_2015$Throughfall,
+        needle_mass_in          = p15$needle_mass_in,
+        Throughfall             = p15$Throughfall,
         photosynthesis_as_input = FALSE,
         preles                  = TRUE,
         fAPAR_Tian              = TRUE,
         sperling_model          = TRUE,
         surplus_c               = surplus_c
       )
-
       model_values <- c(
-        out$Sugar$sugar_needles[autumn_indices],
-        out$Sugar$starch_needles[autumn_indices],
-        out$Sugar$sugar_phloem[autumn_indices],
-        out$Sugar$starch_phloem[autumn_indices],
-        out$Sugar$sugar_roots[autumn_indices],
-        out$Sugar$starch_roots[autumn_indices],
-        out$Sugar$sugar_xylem_sh[autumn_indices],
-        out$Sugar$starch_xylem_sh[autumn_indices],
-        out$Sugar$sugar_xylem_st[autumn_indices],
-        out$Sugar$starch_xylem_st[autumn_indices]
+        out$Sugar$sugar_needles[ai],   out$Sugar$starch_needles[ai],
+        out$Sugar$sugar_phloem[ai],    out$Sugar$starch_phloem[ai],
+        out$Sugar$sugar_roots[ai],     out$Sugar$starch_roots[ai],
+        out$Sugar$sugar_xylem_sh[ai],  out$Sugar$starch_xylem_sh[ai],
+        out$Sugar$sugar_xylem_st[ai],  out$Sugar$starch_xylem_st[ai]
       )
-
       if (any(!is.finite(model_values)) ||
           sum(!out$Culm_Growth$tree_alive) > 0) return(1e10)
-
-      sqrt(mean((model_values - validate_sugar)^2, na.rm = TRUE))
+      sqrt(mean((model_values - vs)^2, na.rm = TRUE))
     }, error = function(e) 1e10)
   }
 }
 
-run_deoptim <- function(objective_fn, itermax = 200) {
-  DEoptim(
-    fn      = objective_fn,
-    lower   = lower_bounds,
-    upper   = upper_bounds,
-    control = DEoptim.control(
-      itermax      = itermax,
-      parallelType = 1,
-      cluster      = cl,
-      trace        = TRUE
-    )
-  )
-}
+cache_dir  <- file.path("development_notebooks", "cache")
+dir.create(cache_dir, showWarnings = FALSE, recursive = TRUE)
 
-apply_fit <- function(fit) {
-  best        <- fit$optim$bestmem
-  names(best) <- par_names
-  parameters_2015$sperling_test[par_names, "Hyde"] <<- best
-  invisible(best)
+load_params <- function(cache_file, label = "calibration") {
+  if (file.exists(cache_file)) {
+    best <- readRDS(cache_file)
+    names(best) <- par_names
+    parameters_2015$sperling_test[par_names, "Hyde"] <<- best
+    kable(data.frame(Parameter = par_names, Value = round(best, 6)),
+          caption = paste("Best parameters —", label, "(loaded from cache)"))
+  } else {
+    message("No cache found for ", label,
+            " — using default sperling_p parameters.\n",
+            "Run the matching 'calibrate-*' chunk manually to calibrate.")
+  }
 }
 ```
 
@@ -328,17 +300,30 @@ apply_fit <- function(fit) {
 ## 4  Calibration: standard model
 
 The standard calibration minimises RMSE between modelled and observed autumn NSC pools
-using DEoptim (200 iterations).  Running on `r ncores` cores.
+using DEoptim (200 iterations).  The chunk below is marked `eval = FALSE` — run it
+once manually in RStudio; the result is saved to `development_notebooks/cache/` and
+loaded automatically on subsequent knits.
 
-```{r calibrate-standard, cache=TRUE}
-fit_standard <- run_deoptim(make_objective(surplus_c = FALSE))
+```{r calibrate-standard, eval = FALSE}
+ncores <- detectCores() - 1
+cl     <- makeCluster(ncores)
+on.exit(stopCluster(cl), add = TRUE)
+clusterEvalQ(cl, library(CASSIA))
 
-cat("Best RMSE:", fit_standard$optim$bestval, "\n")
-kable(data.frame(Parameter = par_names,
-                 Value = round(fit_standard$optim$bestmem, 6)),
-      caption = "Best parameters — standard calibration")
+obj <- make_objective(surplus_c = FALSE)
+fit_standard <- DEoptim(
+  fn      = obj,
+  lower   = lower_bounds,
+  upper   = upper_bounds,
+  control = DEoptim.control(itermax = 200, parallelType = 1, cluster = cl, trace = TRUE)
+)
+cat("Standard calibration RMSE:", fit_standard$optim$bestval, "\n")
+saveRDS(fit_standard$optim$bestmem,
+        file.path(cache_dir, "sperling_standard.rds"))
+```
 
-apply_fit(fit_standard)
+```{r load-standard-params}
+load_params(file.path(cache_dir, "sperling_standard.rds"), "standard calibration")
 ```
 
 ### 4.1  Single-year diagnostic (2015)
@@ -513,15 +498,26 @@ Running with `surplus_c = TRUE` forces the tree into a conservative carbohydrate
 strategy where NSC levels above optimal trigger carbon export rather than additional
 growth.  A separate DEoptim calibration is run for this scenario.
 
-```{r calibrate-surplus-c, cache=TRUE}
-fit_surplus_c <- run_deoptim(make_objective(surplus_c = TRUE))
+```{r calibrate-surplus-c, eval = FALSE}
+ncores <- detectCores() - 1
+cl     <- makeCluster(ncores)
+on.exit(stopCluster(cl), add = TRUE)
+clusterEvalQ(cl, library(CASSIA))
 
-cat("Best RMSE (surplus C):", fit_surplus_c$optim$bestval, "\n")
-kable(data.frame(Parameter = par_names,
-                 Value = round(fit_surplus_c$optim$bestmem, 6)),
-      caption = "Best parameters — surplus C calibration")
+obj <- make_objective(surplus_c = TRUE)
+fit_surplus_c <- DEoptim(
+  fn      = obj,
+  lower   = lower_bounds,
+  upper   = upper_bounds,
+  control = DEoptim.control(itermax = 200, parallelType = 1, cluster = cl, trace = TRUE)
+)
+cat("Surplus C calibration RMSE:", fit_surplus_c$optim$bestval, "\n")
+saveRDS(fit_surplus_c$optim$bestmem,
+        file.path(cache_dir, "sperling_surplus_c.rds"))
+```
 
-apply_fit(fit_surplus_c)
+```{r load-surplus-c-params}
+load_params(file.path(cache_dir, "sperling_surplus_c.rds"), "surplus C calibration")
 ```
 
 ```{r run-surplus-c}
@@ -711,6 +707,3 @@ ggplot(height_var, aes(x = dates, y = value, colour = Scenario)) +
   theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
 ```
 
-```{r cleanup-cluster}
-stopCluster(cl)
-```
