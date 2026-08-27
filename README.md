@@ -123,6 +123,17 @@ sensitivity analysis and parameter fitting.
 
 ---
 
+## Known limitations
+
+| Feature | Status |
+|---------|--------|
+| **p-hydro photosynthesis** (`phydro = TRUE`) | The hydraulic optimality code compiles and the toggle is accepted, but the p-hydro GPP call is not yet wired into the main yearly loop — the model will run but GPP will be zero. Use `preles = TRUE` or the default `photosynthesis_as_input = TRUE` instead. |
+| **Eco-evolutionary variant** (`ecoevolutionary = TRUE`) | The toggle exists in the interface but the compiled export (`CASSIA_eeo`) is currently disabled. Passing `ecoevolutionary = TRUE` will error. |
+| **Lettosuo and Väriö parameterisation** | Parameters for these sites are included but have not been fully calibrated. Results for non-Hyde sites should be treated as indicative only. |
+| **New sites** | The model is calibrated for Hyytiälä (Scots pine, boreal Finland). Applying it to other species or climate zones requires re-calibration — see `vignette("Sensitivity_Analysis")`. |
+
+---
+
 ## For Developers and Contributors
 
 ### Package layout

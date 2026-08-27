@@ -22,9 +22,9 @@ test_that("CASSIA_cpp returns expected list structure", {
   expect_equal(nrow(out$Growth), nrow(weather_original))
 })
 
-test_that("sperling model Sugar output has all organ columns", {
+test_that("organ_level_sugar model Sugar output has all organ columns", {
   out <- CASSIA_cpp(weather = weather_original, site = "Hyde",
-                    sperling_model = TRUE, tests = TRUE)
+                    organ_level_sugar = TRUE, tests = TRUE)
   organs <- c("needles", "phloem", "roots", "xylem_sh", "xylem_st")
   expected <- c(paste0("sugar_",  organs), paste0("starch_", organs))
   expect_true(all(expected %in% names(out$Sugar)))
@@ -37,14 +37,21 @@ test_that("sperling model Sugar output has all organ columns", {
 # is for, with its visual plots against Hyde_daily_original).
 # ---------------------------------------------------------------------------
 
-test_that("zeroing GPP collapses all organ growth to zero", {
+test_that("zeroing GPP substantially reduces total organ growth", {
+  # The model draws on stored reserves even when current GPP = 0, so growth
+  # does not collapse to exactly zero. The test checks that growth is at least
+  # 90 % lower than the baseline run, not that it is precisely zero.
   weather_zero <- weather_original
   weather_zero$P <- 0
-  out <- CASSIA_cpp(weather = weather_zero, site = "Hyde", tests = TRUE)
-  g <- out$Growth
-  total <- sum(g$needle_growth + g$diameter_growth +
-                 g$root_growth + g$height_growth)
-  expect_equal(total, 0)
+
+  total_growth <- function(out) {
+    g <- out$Growth
+    sum(g$needle_growth + g$diameter_growth + g$root_growth + g$height_growth)
+  }
+
+  run_base <- CASSIA_cpp(weather = weather_original, site = "Hyde", tests = TRUE)
+  run_zero <- CASSIA_cpp(weather = weather_zero,    site = "Hyde", tests = TRUE)
+  expect_lt(total_growth(run_zero), total_growth(run_base) * 0.1)
 })
 
 test_that("doubling GPP increases total organ growth", {
@@ -61,14 +68,14 @@ test_that("doubling GPP increases total organ growth", {
   expect_gt(total_growth(run_high), total_growth(run_base))
 })
 
-test_that("sperling model: higher GPP produces higher mean needle sugar", {
+test_that("organ_level_sugar model: higher GPP produces higher mean needle sugar", {
   weather_high <- weather_original
   weather_high$P <- weather_original$P * 2
 
   run_base <- CASSIA_cpp(weather = weather_original, site = "Hyde",
-                          sperling_model = TRUE, tests = TRUE)
+                          organ_level_sugar = TRUE, tests = TRUE)
   run_high <- CASSIA_cpp(weather = weather_high, site = "Hyde",
-                          sperling_model = TRUE, tests = TRUE)
+                          organ_level_sugar = TRUE, tests = TRUE)
 
   expect_gt(mean(run_high$Sugar$sugar_needles, na.rm = TRUE),
             mean(run_base$Sugar$sugar_needles, na.rm = TRUE))
