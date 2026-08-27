@@ -82,6 +82,18 @@
 #'   of days with positive growth. If \code{FALSE} (default), sD is derived
 #'   from the temperature-driven growth integral.
 #' @param LH_estim Logical. If \code{TRUE} (default), LH is modified by GPP.
+#' @param soil_moisture_effect_on_shoot Logical. Enable soil moisture limitation
+#'   on shoot growth. Default \code{FALSE}.
+#' @param soil_moisture_effect_on_needles Logical. Enable soil moisture
+#'   limitation on needle growth. Default \code{FALSE}.
+#' @param soil_moisture_effect_on_diameter Logical. Enable soil moisture
+#'   limitation on diameter growth. Default \code{FALSE}.
+#' @param driver_N Numeric vector of length 2. Scaling parameters controlling
+#'   the effect of nitrogen availability on growth. Default \code{c(1, 1)}.
+#' @param driver_H Numeric vector of length 2. Scaling parameters controlling
+#'   height growth. Default \code{c(0, 2)}.
+#' @param driver_D Numeric vector of length 2. Scaling parameters controlling
+#'   diameter growth. Default \code{c(1, 1)}.
 #' @param trees_grow Logical. If \code{TRUE}, D0 and h0 are updated
 #'   year-to-year from modelled growth. Automatically \code{TRUE} when
 #'   \code{xylogenesis = TRUE}. Default \code{FALSE}.
@@ -254,6 +266,13 @@ CASSIA_cpp <- function(
 
     LH_estim = TRUE,
 
+    soil_moisture_effect_on_shoot = FALSE,
+    soil_moisture_effect_on_needles = FALSE,
+    soil_moisture_effect_on_diameter = FALSE,
+    driver_N = c(1, 1),
+    driver_H = c(0, 2),
+    driver_D = c(1, 1),
+
     trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
     growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
     needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
@@ -310,6 +329,9 @@ CASSIA_cpp <- function(
   # Is the site is the known sites?
   validate_site(site)
 
+  no_trees = 1010
+  if (site == "HF_China") {no_trees = 1044}
+
   # make the model settings into a list
   settings = list(
     "storage_reset" = storage_reset,
@@ -341,7 +363,13 @@ CASSIA_cpp <- function(
     "ecoevolutionary" = ecoevolutionary,
     "fAPAR_Tian" = fAPAR_Tian,
     "preles" = preles,
-    "phydro" = phydro
+    "phydro" = phydro,
+    "soil_moisture_effect_on_shoot" = soil_moisture_effect_on_shoot,
+    "soil_moisture_effect_on_needles" = soil_moisture_effect_on_needles,
+    "soil_moisture_effect_on_diameter" = soil_moisture_effect_on_diameter,
+    "driver_N" = driver_N,
+    "driver_H" = driver_H,
+    "driver_D" = driver_D
   )
 
   # Are the model settings valid?
@@ -384,7 +412,7 @@ CASSIA_cpp <- function(
                       updated_settings)
   } else {
     out <- CASSIA_yearly(start_year, end_year, weather, GPP_ref_in,
-                         pPREL, t(parameters), common, t(ratios), t(sperling), # site,
+                         pPREL, t(parameters), common, t(ratios), t(sperling), no_trees,
                          needle_mass_in,
                          Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance,
                          updated_settings)

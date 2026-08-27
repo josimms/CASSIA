@@ -1,5 +1,5 @@
 bound_checks <- function(CASSIA_sensi) {
-  direct <- "~/Documents/CASSIA_Calibration/"
+  direct <- "~/Documents/CASSIA_Calibration/Processed_Data/"
   bounds_all <- read.delim(paste0(direct, "bounds_all.csv"), sep = ",", row.names = 1)
   bounds_all$UL[1:20] = rep(10, 20)
 
