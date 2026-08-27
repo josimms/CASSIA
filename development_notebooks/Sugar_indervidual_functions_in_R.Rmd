@@ -1,0 +1,376 @@
+---
+title: "Sugar model: individual functions (R reference)"
+author: "Joanna"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 10, fig.height = 4)
+library(ggplot2)
+
+load("../data/weather_original.RData")
+# 2015 is the first 365 rows
+weather_2015 <- weather_original[1:365, ]
+doy          <- weather_2015$X
+```
+
+## Overview
+
+This notebook contains R implementations of the individual functions that make
+up the CASSIA sugar model (`src/sugar_model.cpp`). Each function is explored in
+isolation using the built-in `weather_original` dataset (Hyytiälä SMEAR II,
+2015). The C++ function name is given in each section header so the two versions
+can be compared directly.
+
+---
+
+## 1  Sugar limitation factor
+
+**C++ equivalent:** `storage_update_organs()` in `sugar_model.cpp`
+
+Given a sugar pool $s$, an organ-specific lower reserve limit $l$, and the
+potential growth + maintenance demand for that day $g$, the storage term is the
+fraction of growth that can be satisfied:
+
+$$
+k(s,\, l,\, g) = \begin{cases}
+0 & s \leq l \text{ or } g \leq 0 \\
+\min\!\left(1,\; \dfrac{s - l}{g}\right) & s > l
+\end{cases}
+$$
+
+```{r sugar-limitation}
+sugar_limitation <- function(s, l, g) {
+  if (g <= 0) return(0)
+  available <- s - l
+  if (available <= 0) return(0)
+  min(1, available / g)
+}
+
+# Vectorised wrapper for plotting
+sugar_lim_vec <- function(s, l, g) pmax(0, pmin(1, (s - l) / pmax(g, 1e-10))) * (s > l) * (g > 0)
+
+sugar <- seq(0, 1, length.out = 200)
+
+par(mfrow = c(1, 2))
+plot(sugar, sugar_lim_vec(sugar, 0.1, 0.5), type = "l", col = "blue",
+     ylim = c(0, 1), xlab = "Sugar pool (kg C)", ylab = "Storage term k",
+     main = "Effect of reserve limit l\n(demand g = 0.5 fixed)")
+lines(sugar, sugar_lim_vec(sugar, 0.2, 0.5))
+lines(sugar, sugar_lim_vec(sugar, 0.3, 0.5), col = "red")
+legend("bottomright", legend = c("l = 0.1", "l = 0.2", "l = 0.3"),
+       col = c("blue", "black", "red"), lty = 1, bty = "n", cex = 0.8)
+
+plot(sugar, sugar_lim_vec(sugar, 0.2, 0.25), type = "l",
+     ylim = c(0, 1), xlab = "Sugar pool (kg C)", ylab = "Storage term k",
+     main = "Effect of growth demand g\n(reserve l = 0.2 fixed)")
+lines(sugar, sugar_lim_vec(sugar, 0.2, 0.50), col = "green")
+lines(sugar, sugar_lim_vec(sugar, 0.2, 0.75), col = "purple")
+legend("bottomright", legend = c("g = 0.25", "g = 0.50", "g = 0.75"),
+       col = c("black", "green", "purple"), lty = 1, bty = "n", cex = 0.8)
+par(mfrow = c(1, 1))
+```
+
+---
+
+## 2  Winter reserve scaling
+
+**C++ equivalent:** `winter_factor()` in `sugar_model.cpp`
+
+The winter reserve $w$ scales the fraction of each organ's sugar pool that must
+be retained as antifreeze protection. Rather than responding instantaneously,
+$w$ tracks a physiological target $w^*$ with a first-order lag (time constant
+$\tau = 7$ days). After each update $w$ is clamped to $[0, 1]$:
+
+$$
+w^* = 1 - \frac{1}{1+e^{-(T-T_c)/k_T}} \cdot \frac{1}{1+e^{-(R-R_c)/k_R}}, \qquad
+w_t = \text{clamp}\!\left(w_{t-1} + \frac{w^*-w_{t-1}}{\tau},\; 0, 1\right)
+$$
+
+Default parameters: $T_c = 5\,^\circ\text{C}$, $R_c = 30\;\mu\text{mol m}^{-2}
+\text{s}^{-1}$, $k_T = 2$, $k_R = 10$, $\tau = 7$.
+
+```{r winter-factor}
+w_target <- function(T_air, PAR, T_crit = 5, PAR_crit = 30, kT = 2, kPAR = 10) {
+  1 - (1 / (1 + exp(-(T_air - T_crit) / kT))) * (1 / (1 + exp(-(PAR - PAR_crit) / kPAR)))
+}
+
+update_w <- function(w_prev, T_air, PAR, tau = 7) {
+  w_star <- w_target(T_air, PAR)
+  pmin(pmax(w_prev + (w_star - w_prev) / tau, 0), 1)   # clamp to [0, 1] as in C++
+}
+
+w_star_daily <- w_target(weather_2015$T, weather_2015$PAR)
+
+w <- numeric(365)
+w[1] <- w_star_daily[1]
+for (i in 2:365) {
+  w[i] <- update_w(w[i - 1], weather_2015$T[i], weather_2015$PAR[i])
+}
+
+plot(doy, w_star_daily, type = "l", col = "grey60", lwd = 1,
+     ylim = c(0, 1),
+     xlab = "Day of year (Hyytiälä 2015)",
+     ylab = "Winter reserve scaling w",
+     main = "Winter reserve scaling (τ = 7 d lag, clamped to [0, 1])")
+lines(doy, w, col = "blue", lwd = 2)
+legend("bottomright",
+       legend = c("Instantaneous target w*", "Delayed w (τ = 7 d)"),
+       col = c("grey60", "blue"), lwd = c(1, 2), bty = "n", cex = 0.8)
+```
+
+---
+
+## 3  Sugar–starch flux: current C++ formulation
+
+**C++ equivalent:** `safe_to_starch_transfer()` in `sugar_model.cpp`
+
+The daily net flux from sugar to starch is computed by two simple linear terms:
+
+- **Synthesis**: a fixed 30% of the sugar surplus above the winter reserve is
+  converted to starch each day.
+- **Remobilisation**: if sugar falls below the winter reserve, starch is drawn
+  down at a rate of 30% of the shortfall, capped by the available starch.
+
+After both terms, three physical limits are applied: the flux cannot exceed the
+sugar surplus, it cannot push starch above its capacity, and it cannot drain
+more starch than exists.
+
+$$
+S = \max(s - w,\; 0), \qquad
+F_\text{syn} = 0.3 \cdot S
+$$
+
+$$
+F_\text{rem} = \begin{cases}
+\min\!\left(\theta,\; 0.3(w - s)\right) & s < w \\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+$$
+F_\text{net} = \text{clamp}\!\left(F_\text{syn} - F_\text{rem},\; -\theta,\; \min(S,\; \Theta - \theta)\right)
+$$
+
+where $s$ = sugar, $w$ = winter reserve, $\theta$ = current starch, $\Theta$ =
+starch capacity.
+
+```{r safe-to-starch}
+safe_to_starch_transfer <- function(sugar, winter, starch, max_capacity) {
+  S             <- max(sugar - winter, 0)
+  capacity_free <- max(max_capacity - starch, 0)
+
+  synthesis     <- 0.3 * S
+
+  remobilization <- 0
+  if (sugar < winter) {
+    remobilization <- min(starch, 0.3 * (winter - sugar))
+  }
+
+  flux <- synthesis - remobilization
+  flux <- min(flux, S)             # cannot store more sugar than is available
+  flux <- min(flux, capacity_free) # cannot exceed starch capacity
+  flux <- max(flux, -starch)       # cannot drain more starch than exists
+  flux
+}
+
+# Vectorised for plotting
+stt_vec <- function(sugar, winter, starch, max_capacity) {
+  mapply(safe_to_starch_transfer, sugar, winter, starch, max_capacity)
+}
+
+sugar_vals <- seq(0, 1, length.out = 200)
+winter_fixed  <- 0.2
+max_cap       <- 1.0
+
+par(mfrow = c(1, 2))
+plot(sugar_vals, stt_vec(sugar_vals, winter_fixed, 0.25, max_cap),
+     type = "l", col = "yellow3", ylim = c(-0.2, 0.3),
+     xlab = "Sugar (kg C)", ylab = "Net flux to starch (kg C)",
+     main = "Net flux vs sugar\n(max_capacity = 1.0, winter = 0.2)")
+lines(sugar_vals, stt_vec(sugar_vals, winter_fixed, 0.50, max_cap), col = "orange")
+lines(sugar_vals, stt_vec(sugar_vals, winter_fixed, 0.75, max_cap), col = "red")
+abline(v = winter_fixed, lty = 2, col = "grey50"); abline(h = 0, lty = 2, col = "grey50")
+legend("topleft", legend = c("Starch = 0.25", "Starch = 0.50", "Starch = 0.75"),
+       col = c("yellow3", "orange", "red"), lty = 1, bty = "n", cex = 0.8)
+
+starch_fixed <- 0.5
+plot(sugar_vals, stt_vec(sugar_vals, 0.1, starch_fixed, max_cap),
+     type = "l", col = "blue", ylim = c(-0.2, 0.3),
+     xlab = "Sugar (kg C)", ylab = "Net flux to starch (kg C)",
+     main = "Effect of winter reserve w\n(starch = 0.5, max_capacity = 1.0)")
+lines(sugar_vals, stt_vec(sugar_vals, 0.2, starch_fixed, max_cap))
+lines(sugar_vals, stt_vec(sugar_vals, 0.4, starch_fixed, max_cap), col = "red")
+abline(h = 0, lty = 2, col = "grey50")
+legend("topleft", legend = c("w = 0.1", "w = 0.2", "w = 0.4"),
+       col = c("blue", "black", "red"), lty = 1, bty = "n", cex = 0.8)
+par(mfrow = c(1, 1))
+```
+
+### Seasonal behaviour using 2015 weather
+
+The daily winter reserve from Section 2 is used to drive the flux, with sugar
+and starch pools held constant to isolate the seasonal pattern:
+
+```{r starch-seasonal}
+flux_series <- stt_vec(0.4, w, 0.3, 1.0)
+
+plot(doy, flux_series, type = "l", col = "steelblue", lwd = 2,
+     xlab = "Day of year (Hyytiälä 2015)", ylab = "Net flux to starch (kg C)",
+     main = "Daily sugar→starch flux driven by real winter reserve\n(sugar = 0.4, starch = 0.3, capacity = 1.0)")
+abline(h = 0, lty = 2, col = "grey50")
+lines(doy, w * 0.3, col = "grey70", lty = 3)
+legend("topright", legend = c("Net flux to starch", "Winter reserve w (×0.3, for scale)"),
+       col = c("steelblue", "grey70"), lty = c(1, 3), bty = "n", cex = 0.8)
+```
+
+---
+
+## 4  Sugar–starch flux: prototype Michaelis–Menten formulation
+
+The function below was an earlier prototype using Michaelis–Menten scalers for
+both the availability of surplus sugar and the remaining storage capacity. It is
+retained here for comparison and exploration; the C++ uses the simpler linear
+formulation in Section 3.
+
+```{r F-function-def}
+F_function <- function(Ss, St, V, Theta, A0, delta, eps = 1e-6) {
+  s           <- pmax(0, Ss - V)
+  K_s         <- 0.25 * Theta
+  sigma_s     <- s / (s + K_s)
+  Theta_free  <- pmax(0, Theta - St)
+  sigma_Theta <- Theta_free / (Theta_free + eps)
+  F_syn <- A0    * sigma_s       * sigma_Theta
+  F_rem <- delta * St * (1 - sigma_s)
+  F_syn - F_rem
+}
+```
+
+```{r F-function-plots, fig.height=4}
+V <- 0.1; Theta <- 1.0; A0 <- 0.9; delta <- 0.9
+starch <- seq(0, 1, length.out = 200)
+
+par(mfrow = c(1, 2))
+plot(sugar_vals, F_function(sugar_vals, 0.25, V, Theta, A0, delta),
+     type = "l", col = "yellow3", ylim = c(-1, 1),
+     xlab = "Sugar (kg C)", ylab = "Net flux to starch",
+     main = "Prototype: flux vs sugar\n(Michaelis–Menten scalers)")
+lines(sugar_vals, F_function(sugar_vals, 0.50, V, Theta, A0, delta), col = "orange")
+lines(sugar_vals, F_function(sugar_vals, 0.75, V, Theta, A0, delta), col = "red")
+abline(h = 0, lty = 2, col = "grey50")
+legend("topleft", legend = c("St = 0.25", "St = 0.50", "St = 0.75"),
+       col = c("yellow3", "orange", "red"), lty = 1, bty = "n", cex = 0.8)
+
+plot(starch, F_function(0.25, starch, V, Theta, A0, delta),
+     type = "l", col = "yellow3", ylim = c(-1, 1),
+     xlab = "Starch (kg C)", ylab = "Net flux to starch",
+     main = "Prototype: flux vs starch")
+lines(starch, F_function(0.50, starch, V, Theta, A0, delta), col = "orange")
+lines(starch, F_function(0.75, starch, V, Theta, A0, delta), col = "red")
+abline(h = 0, lty = 2, col = "grey50")
+legend("topright", legend = c("Ss = 0.25", "Ss = 0.50", "Ss = 0.75"),
+       col = c("yellow3", "orange", "red"), lty = 1, bty = "n", cex = 0.8)
+par(mfrow = c(1, 1))
+```
+
+---
+
+## 5  Mycorrhizal nitrogen transfer
+
+**C++ equivalent:** `nitrogen_transfer_from_mycorrhiza()` in `sugar_model.cpp`
+
+The fraction of mycorrhizal nitrogen transferred to the tree is a Michaelis–
+Menten saturating function of the sugar exported to the fungi:
+
+$$
+f_m(S_m) = \frac{S_m}{S_m + \beta_m}
+$$
+
+The C++ implementation hardcodes $\beta_m = 5 \times 10^{-5}$ (`sugar_half_saturation`).
+
+```{r f-mycorrhiza}
+f_m <- function(S_m, beta_m = 0.00005) S_m / (S_m + beta_m)
+
+S_m_vals <- seq(0, 0.001, length.out = 200)
+
+beta_vals <- c(0.00005, 0.0002, 0.001)
+cols      <- c("blue", "orange", "red")
+
+plot(S_m_vals, f_m(S_m_vals, beta_vals[1]), type = "l", col = cols[1], lwd = 2,
+     ylim = c(0, 1),
+     xlab = "Sugar transferred to mycorrhiza (kg C)",
+     ylab = "Fraction of mycorrhizal N transferred",
+     main = sprintf("Mycorrhizal N transfer (C++ default β_m = %.5f)", 0.00005))
+for (i in 2:length(beta_vals)) {
+  lines(S_m_vals, f_m(S_m_vals, beta_vals[i]), col = cols[i], lwd = 2)
+}
+legend("bottomright",
+       legend = sapply(beta_vals, function(b) bquote(beta[m] == .(b))),
+       col = cols, lwd = 2, bty = "n")
+```
+
+---
+
+## 6  Mycorrhizal and starch seasonality
+
+**C++ equivalent:** inline in `sugar_model()` in `sugar_model.cpp`
+
+The C++ model uses two hardcoded logistic functions to scale mycorrhizal
+allocation and starch demand through the growing season. These are not separate
+C++ functions — they are computed inline inside `sugar_model()`.
+
+**Mycorrhizal allocation seasonality** (sugar_model.cpp lines 416–418):
+
+```cpp
+double spring = 1.0 / (1.0 + exp(-0.075 * (day - 130)));
+double autumn = 1.0 / (1.0 + exp( 0.075 * (day - 220)));
+double allocation = spring * autumn;
+```
+
+**Starch demand seasonality** (line 606) uses a slightly earlier autumn cutoff
+(day 200 instead of 220):
+
+```cpp
+double star = 1.0 / (1.0 + exp(-0.075 * (day - 130)))
+            * 1.0 / (1.0 + exp( 0.075 * (day - 200)));
+```
+
+```{r myco-seasonality}
+spring    <- 1 / (1 + exp(-0.075 * (doy - 130)))
+autumn    <- 1 / (1 + exp( 0.075 * (doy - 220)))
+myco_seas <- spring * autumn
+
+star <- 1 / (1 + exp(-0.075 * (doy - 130))) *
+        1 / (1 + exp( 0.075 * (doy - 200)))
+
+plot(doy, myco_seas, type = "l", col = "blue", lwd = 2,
+     ylim = c(0, 1), xlab = "Day of year (Hyytiälä 2015)",
+     ylab = "Seasonality scaling (0–1)",
+     main = "C++ inline seasonality scalers")
+lines(doy, star, col = "red", lwd = 2, lty = 2)
+legend("topright",
+       legend = c("Mycorrhizal allocation (autumn cutoff day 220)",
+                  "Starch demand (autumn cutoff day 200)"),
+       col = c("blue", "red"), lwd = 2, lty = c(1, 2), bty = "n", cex = 0.9)
+```
+
+### Seasonality with Hyytiälä 2015 temperature
+
+```{r myco-with-weather, fig.height=4}
+par(mar = c(5, 4, 4, 4) + 0.1)
+plot(doy, weather_2015$T, type = "l", col = "grey60",
+     xlab = "Day of year (2015)", ylab = "Temperature (°C)",
+     main = "Mycorrhizal seasonality vs 2015 temperature")
+par(new = TRUE)
+plot(doy, myco_seas, type = "l", col = "blue", lwd = 2,
+     axes = FALSE, xlab = "", ylab = "")
+axis(side = 4, col.axis = "blue")
+mtext("Seasonality scaling", side = 4, line = 3, col = "blue")
+legend("topleft", legend = c("Temperature (°C)", "Myco seasonality"),
+       col = c("grey60", "blue"), lty = 1, lwd = c(1, 2), bty = "n")
+```

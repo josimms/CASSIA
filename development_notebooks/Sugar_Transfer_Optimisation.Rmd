@@ -1,0 +1,271 @@
+---
+title: "Below-ground sugar allocation: nitrogen-feedback optimisation"
+author: "Joanna"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
+                      fig.width = 9, fig.height = 4)
+library(Rsolnp)
+library(ggplot2)
+library(reshape2)
+library(viridis)
+library(gridExtra)
+```
+
+## Background
+
+CASSIA includes an organ-level sugar model (Sperling et al. 2019) that tracks
+non-structural carbohydrate pools in needles, phloem, xylem, and roots. The
+full transfer equations are given in the CASSIA Instruction Booklet
+(§ Sugar and starch transfer). In brief, each organ exchanges sugar with the
+phloem via a concentration-gradient diffusion term, and growth and respiration
+draw down the pool each day.
+
+One open question in that framework is how much sugar the tree should allocate
+**below ground** — to the root nitrogen-uptake pathway versus to mycorrhizal
+fungi — and whether that allocation should be driven by a fixed proportion of
+the phloem pool or by a target nitrogen demand. The Instruction Booklet
+describes two strategies (§ Below-ground allocation):
+
+1. **Empirical fixed fraction**: approximately 30% of phloem sugar is
+   exported below ground, matching measured carbohydrate budgets. This is the
+   current default in the model.
+
+2. **Nitrogen-feedback**: the below-ground allocation is chosen to meet a
+   nitrogen uptake target, minimising total carbon spent. If the target cannot
+   be met within the available carbon budget, the tree maximises nitrogen
+   uptake instead.
+
+This notebook explores the second strategy. It formulates and solves the
+nitrogen-feedback allocation as a constrained optimisation, then shows how
+the solution changes across the space of root and mycorrhizal nitrogen
+uptake capacities.
+
+## Model formulation
+
+Let $c_s$ (g C) be the carbon allocated to the root nitrogen-uptake pathway
+and $c_m$ (g C) be the carbon allocated to mycorrhizal fungi. These appear
+as $c_s^{Ss}$ and $c_m^{Ss}$ respectively in the phloem sugar equation
+(Instruction Booklet, Eq. for $dc_{\text{phl}}^{Ss}/dt$).
+
+Total nitrogen uptake is
+
+$$
+N(c_s,\, c_m) = \frac{c_s}{c_s + c_m + \varepsilon}\, N_r \;+\; \frac{c_m}{c_m + \beta_m}\, N_m
+$$
+
+where:
+
+| Symbol | Meaning | Units |
+|--------|---------|-------|
+| $N_r$ | Maximum nitrogen uptake rate via roots | g N |
+| $N_m$ | Maximum nitrogen uptake rate via mycorrhizal fungi | g N |
+| $\beta_m$ | Michaelis–Menten half-saturation constant for mycorrhizal uptake | g C |
+| $\varepsilon$ | Small regularisation constant preventing division by zero | — |
+
+The first term describes root uptake: the fraction of below-ground carbon going
+to the root pathway scales the available root nitrogen supply. The second term
+describes mycorrhizal uptake using Michaelis–Menten kinetics, reflecting that
+fungal nitrogen acquisition saturates at high carbon investment.
+
+The optimisation is:
+
+$$
+\min_{c_s,\, c_m} \; (c_s + c_m)
+\quad \text{subject to} \quad
+N(c_s, c_m) = N_T, \quad c_s + c_m \leq c_I, \quad c_s, c_m \geq 0
+$$
+
+where $N_T$ is the nitrogen demand and $c_I$ is the total carbon available for
+below-ground allocation. If no feasible point exists (i.e. $N_T$ cannot be
+reached within the carbon budget), the problem switches to maximising $N$
+subject only to the budget constraint.
+
+---
+
+## Single-scenario optimisation
+
+The example below uses fixed parameter values to illustrate how the optimiser
+finds the minimum-carbon allocation that meets a nitrogen target.
+
+```{r single-opt}
+N_r    <- 10     # root N uptake capacity (g N)
+N_m    <- 100    # mycorrhizal N uptake capacity (g N)
+epsilon <- 1e-6  # numerical regularisation
+beta_m  <- 0.1   # Michaelis-Menten half-saturation (g C)
+N_T    <- 8      # nitrogen demand (g N)
+c_I    <- 5      # carbon available for below-ground allocation (g C)
+
+N_fun <- function(c) {
+  c_s <- c[1]; c_m <- c[2]
+  (c_s / (c_s + c_m + epsilon)) * N_r +
+    (c_m / (c_m + beta_m)) * N_m
+}
+
+# Step 1: minimise carbon spend while meeting nitrogen target
+res1 <- try(
+  solnp(
+    pars   = c(0.1, 0.1),
+    fun    = function(c) sum(c),
+    eqfun  = function(c) N_fun(c) - N_T,
+    eqB    = 0,
+    ineqfun = function(c) c_I - sum(c),
+    ineqLB = 0,
+    ineqUB = Inf,
+    LB = c(0, 0),
+    UB = c(c_I, c_I)
+  ),
+  silent = TRUE
+)
+
+if (!inherits(res1, "try-error") && abs(N_fun(res1$pars) - N_T) < 1e-4) {
+  c_opt <- res1$pars
+  mode  <- "Target nitrogen met — minimum carbon solution."
+} else {
+  # Step 2: target infeasible; maximise achievable nitrogen
+  res2 <- solnp(
+    pars    = c(0.1, 0.1),
+    fun     = function(c) -N_fun(c),
+    ineqfun = function(c) c_I - sum(c),
+    ineqLB  = 0,
+    ineqUB  = Inf,
+    LB = c(0, 0),
+    UB = c(c_I, c_I)
+  )
+  c_opt <- res2$pars
+  mode  <- "Target nitrogen NOT achievable within budget — nitrogen maximised."
+}
+
+cat(mode, "\n\n")
+cat(sprintf("  Root pathway carbon  c_s = %.4f g C\n", c_opt[1]))
+cat(sprintf("  Mycorrhizal carbon   c_m = %.4f g C\n", c_opt[2]))
+cat(sprintf("  Total carbon spent       = %.4f g C\n", sum(c_opt)))
+cat(sprintf("  Nitrogen achieved        = %.4f g N\n", N_fun(c_opt)))
+```
+
+The solution shows that, with these parameter values, the nitrogen target can
+be met by preferentially investing in the mycorrhizal pathway (large $c_m$),
+which has a higher maximum uptake capacity ($N_m = 100$) but saturates. A
+small root-pathway investment ($c_s$) is still needed because the root term
+provides nitrogen proportional to the carbon fraction it receives.
+
+---
+
+## Sensitivity to uptake capacities $N_r$ and $N_m$
+
+In practice, $N_r$ and $N_m$ vary with soil nitrogen availability, root
+architecture, and fungal community composition. The heatmaps below show how
+the optimal allocation ($c_s^*$, $c_m^*$) changes across the two-dimensional
+space of these uptake capacities, with all other parameters held at the
+single-scenario values.
+
+### Method
+
+For each $(N_r, N_m)$ combination the constraint set is scanned over a fine
+grid of $c_m$ values; for each $c_m$ the equality $N(c_s, c_m) = N_T$ is
+solved analytically for $c_s$. If any feasible point exists the minimum-carbon
+pair is selected. If no feasible point exists the maximum-nitrogen allocation
+is found by brute force over the budget boundary.
+
+```{r sensitivity-grid, cache=TRUE}
+N_r_vals <- seq(0, 10, length.out = 50)
+N_m_vals <- seq(0, 10, length.out = 50)
+grid     <- expand.grid(N_r = N_r_vals, N_m = N_m_vals)
+
+grid$c_s_opt   <- NA_real_
+grid$c_m_opt   <- NA_real_
+grid$N_achieved <- NA_real_
+
+c_m_seq <- seq(0, c_I, length.out = 500)
+
+for (i in seq_len(nrow(grid))) {
+  N_r_i <- grid$N_r[i]
+  N_m_i <- grid$N_m[i]
+
+  feasible <- data.frame(c_s = numeric(0), c_m = numeric(0))
+
+  for (c_m in c_m_seq) {
+    term2 <- (c_m / (c_m + beta_m)) * N_m_i
+    if (N_r_i == 0) {
+      if (abs(term2 - N_T) < 1e-6) c_s <- 0 else next
+    } else {
+      c_s <- (N_T - term2) * (c_m + epsilon) / (N_r_i - (N_T - term2))
+    }
+    if (is.na(c_s) || c_s < 0 || c_s + c_m > c_I) next
+    feasible <- rbind(feasible, data.frame(c_s = c_s, c_m = c_m))
+  }
+
+  if (nrow(feasible) > 0) {
+    best_idx         <- which.min(feasible$c_s + feasible$c_m)
+    grid$c_s_opt[i]  <- feasible$c_s[best_idx]
+    grid$c_m_opt[i]  <- feasible$c_m[best_idx]
+    grid$N_achieved[i] <- N_T
+  } else {
+    # Budget insufficient for N_T — find the maximum achievable N
+    best_N <- -Inf; best_cs <- NA; best_cm <- NA
+    for (c_m in c_m_seq) {
+      max_cs <- c_I - c_m
+      if (max_cs < 0) next
+      N_try <- (max_cs / (max_cs + c_m + epsilon)) * N_r_i +
+               (c_m / (c_m + beta_m)) * N_m_i
+      if (N_try > best_N) { best_N <- N_try; best_cs <- max_cs; best_cm <- c_m }
+    }
+    grid$c_s_opt[i]   <- best_cs
+    grid$c_m_opt[i]   <- best_cm
+    grid$N_achieved[i] <- best_N
+  }
+}
+```
+
+### Optimal carbon allocation heatmaps
+
+White cells indicate parameter combinations for which the nitrogen target
+$N_T = `r N_T`$ g N cannot be met even at the full carbon budget $c_I =
+`r c_I`$ g C.
+
+```{r sensitivity-plots, fig.height=4}
+c_s_melt <- melt(grid, id.vars = c("N_r", "N_m"), measure.vars = "c_s_opt")
+c_m_melt <- melt(grid, id.vars = c("N_r", "N_m"), measure.vars = "c_m_opt")
+
+p1 <- ggplot(c_s_melt, aes(x = N_r, y = N_m, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma", na.value = "white") +
+  labs(title = "Optimal root-pathway carbon (c_s)",
+       subtitle = "White = N target infeasible",
+       x = "Root N capacity (N_r)", y = "Mycorrhizal N capacity (N_m)",
+       fill = "c_s (g C)") +
+  theme_minimal()
+
+p2 <- ggplot(c_m_melt, aes(x = N_r, y = N_m, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c(option = "plasma", na.value = "white") +
+  labs(title = "Optimal mycorrhizal carbon (c_m)",
+       subtitle = "White = N target infeasible",
+       x = "Root N capacity (N_r)", y = "Mycorrhizal N capacity (N_m)",
+       fill = "c_m (g C)") +
+  theme_minimal()
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+### Interpretation
+
+- **High $N_r$, low $N_m$** (top-left region): the root pathway is efficient;
+  the optimiser invests more in $c_s$ and keeps $c_m$ small.
+- **Low $N_r$, high $N_m$** (bottom-right region): mycorrhizal uptake is the
+  dominant pathway; $c_m$ is large and $c_s$ is minimal.
+- **Both low** (bottom-left): neither pathway can reach $N_T$ within the
+  carbon budget (white); the tree would need to either accept a nitrogen
+  shortfall or increase $c_I$.
+- **Both high** (top-right): the target is reachable at low total carbon cost,
+  leaving more sugar available for growth and respiration in the phloem pool.
+
+These patterns directly inform how the nitrogen-feedback strategy would
+modulate phloem sugar export ($c_s^{Ss}$ and $c_m^{Ss}$ in the Instruction
+Booklet equations) relative to the empirical fixed-fraction default.
