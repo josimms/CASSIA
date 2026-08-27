@@ -1,36 +1,273 @@
 ---
-title: "Tests: C++ against R"
+title: "Tests: C++ against original R model"
 author: "Joanna"
-output: html_document
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.width = 12, fig.height = 5)
 ```
 
-## The basic settings
+## What this document tests
 
-Note: here I compare the values against the original weather data that came with CASSIA originally.
+The CASSIA model was originally written in R and then translated into C++.
+This notebook checks that the C++ version produces the same outputs as the
+original R model, using the stored reference output `Hyde_daily_original`
+(Hyytiälä site, 2015–2018).
 
-Import the weather from the original datafiles
+The weather data used here (`weather_original`) covers 2015–2017.  A `dates`
+column is constructed from the day-of-year (`X`) column before the model is
+run.
 
-``` {r}
-weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
-weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+```{r load-and-run}
+library(CASSIA)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(knitr)
 
-plot_weather_variables(weather_original)
+data("weather_original")
+data("Hyde_daily_original")
+
+# Build the dates column (2016 is a leap year: 365 + 366 + 365 = 1096 rows)
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+           format = "%Y %j"))
+
+# Run with tests = TRUE so LH/LN are fixed to the calibrated values used in
+# the original R model
+out <- CASSIA_cpp(weather = weather_original, site = "Hyde", tests = TRUE)
+
+# Trim reference to matching years
+orig <- Hyde_daily_original[Hyde_daily_original$year %in% 2015:2017, ]
+orig$dates <- as.Date(strptime(paste(orig$year, orig$day), format = "%Y %j"))
+
+new_g  <- out$Growth
+new_g$dates  <- weather_original$dates
+new_su <- out$Sugar
+new_su$dates <- weather_original$dates
 ```
 
-## Compare against the original data
+---
 
-```{r}
-CASSIA_Hyde <- CASSIA_cpp(weather_original, "Hyde", tests = TRUE)
+## 1  Summary metrics
 
-variables_original <- c("bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "Rg", "Rm", "P") # TODO: check if I want more, and that these are equivalent!
-variables_new <- c("bud_growth", "diameter_growth", "needle_growth", "root_growth", "height_growth", "respiration_growth", "respiration_maintenance", "GPP")
+The table below compares the **annual means** of each output variable.
+`ratio` = C++ mean / original mean; values near 1.0 indicate a good match.
 
-Hyde_daily_original_plot <- Hyde_daily_original
+The C++ model distinguishes *potential* growth (driven by temperature and
+phenology only) from *actual* growth (potential × carbon-storage term).
+The original R model only computed potential growth, so the meaningful
+comparison is against the `*_potential` columns.
 
-plot_comparison(CASSIA_Hyde, variables_new, Hyde_daily_original, variables_original, soil_processes = FALSE)
+```{r metrics-table}
+make_row <- function(new_col, orig_col, label) {
+  nm <- mean(aligned[[new_col]], na.rm = TRUE)
+  om <- mean(aligned[[orig_col]],  na.rm = TRUE)
+  data.frame(Variable = label,
+             `C++ mean`  = round(nm, 6),
+             `Orig mean` = round(om, 6),
+             Ratio       = round(nm / om, 4),
+             check.names = FALSE)
+}
+
+# Align on date so the leap-year row difference doesn't cause length errors
+aligned <- merge(
+  new_g,
+  orig[, c("dates", "bud", "wall_daily", "needle_daily", "root_daily", "height_daily", "P",
+           "sugar", "starch", "storage_term", "Rg", "Rm")],
+  by = "dates"
+)
+
+metrics <- rbind(
+  make_row("bud_growth",    "bud",          "Bud growth (actual)"),
+  make_row("diameter_growth","wall_daily",  "Diameter growth (actual)"),
+  make_row("needle_growth", "needle_daily", "Needle growth (actual)"),
+  make_row("root_growth",   "root_daily",   "Root growth (actual)"),
+  make_row("height_growth", "height_daily", "Height growth (actual)"),
+  make_row("bud_growth_potential",    "bud",          "Bud growth (potential)"),
+  make_row("wall_growth_potential",   "wall_daily",   "Diameter growth (potential)"),
+  make_row("needle_growth_potential", "needle_daily", "Needle growth (potential)"),
+  make_row("roots_growth_potential",  "root_daily",   "Root growth (potential)"),
+  make_row("height_growth_potential", "height_daily", "Height growth (potential)")
+)
+
+# GPP: weather P is in g C m-2 day-1; Hyde_daily stores per-stem value
+# (P / no_trees * 10000/1000)
+no_trees <- 1010
+metrics <- rbind(
+  metrics,
+  data.frame(Variable   = "GPP (per stem, scaled)",
+             `C++ mean` = round(mean(out$Preles$GPP / no_trees * 10, na.rm = TRUE), 6),
+             `Orig mean` = round(mean(orig$P, na.rm = TRUE), 6),
+             Ratio       = round(mean(out$Preles$GPP / no_trees * 10, na.rm = TRUE) /
+                                 mean(orig$P, na.rm = TRUE), 4),
+             check.names = FALSE)
+)
+
+kable(metrics, align = c("l", "r", "r", "r"),
+      caption = "Mean values over 2015–2017; ratio = C++ / original")
 ```
 
+---
+
+## 2  Growth variables: time series
+
+Each panel shows the C++ output (red) against the original R model (black).
+The shaded period in January–February of each year illustrates where growth
+is zero for both models (cold dormancy).
+
+```{r growth-plots, fig.height = 14}
+# 'aligned' was already built in the metrics chunk above.
+model_colours <- c("Original R" = "black", "C++" = "firebrick")
+
+plot_pair <- function(new_col, orig_col, title, units = "kg C stem⁻¹ day⁻¹") {
+  df <- data.frame(
+    dates = rep(aligned$dates, 2),
+    value = c(aligned[[orig_col]], aligned[[new_col]]),
+    Model = rep(c("Original R", "C++"), each = nrow(aligned))
+  )
+  ggplot(df, aes(x = dates, y = value, colour = Model)) +
+    geom_line(linewidth = 1.1) +
+    scale_colour_manual(values = model_colours) +
+    scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+    labs(title = title, x = NULL, y = units, colour = NULL) +
+    theme_bw(base_size = 11) +
+    theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+}
+
+p1 <- plot_pair("bud_growth",    "bud",          "Bud growth")
+p2 <- plot_pair("diameter_growth","wall_daily",  "Diameter (wall) growth")
+p3 <- plot_pair("needle_growth", "needle_daily", "Needle growth")
+p4 <- plot_pair("root_growth",   "root_daily",   "Root growth")
+p5 <- plot_pair("height_growth", "height_daily", "Height growth", units = "m day⁻¹")
+
+(p1 / p2 / p3 / p4 / p5) + plot_layout(ncol = 1, guides = "collect") &
+  theme(legend.position = "bottom")
+```
+
+---
+
+## 3  Carbon storage
+
+```{r storage-plots, fig.height = 8}
+df_stor <- data.frame(
+  dates        = aligned$dates,
+  cpp_sugar    = new_su$sugar[match(aligned$dates, weather_original$dates)],
+  cpp_starch   = new_su$starch[match(aligned$dates, weather_original$dates)],
+  cpp_storage  = new_su$storage[match(aligned$dates, weather_original$dates)],
+  orig_sugar   = aligned$sugar,
+  orig_starch  = aligned$starch,
+  orig_storage = aligned$storage_term
+)
+
+stor_colours <- c("Original R" = "black", "C++" = "firebrick")
+
+make_stor_long <- function(cpp_col, orig_col) {
+  data.frame(
+    dates = rep(df_stor$dates, 2),
+    value = c(df_stor[[orig_col]], df_stor[[cpp_col]]),
+    Model = rep(c("Original R", "C++"), each = nrow(df_stor))
+  )
+}
+
+ps1 <- ggplot(make_stor_long("cpp_sugar",   "orig_sugar"),
+              aes(x = dates, y = value, colour = Model)) +
+  geom_line(linewidth = 1.1) +
+  scale_colour_manual(values = stor_colours) +
+  labs(title = "Sugar pool", x = NULL, y = "kg C stem⁻¹", colour = NULL) +
+  theme_bw(base_size = 11) + theme(plot.title = element_text(face = "bold"),
+                                   legend.position = "bottom")
+
+ps2 <- ggplot(make_stor_long("cpp_starch",  "orig_starch"),
+              aes(x = dates, y = value, colour = Model)) +
+  geom_line(linewidth = 1.1) +
+  scale_colour_manual(values = stor_colours) +
+  labs(title = "Starch pool", x = NULL, y = "kg C stem⁻¹", colour = NULL) +
+  theme_bw(base_size = 11) + theme(plot.title = element_text(face = "bold"),
+                                   legend.position = "bottom")
+
+ps3 <- ggplot(make_stor_long("cpp_storage", "orig_storage"),
+              aes(x = dates, y = value, colour = Model)) +
+  geom_line(linewidth = 1.1) +
+  scale_colour_manual(values = stor_colours) +
+  labs(title = "Storage term (carbon availability fraction, 0–1)",
+       x = NULL, y = "fraction", colour = NULL) +
+  theme_bw(base_size = 11) + theme(plot.title = element_text(face = "bold"),
+                                   legend.position = "bottom")
+
+(ps1 / ps2 / ps3) + plot_layout(ncol = 1, guides = "collect") &
+  theme(legend.position = "bottom")
+```
+
+---
+
+## 4  GPP
+
+The `weather_original$P` column (g C m⁻² day⁻¹) is passed through unchanged
+and stored in `Preles$GPP`.  The original model stored this divided by
+`no_trees × (10000/1000)` to give per-stem GPP.  The comparison below
+applies that scaling.
+
+```{r gpp-plot}
+df_gpp <- data.frame(
+  dates    = aligned$dates,
+  cpp_gpp  = out$Preles$GPP[match(aligned$dates, weather_original$dates)] / no_trees * 10,
+  orig_gpp = aligned$P
+)
+
+df_gpp_long <- data.frame(
+  dates = rep(df_gpp$dates, 2),
+  value = c(df_gpp$orig_gpp, df_gpp$cpp_gpp),
+  Model = rep(c("Original R", "C++ (weather P / no_trees × 10)"), each = nrow(df_gpp))
+)
+
+ggplot(df_gpp_long, aes(x = dates, y = value, colour = Model)) +
+  geom_line(linewidth = 1.1) +
+  scale_colour_manual(values = c("Original R" = "black",
+                                 "C++ (weather P / no_trees × 10)" = "firebrick")) +
+  labs(title = "GPP per stem", x = NULL, y = "kg C stem⁻¹ day⁻¹", colour = NULL) +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+```
+
+---
+
+## 5  Potential vs actual growth
+
+The C++ model adds an *actual growth* step that multiplies potential growth
+by a carbon-storage availability term (`storage_term`, range 0–1).  With
+correct initialisation the storage term is very close to 1.0 throughout the
+growing season, so actual and potential growth track each other closely.
+The panels below show where carbon limitation would reduce growth.
+
+```{r actual-vs-potential, fig.height = 8}
+pot_act_cols <- c("Potential" = "grey50", "Actual" = "firebrick")
+
+make_pot_act <- function(pot_col, act_col, title) {
+  df <- data.frame(
+    dates = rep(aligned$dates, 2),
+    value = c(aligned[[pot_col]], aligned[[act_col]]),
+    Type  = rep(c("Potential", "Actual"), each = nrow(aligned))
+  )
+  ggplot(df, aes(x = dates, y = value, colour = Type)) +
+    geom_line(linewidth = 1.1) +
+    scale_colour_manual(values = pot_act_cols) +
+    scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+    labs(title = title, x = NULL, y = "kg C stem⁻¹ day⁻¹", colour = NULL) +
+    theme_bw(base_size = 11) +
+    theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+}
+
+pa1 <- make_pot_act("bud_growth_potential",    "bud_growth",    "Bud growth")
+pa2 <- make_pot_act("needle_growth_potential", "needle_growth", "Needle growth")
+
+(pa1 / pa2) + plot_layout(ncol = 1, guides = "collect") &
+  theme(legend.position = "bottom")
+```
