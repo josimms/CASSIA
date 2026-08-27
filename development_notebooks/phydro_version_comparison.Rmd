@@ -1,5 +1,5 @@
 ---
-title: "Photosynthesis Sub-model Comparison: Original vs PRELES vs p-hydro (Boreal)"
+title: "Photosynthesis sub-models: SPP, PRELES, and p-hydro"
 author: "Joanna"
 date: "`r Sys.Date()`"
 output:
@@ -15,24 +15,24 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
 
 ## Overview
 
-This notebook compares CASSIA output when driven by three different sources
-of photosynthesis on the same boreal (ERA5) weather data:
+CASSIA can derive gross primary production (GPP) from three photosynthesis
+sub-models. Each makes different trade-offs between data requirements,
+mechanistic complexity, and ability to respond to climate variability:
 
-| Sub-model | Toggle | Approach |
-|-----------|--------|----------|
-| **Photosynthesis (Original)** | `photosynthesis_as_input = TRUE` | GPP taken directly from the `P` column of the weather data, which was pre-computed by the SPP (Scots Pine Process) model. This is the standard baseline used throughout CASSIA development. |
-| **PRELES** | `preles = TRUE` | Empirical light-use efficiency; driven by PAR, VPD, CO₂, fAPAR |
-| **p-hydro** | `phydro = TRUE` | Hydraulic optimality; driven by PPFD, VPD, SWP, atmospheric pressure |
+| Sub-model | Toggle | Driver | Key feature |
+|-----------|--------|--------|-------------|
+| **SPP (Original)** | `photosynthesis_as_input = TRUE` | Pre-computed GPP in weather `P` column | Calibrated to Hyytiälä; the standard development baseline |
+| **PRELES** | `preles = TRUE` | PAR, VPD, CO₂, fAPAR | Empirical light-use efficiency; `fAPAR_Tian = TRUE` improves seasonal shape |
+| **p-hydro** | `phydro = TRUE` | PPFD, VPD, SWP, atmospheric pressure | Hydraulic optimality; drought-sensitive |
 
-The key questions are:
+The key questions:
 
-1. How well do PRELES and p-hydro reproduce the SPP-generated baseline GPP?
-2. Does any GPP difference between models propagate into growth and ring width?
-3. Where do PRELES and p-hydro diverge from the original — early season,
+1. How well do PRELES and p-hydro reproduce the SPP baseline GPP?
+2. Does any GPP difference propagate into growth and ring width?
+3. Where do PRELES and p-hydro diverge from the original — spring onset,
    late season, drought events?
 
-The comparison plots use synthetic output that reflects the expected character
-of each model. Replace with real runs once the ERA5 input file is available.
+---
 
 ## Setup
 
@@ -55,9 +55,8 @@ model_cols <- c(
   "phydro"   = "#0072B2"
 )
 
-# Set TRUE only if the ERA5 data files are present on this machine.
-# All weather-loading and model-run chunks are gated on this flag, so the
-# notebook is safe to run interactively without the data files.
+# All weather-loading and model-run chunks are gated on this flag.
+# Set TRUE only when the ERA5 data files are present on this machine.
 DATA_AVAILABLE <- file.exists("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
 ```
 
@@ -65,14 +64,11 @@ DATA_AVAILABLE <- file.exists("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
 
 ## Weather data
 
-PRELES and p-hydro each require different weather columns, so two separate
-ERA5 files are used. The Original (SPP) run uses the built-in `weather_original`
-package data (2015–2017). SMEAR eddy covariance observations provide a
-validation reference.
+SPP uses the built-in `weather_original` (2015–2017). PRELES and p-hydro each
+require different ERA5 columns, so separate files are loaded. SMEAR eddy
+covariance GPP is used as an observational reference in the comparison plots.
 
-### Original (SPP) weather
-
-The built-in package dataset. No external file needed.
+### Original (SPP) — built-in package data
 
 ```{r weather-original, eval=DATA_AVAILABLE}
 data("weather_original")
@@ -83,33 +79,36 @@ weather_original$dates <- as.Date(
 
 ### ERA5 — PRELES run
 
-Contains `PAR`, `VPD`, `CO2`, `fAPAR`, and the standard core columns.
+Columns: `date`, `T`, `VPD`, `PAR`, `Rain`, `CO2`, `fAPAR`, `TSA`, `TSB`, `MB`.
 
 ```{r weather-preles, eval=DATA_AVAILABLE}
 weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
 names(weather_preles)[names(weather_preles) == "date"] <- "dates"
 weather_preles$dates <- as.Date(weather_preles$dates)
+# Restrict to the same 2015-2017 window as weather_original
+weather_preles <- weather_preles[format(weather_preles$dates, "%Y") %in% 2015:2017, ]
 ```
 
 ### ERA5 — p-hydro run
 
-Contains `PPFD`, `PPFD_max`, `PA`, `SWP` in addition to the core columns.
+Additional columns beyond PRELES: `PPFD`, `PPFD_max`, `SWP`. `Nitrogen` and
+`PA` are added here as placeholders; fit from deposition data if available.
 
 ```{r weather-phydro, eval=DATA_AVAILABLE}
 weather_phydro <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_phydro.csv")
 names(weather_phydro)[names(weather_phydro) == "date"] <- "dates"
 weather_phydro$dates    <- as.Date(weather_phydro$dates)
-weather_phydro$Nitrogen <- 1        # placeholder; fit if N deposition data available
+weather_phydro$Nitrogen <- 1        # placeholder
 weather_phydro$PA       <- 101325   # sea-level atmospheric pressure (Pa)
+# Restrict to the same 2015-2017 window as weather_original
+weather_phydro <- weather_phydro[format(weather_phydro$dates, "%Y") %in% 2015:2017, ]
 ```
 
 ### SMEAR eddy covariance observations
 
-Measured ecosystem GPP from the SMEAR II tower at Hyytiälä. This is used
-as an observational reference when comparing model GPP. Note that it
-represents ecosystem-level flux (all species), whereas the model output is
-for a single pine tree scaled to ground area; the difference is primarily
-due to stand composition and leaf area.
+Ecosystem GPP from the SMEAR II tower. Values are higher than the single-tree
+model output because eddy covariance integrates all species and stand-level
+leaf area; used here as a shape and magnitude reference.
 
 ```{r smear-obs, eval=DATA_AVAILABLE}
 smear <- data.table::fread("~/Documents/CASSIA/data/daily_dataframe.csv")
@@ -118,9 +117,9 @@ smear$Date <- as.Date(smear$Date)
 
 ### Weather comparison: ERA5 vs SMEAR station
 
-ERA5 reanalysis is used for long-term runs but carries systematic biases.
-The four panels below show how ERA5 compares to the observed SMEAR
-meteorological record for the overlapping 2015–2018 period.
+ERA5 reanalysis is used for long-term PRELES and p-hydro runs but can carry
+systematic biases. The four panels below show how ERA5 compares to the observed
+SMEAR meteorological record for 2015–2018.
 
 ```{r weather-comparison, eval=DATA_AVAILABLE}
 smear_meteo <- data.table::as.data.table(
@@ -137,56 +136,54 @@ names(smear_meteo) <- names(
 )
 smear_meteo$Date <- as.Date(smear_meteo$Date)
 
-weather_preles_plot <- weather_preles[
-  as.integer(format(weather_preles$date, "%Y")) %in% 2015:2018, ]
+era5_2015_2018 <- weather_preles[
+  as.integer(format(weather_preles$dates, "%Y")) %in% 2015:2018, ]
 
 p_par  <- ggplot() +
-  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$PAR,
-                colour = "ERA5")) +
-  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$PAR,
-                 colour = "SMEAR"), size = 0.5) +
+  geom_line(aes(x = era5_2015_2018$dates, y = era5_2015_2018$PAR, colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$PAR, colour = "SMEAR"),
+             size = 0.5) +
   scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
-  labs(x = NULL, y = "PAR (mol m⁻² day⁻¹)", colour = NULL) + theme_bw()
+  labs(x = NULL, y = "PAR", colour = NULL) + theme_bw()
 
 p_t    <- ggplot() +
-  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$T,
-                colour = "ERA5")) +
-  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$TA_F,
-                 colour = "SMEAR"), size = 0.5) +
+  geom_line(aes(x = era5_2015_2018$dates, y = era5_2015_2018$T, colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$TA_F, colour = "SMEAR"),
+             size = 0.5) +
   scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
   labs(x = NULL, y = "Temperature (°C)", colour = NULL) + theme_bw()
 
 p_rain <- ggplot() +
-  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$Rain,
-                colour = "ERA5")) +
-  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$P_F,
-                 colour = "SMEAR"), size = 0.5) +
+  geom_line(aes(x = era5_2015_2018$dates, y = era5_2015_2018$Rain, colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$P_F, colour = "SMEAR"),
+             size = 0.5) +
   scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
   labs(x = NULL, y = "Rain (mm day⁻¹)", colour = NULL) + theme_bw()
 
 p_vpd  <- ggplot() +
-  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$VPD,
-                colour = "ERA5")) +
-  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$VPD_F...8,
-                 colour = "SMEAR"), size = 0.5) +
+  geom_line(aes(x = era5_2015_2018$dates, y = era5_2015_2018$VPD, colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$`VPD_F...8`, colour = "SMEAR"),
+             size = 0.5) +
   scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
   labs(x = NULL, y = "VPD (kPa)", colour = NULL) + theme_bw()
 
 (p_par | p_t) / (p_rain | p_vpd) +
   plot_layout(guides = "collect") +
-  plot_annotation(title = "ERA5 vs SMEAR station weather (2015–2018)",
-                  subtitle = "ERA5 is used for model runs; SMEAR is the observed reference")
+  plot_annotation(
+    title    = "ERA5 vs SMEAR station weather (2015–2018)",
+    subtitle = "ERA5 is used for model runs; SMEAR is the observed reference"
+  )
 ```
 
 ---
 
 ## Model runs
 
-### Photosynthesis (Original)
+### Original (SPP)
 
-GPP comes directly from the `P` column of `weather_original`, which was
-generated by the SPP model. This is the standard input used throughout
-CASSIA development and acts as the baseline for this comparison.
+GPP is taken directly from the `P` column of `weather_original`, which was
+pre-computed by the SPP (Scots Pine Process) model. This is the calibrated
+baseline used throughout CASSIA development.
 
 ```{r original-run, eval=DATA_AVAILABLE}
 CASSIA_original <- CASSIA_cpp(
@@ -206,9 +203,9 @@ CASSIA_original <- CASSIA_cpp(
 
 ### PRELES
 
-`fAPAR_Tian = TRUE` enables the dynamic fAPAR scaling derived from the
-Tian et al. LAI product, which improves GPP seasonality relative to using
-a fixed fAPAR constant.
+`fAPAR_Tian = TRUE` applies a dynamic fAPAR derived from the Tian et al. LAI
+product. This improves the seasonality of GPP relative to a fixed fAPAR value
+by capturing the spring increase and autumn senescence of the canopy.
 
 ```{r preles-run, eval=DATA_AVAILABLE}
 CASSIA_preles <- CASSIA_cpp(
@@ -230,11 +227,11 @@ CASSIA_preles <- CASSIA_cpp(
 
 ### p-hydro
 
-The `phydro_param` vector contains calibrated hydraulic parameters. The
-p-hydro run uses a separate weather file that provides the required
-`PPFD`, `PPFD_max`, `PA`, and `SWP` columns. Note: `ecoevolutionary = TRUE`
-is not currently compiled into the package (`CASSIA_eeo` export is disabled
-in `src/ecoevolutionary.cpp`); use standard `phydro = TRUE` only.
+The calibrated `phydro_parameters_in` vector specifies the hydraulic parameters.
+A separate ERA5 file is used because p-hydro requires `PPFD`, `PPFD_max`, `SWP`,
+and `PA` columns that the PRELES file does not contain.
+Note: `ecoevolutionary = TRUE` is not currently compiled into the package
+(`CASSIA_eeo` export is disabled in `src/ecoevolutionary.cpp`).
 
 ```{r phydro-run, eval=DATA_AVAILABLE}
 phydro_parameters_in <- c(
@@ -263,132 +260,86 @@ CASSIA_phydro <- CASSIA_cpp(
 
 ---
 
-## Synthetic example output
+## Placeholder output (runs not yet available)
 
-Synthetic boreal output for 2015–2017. The series reflect the expected
-character of each source:
+The comparison plots below use synthetic data that reflects the expected
+character of each model. Replace the synthetic chunk with real output once
+the ERA5 files are present and the model runs above have completed.
 
-- **SMEAR (observed)**: ecosystem eddy covariance GPP from the Hyytiälä tower.
-  Higher than single-tree model output because it integrates all species
-  and stand-level canopy area; used here only as a shape reference.
-- **Original (SPP)**: smooth, process-based seasonal curve calibrated to
-  Hyytiälä; treated as the model baseline.
-- **PRELES**: similar shape to Original but independently driven by radiation
-  and LUE; slight offset due to different calibration.
-- **p-hydro**: responds additionally to VPD and soil water potential, causing
-  a 35% mid-summer depression in the dry year 2016.
-
-Replace `CASSIA_original`, `CASSIA_preles`, `CASSIA_phydro`, and `smear` with
-real model output and observations once the ERA5 files are available.
-
-```{r synthetic-data}
+```{r synthetic-data, eval=!DATA_AVAILABLE}
 set.seed(42)
 n    <- 1096
 year <- rep(2015:2017, times = c(365, 366, 365))
 doy  <- c(1:365, 1:366, 1:365)
 
-# ── SMEAR EC observations: ecosystem GPP, higher than single-tree model ───────
-# Eddy covariance integrates all species and stand LAI; used as shape reference
-gpp_smear <- pmax(0,
-  12.5 * exp(-((doy - 195)^2) / (2 * 65^2)) + rnorm(n, 0, 0.60)
-)
+gpp_smear <- pmax(0, 12.5 * exp(-((doy - 195)^2) / (2 * 65^2)) + rnorm(n, 0, 0.6))
 smear <- data.frame(
   Date     = as.Date(doy - 1, origin = paste0(year, "-01-01")),
   GPP_mean = gpp_smear
 )
 
-# ── Original (SPP): process-based reference ───────────────────────────────────
-gpp_original <- pmax(0,
-  10.2 * exp(-((doy - 192)^2) / (2 * 62^2)) + rnorm(n, 0, 0.20)
-)
-
-# ── PRELES: light-use efficiency, similar shape with its own calibration ──────
-gpp_preles <- pmax(0,
-  9.5 * exp(-((doy - 190)^2) / (2 * 60^2)) + rnorm(n, 0, 0.25)
-)
-
-# ── p-hydro: hydraulic optimality, drought-sensitive ─────────────────────────
-drought_penalty <- ifelse(
-  year == 2016 & doy >= 170 & doy <= 220,
-  0.65,   # 35% suppression during mid-summer dry spell in 2016
-  1.0
-)
-gpp_phydro <- pmax(0,
-  8.8 * exp(-((doy - 188)^2) / (2 * 58^2)) * drought_penalty +
-    rnorm(n, 0, 0.30)
-)
-
-# ── Growth: same allocation logic for all three, scaled by GPP ───────────────
 make_output <- function(gpp_vec) {
   set.seed(1)
   diam   <- pmax(0, 0.012 * exp(-((doy - 175)^2) / (2 * 30^2)) + rnorm(n, 0, 5e-4))
   needle <- pmax(0, 0.018 * exp(-((doy - 165)^2) / (2 * 25^2)) + rnorm(n, 0, 6e-4))
   root   <- pmax(0, 0.010 * exp(-((doy - 185)^2) / (2 * 40^2)) + rnorm(n, 0, 4e-4))
   height <- pmax(0, 0.008 * exp(-((doy - 160)^2) / (2 * 20^2)) + rnorm(n, 0, 3e-4))
-
   scale  <- gpp_vec / mean(gpp_vec, na.rm = TRUE)
-  diam   <- diam * scale; needle <- needle * scale
-  root   <- root * scale; height <- height * scale
-
+  diam <- diam * scale; needle <- needle * scale
+  root <- root * scale; height <- height * scale
   rw <- numeric(n); running <- 0; prev_yr <- year[1]
   for (i in seq_len(n)) {
     if (year[i] != prev_yr) { running <- 0; prev_yr <- year[i] }
-    running <- running + diam[i] * 0.12
-    rw[i]  <- running
+    running <- running + diam[i] * 0.12; rw[i] <- running
   }
-
   list(
-    Preles = data.frame(
-      GPP       = gpp_vec,
-      ET        = pmax(0, 2.5 * gpp_vec / 9 + rnorm(n, 0, 0.1)),
-      SoilWater = 0.25 + 0.05 * sin(2 * pi * doy / 365) + rnorm(n, 0, 0.01),
-      fAPAR     = rep(0.7, n)
-    ),
+    Preles = data.frame(GPP = gpp_vec),
     Growth = data.frame(
-      year                    = year, day = doy,
-      g                       = pmax(0, 1 / (1 + exp(-0.185 * (doy - 285)))),
-      bud_growth_potential    = diam * 0.3,
-      wall_growth_potential   = diam * 1.2,
-      needle_growth_potential = needle * 1.2,
-      roots_growth_potential  = root   * 1.1,
-      height_growth_potential = height * 1.1,
-      bud_growth              = diam * 0.3,
-      diameter_growth         = diam,  needle_growth = needle,
-      root_growth             = root,  height_growth = height,
+      year = year, day = doy,
+      diameter_growth         = diam,   needle_growth = needle,
+      root_growth             = root,   height_growth = height,
       respiration_growth      = pmax(0, 0.15 * gpp_vec + rnorm(n, 0, 0.03)),
       respiration_maintenance = pmax(0, 0.20 * gpp_vec + rnorm(n, 0, 0.02)),
-      ring_width              = rw,    mm_potenital  = rw * 1.2,
-      leaf_mass               = rep(3.8, n),
-      leaf_area               = rep(7.5, n)
+      ring_width              = rw
     )
   )
 }
 
-CASSIA_original <- make_output(gpp_original)
-CASSIA_preles   <- make_output(gpp_preles)
-CASSIA_phydro   <- make_output(gpp_phydro)
+CASSIA_original <- make_output(
+  pmax(0, 10.2 * exp(-((doy - 192)^2) / (2 * 62^2)) + rnorm(n, 0, 0.2))
+)
+CASSIA_preles <- make_output(
+  pmax(0,  9.5 * exp(-((doy - 190)^2) / (2 * 60^2)) + rnorm(n, 0, 0.25))
+)
+drought_penalty <- ifelse(year == 2016 & doy >= 170 & doy <= 220, 0.65, 1.0)
+CASSIA_phydro <- make_output(
+  pmax(0, 8.8 * exp(-((doy - 188)^2) / (2 * 58^2)) * drought_penalty + rnorm(n, 0, 0.3))
+)
 ```
 
 ---
 
-## Comparison
+## GPP comparison
 
-### 1. GPP time series
+### 1. Time series
 
 All three model GPP series overlaid with SMEAR eddy covariance observations
-(grey points) as a shape reference. Original (SPP) is the model baseline;
-p-hydro diverges during the 2016 mid-summer drought. The SMEAR values are
-systematically higher because they represent ecosystem-level flux rather than
-a single pine tree.
+(grey points). SMEAR values are systematically higher because they represent
+ecosystem-level flux; they are used here as a shape and seasonal-timing
+reference, not a calibration target.
 
 ```{r gpp-timeseries, fig.height=4}
+year  <- CASSIA_original$Growth$year
+doy   <- CASSIA_original$Growth$day
+n     <- length(year)
+dates <- as.Date(doy - 1, origin = paste0(year, "-01-01"))
+
 gpp_df <- data.frame(
-  day      = seq_len(n),
+  date     = dates,
   Original = CASSIA_original$Preles$GPP,
   PRELES   = CASSIA_preles$Preles$GPP,
   phydro   = CASSIA_phydro$Preles$GPP
 )
-
 gpp_long <- reshape(gpp_df,
   varying = c("Original", "PRELES", "phydro"), v.names = "GPP",
   timevar = "model", times = c("Original", "PRELES", "phydro"),
@@ -398,66 +349,55 @@ gpp_long$model <- factor(gpp_long$model, levels = c("Original", "PRELES", "phydr
 
 ggplot() +
   geom_point(data = smear,
-             aes(x = as.integer(Date - as.Date("2014-12-31")),
-                 y = GPP_mean),
+             aes(x = Date, y = GPP_mean),
              colour = "grey70", size = 0.5, alpha = 0.6) +
   geom_line(data = gpp_long,
-            aes(x = day, y = GPP, colour = model, linewidth = model),
+            aes(x = date, y = GPP, colour = model, linewidth = model),
             alpha = 0.85) +
   scale_colour_manual(values = model_cols) +
   scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
-  scale_x_continuous(
-    breaks = c(1, 366, 731),
-    labels = c("2015", "2016", "2017")
-  ) +
-  annotate("text", x = 50, y = max(smear$GPP_mean) * 0.9,
+  annotate("text", x = min(dates) + 30, y = max(smear$GPP_mean, na.rm = TRUE) * 0.9,
            label = "SMEAR EC (obs.)", colour = "grey50", size = 3, hjust = 0) +
   labs(title = "Daily GPP: Original (SPP) vs PRELES vs p-hydro (2015–2017)",
-       subtitle = "Grey points = SMEAR eddy covariance (ecosystem GPP); p-hydro shows drought suppression in 2016",
+       subtitle = "Grey = SMEAR eddy covariance (ecosystem); model lines = single-tree",
        x = NULL, y = "GPP (g C m⁻² day⁻¹)", colour = "Model") +
   guides(linewidth = "none") +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  theme_bw() + theme(legend.position = "bottom")
 ```
 
-### 2. GPP difference from Original
+### 2. Deviation from Original (SPP baseline)
 
-How much does each model deviate from the SPP baseline? Positive = model
-predicts more GPP than Original; negative = less.
+Positive = model predicts more GPP than the SPP baseline; negative = less.
+Any sustained bias in one season or year would indicate a structural difference
+between models.
 
-```{r gpp-difference, fig.height=5}
+```{r gpp-difference, fig.height=4}
 diff_df <- data.frame(
-  day    = seq_len(n),
-  PRELES = CASSIA_preles$Preles$GPP   - CASSIA_original$Preles$GPP,
-  phydro = CASSIA_phydro$Preles$GPP   - CASSIA_original$Preles$GPP
+  date   = dates,
+  PRELES = CASSIA_preles$Preles$GPP - CASSIA_original$Preles$GPP,
+  phydro = CASSIA_phydro$Preles$GPP  - CASSIA_original$Preles$GPP
 )
-
 diff_long <- reshape(diff_df,
   varying = c("PRELES", "phydro"), v.names = "diff",
   timevar = "model", times = c("PRELES", "phydro"), direction = "long"
 )
 diff_long$model <- factor(diff_long$model, levels = c("PRELES", "phydro"))
 
-ggplot(diff_long, aes(x = day, y = diff, fill = diff > 0)) +
+ggplot(diff_long, aes(x = date, y = diff, fill = diff > 0)) +
   geom_col(width = 1, show.legend = FALSE) +
   geom_hline(yintercept = 0, linewidth = 0.4) +
   scale_fill_manual(values = c("TRUE" = "#56B4E9", "FALSE" = "#D55E00")) +
-  scale_x_continuous(
-    breaks = c(1, 366, 731),
-    labels = c("2015", "2016", "2017")
-  ) +
   facet_wrap(~model, ncol = 1) +
   labs(title = "GPP deviation from Original (SPP baseline)",
-       subtitle = "Blue = model higher than Original; orange = model lower than Original",
+       subtitle = "Blue = model higher than baseline; orange = model lower",
        x = NULL, y = "Δ GPP (g C m⁻² day⁻¹)") +
   theme_bw()
 ```
 
-### 3. Seasonal GPP pattern
+### 3. Seasonal pattern (DOY average)
 
-DOY-averaged GPP removes inter-annual variability and shows whether the
-models agree on the shape and timing of the growing season. A mismatch in
-peak timing or width would indicate a structural difference between models.
+DOY-averaged GPP removes inter-annual variability and shows whether the models
+agree on the shape and timing of the growing season.
 
 ```{r seasonal-gpp, fig.height=4}
 doy_gpp <- data.frame(
@@ -466,9 +406,8 @@ doy_gpp <- data.frame(
   PRELES   = CASSIA_preles$Preles$GPP,
   phydro   = CASSIA_phydro$Preles$GPP
 )
-doy_agg <- aggregate(cbind(Original, PRELES, phydro) ~ doy,
-                     data = doy_gpp, FUN = mean)
-
+doy_agg  <- aggregate(cbind(Original, PRELES, phydro) ~ doy,
+                      data = doy_gpp, FUN = mean)
 doy_long <- reshape(doy_agg,
   varying = c("Original", "PRELES", "phydro"), v.names = "GPP",
   timevar = "model", times = c("Original", "PRELES", "phydro"),
@@ -483,15 +422,17 @@ ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
   labs(title = "Mean GPP by day of year (averaged 2015–2017)",
        x = "Day of year", y = "GPP (g C m⁻² day⁻¹)", colour = "Model") +
   guides(linewidth = "none") +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  theme_bw() + theme(legend.position = "bottom")
 ```
+
+---
+
+## Growth comparison
 
 ### 4. Annual carbon budget
 
-Annual totals of GPP, growth, and respiration for each model. If the carbon
-allocation logic works correctly, differences in GPP between models should
-scale through to proportional differences in growth.
+If carbon allocation is functioning correctly, differences in GPP between
+models should scale through to proportional differences in growth.
 
 ```{r annual-budget, fig.height=5}
 budget_model <- function(model_out, model_name) {
@@ -501,7 +442,7 @@ budget_model <- function(model_out, model_name) {
     year         = g$year,
     GPP          = model_out$Preles$GPP,
     growth_total = g$diameter_growth + g$needle_growth +
-                   g$root_growth + g$height_growth,
+                   g$root_growth     + g$height_growth,
     resp_growth  = g$respiration_growth,
     resp_maint   = g$respiration_maintenance
   )
@@ -512,7 +453,6 @@ budget <- rbind(
   budget_model(CASSIA_preles,   "PRELES"),
   budget_model(CASSIA_phydro,   "phydro")
 )
-
 budget_annual <- aggregate(
   cbind(GPP, growth_total, resp_growth, resp_maint) ~ model + year,
   data = budget, FUN = sum, na.rm = TRUE
@@ -521,15 +461,13 @@ budget_annual$model <- factor(budget_annual$model,
                                levels = c("Original", "PRELES", "phydro"))
 
 budget_long <- reshape(budget_annual,
-  varying   = c("GPP", "growth_total", "resp_growth", "resp_maint"),
-  v.names   = "value",
-  timevar   = "flux",
-  times     = c("GPP", "Total growth", "Growth resp.", "Maint. resp."),
+  varying = c("GPP", "growth_total", "resp_growth", "resp_maint"),
+  v.names = "value", timevar = "flux",
+  times   = c("GPP", "Total growth", "Growth resp.", "Maint. resp."),
   direction = "long"
 )
 
-ggplot(budget_long,
-       aes(x = factor(year), y = value, fill = flux)) +
+ggplot(budget_long, aes(x = factor(year), y = value, fill = flux)) +
   geom_col(position = "dodge") +
   facet_wrap(~model) +
   scale_fill_manual(values = c(
@@ -540,27 +478,21 @@ ggplot(budget_long,
   )) +
   labs(title = "Annual carbon budget by photosynthesis source",
        x = "Year", y = "g C m⁻² year⁻¹", fill = NULL) +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  theme_bw() + theme(legend.position = "bottom")
 ```
 
-### 5. Growth components by year
+### 5. Growth by organ
 
-Organ-level breakdown of annual growth carbon. If allocation is functioning
+Organ-level breakdown of annual growth carbon. If allocation is working
 correctly across all three runs, the proportions (diameter : needle : root :
-height) should be similar even when total growth differs.
+height) should be similar even if total growth differs.
 
 ```{r growth-components, fig.height=5}
 growth_model <- function(model_out, model_name) {
   g <- model_out$Growth
-  data.frame(
-    model    = model_name,
-    year     = g$year,
-    diameter = g$diameter_growth,
-    needle   = g$needle_growth,
-    root     = g$root_growth,
-    height   = g$height_growth
-  )
+  data.frame(model = model_name, year = g$year,
+             diameter = g$diameter_growth, needle = g$needle_growth,
+             root     = g$root_growth,     height = g$height_growth)
 }
 
 growth <- rbind(
@@ -568,7 +500,6 @@ growth <- rbind(
   growth_model(CASSIA_preles,   "PRELES"),
   growth_model(CASSIA_phydro,   "phydro")
 )
-
 growth_annual <- aggregate(
   cbind(diameter, needle, root, height) ~ model + year,
   data = growth, FUN = sum, na.rm = TRUE
@@ -577,29 +508,26 @@ growth_annual$model <- factor(growth_annual$model,
                                levels = c("Original", "PRELES", "phydro"))
 
 growth_long <- reshape(growth_annual,
-  varying   = c("diameter", "needle", "root", "height"),
-  v.names   = "value",
-  timevar   = "organ",
-  times     = c("diameter", "needle", "root", "height"),
+  varying = c("diameter", "needle", "root", "height"),
+  v.names = "value", timevar = "organ",
+  times   = c("diameter", "needle", "root", "height"),
   direction = "long"
 )
 
-ggplot(growth_long,
-       aes(x = factor(year), y = value, fill = organ)) +
+ggplot(growth_long, aes(x = factor(year), y = value, fill = organ)) +
   geom_col() +
   facet_wrap(~model) +
   scale_fill_manual(values = organ_cols) +
   labs(title = "Annual growth by organ and photosynthesis source",
        x = "Year", y = "g C m⁻² year⁻¹", fill = "Organ") +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  theme_bw() + theme(legend.position = "bottom")
 ```
 
 ### 6. Cumulative ring width
 
-Ring width is the most directly observable output that can be checked against
-dendrometer or core data. Do the models agree on the final annual ring width,
-or does the GPP difference translate into a measurable divergence?
+Ring width is the most directly observable output that can be compared against
+dendrometer or core data. Inter-model differences in final ring width indicate
+whether the GPP divergence translates into a detectable structural outcome.
 
 ```{r ring-width, fig.height=5}
 rw_df <- rbind(
@@ -626,27 +554,25 @@ ggplot(rw_df, aes(x = doy, y = rw,
        subtitle = "Solid = Original (SPP), dashed = PRELES, dotted = p-hydro",
        x = "Day of year", y = "Ring width (mm)",
        colour = "Year", linetype = "Model") +
-  theme_bw() +
-  theme(legend.position = "bottom")
+  theme_bw() + theme(legend.position = "bottom")
 ```
 
-### 7. Summary table
+---
+
+## Summary
 
 ```{r summary-table}
 summary_model <- function(model_out, model_name) {
   g   <- model_out$Growth
   gpp <- model_out$Preles$GPP
-
   total_growth <- sum(g$diameter_growth + g$needle_growth +
-                      g$root_growth + g$height_growth, na.rm = TRUE)
-
+                      g$root_growth     + g$height_growth, na.rm = TRUE)
   annual_rw <- tapply(g$ring_width, g$year, max, na.rm = TRUE)
-
   data.frame(
-    Model                        = model_name,
-    `Mean GPP (g C m-2 day-1)`  = round(mean(gpp, na.rm = TRUE), 2),
-    `Total growth (g C m-2)`    = round(total_growth, 1),
-    `Growth / GPP (%)`          = round(total_growth / sum(gpp, na.rm = TRUE) * 100, 1),
+    Model                          = model_name,
+    `Mean GPP (g C m-2 day-1)`    = round(mean(gpp, na.rm = TRUE), 2),
+    `Total growth (g C m-2)`      = round(total_growth, 1),
+    `Growth / GPP (%)`            = round(total_growth / sum(gpp, na.rm = TRUE) * 100, 1),
     `Mean annual ring width (mm)` = round(mean(annual_rw), 3),
     check.names = FALSE
   )
