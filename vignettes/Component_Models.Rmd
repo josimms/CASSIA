@@ -11,6 +11,11 @@ vignette: >
 library(CASSIA)
 ```
 
+> **More detail:** The CASSIA Instruction Booklet (`CASSIA_Instruction_Booklet.pdf`,
+> available in the package root or on GitHub) contains the full mathematical
+> descriptions of both the Repola allometry equations and the PRELES
+> photosynthesis model as implemented in CASSIA.
+
 CASSIA integrates two external sub-models — Repola allometry and PRELES
 photosynthesis — that can also be useful on their own. This vignette shows
 how to use each independently and explains how they connect to `CASSIA_cpp`.
