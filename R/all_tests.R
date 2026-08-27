@@ -113,6 +113,7 @@ process_weather_data <- function(using_spp_photosynthesis) {
 # Load data
 ####
 
+#' @export
 load_data <- function(data_directory = "~/Documents/CASSIA_Calibration/Processed_Data/") {
   direct <- data_directory
 
@@ -163,6 +164,7 @@ load_data <- function(data_directory = "~/Documents/CASSIA_Calibration/Processed
 # Parameters
 #####
 
+#' @export
 initialize_parameters <- function(calibration = FALSE, new_parameters = NULL) {
   # CASSIA extra parameters
   needle_mass_in <- 4.467638
