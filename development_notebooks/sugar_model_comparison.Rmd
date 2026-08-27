@@ -22,7 +22,7 @@ pools against observed concentrations from Hyytiälä.
 
 Two simulation periods are shown:
 
-1. **2015–2018** using the standard weather forcing (`weather_original`).
+1. **2015–2017** using the standard weather forcing (`weather_original`).
 2. **1998–2022** using ERA5-derived climate data with PRELES computing GPP internally,
    and parameters calibrated for the longer period.
 
@@ -44,14 +44,14 @@ library(data.table)
 
 ---
 
-## 1  Setup: 2015–2018 run
+## 1  Setup: 2015–2017 run
 
 ```{r setup-weather}
 data("weather_original")
 
-# 2016 is a leap year: 365 + 366 + 365 + 365 = 1461 rows
+# weather_original covers 2015-2017; 2016 is a leap year: 365 + 366 + 365 = 1096 rows
 weather_original$dates <- as.Date(
-  strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X),
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
            format = "%Y %j"))
 ```
 
@@ -83,7 +83,7 @@ su$dates <- weather_original$dates
 
 ---
 
-## 2  Sugar pools, 2015–2018
+## 2  Sugar pools, 2015–2017
 
 Each line is one organ pool.  The pink dashed line marks the bloom-threshold parameter
 (`SCb`) from `sperling_p`; when phloem sugar drops below this the model can trigger
@@ -137,7 +137,7 @@ p_su_total <- ggplot(su_total, aes(x = dates, y = value)) +
 
 ---
 
-## 3  Starch pools, 2015–2018
+## 3  Starch pools, 2015–2017
 
 ```{r starch-by-organ, fig.height = 8}
 st_organ_long <- bind_rows(
