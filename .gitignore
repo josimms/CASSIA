@@ -9,3 +9,4 @@ src/*.dll
 Instruction_Booklet
 *.html
 development_notebooks/cache/
+CASSIA_equations/
