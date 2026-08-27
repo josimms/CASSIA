@@ -1,10 +1,39 @@
 # CASSIA — Intra-Annual Tree Growth Model
 
 CASSIA simulates daily carbon allocation and organ-level growth for an individual
-Scots pine in boreal conditions. Seasonal growth of needles, shoots, diameter, and
-roots is modelled, with optional sugar dynamics, xylogenesis, and mycorrhizal
-interactions. Built-in parameters and weather data for Hyytiälä (SMEAR II) allow
-the model to run out of the box.
+Scots pine in boreal conditions. The core idea is that each organ has a
+**phenologically-driven potential growth** rate set by temperature and day length,
+and an **actual growth** rate determined by how full the tree's carbon (sugar) stores
+are:
+
+> actual growth = potential growth × sugar store fullness
+
+This means the model captures carbon limitation explicitly: if photosynthesis is
+poor, stores deplete and actual growth falls below potential even during the
+growing season. Built-in parameters and weather data for Hyytiälä (SMEAR II)
+allow the model to run out of the box.
+
+### What CASSIA simulates
+
+| Process | Detail |
+|---------|--------|
+| **Photosynthesis (GPP)** | Pre-computed input, PRELES light-use efficiency, or p-hydro hydraulic optimality |
+| **Organ growth** | Height, diameter, needles, buds, roots, and ectomycorrhiza |
+| **Carbon stores** | Single aggregate pool (default) or per-organ sugar and starch pools |
+| **Respiration** | Growth and maintenance, temperature-dependent |
+| **Phenology** | Needle cohort ageing and senescence |
+| **Xylogenesis** | Cell-level early/late-wood formation and ring width |
+| **Nitrogen** | Co-limited growth and soil–mycorrhizal uptake *(under development)* |
+| **C/N transfer** | Strategic carbon–nitrogen exchange between tree and ectomycorrhizal fungi *(under development)* |
+
+### What observational data can be compared to CASSIA output
+
+CASSIA is particularly useful if you have measurements of:
+diameter growth or ring width (dendrometer bands, microcores), non-structural
+carbohydrates (NSC extractions, pulse-chase labelling, sap sampling, CO₂ efflux),
+height or needle growth (shoot measurements, allometry), fine-root turnover
+(minirhizotrons, biomass), phenology (bud burst, senescence dates), or soil
+nitrogen pools and fluxes. Get in touch if you have data and want to collaborate.
 
 > **Branches:** `main` is the stable, published version.
 > `adding_externals` is the development branch with experimental features
@@ -127,6 +156,7 @@ sensitivity analysis and parameter fitting.
 
 | Feature | Status |
 |---------|--------|
+| **Nitrogen and C/N transfer** | The nitrogen co-limitation and mycorrhizal trading sub-models are under active development. Toggles exist but results should be treated as preliminary. |
 | **p-hydro photosynthesis** (`phydro = TRUE`) | The hydraulic optimality code compiles and the toggle is accepted, but the p-hydro GPP call is not yet wired into the main yearly loop — the model will run but GPP will be zero. Use `preles = TRUE` or the default `photosynthesis_as_input = TRUE` instead. |
 | **Eco-evolutionary variant** (`ecoevolutionary = TRUE`) | The toggle exists in the interface but the compiled export (`CASSIA_eeo`) is currently disabled. Passing `ecoevolutionary = TRUE` will error. |
 | **Lettosuo and Väriö parameterisation** | Parameters for these sites are included but have not been fully calibrated. Results for non-Hyde sites should be treated as indicative only. |
