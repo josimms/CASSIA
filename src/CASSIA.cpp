@@ -69,6 +69,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                          Rcpp::DataFrame pCASSIA_ratios,
                          Rcpp::DataFrame pCASSIA_sperling,
 
+                         int no_trees,
+
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
 
@@ -176,8 +178,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.nitrogen_capacity_vector.height[0] = 1;
   all_out.nitrogen_capacity_vector.bud[0] = 1;
   all_out.nitrogen_capacity_vector.roots[0] = 1;
-
-  std::cout << "GPP_ref length: " << GPP_ref.size() << std::endl;
 
   /*
    * YEAR LOOP
@@ -302,12 +302,12 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.GPP = climate.Photosynthesis_IN[day + days_gone];
         photosynthesis.ET = 0.0;
         photosynthesis.SoilWater = 0.0;
-        photosynthesis_per_stem = climate.Photosynthesis_IN[day + days_gone] / 1010 * 10000/1000;
+        photosynthesis_per_stem = climate.Photosynthesis_IN[day + days_gone] / no_trees * 10000/1000;
       } else if (boolsettings.preles) {
         photosynthesis = preles_cpp(day, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
                                     climate.VPD[days_gone + day], climate.CO2[days_gone + day], all_out.fAPAR[days_gone + day],
                                     parSite, parGPP, parET, parSnowRain, parWater, 0.0, 1);
-        photosynthesis_per_stem = photosynthesis.GPP / 1010 * 10000/1000;
+        photosynthesis_per_stem = photosynthesis.GPP / no_trees * 10000/1000;
       } else {
         std::cout << "There is no photosynthesis model chosen!\n";
       }

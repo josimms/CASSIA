@@ -486,6 +486,13 @@ struct Settings {
   bool tests = false;
   bool etmodel = false;
   bool LOGFLAG = false;
+
+  bool soil_moisture_effect_on_shoot = false;
+  bool soil_moisture_effect_on_needles = false;
+  bool soil_moisture_effect_on_diameter = false;
+  std::vector<int> driver_N = {1, 1};
+  std::vector<int> driver_H = {0, 2};
+  std::vector<int> driver_D = {1, 1};
 };
 
 /*
