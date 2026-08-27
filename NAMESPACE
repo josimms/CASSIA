@@ -3,6 +3,8 @@
 export(CASSIA_cpp)
 export(CASSIA_yearly)
 export(PRELES_GPP)
+export(initialize_parameters)
+export(load_data)
 export(repola)
 importFrom(Rcpp,evalCpp)
 useDynLib(CASSIA, .registration=TRUE)
