@@ -11,6 +11,10 @@ vignette: >
 library(CASSIA)
 ```
 
+> **More detail:** The CASSIA Instruction Booklet (`CASSIA_Instruction_Booklet.pdf`,
+> available in the package root or on GitHub) lists every required weather column
+> and explains the unit conventions for each photosynthesis sub-model.
+
 ## What CASSIA needs
 
 Which columns are required depends on the photosynthesis sub-model selected

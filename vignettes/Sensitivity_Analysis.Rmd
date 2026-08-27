@@ -12,6 +12,11 @@ library(CASSIA)
 library(dplyr)
 ```
 
+> **More detail:** The CASSIA Instruction Booklet (`CASSIA_Instruction_Booklet.pdf`,
+> available in the package root or on GitHub) explains the mathematical role of
+> each parameter and is the best reference when deciding which parameters to
+> prioritise for calibration.
+
 ## Why run a sensitivity analysis?
 
 CASSIA has many parameters, most of which come pre-calibrated for Hyytiälä
