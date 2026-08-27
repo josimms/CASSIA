@@ -60,39 +60,110 @@ model_cols <- c(
 
 ## Weather data
 
-ERA5 daily data for the boreal site. All three runs use the same weather
-file. The `P` column contains daily GPP (g C m⁻² day⁻¹) pre-computed by
-the SPP model; it is the photosynthesis source for the Original run.
-PRELES and p-hydro compute their own GPP internally so `P` is not used
-in those runs.
+PRELES and p-hydro each require different weather columns, so two separate
+ERA5 files are used. The Original (SPP) run uses the PRELES file with the
+`P` column added (SPP-generated GPP). SMEAR eddy covariance observations
+provide a validation reference.
 
-```{r weather, eval=FALSE}
-weather_ERAS <- read.delim("~/Documents/ERAS_dataset.csv", sep = ",")
+### ERA5 — PRELES run
 
-names(weather_ERAS) <- c("Year", "Month", "Decimal_year", "T", "VPD",
-                         "PPFD", "PPFD_max", "SWP", "dates")
+Contains `PAR`, `VPD`, `CO2`, `fAPAR`, and the standard core columns.
 
-weather_ERAS$VPD   <- 0.1 * weather_ERAS$VPD   # hPa → kPa
-weather_ERAS$dates <- as.Date(
-  paste(weather_ERAS$Year, weather_ERAS$Month, "01", sep = "-")
+```{r weather-preles, eval=FALSE}
+weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
+weather_preles$date <- as.Date(weather_preles$date)
+
+# Add SPP-generated GPP for the Original run
+# (P column contains daily GPP, g C m-2 day-1, matched to this ERA5 period)
+weather_original_spp <- read_and_combine_weather_data(
+  2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_"
 )
+weather_preles$P <- weather_original_spp$P
+```
 
-# P: SPP-generated GPP (g C m-2 day-1) — used by the Original run only
-# Load from the SPP output file matched to this ERA5 period
-weather_ERAS$P     <- spp_gpp_timeseries   # replace with the actual object/read
+### ERA5 — p-hydro run
 
-# Columns for PRELES (PAR in mol m-2 day-1; convert from PPFD in umol m-2 s-1)
-weather_ERAS$PAR   <- weather_ERAS$PPFD * 0.0864
-weather_ERAS$fAPAR <- 0.7
-weather_ERAS$CO2   <- 421.38
+Contains `PPFD`, `PPFD_max`, `PA`, `SWP` in addition to the core columns.
 
-# Shared columns
-weather_ERAS$Nitrogen <- 1
-weather_ERAS$TSA      <- NA
-weather_ERAS$TSB      <- NA
-weather_ERAS$MB       <- NA
-weather_ERAS$Rain     <- NA
-weather_ERAS$PA       <- 101325
+```{r weather-phydro, eval=FALSE}
+weather_phydro <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_phydro.csv")
+names(weather_phydro)[1] <- "date"
+weather_phydro$date <- as.Date(weather_phydro$date)
+```
+
+### SMEAR eddy covariance observations
+
+Measured ecosystem GPP from the SMEAR II tower at Hyytiälä. This is used
+as an observational reference when comparing model GPP. Note that it
+represents ecosystem-level flux (all species), whereas the model output is
+for a single pine tree scaled to ground area; the difference is primarily
+due to stand composition and leaf area.
+
+```{r smear-obs, eval=FALSE}
+smear <- data.table::fread("~/Documents/CASSIA/data/daily_dataframe.csv")
+smear$Date <- as.Date(smear$Date)
+```
+
+### Weather comparison: ERA5 vs SMEAR station
+
+ERA5 reanalysis is used for long-term runs but carries systematic biases.
+The four panels below show how ERA5 compares to the observed SMEAR
+meteorological record for the overlapping 2015–2018 period.
+
+```{r weather-comparison, eval=FALSE}
+smear_meteo <- data.table::as.data.table(
+  readxl::read_xlsx(
+    "~/Documents/CASSIA_Calibration/Raw_Data/hyy_all_2008_2019.xlsx",
+    sheet = 1, skip = 1
+  )
+)
+names(smear_meteo) <- names(
+  readxl::read_xlsx(
+    "~/Documents/CASSIA_Calibration/Raw_Data/hyy_all_2008_2019.xlsx",
+    sheet = 1
+  )
+)
+smear_meteo$Date <- as.Date(smear_meteo$Date)
+
+weather_preles_plot <- weather_preles[
+  as.integer(format(weather_preles$date, "%Y")) %in% 2015:2018, ]
+
+p_par  <- ggplot() +
+  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$PAR,
+                colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$PAR,
+                 colour = "SMEAR"), size = 0.5) +
+  scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
+  labs(x = NULL, y = "PAR (mol m⁻² day⁻¹)", colour = NULL) + theme_bw()
+
+p_t    <- ggplot() +
+  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$T,
+                colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$TA_F,
+                 colour = "SMEAR"), size = 0.5) +
+  scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
+  labs(x = NULL, y = "Temperature (°C)", colour = NULL) + theme_bw()
+
+p_rain <- ggplot() +
+  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$Rain,
+                colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$P_F,
+                 colour = "SMEAR"), size = 0.5) +
+  scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
+  labs(x = NULL, y = "Rain (mm day⁻¹)", colour = NULL) + theme_bw()
+
+p_vpd  <- ggplot() +
+  geom_line(aes(x = weather_preles_plot$date, y = weather_preles_plot$VPD,
+                colour = "ERA5")) +
+  geom_point(aes(x = smear_meteo$Date, y = smear_meteo$VPD_F...8,
+                 colour = "SMEAR"), size = 0.5) +
+  scale_colour_manual(values = c(ERA5 = "#0072B2", SMEAR = "#009E73")) +
+  labs(x = NULL, y = "VPD (kPa)", colour = NULL) + theme_bw()
+
+(p_par | p_t) / (p_rain | p_vpd) +
+  plot_layout(guides = "collect") +
+  plot_annotation(title = "ERA5 vs SMEAR station weather (2015–2018)",
+                  subtitle = "ERA5 is used for model runs; SMEAR is the observed reference")
 ```
 
 ---
@@ -107,7 +178,7 @@ CASSIA development and acts as the baseline for this comparison.
 
 ```{r original-run, eval=FALSE}
 CASSIA_original <- CASSIA_cpp(
-  weather                 = weather_ERAS,
+  weather                 = weather_preles,
   site                    = "Hyde",
   pPREL                   = c(parameters_all$pPREL, parameters_all$N_parameters),
   parameters              = parameters_all$parameters_test,
@@ -123,9 +194,13 @@ CASSIA_original <- CASSIA_cpp(
 
 ### PRELES
 
+`fAPAR_Tian = TRUE` enables the dynamic fAPAR scaling derived from the
+Tian et al. LAI product, which improves GPP seasonality relative to using
+a fixed fAPAR constant.
+
 ```{r preles-run, eval=FALSE}
 CASSIA_preles <- CASSIA_cpp(
-  weather                 = weather_ERAS,
+  weather                 = weather_preles,
   site                    = "Hyde",
   pPREL                   = c(parameters_all$pPREL, parameters_all$N_parameters),
   parameters              = parameters_all$parameters_test,
@@ -136,15 +211,27 @@ CASSIA_preles <- CASSIA_cpp(
   Throughfall             = parameters_all$Throughfall,
   photosynthesis_as_input = FALSE,
   preles                  = TRUE,
+  fAPAR_Tian              = TRUE,
   CASSIA_graphs           = FALSE
 )
 ```
 
 ### p-hydro
 
+The `phydro_param` vector contains calibrated hydraulic parameters. The
+p-hydro run uses a separate weather file that provides the required
+`PPFD`, `PPFD_max`, `PA`, and `SWP` columns.
+
 ```{r phydro-run, eval=FALSE}
+phydro_parameters_in <- c(
+  0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
+  0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
+  15, 10, 5, 0, 1,
+  exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)
+)
+
 CASSIA_phydro <- CASSIA_cpp(
-  weather                 = weather_ERAS,
+  weather                 = weather_phydro,
   site                    = "Hyde",
   pPREL                   = c(parameters_all$pPREL, parameters_all$N_parameters),
   parameters              = parameters_all$parameters_test,
@@ -153,6 +240,7 @@ CASSIA_phydro <- CASSIA_cpp(
   sperling                = parameters_all$sperling_test,
   needle_mass_in          = parameters_all$needle_mass_in,
   Throughfall             = parameters_all$Throughfall,
+  phydro_param            = phydro_parameters_in,
   photosynthesis_as_input = FALSE,
   phydro                  = TRUE,
   ecoevolutionary         = TRUE,
@@ -164,24 +252,37 @@ CASSIA_phydro <- CASSIA_cpp(
 
 ## Synthetic example output
 
-Synthetic boreal output for 2015–2017. The three GPP series reflect the
-expected character of each source:
+Synthetic boreal output for 2015–2017. The series reflect the expected
+character of each source:
 
+- **SMEAR (observed)**: ecosystem eddy covariance GPP from the Hyytiälä tower.
+  Higher than single-tree model output because it integrates all species
+  and stand-level canopy area; used here only as a shape reference.
 - **Original (SPP)**: smooth, process-based seasonal curve calibrated to
-  Hyytiälä; treated as the reference.
+  Hyytiälä; treated as the model baseline.
 - **PRELES**: similar shape to Original but independently driven by radiation
   and LUE; slight offset due to different calibration.
 - **p-hydro**: responds additionally to VPD and soil water potential, causing
   a 35% mid-summer depression in the dry year 2016.
 
-Replace `CASSIA_original`, `CASSIA_preles`, and `CASSIA_phydro` with real
-model output once the ERA5 file is available.
+Replace `CASSIA_original`, `CASSIA_preles`, `CASSIA_phydro`, and `smear` with
+real model output and observations once the ERA5 files are available.
 
 ```{r synthetic-data}
 set.seed(42)
 n    <- 1096
 year <- rep(2015:2017, times = c(365, 366, 365))
 doy  <- c(1:365, 1:366, 1:365)
+
+# ── SMEAR EC observations: ecosystem GPP, higher than single-tree model ───────
+# Eddy covariance integrates all species and stand LAI; used as shape reference
+gpp_smear <- pmax(0,
+  12.5 * exp(-((doy - 195)^2) / (2 * 65^2)) + rnorm(n, 0, 0.60)
+)
+smear <- data.frame(
+  Date     = as.Date(doy - 1, origin = paste0(year, "-01-01")),
+  GPP_mean = gpp_smear
+)
 
 # ── Original (SPP): process-based reference ───────────────────────────────────
 gpp_original <- pmax(0,
@@ -261,9 +362,11 @@ CASSIA_phydro   <- make_output(gpp_phydro)
 
 ### 1. GPP time series
 
-All three GPP sources overlaid. The Original (SPP) series is the reference.
-PRELES and p-hydro should track it closely during normal conditions; p-hydro
-should diverge during the 2016 mid-summer drought.
+All three model GPP series overlaid with SMEAR eddy covariance observations
+(grey points) as a shape reference. Original (SPP) is the model baseline;
+p-hydro diverges during the 2016 mid-summer drought. The SMEAR values are
+systematically higher because they represent ecosystem-level flux rather than
+a single pine tree.
 
 ```{r gpp-timeseries, fig.height=4}
 gpp_df <- data.frame(
@@ -280,16 +383,24 @@ gpp_long <- reshape(gpp_df,
 )
 gpp_long$model <- factor(gpp_long$model, levels = c("Original", "PRELES", "phydro"))
 
-ggplot(gpp_long, aes(x = day, y = GPP, colour = model, linewidth = model)) +
-  geom_line(alpha = 0.85) +
+ggplot() +
+  geom_point(data = smear,
+             aes(x = as.integer(Date - as.Date("2014-12-31")),
+                 y = GPP_mean),
+             colour = "grey70", size = 0.5, alpha = 0.6) +
+  geom_line(data = gpp_long,
+            aes(x = day, y = GPP, colour = model, linewidth = model),
+            alpha = 0.85) +
   scale_colour_manual(values = model_cols) +
   scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
   scale_x_continuous(
     breaks = c(1, 366, 731),
     labels = c("2015", "2016", "2017")
   ) +
+  annotate("text", x = 50, y = max(smear$GPP_mean) * 0.9,
+           label = "SMEAR EC (obs.)", colour = "grey50", size = 3, hjust = 0) +
   labs(title = "Daily GPP: Original (SPP) vs PRELES vs p-hydro (2015–2017)",
-       subtitle = "Original is the SPP-generated reference; p-hydro shows drought suppression in 2016",
+       subtitle = "Grey points = SMEAR eddy covariance (ecosystem GPP); p-hydro shows drought suppression in 2016",
        x = NULL, y = "GPP (g C m⁻² day⁻¹)", colour = "Model") +
   guides(linewidth = "none") +
   theme_bw() +
