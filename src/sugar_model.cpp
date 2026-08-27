@@ -12,21 +12,21 @@ carbo_tracker storage_carbohydrate(carbo_tracker critical_W, CASSIA_parameters p
   return out;
 }
 
-double storage_update(double alfa, double sugar, double starch, double Wala, bool tree_alive) {
+double storage_update(double alfa, double sugar, double starch, double Wala, bool tree_alive, bool warn) {
   double out;
   // The checks here make sense, as the model should compensate for the sugar lost at the end of each iteration rather than the beginning
   // Therefore, there should always be a positive value of sugar at the beginning of an iteration (and hopefully generally)
   if (std::isnan(sugar)) {
-    std::cout << "Sugar is NaN ";
+    if (warn) Rcpp::warning("Sugar is NaN in output year");
     out = 0;
   } else if (std::isnan(starch)) {
-    std::cout << "Starch is NaN ";
+    if (warn) Rcpp::warning("Starch is NaN in output year");
     out = 0;
   } else if (sugar < 0) {
-    std::cout << "Sugar is negative ";
+    if (warn) Rcpp::warning("Sugar is negative in output year");
     out = 0;
   } else if (starch < 0) {
-    std::cout << "Starch is negative ";
+    if (warn) Rcpp::warning("Starch is negative in output year");
     out = 0;
   } else if (!tree_alive) {
     out = 0;
@@ -95,16 +95,17 @@ carbo_balance sugar_model(int year,
                           carbo_tracker sugar,
                           carbo_tracker starch,
 
-                          carbo_values_out parameters_in) {
+                          carbo_values_out parameters_in,
+                          bool output_year) {
 
 
   carbo_tracker storage_term;
   // TODO: consider these terms in the calibration
-  storage_term.needles = storage_update(parameters.alfa_needles, sugar.needles, starch.needles, parameters.lower_bound_needles, tree_alive);
-  storage_term.phloem = storage_update(parameters.alfa_phloem, sugar.phloem, starch.phloem, parameters.lower_bound_phloem, tree_alive);
-  storage_term.roots = storage_update(parameters.alfa_roots, sugar.roots, starch.roots, parameters.lower_bound_roots, tree_alive);
-  storage_term.xylem_sh = storage_update(parameters.alfa_xylem_sh, sugar.xylem_sh, starch.xylem_sh, parameters.lower_bound_xylem_sh, tree_alive);
-  storage_term.xylem_st = storage_update(parameters.alfa_xylem_st, sugar.xylem_st, starch.xylem_st, parameters.lower_bound_xylem_st, tree_alive);
+  storage_term.needles = storage_update(parameters.alfa_needles, sugar.needles, starch.needles, parameters.lower_bound_needles, tree_alive, output_year);
+  storage_term.phloem = storage_update(parameters.alfa_phloem, sugar.phloem, starch.phloem, parameters.lower_bound_phloem, tree_alive, output_year);
+  storage_term.roots = storage_update(parameters.alfa_roots, sugar.roots, starch.roots, parameters.lower_bound_roots, tree_alive, output_year);
+  storage_term.xylem_sh = storage_update(parameters.alfa_xylem_sh, sugar.xylem_sh, starch.xylem_sh, parameters.lower_bound_xylem_sh, tree_alive, output_year);
+  storage_term.xylem_st = storage_update(parameters.alfa_xylem_st, sugar.xylem_st, starch.xylem_st, parameters.lower_bound_xylem_st, tree_alive, output_year);
 
   double sB0;
   carbo_tracker As_new, Ad_new;

@@ -137,7 +137,8 @@ carbo_balance sugar_model(int year,
                           carbo_tracker sugar,
                           carbo_tracker starch,
 
-                          carbo_values_out parameters_in);
+                          carbo_values_out parameters_in,
+                          bool output_year);
 
 /*
  * growth.cpp

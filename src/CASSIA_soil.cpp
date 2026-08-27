@@ -180,8 +180,8 @@ Rcpp::List CASSIA_soil(int start_year,
    * Vectors between iterations
    */
 
-  growth_values_out growth_values_for_next_iteration;
-  carbo_balance sugar_values_for_next_iteration;
+  growth_values_out growth_values_for_next_iteration = {};
+  carbo_balance sugar_values_for_next_iteration = {};
   carbo_balance original_parameters;
   MYCOFON_function_out MYCOFON_for_next_iteration;
   SYMPHONY_output soil_values_for_next_iteration;
@@ -519,7 +519,8 @@ Rcpp::List CASSIA_soil(int start_year,
                                                     potential_growth,
                                                     sugar_values_for_next_iteration.sugar,
                                                     sugar_values_for_next_iteration.starch,
-                                                    sugar_values_for_next_iteration.previous_values);
+                                                    sugar_values_for_next_iteration.previous_values,
+                                                    final_year % 2 == 0);
         // Saved for the next iteration
         sugar_values_for_next_iteration.previous_values = sugar_model_out.previous_values;
         sugar_values_for_next_iteration.sugar = sugar_model_out.sugar;
