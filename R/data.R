@@ -51,10 +51,10 @@
 #'                   parameters = p)
 #' }
 #'
-#' @format A numeric matrix with 72 rows (parameters) and 3 columns (sites:
+#' @format A numeric matrix with 75 rows (parameters) and 3 columns (sites:
 #'   \code{Hyde}, \code{Lettosuo}, \code{Väriö}). Row names are parameter
 #'   names. All parameter meanings are described in the CASSIA instruction
-#'   booklet (\file{man/CASSIA_Instruction_Booklet.pdf}) and in
+#'   booklet (\file{CASSIA_Instruction_Booklet.pdf}) and in
 #'   Schiestl-Aalto et al. (2015).
 #' @source Built by \code{data-raw/building_data.R}.
 #' @seealso \code{\link{ratios_p}}, \code{\link{common_p}},
@@ -105,16 +105,16 @@
 "common_p"
 
 
-#' Xylogenesis (Sperling) model parameters
+#' Sugar and xylogenesis model parameters
 #'
-#' Parameters for the xylogenesis sub-model, which describes cell division,
-#' enlargement, and wall-thickening during ring-width formation. Passed to
-#' \code{\link{CASSIA_cpp}} via the \code{sperling_parameters} argument.
+#' Parameters for the organ-level sugar sub-model and the xylogenesis
+#' sub-model. Passed to \code{\link{CASSIA_cpp}} via the
+#' \code{sperling_parameters} argument.
 #'
-#' @format A numeric matrix with 54 rows (parameters) and 2 columns (sites:
-#'   \code{Hyde}, \code{Lettosuo}). Row names are parameter names. For a
-#'   step-by-step description of how these parameters are used, see
-#'   \code{vignette("ring_width_process")}.
+#' @format A numeric matrix with 55 rows (parameters) and 3 columns (sites:
+#'   \code{Hyde}, \code{Lettosuo}, \code{Flakaliden_c}). Row names are
+#'   parameter names. For a step-by-step description of how the xylogenesis
+#'   parameters are used, see \code{vignette("ring_width_process")}.
 #' @source Built by \code{data-raw/building_data.R}.
 #' @seealso \code{\link{parameters_p}}, \code{\link{CASSIA_cpp}}
 "sperling_p"

@@ -5,10 +5,10 @@
 \alias{parameters_p}
 \title{Main CASSIA model parameters}
 \format{
-A numeric matrix with 72 rows (parameters) and 3 columns (sites:
+A numeric matrix with 75 rows (parameters) and 3 columns (sites:
   \code{Hyde}, \code{Lettosuo}, \code{Väriö}). Row names are parameter
   names. All parameter meanings are described in the CASSIA instruction
-  booklet (\file{man/CASSIA_Instruction_Booklet.pdf}) and in
+  booklet (\file{CASSIA_Instruction_Booklet.pdf}) and in
   Schiestl-Aalto et al. (2015).
 }
 \source{
