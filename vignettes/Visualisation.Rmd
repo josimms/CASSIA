@@ -83,11 +83,24 @@ observation data must span the same dates.
 # Subset observations to the same three years
 hyde_obs <- Hyde_daily_original[Hyde_daily_original$year %in% 2015:2017, ]
 
-# Model column names → observation column names
-variables_new      <- c("bud_growth", "needle_growth", "root_growth")
-variables_original <- c("bud",        "needle_daily",  "root_daily")
+# Hyde_daily_original has no entry for the leap day (2016-02-29), so drop
+# that day from the model output before comparing row-by-row.
+model_dates <- as.Date(strptime(paste(out$Growth$year, out$Growth$day),
+                                format = "%Y %j"))
+obs_dates   <- as.Date(strptime(paste(hyde_obs$year, hyde_obs$day),
+                                format = "%Y %j"))
+keep <- model_dates %in% obs_dates
 
-plot_comparison(out, variables_new, hyde_obs, variables_original)
+out_matched        <- out
+out_matched$Growth <- out$Growth[keep, ]
+out_matched$Preles <- out$Preles[keep, ]
+
+# plot_comparison treats the final element as a Preles output (GPP vs P).
+# All preceding elements are drawn from out$Growth vs Hyde_daily_original.
+variables_new      <- c("bud_growth", "needle_growth", "root_growth", "GPP")
+variables_original <- c("bud",        "needle_daily",  "root_daily",  "P")
+
+plot_comparison(out_matched, variables_new, hyde_obs, variables_original)
 ```
 
 The three-column layout for each variable shows: time series overlay,
