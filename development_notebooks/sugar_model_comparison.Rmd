@@ -1,90 +1,383 @@
 ---
-title: "Sugar Model Comparison"
+title: "Sugar and starch pools: Sperling model validation"
 author: "Joanna"
-output: html_document
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.width = 12, fig.height = 5)
+```
 
-new_parameters <- rep(0.5, 27)  # Example new parameters
-calibration = F
-parameters_all <- initialize_parameters(calibration, new_parameters)
+## What this document shows
 
-weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
-weather_original$dates <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+This notebook validates the multi-pool sugar model (Sperling et al. 2019) by running
+CASSIA with `sperling_model = TRUE` and comparing simulated organ-level sugar and starch
+pools against observed concentrations from Hyytiälä.
 
+Two simulation periods are shown:
+
+1. **2015–2018** using the standard weather forcing (`weather_original`).
+2. **1998–2022** using ERA5-derived climate data with PRELES computing GPP internally,
+   and parameters calibrated for the longer period.
+
+Observed data come from two sources: Schiestl-Aalto et al. (2019) (`original_data`) and
+Yu et al. (unpublished, `yu_data`).  Both are read from an external calibration directory;
+sections that depend on them are skipped automatically if that directory is absent.
+
+Numerical agreement with the base (non-sugar) model is covered separately in
+`tests_c++_against_R.Rmd`.
+
+```{r load-libraries}
+library(CASSIA)
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(knitr)
+library(data.table)
+```
+
+---
+
+## 1  Setup: 2015–2018 run
+
+```{r setup-weather}
+data("weather_original")
+
+# 2016 is a leap year: 365 + 366 + 365 + 365 = 1461 rows
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X),
+           format = "%Y %j"))
+```
+
+`initialize_parameters()` adjusts a small set of bounds and initial conditions relative
+to the defaults in `parameters_p`; see `R/all_tests.R` for the full list.
+
+```{r setup-parameters}
+new_parameters <- rep(0.5, 27)
+parameters_all <- initialize_parameters(calibration = FALSE, new_parameters)
+```
+
+```{r run-base}
+out_base <- CASSIA_cpp(
+  weather        = weather_original,
+  site           = "Hyde",
+  pPREL          = c(parameters_all$pPREL, parameters_all$N_parameters),
+  parameters     = parameters_all$parameters_test,
+  common         = common_p,
+  ratios         = ratios_p,
+  sperling       = sperling_p,
+  Throughfall    = 1,
+  sperling_model = TRUE,
+  mycorrhiza     = FALSE
+)
+
+su <- out_base$Sugar
+su$dates <- weather_original$dates
+```
+
+---
+
+## 2  Sugar pools, 2015–2018
+
+Each line is one organ pool.  The pink dashed line marks the bloom-threshold parameter
+(`SCb`) from `sperling_p`; when phloem sugar drops below this the model can trigger
+budburst (if `phloem_trigger = TRUE`).
+
+```{r sugar-by-organ, fig.height = 8}
+organ_colours <- c(
+  "Needles"      = "#4daf4a",
+  "Phloem"       = "#8b4513",
+  "Roots"        = "#000000",
+  "Xylem (shoot)" = "#e41a1c",
+  "Xylem (stem)"  = "#ff7f00"
+)
+
+su_organ_long <- bind_rows(
+  data.frame(dates = su$dates, value = su$sugar_needles,  Organ = "Needles"),
+  data.frame(dates = su$dates, value = su$sugar_phloem,   Organ = "Phloem"),
+  data.frame(dates = su$dates, value = su$sugar_roots,    Organ = "Roots"),
+  data.frame(dates = su$dates, value = su$sugar_xylem_sh, Organ = "Xylem (shoot)"),
+  data.frame(dates = su$dates, value = su$sugar_xylem_st, Organ = "Xylem (stem)")
+)
+
+su_total <- data.frame(
+  dates = su$dates,
+  value = su$sugar_needles + su$sugar_phloem + su$sugar_roots +
+          su$sugar_xylem_sh + su$sugar_xylem_st
+)
+
+SCb <- sperling_p["SCb", "Hyde"]
+
+p_su_organs <- ggplot(su_organ_long, aes(x = dates, y = value, colour = Organ)) +
+  geom_line(linewidth = 0.9) +
+  geom_hline(yintercept = SCb, linetype = "dashed", colour = "pink", linewidth = 0.8) +
+  annotate("text", x = min(su$dates), y = SCb + 0.015,
+           label = "SCb (bloom threshold)", colour = "pink3", hjust = 0, size = 3) +
+  scale_colour_manual(values = organ_colours) +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+  labs(title = "Sugar pools by organ", x = NULL, y = "kg C stem⁻¹", colour = NULL) +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+
+p_su_total <- ggplot(su_total, aes(x = dates, y = value)) +
+  geom_line(linewidth = 1.1, colour = "steelblue") +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+  labs(title = "Total sugar (all organs)", x = NULL, y = "kg C stem⁻¹") +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"))
+
+(p_su_organs / p_su_total) + plot_layout(ncol = 1)
+```
+
+---
+
+## 3  Starch pools, 2015–2018
+
+```{r starch-by-organ, fig.height = 8}
+st_organ_long <- bind_rows(
+  data.frame(dates = su$dates, value = su$starch_needles,  Organ = "Needles"),
+  data.frame(dates = su$dates, value = su$starch_phloem,   Organ = "Phloem"),
+  data.frame(dates = su$dates, value = su$starch_roots,    Organ = "Roots"),
+  data.frame(dates = su$dates, value = su$starch_xylem_sh, Organ = "Xylem (shoot)"),
+  data.frame(dates = su$dates, value = su$starch_xylem_st, Organ = "Xylem (stem)")
+)
+
+st_total <- data.frame(
+  dates = su$dates,
+  value = su$starch_needles + su$starch_phloem + su$starch_roots +
+          su$starch_xylem_sh + su$starch_xylem_st
+)
+
+p_st_organs <- ggplot(st_organ_long, aes(x = dates, y = value, colour = Organ)) +
+  geom_line(linewidth = 0.9) +
+  scale_colour_manual(values = organ_colours) +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+  labs(title = "Starch pools by organ", x = NULL, y = "kg C stem⁻¹", colour = NULL) +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+
+p_st_total <- ggplot(st_total, aes(x = dates, y = value)) +
+  geom_line(linewidth = 1.1, colour = "darkorange") +
+  scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+  labs(title = "Total starch (all organs)", x = NULL, y = "kg C stem⁻¹") +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"))
+
+(p_st_organs / p_st_total) + plot_layout(ncol = 1)
+```
+
+---
+
+## 4  Comparison with observed data
+
+Observed NSC concentrations from Schiestl-Aalto et al. (2019) (crosses) and Yu et al.
+(circles) are overlaid on the simulated organ pools.  This section is skipped
+automatically if the external calibration data directory is not present.
+
+```{r load-obs}
 data_directory <- "~/Documents/CASSIA_Calibration/Processed_Data/"
-loaded_data <- load_data(data_directory)
+has_obs <- dir.exists(data_directory)
+if (has_obs) {
+  loaded_data   <- load_data(data_directory)
+  original_data <- loaded_data$original_data
+  yu_data       <- loaded_data$yu_data
+
+  obs_sa <- data.frame(
+    dates      = as.Date(rownames(original_data)),
+    su_needles = original_data$needles_sugar,
+    su_phloem  = original_data$phloem_sugar,
+    su_roots   = original_data$roots_sugar,
+    su_xsh     = original_data$xylem_sh_sugar,
+    su_xst     = original_data$xylem_st_sugar,
+    st_needles = original_data$needles_starch,
+    st_phloem  = original_data$phloem_starch,
+    st_roots   = original_data$roots_starch,
+    st_xsh     = original_data$xylem_sh_starch,
+    st_xst     = original_data$xylem_st_starch
+  )
+
+  obs_yu <- data.frame(
+    dates      = as.Date(yu_data$Date),
+    su_needles = yu_data$sugar.needles,
+    su_phloem  = yu_data$sugar.phloem,
+    su_roots   = yu_data$sugar.root,
+    su_xsh     = yu_data$sugar.xylem.sh,
+    su_xst     = yu_data$sugar.xylem.st,
+    st_needles = yu_data$starch.needles,
+    st_phloem  = yu_data$starch.phloem,
+    st_roots   = yu_data$starch.root,
+    st_xsh     = yu_data$starch.xylem.sh,
+    st_xst     = yu_data$starch.xylem.st
+  )
+}
 ```
 
-## Basic
+```{r obs-sugar, eval = has_obs, fig.height = 10}
+make_organ_plot <- function(sim_col, sa_col, yu_col,
+                            line_colour, point_colour, title) {
+  ggplot(su, aes(x = dates, y = .data[[sim_col]])) +
+    geom_line(colour = line_colour, linewidth = 0.9) +
+    geom_point(data = obs_sa, aes(x = dates, y = .data[[sa_col]]),
+               shape = 4, colour = point_colour, size = 2.5) +
+    geom_point(data = obs_yu, aes(x = dates, y = .data[[yu_col]]),
+               shape = 1, colour = point_colour, size = 2.5) +
+    scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+    labs(title = title, x = NULL, y = "kg C stem⁻¹") +
+    theme_bw(base_size = 11) +
+    theme(plot.title = element_text(face = "bold", size = 10))
+}
 
-```{r cars}
-CASSIA_new_output_sugar = CASSIA_cpp(weather = weather_original,
-                                     site = "Hyde",
-                                     pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
-                                     parameters = parameters_all$parameters_test,
-                                     common = common_p,
-                                     ratios = ratios_p,
-                                     sperling = sperling_p,
-                                     Throughfall = 1,
-                                     sperling_model = T,
-                                     mycorrhiza = F)
+pn  <- make_organ_plot("sugar_needles",  "su_needles", "su_needles",
+                       "steelblue", "#4daf4a", "Needles")
+pph <- make_organ_plot("sugar_phloem",   "su_phloem",  "su_phloem",
+                       "steelblue", "#8b4513", "Phloem")
+pr  <- make_organ_plot("sugar_roots",    "su_roots",   "su_roots",
+                       "steelblue", "#000000", "Roots")
+pxs <- make_organ_plot("sugar_xylem_sh", "su_xsh",     "su_xsh",
+                       "steelblue", "#e41a1c", "Xylem (shoot)")
+pxt <- make_organ_plot("sugar_xylem_st", "su_xst",     "su_xst",
+                       "steelblue", "#ff7f00", "Xylem (stem)")
 
-plot_comparison(CASSIA_new_output_sugar, variables_new,
-                Hyde_daily_original_plot, variables_original, soil_processes)
-
-plot_sugar_starch_comparison(CASSIA_new_output_sugar, weather_original$dates, loaded_data$original_data, loaded_data$yu_data)
+(pn + pph) / (pr + pxs + pxt) +
+  plot_annotation(
+    title = "Sugar pools vs observations  (× = Schiestl-Aalto et al. 2019, ○ = Yu et al.)",
+    theme = theme(plot.title = element_text(face = "bold"))
+  )
 ```
 
-Calibration Weather
+```{r obs-starch, eval = has_obs, fig.height = 10}
+qn  <- make_organ_plot("starch_needles",  "st_needles", "st_needles",
+                       "darkorange", "#4daf4a", "Needles")
+qph <- make_organ_plot("starch_phloem",   "st_phloem",  "st_phloem",
+                       "darkorange", "#8b4513", "Phloem")
+qr  <- make_organ_plot("starch_roots",    "st_roots",   "st_roots",
+                       "darkorange", "#000000", "Roots")
+qxs <- make_organ_plot("starch_xylem_sh", "st_xsh",     "st_xsh",
+                       "darkorange", "#e41a1c", "Xylem (shoot)")
+qxt <- make_organ_plot("starch_xylem_st", "st_xst",     "st_xst",
+                       "darkorange", "#ff7f00", "Xylem (stem)")
 
-```{r}
+(qn + qph) / (qr + qxs + qxt) +
+  plot_annotation(
+    title = "Starch pools vs observations  (× = Schiestl-Aalto et al. 2019, ○ = Yu et al.)",
+    theme = theme(plot.title = element_text(face = "bold"))
+  )
+```
+
+---
+
+## 5  Long run: 1998–2022 with ERA5 / PRELES
+
+This section uses ERA5-derived climate data and runs PRELES internally to generate GPP,
+with parameters calibrated for the 1998–2022 period.
+
+```{r setup-preles-weather}
 weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
-weather_preles_1998_2022 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 1998:2022,]
+weather_preles_1998_2022 <- weather_preles[
+  substring(weather_preles$date, 1, 4) %in% 1998:2022, ]
 weather_preles_1998_2022$dates <- as.Date(weather_preles_1998_2022$date)
 ```
 
-Parameters
+```{r setup-preles-parameters}
+parameters_long <- initialize_parameters(calibration = FALSE, new_parameters)
 
-```{r}
-parameters_1998_2022 <- initialize_parameters(calibration, new_parameters)
-parameters_1998_2022$parameters_test[c("h0"),c("Hyde")] <- 12
-parameters_1998_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416
-parameters_1998_2022$parameters_test[c("GPP_mean"),c("Hyde")] <- 463.8833
-parameters_1998_2022$parameters_test[c("GPP_initial"),c("Hyde")] <- 460.0
+parameters_long$parameters_test[c("h0"),          "Hyde"] <- 12
+parameters_long$parameters_test[c("D0"),          "Hyde"] <- 0.1416
+parameters_long$parameters_test[c("GPP_mean"),    "Hyde"] <- 463.8833
+parameters_long$parameters_test[c("GPP_initial"), "Hyde"] <- 460.0
 
-parameters_1998_2022$sperling_test[c("Ad0.needles", "Ad0.phloem", "Ad0.roots", "Ad0.xylem.sh", "Ad0.xylem.st"),c("Hyde")] <- c(0.1, 0.1, 0.1, 0.1, 0.1)
-parameters_1998_2022$sperling_test[c("lamda.needles", "lamda.phloem", "lamda.roots", "lamda.xylem.sh", "lamda.xylem.st"),c("Hyde")] <- c(1e-4, 1e-4, 1e-4, 1e-4, 1e-4)
-parameters_1998_2022$sperling_test[c("delta.needles", "delta.phloem", "delta.roots", "delta.xylem.sh", "delta.xylem.st"),c("Hyde")] <- c(25e-6, 25e-6, 25e-6, 25e-6, 25e-6)
-parameters_1998_2022$sperling_test[c("myco.thresh"),c("Hyde")] <- 0.3
-# These are not currently used!
-# parameters_1998_2022$sperling_test[c("k_np", "k_pr", "k_pxsh", "k_pxst", "myco.thresh"),c("Hyde")]
+parameters_long$sperling_test[
+  c("Ad0.needles", "Ad0.phloem", "Ad0.roots", "Ad0.xylem.sh", "Ad0.xylem.st"),
+  "Hyde"] <- c(0.1, 0.1, 0.1, 0.1, 0.1)
+
+parameters_long$sperling_test[
+  c("lamda.needles", "lamda.phloem", "lamda.roots", "lamda.xylem.sh", "lamda.xylem.st"),
+  "Hyde"] <- c(1e-4, 1e-4, 1e-4, 1e-4, 1e-4)
+
+parameters_long$sperling_test[
+  c("delta.needles", "delta.phloem", "delta.roots", "delta.xylem.sh", "delta.xylem.st"),
+  "Hyde"] <- c(25e-6, 25e-6, 25e-6, 25e-6, 25e-6)
+
+parameters_long$sperling_test["myco.thresh", "Hyde"] <- 0.3
 ```
 
-Simulation
+```{r run-preles}
+out_long <- CASSIA_cpp(
+  weather                 = weather_preles_1998_2022,
+  site                    = "Hyde",
+  pPREL                   = c(parameters_long$pPREL, parameters_long$N_parameters),
+  parameters              = parameters_long$parameters_test,
+  common                  = common_p,
+  ratios                  = ratios_p,
+  sperling                = parameters_long$sperling_test,
+  needle_mass_in          = parameters_long$needle_mass_in,
+  Throughfall             = parameters_long$Throughfall,
+  photosynthesis_as_input = FALSE,
+  preles                  = TRUE,
+  fAPAR_Tian              = TRUE,
+  sperling_model          = TRUE
+)
 
-```{r}
-CASSIA_preles_1998_2022_sugar_mine <- CASSIA_cpp(weather = weather_preles_1998_2022,
-                                                site = "Hyde",
-                                                pPREL = c(parameters_1998_2022$pPREL, parameters_1998_2022$N_parameters),
-                                                parameters = parameters_1998_2022$parameters_test,
-                                                common = common_p,
-                                                ratios = ratios_p,
-                                                sperling = parameters_1998_2022$sperling_test,
-                                                needle_mass_in = parameters_1998_2022$needle_mass_in,
-                                                Throughfall = parameters_1998_2022$Throughfall,
-                                                photosynthesis_as_input = FALSE,
-                                                preles = TRUE,
-                                                fAPAR_Tian = TRUE,
-                                                sperling_model = TRUE)
+su_long <- out_long$Sugar
+su_long$dates <- weather_preles_1998_2022$dates
 ```
 
-Plot
+```{r preles-organ-plots, fig.height = 8}
+su_long_organ <- bind_rows(
+  data.frame(dates = su_long$dates, value = su_long$sugar_needles,  Organ = "Needles"),
+  data.frame(dates = su_long$dates, value = su_long$sugar_phloem,   Organ = "Phloem"),
+  data.frame(dates = su_long$dates, value = su_long$sugar_roots,    Organ = "Roots"),
+  data.frame(dates = su_long$dates, value = su_long$sugar_xylem_sh, Organ = "Xylem (shoot)"),
+  data.frame(dates = su_long$dates, value = su_long$sugar_xylem_st, Organ = "Xylem (stem)")
+)
 
-```{r}
-plot_sugar_starch_comparison(CASSIA_preles_1998_2022_sugar_mine, weather_preles_1998_2022$dates, loaded_data$original_data, loaded_data$yu_data)
+st_long_organ <- bind_rows(
+  data.frame(dates = su_long$dates, value = su_long$starch_needles,  Organ = "Needles"),
+  data.frame(dates = su_long$dates, value = su_long$starch_phloem,   Organ = "Phloem"),
+  data.frame(dates = su_long$dates, value = su_long$starch_roots,    Organ = "Roots"),
+  data.frame(dates = su_long$dates, value = su_long$starch_xylem_sh, Organ = "Xylem (shoot)"),
+  data.frame(dates = su_long$dates, value = su_long$starch_xylem_st, Organ = "Xylem (stem)")
+)
+
+p_long_su <- ggplot(su_long_organ, aes(x = dates, y = value, colour = Organ)) +
+  geom_line(linewidth = 0.6) +
+  scale_colour_manual(values = organ_colours) +
+  scale_x_date(date_breaks = "4 years", date_labels = "%Y") +
+  labs(title = "Sugar pools, 1998–2022 (ERA5 / PRELES)",
+       x = NULL, y = "kg C stem⁻¹", colour = NULL) +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+
+p_long_st <- ggplot(st_long_organ, aes(x = dates, y = value, colour = Organ)) +
+  geom_line(linewidth = 0.6) +
+  scale_colour_manual(values = organ_colours) +
+  scale_x_date(date_breaks = "4 years", date_labels = "%Y") +
+  labs(title = "Starch pools, 1998–2022 (ERA5 / PRELES)",
+       x = NULL, y = "kg C stem⁻¹", colour = NULL) +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+
+(p_long_su / p_long_st) + plot_layout(ncol = 1, guides = "collect") &
+  theme(legend.position = "bottom")
 ```
 
-
+```{r preles-obs-needle, eval = has_obs}
+ggplot(data.frame(dates = su_long$dates, value = su_long$sugar_needles),
+       aes(x = dates, y = value)) +
+  geom_line(colour = "steelblue", linewidth = 0.8) +
+  geom_point(data = obs_sa, aes(x = dates, y = su_needles),
+             shape = 4, colour = "#4daf4a", size = 2.5) +
+  geom_point(data = obs_yu, aes(x = dates, y = su_needles),
+             shape = 1, colour = "#4daf4a", size = 2.5) +
+  scale_x_date(date_breaks = "4 years", date_labels = "%Y") +
+  labs(title = "Needle sugar, 1998–2022 vs observations  (× = Schiestl-Aalto, ○ = Yu)",
+       x = NULL, y = "kg C stem⁻¹") +
+  theme_bw(base_size = 11) +
+  theme(plot.title = element_text(face = "bold"))
+```
