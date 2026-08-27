@@ -80,8 +80,8 @@ out3 <- CASSIA_cpp(weather = weather_original, site = "Hyde",
 ```
 
 All parameters are explained in the CASSIA instruction booklet
-(`man/CASSIA+_Instruction_And_Plans_Booklet.pdf`) and in the original articles
-listed below.
+(`CASSIA_Instruction_Booklet.pdf`, in the package root or on GitHub) and in
+the original articles listed below.
 
 ### Using your own weather data
 
@@ -113,7 +113,13 @@ sensitivity analysis and parameter fitting.
 | Vignette | Topic |
 |----------|-------|
 | `vignette("Running_The_Model")` | Full walkthrough: install, run, interpret output, change parameters |
-| `vignette("Sensitivity_Analysis")` | How to test parameter sensitivity and calibrate for a new site |
+| `vignette("Visualisation")` | Plotting model output and comparing to observations |
+| `vignette("Datasets")` | Exploring and modifying built-in parameter tables and datasets |
+| `vignette("Component_Models")` | Using Repola allometry and PRELES photosynthesis independently |
+| `vignette("Weather")` | Preparing and formatting weather data for CASSIA |
+| `vignette("ERA5_Weather")` | ERA5 reanalysis workflow and the `calculate_VPD` function |
+| `vignette("ring_width_process")` | Step-by-step walkthrough of the xylogenesis sub-model |
+| `vignette("Sensitivity_Analysis")` | Testing parameter sensitivity and calibrating for a new site |
 
 ---
 
@@ -125,10 +131,12 @@ sensitivity analysis and parameter fitting.
 CASSIA/
 ├── R/                    # Exported R functions + roxygen2 documentation blocks
 ├── src/                  # C++ model core, compiled via Rcpp
+├── inst/include/         # C++ header files shared across translation units
 ├── data/                 # Built-in datasets (weather_original, parameters_p, …)
 ├── data-raw/             # Scripts that built the data/ objects
 ├── man/                  # Auto-generated help files — do not edit by hand
 ├── vignettes/            # User-facing tutorials (rendered on CRAN/GitHub)
+├── external/             # External dependency code
 └── development_notebooks/ # Developer notebooks (model comparisons, calibration)
 ```
 
@@ -137,9 +145,9 @@ The C++ model (`src/`) is compiled by Rcpp on install. The R wrapper
 
 ### Regenerating documentation
 
-Documentation is written as roxygen2 `#'` blocks directly above each function in
-the `R/` files. **Never edit `man/*.Rd` files by hand** — they are auto-generated.
-After editing any `#'` block, regenerate with:
+Documentation for the main user-facing functions is written as roxygen2 `#'`
+blocks in the `R/` files and auto-generated into `man/`. After editing any `#'`
+block, regenerate with:
 
 ```r
 devtools::document()
