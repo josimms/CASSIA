@@ -116,7 +116,7 @@ The following features are off by default and enabled by toggles:
 
 | Toggle | What it enables |
 |--------|----------------|
-| `sperling_model = TRUE` | Enzyme-driven sugar model with organ-level concentration pools |
+| `organ_level_sugar = TRUE` | Organ-level sugar model: per-organ concentration pools with separate sugar/starch dynamics |
 | `phydro = TRUE` | GPP calculated via the p-hydro hydraulic model |
 | `myco_model = TRUE` | Experimental mycorrhizal carbon/nitrogen exchange model |
 | `xylogenesis = TRUE` | Xylogenesis sub-model with early/late-wood cell stages |
@@ -130,6 +130,6 @@ the full list and meanings.
 
 ```{r}
 out_sugar <- CASSIA_cpp(weather = weather_original, site = "Hyde",
-                        sperling_model = TRUE)
+                        organ_level_sugar = TRUE)
 head(out_sugar$Sugar)
 ```

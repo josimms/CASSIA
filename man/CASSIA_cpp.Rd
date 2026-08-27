@@ -34,13 +34,19 @@ CASSIA_cpp(
   LD_estim = TRUE,
   sD_estim_T_count = FALSE,
   LH_estim = TRUE,
+  soil_moisture_effect_on_shoot = FALSE,
+  soil_moisture_effect_on_needles = FALSE,
+  soil_moisture_effect_on_diameter = FALSE,
+  driver_N = c(1, 1),
+  driver_H = c(0, 2),
+  driver_D = c(1, 1),
   trees_grow = FALSE,
   growth_decreases = FALSE,
   needle_mass_grows = FALSE,
   phloem_trigger = FALSE,
   mycorrhiza = TRUE,
   root_as_Ding = TRUE,
-  sperling_model = FALSE,
+  organ_level_sugar = FALSE,
   myco_model = FALSE,
   xylogenesis = FALSE,
   environment_effect_xylogenesis = FALSE,
@@ -173,6 +179,24 @@ from the temperature-driven growth integral.}
 
 \item{LH_estim}{Logical. If \code{TRUE} (default), LH is modified by GPP.}
 
+\item{soil_moisture_effect_on_shoot}{Logical. Enable soil moisture limitation
+on shoot growth. Default \code{FALSE}.}
+
+\item{soil_moisture_effect_on_needles}{Logical. Enable soil moisture
+limitation on needle growth. Default \code{FALSE}.}
+
+\item{soil_moisture_effect_on_diameter}{Logical. Enable soil moisture
+limitation on diameter growth. Default \code{FALSE}.}
+
+\item{driver_N}{Numeric vector of length 2. Scaling parameters controlling
+the effect of nitrogen availability on growth. Default \code{c(1, 1)}.}
+
+\item{driver_H}{Numeric vector of length 2. Scaling parameters controlling
+height growth. Default \code{c(0, 2)}.}
+
+\item{driver_D}{Numeric vector of length 2. Scaling parameters controlling
+diameter growth. Default \code{c(1, 1)}.}
+
 \item{trees_grow}{Logical. If \code{TRUE}, D0 and h0 are updated
 year-to-year from modelled growth. Automatically \code{TRUE} when
 \code{xylogenesis = TRUE}. Default \code{FALSE}.}
@@ -186,19 +210,19 @@ needle mass is fixed after the first iteration.}
 
 \item{phloem_trigger}{Logical. If \code{TRUE}, bud burst is triggered when
 phloem sugar first drops below a threshold (requires
-\code{sperling_model = TRUE}). Default \code{FALSE}.}
+\code{organ_level_sugar = TRUE}). Default \code{FALSE}.}
 
 \item{mycorrhiza}{Logical. If \code{TRUE} (default), carbon allocation to
 mycorrhiza is included. Automatically \code{FALSE} when
-\code{sperling_model = TRUE}.}
+\code{organ_level_sugar = TRUE}.}
 
 \item{root_as_Ding}{Logical. If \code{TRUE} (default), root growth follows
 Ding et al. (2020) with fibrous/non-fibrous root stages.}
 
-\item{sperling_model}{Logical. If \code{TRUE}, uses the enzyme-driven sugar
-model (Sperling et al. 2019) with organ-level concentration pools.
-If \code{FALSE} (default), uses the Schiestl-Aalto (2019) equilibrium
-approach.}
+\item{organ_level_sugar}{Logical. If \code{TRUE}, uses the organ-level sugar
+model with per-organ concentration pools (requires \code{sperling_p}
+parameters). If \code{FALSE} (default), uses the Schiestl-Aalto (2019)
+equilibrium approach with a single aggregate pool.}
 
 \item{myco_model}{Logical. Enable experimental mycorrhizal model.
 Default \code{FALSE}.}

@@ -21,7 +21,7 @@ void actual_growth(int day,
    */
 
   double storage_height = 0;
-  if (boolsettings.sperling_model) {
+  if (boolsettings.organ_level_sugar) {
     storage_height = (phloem_share * storage.phloem + xylem_st_share * storage.xylem_st + xylem_sh_share * storage.xylem_sh);
   } else {
     storage_height = storage.needles;
@@ -33,7 +33,7 @@ void actual_growth(int day,
    */
 
   double storage_wall = 0;
-  if (boolsettings.sperling_model) {
+  if (boolsettings.organ_level_sugar) {
     storage_wall = (phloem_share * storage.phloem + xylem_st_share * storage.xylem_st + xylem_sh_share * storage.xylem_sh);
   } else {
     storage_wall = storage.needles;
@@ -54,7 +54,7 @@ void actual_growth(int day,
    * Roots
    */
   double storage_roots;
-  if (boolsettings.sperling_model) {
+  if (boolsettings.organ_level_sugar) {
     storage_roots = storage.roots;
   } else {
     storage_roots = storage.needles;
@@ -77,7 +77,7 @@ void actual_growth(int day,
    * GD
    */
   double storage_GD;
-  if (boolsettings.sperling_model) {
+  if (boolsettings.organ_level_sugar) {
     storage_GD = (phloem_share * storage.phloem + xylem_st_share * storage.xylem_st + xylem_sh_share * storage.xylem_sh);
   } else {
     storage_GD = storage.needles;

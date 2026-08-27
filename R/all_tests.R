@@ -245,6 +245,7 @@ initialize_parameters <- function(calibration = FALSE, new_parameters = NULL) {
 # Plot old CASSIA verison against new CASSIA version
 #####
 
+#' @export
 plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_original_plot, variables_original, soil_processes = FALSE) {
   par(mfrow = c(3, 3))
 
@@ -298,6 +299,7 @@ plot_comparison <- function(CASSIA_new_output, variables_new, Hyde_daily_origina
 # Weather variables
 #####
 
+#' @export
 plot_weather_variables <- function(weather_original) {
   par(mfrow = c(2, 3))
   not_dates = !(names(weather_original) %in% c("dates", "Date", "date", "X"))
@@ -314,6 +316,7 @@ plot_weather_variables <- function(weather_original) {
 # Plot sugar start comparison
 #####
 
+#' @export
 plot_sugar_starch_comparison <- function(CASSIA_new_output, dates, original_data, yu_data) {
   par(mfrow = c(2, 1))
 

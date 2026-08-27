@@ -7,9 +7,9 @@ validate_site <- function(site) {
 
 update_model_settings <- function(settings) {
   if (settings$myco_model) {
-    if (!settings$sperling_model) {
-      settings$sperling_model <- TRUE
-      warning("sperling_model set to TRUE as it should control allocation in myco_model.")
+    if (!settings$organ_level_sugar) {
+      settings$organ_level_sugar <- TRUE
+      warning("organ_level_sugar set to TRUE as it should control allocation in myco_model.")
     }
     if (!settings$PRELES_GPP) {
       settings$PRELES_GPP <- TRUE
@@ -17,14 +17,14 @@ update_model_settings <- function(settings) {
     }
   }
 
-  if (settings$sperling_model && settings$mycorrhiza) {
+  if (settings$organ_level_sugar && settings$mycorrhiza) {
     settings$mycorrhiza <- FALSE
-    warning("mycorrhiza set to FALSE as it's included explicitly in the Sperling submodel.")
+    warning("mycorrhiza set to FALSE as it's included explicitly in the organ-level sugar model.")
   }
 
-  if (!settings$sperling_model && settings$phloem_trigger) {
+  if (!settings$organ_level_sugar && settings$phloem_trigger) {
     settings$phloem.trigger <- FALSE
-    warning("phloem.trigger set to FALSE as this feature requires the Sperling model.")
+    warning("phloem.trigger set to FALSE as this feature requires the organ-level sugar model.")
   }
 
   if (settings$xylogenesis) {
@@ -105,7 +105,7 @@ validate_weather_data <- function(weather, photosynthesis_as_input, ecoevolution
 
 # Function to set up export data frames based on model type
 setup_export_data <- function(model_type, years, total_days) {
-  if (model_type == "sperling") {
+  if (model_type == "organ_level_sugar") {
     yearly_columns <- c("year", "starch", "sugar", "wall.tot", "height.tot", "needle.tot", "root.tot", "tot.Rm", "tot.Rg",
                         "tot.P", "cumsum.PF", "cum.Daily.H.tot", "cum.Daily.N.tot", "tot.mm", "needle_mass", "sum.needle.cohorts",
                         "sugar.needles", "sugar.phloem", "sugar.xylem.sh", "sugar.xylem.st", "sugar.roots",

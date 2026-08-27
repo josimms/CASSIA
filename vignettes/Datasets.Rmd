@@ -1,0 +1,197 @@
+---
+title: "Exploring Built-in Datasets and Parameters"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Exploring Built-in Datasets and Parameters}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, message=FALSE}
+library(CASSIA)
+```
+
+CASSIA ships with pre-calibrated parameter sets and reference datasets for
+Hyytiälä (Hyde), Lettosuo, and Väriö/Flakaliden. This vignette shows how to
+explore and modify them.
+
+---
+
+## Weather data: weather_original
+
+`weather_original` is a 1096-row data frame covering Hyytiälä SMEAR II
+daily measurements for 2015–2017.
+
+```{r}
+dim(weather_original)
+names(weather_original)
+```
+
+Add a `dates` column before passing to `CASSIA_cpp`:
+
+```{r}
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+           format = "%Y %j"))
+head(weather_original[, c("dates", "T", "P", "TSA", "TSB", "MB", "Rain")], 3)
+```
+
+Column descriptions: `T` = air temperature (°C), `P` = GPP input
+(g C m⁻² day⁻¹), `TSA`/`TSB` = soil temperature A/B horizon (°C),
+`MB` = soil moisture B horizon (m³ m⁻³), `Rain` = precipitation (mm day⁻¹).
+
+---
+
+## Site-specific parameters: parameters_p
+
+`parameters_p` is a 75 × 3 matrix — one column per site.
+
+```{r}
+dim(parameters_p)
+colnames(parameters_p)
+```
+
+Browse selected rows by category:
+
+```{r}
+# Growth parameters
+parameters_p[c("bud.day", "bud.T", "leaf.out", "gD"), ]
+```
+
+```{r}
+# Respiration parameters
+parameters_p[c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R"), ]
+```
+
+To modify a parameter for a sensitivity run, copy the matrix and edit:
+
+```{r}
+params_modified <- parameters_p
+params_modified["root.lifetime", "Hyde"] <- 2.0   # originally 1.0
+```
+
+Then pass it to `CASSIA_cpp`:
+
+```{r, eval=FALSE}
+out_mod <- CASSIA_cpp(weather = weather_original, site = "Hyde",
+                      parameters = params_modified)
+```
+
+---
+
+## Sugar model parameters: sperling_p
+
+`sperling_p` is a 55 × 3 matrix covering sugar kinetics for three sites.
+The third site is Flakaliden\_c (a Swedish boreal site).
+
+```{r}
+dim(sperling_p)
+colnames(sperling_p)
+```
+
+```{r}
+# Transfer rate parameters (tau = relaxation time, days)
+sperling_p[c("tau.s", "tau.t", "SCb", "SCs"), ]
+```
+
+---
+
+## Allocation ratios: ratios_p
+
+`ratios_p` holds allocation and morphology ratios for Hyde and Lettosuo.
+
+```{r}
+ratios_p
+```
+
+---
+
+## Site-independent parameters: common_p
+
+`common_p` is a named numeric vector of constants that do not vary between
+sites: soil physics, gas constants, and growth respiration coefficients.
+
+```{r}
+length(common_p)
+head(common_p, 20)
+```
+
+---
+
+## Repola allometry parameters: repo_p
+
+`repo_p` holds the fixed-effect parameters from the Repola (2009) biomass
+allometry model, used internally to initialise organ masses.
+
+```{r}
+repo_p
+```
+
+---
+
+## initialize_parameters
+
+`initialize_parameters()` bundles all the adjustments CASSIA applies to the
+raw parameter matrices before a run: it sets lower-bound sugar concentrations,
+initialises transfer rates, and assembles the PRELES parameter vector.
+
+```{r}
+params <- initialize_parameters()
+names(params)
+```
+
+The returned list contains:
+
+| Name | Contents |
+|------|----------|
+| `needle_mass_in` | Initial needle mass (kg C tree⁻¹) |
+| `N_parameters` | Nitrogen uptake parameters |
+| `pPREL` | 30-element PRELES parameter vector |
+| `parameters_test` | Modified `parameters_p` with adjusted bounds |
+| `sperling_test` | Modified `sperling_p` with adjusted transfer rates |
+| `Throughfall` | Throughfall fraction |
+| `parameters_R` | Soil/nitrogen sub-model parameters (length 58) |
+
+You can inspect the PRELES vector directly:
+
+```{r}
+params$pPREL
+```
+
+---
+
+## Reference datasets
+
+| Dataset | Contents |
+|---------|----------|
+| `Hyde_daily_original` | Daily Hyytiälä observations 2015–2018 (growth, respiration, GPP) |
+| `Hyde_yearly_original` | Annual summaries of the same observations |
+| `GPP_ref` | Reference daily GPP (365 values) used when `LN_estim = TRUE` |
+| `oyewole_2015_calibration_data` | Nitrogen uptake calibration data |
+
+```{r}
+names(Hyde_daily_original)
+head(GPP_ref)
+```
+
+---
+
+## Calibration data: load_data
+
+`load_data()` loads the full set of Hyytiälä calibration files (sugar
+measurements, trenching fluxes, SMEAR observations, core drilling data).
+These files are not bundled in the package; they are stored in a separate
+calibration directory.
+
+```{r, eval=FALSE}
+loaded <- load_data(data_directory = "~/Documents/CASSIA_Calibration/Processed_Data/")
+names(loaded)
+# $yu_data            — sugar/starch concentration measurements
+# $original_data      — original CASSIA R-version outputs for comparison
+# $smearII_data       — SmearII ecological measurements
+# $core_drilling_list — list of core drilling ring-width files
+# ...
+```
+
+Contact the maintainer (joanna.x.simms@helsinki.fi) for access to the
+calibration data directory.

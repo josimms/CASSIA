@@ -395,7 +395,7 @@
                                                              nitrogen_balance,
                                                              nitrogen_change,
                                                              nitrogen_contrast,
-                                                             boolsettings.sperling_model,
+                                                             boolsettings.organ_level_sugar,
                                                              tree_alive,
                                                              boolsettings.storage_grows,
                                                              surplus_c,
@@ -443,7 +443,7 @@
       growth_out actual_growth_out = actual_growth(parameters, common,
                                                    sugar_values_for_next_iteration.storage, potential_growth,
                                                    resp,
-                                                   boolsettings.sperling_model,
+                                                   boolsettings.organ_level_sugar,
                                                    sugar_model_out.nitrogen_capacity);
 
       ring_width_out ring_width = ring_width_generator(day, previous_ring_width, potential_growth.previous_values, parameters, actual_growth_out.GD);

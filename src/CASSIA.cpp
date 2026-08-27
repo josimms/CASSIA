@@ -162,9 +162,9 @@ Rcpp::List CASSIA_yearly(int start_year,
     repola_values.needle_mass = needle_mass_in;
   }
 
-  // Sperling (multi-compartment) model uses per-organ initial values.
-  // Non-sperling model uses a single needle pool seeded from the aggregate sugar0/starch0.
-  if (boolsettings.sperling_model) {
+  // Organ-level sugar model uses per-organ initial values.
+  // Non-organ-level-sugar model uses a single needle pool seeded from the aggregate sugar0/starch0.
+  if (boolsettings.organ_level_sugar) {
     all_out.starch_vector.needles[0] = starch.needles = parameters.starch_needles00 = parameters.starch_needles0;
     all_out.sugar_vector.needles[0]  = sugar.needles  = parameters.sugar_needles00  = parameters.sugar_needles0;
     all_out.starch_vector.phloem[0]  = starch.phloem  = parameters.starch_phloem00  = parameters.starch_phloem0;
@@ -398,7 +398,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                     TRUE,
                     surplus_c,
                     tree_alive,
-                    boolsettings.sperling_model,
+                    boolsettings.organ_level_sugar,
                     tree_state,
                     nitrogen_balance,
                     winter_state,

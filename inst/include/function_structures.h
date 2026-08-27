@@ -466,7 +466,7 @@ struct Settings {
   bool mycorrhiza = false;
   bool root_as_Ding = false;
 
-  bool sperling_model = false;
+  bool organ_level_sugar = false;
   bool myco_model = false;
   bool xylogensis_option = false;
 

@@ -1,0 +1,142 @@
+---
+title: "Component Models: Repola and PRELES"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Component Models: Repola and PRELES}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, message=FALSE}
+library(CASSIA)
+```
+
+CASSIA integrates two external sub-models — Repola allometry and PRELES
+photosynthesis — that can also be useful on their own. This vignette shows
+how to use each independently and explains how they connect to `CASSIA_cpp`.
+
+---
+
+## Repola biomass allometry
+
+The `repola()` function implements the Repola (2009) mixed-effects allometry
+model for Scots pine, relating stem diameter and tree height to needle mass,
+sapwood mass, and fine root mass. CASSIA calls it internally during
+initialisation to set starting organ masses for each simulation year.
+
+### Standalone use
+
+The function needs diameter at breast height (`D0`, m), tree height (`h0`, m),
+a year index (`n.year`), a needle mass history vector, a site string, and the
+`parameters_p` and `repo_p` matrices.
+
+```{r}
+# A 15 cm diameter, 12 m tall Scots pine at Hyytiälä
+out_repola <- repola(
+  D0        = 0.15,
+  h0        = 12,
+  n.year    = 1,
+  needle_mas = rep(NA, 10),   # history vector; only index n.year is written
+  ste       = "Hyde",
+  params    = parameters_p,
+  reps      = repo_p
+)
+names(out_repola)
+```
+
+```{r}
+# Total needle carbon (kg C tree⁻¹)
+out_repola$m.N.tot
+
+# Fine root carbon (= 50 % of needle carbon by default)
+out_repola$m.R.tot
+
+# Needle mass per mm of the youngest cohort
+out_repola$m.N
+```
+
+### Scanning a diameter range
+
+```{r, fig.width=6, fig.height=4}
+D0_seq <- seq(0.05, 0.30, by = 0.01)
+
+needle_mass <- sapply(D0_seq, function(d) {
+  repola(D0 = d, h0 = 10 + d * 30, n.year = 1,
+         needle_mas = rep(NA, 10),
+         ste = "Hyde", params = parameters_p, reps = repo_p)$m.N.tot
+})
+
+plot(D0_seq * 100, needle_mass,
+     type = "l", lwd = 2,
+     xlab = "DBH (cm)", ylab = "Needle mass (kg C tree⁻¹)",
+     main = "Repola allometry: needle mass vs diameter")
+```
+
+### How it connects to CASSIA_cpp
+
+`CASSIA_cpp` calls `repola` during setup to compute `m.N.tot` and `m.R.tot`
+before the C++ loop begins. You can supply a custom needle mass history via the
+`needle_mass` argument to `CASSIA_cpp` if your tree has measured values.
+
+---
+
+## PRELES photosynthesis
+
+PRELES (Prentice *et al.* 2014) is a process-based GPP model driven by PAR,
+VPD, precipitation, temperature, CO₂ and fAPAR. CASSIA uses the C++
+implementation internally, which is faster than the R version.
+
+### Using PRELES via CASSIA_cpp
+
+Pass `preles = TRUE` together with `photosynthesis_as_input = FALSE` — only
+one photosynthesis source may be active at a time. The built-in `data_format`
+dataset has the required PRELES columns (`PAR`, `VPD`, `CO2`, `fAPAR`) for
+Hyytiälä 2005 onward:
+
+```{r}
+names(data_format)
+```
+
+```{r, fig.width=7, fig.height=4}
+# Take the first year from data_format
+weather_preles        <- data_format[1:365, ]
+weather_preles$dates  <- as.Date(weather_preles$Date)
+
+out_preles <- CASSIA_cpp(weather = weather_preles, site = "Hyde",
+                         photosynthesis_as_input = FALSE,
+                         preles = TRUE)
+
+par(mfrow = c(1, 2))
+plot(weather_preles$dates, out_preles$Preles$GPP,
+     type = "l", main = "PRELES GPP",
+     xlab = "Date", ylab = "g C m⁻² day⁻¹")
+plot(weather_preles$dates, out_preles$Preles$ET,
+     type = "l", col = "blue", main = "PRELES ET",
+     xlab = "Date", ylab = "mm day⁻¹")
+```
+
+The `out$Preles` data frame columns are:
+
+```{r}
+names(out_preles$Preles)
+```
+
+### Photosynthesis options
+
+CASSIA supports three ways to supply GPP — exactly one must be active:
+
+| Toggle | Source of GPP |
+|--------|----------------|
+| `photosynthesis_as_input = TRUE` (default) | Column `P` in weather data — measured or pre-computed GPP |
+| `preles = TRUE` | C++ PRELES, driven by PAR, VPD, CO2, fAPAR in the weather data |
+| `phydro = TRUE` | p-hydro hydraulic optimality model (also needs PPFD, PPFD\_max, SWP) |
+
+When using `preles = TRUE`, always set `photosynthesis_as_input = FALSE`.
+
+### PRELES_GPP (R wrapper)
+
+The exported function `PRELES_GPP` wraps the R package `Rprebasso` and is
+retained for compatibility with the pure-R version of CASSIA. It is not
+needed for normal use of `CASSIA_cpp` and requires `Rprebasso` to be
+installed separately. Use `preles = TRUE` in `CASSIA_cpp` for the C++
+implementation instead.

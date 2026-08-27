@@ -104,16 +104,16 @@
 #'   needle mass is fixed after the first iteration.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
-#'   \code{sperling_model = TRUE}). Default \code{FALSE}.
+#'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}.
 #' @param mycorrhiza Logical. If \code{TRUE} (default), carbon allocation to
 #'   mycorrhiza is included. Automatically \code{FALSE} when
-#'   \code{sperling_model = TRUE}.
+#'   \code{organ_level_sugar = TRUE}.
 #' @param root_as_Ding Logical. If \code{TRUE} (default), root growth follows
 #'   Ding et al. (2020) with fibrous/non-fibrous root stages.
-#' @param sperling_model Logical. If \code{TRUE}, uses the enzyme-driven sugar
-#'   model (Sperling et al. 2019) with organ-level concentration pools.
-#'   If \code{FALSE} (default), uses the Schiestl-Aalto (2019) equilibrium
-#'   approach.
+#' @param organ_level_sugar Logical. If \code{TRUE}, uses the organ-level sugar
+#'   model with per-organ concentration pools (requires \code{sperling_p}
+#'   parameters). If \code{FALSE} (default), uses the Schiestl-Aalto (2019)
+#'   equilibrium approach with a single aggregate pool.
 #' @param myco_model Logical. Enable experimental mycorrhizal model.
 #'   Default \code{FALSE}.
 #' @param xylogenesis Logical. If \code{TRUE}, xylogenesis controls cell growth
@@ -282,7 +282,7 @@ CASSIA_cpp <- function(
     mycorrhiza = TRUE, 			# If allocation to mychorrhiza is taken into account
     root_as_Ding = TRUE,
 
-    sperling_model = FALSE,       # Dynamic sugar model using Sperling's enzyme dynamics
+    organ_level_sugar = FALSE,    # Organ-level sugar model with per-organ concentration pools
     myco_model = FALSE,           # Joanna's mycomodel development!
     xylogenesis = FALSE,
 
@@ -347,7 +347,7 @@ CASSIA_cpp <- function(
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,
-    "sperling_model" = sperling_model,
+    "organ_level_sugar" = organ_level_sugar,
     "myco_model" = myco_model,
     "xylogenesis" = xylogenesis,
     "environment_effect_xylogenesis" = environment_effect_xylogenesis,

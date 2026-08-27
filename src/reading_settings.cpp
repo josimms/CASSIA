@@ -24,7 +24,7 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.mycorrhiza = Rcpp::as<bool>(settingsList["mycorrhiza"]);
   settings.root_as_Ding = Rcpp::as<bool>(settingsList["root_as_Ding"]);
 
-  settings.sperling_model = Rcpp::as<bool>(settingsList["sperling_model"]);
+  settings.organ_level_sugar = Rcpp::as<bool>(settingsList["organ_level_sugar"]);
   settings.myco_model = Rcpp::as<bool>(settingsList["myco_model"]);
   settings.xylogensis_option = Rcpp::as<bool>(settingsList["xylogenesis"]);
 

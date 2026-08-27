@@ -49,7 +49,8 @@ run_sensitivity <- function(param_name, range, weather) {
     if (param_name %in% rownames(parameters_p_new)) {
       parameters_p_new["Hyde"][rownames(parameters_p_new) == param_name, ] <- i
       result <- CASSIA_cpp(weather, site = "Hyde",
-                           parameters = parameters_p_new)
+                           parameters = parameters_p_new,
+                           CASSIA_graphs = FALSE)
       list(param_value = i, result = result)
     } else {
       message("Parameter '", param_name,
@@ -91,7 +92,7 @@ sugar or nitrogen sub-models, e.g.:
 ```{r, eval=FALSE}
 results_tau <- lapply(seq(1, 20, length.out = 10), function(tau) {
   out <- CASSIA_cpp(weather_original, site = "Hyde",
-                    sperling_model = TRUE, tau.myco = tau)
+                    organ_level_sugar = TRUE, tau.myco = tau)
   list(tau = tau, result = out)
 })
 ```
@@ -104,10 +105,9 @@ sensitivity_dgs      <- run_sensitivity("diameter_start_day", seq(50, 200, lengt
 
 ## Plotting the results
 
-Extract the end-of-season wall growth across all runs. Here we use `wall.tot`
-(cumulative diameter wall growth, mm), taking the maximum per year as the
-final annual value — this is the ring-width equivalent in the default model.
-You could substitute any column from `out$Growth`.
+Extract the annual ring width across all runs. Here we use `ring_width`
+(cumulative ring width within the year, mm), taking the maximum per year as
+the final annual value. You could substitute any column from `out$Growth`.
 
 ```{r, eval=FALSE}
 extract_yearly <- function(sensitivity_list, param_name, output_col, fun = max) {
@@ -124,16 +124,16 @@ extract_yearly <- function(sensitivity_list, param_name, output_col, fun = max) 
 }
 
 plot_data <- bind_rows(
-  extract_yearly(sensitivity_sDc,      "sDc",                "wall.tot"),
-  extract_yearly(sensitivity_sD0_Trad, "sD0.Trad",           "wall.tot"),
-  extract_yearly(sensitivity_dgs,      "diameter_start_day", "wall.tot")
+  extract_yearly(sensitivity_sDc,      "sDc",                "ring_width"),
+  extract_yearly(sensitivity_sD0_Trad, "sD0.Trad",           "ring_width"),
+  extract_yearly(sensitivity_dgs,      "diameter_start_day", "ring_width")
 )
 
 library(ggplot2)
 ggplot(plot_data, aes(x = param_value, y = value, colour = factor(year))) +
   geom_line() +
   facet_wrap(~param_name, scales = "free_x") +
-  labs(y = "End-of-season wall growth (mm)", colour = "Year")
+  labs(y = "Annual ring width (mm)", colour = "Year")
 ```
 
 ## Interpreting the results

@@ -1,5 +1,6 @@
 # DEW POINT
 
+#' @export
 calculate_VPD <- function(dew_point_temp, air_temp) {
   # Calculate saturation vapor pressure at air temperature (in hPa)
   e_s <- 6.11 * 10^(7.5 * air_temp / (237.3 + air_temp))

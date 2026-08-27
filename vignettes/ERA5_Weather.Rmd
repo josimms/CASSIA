@@ -1,0 +1,151 @@
+---
+title: "ERA5 Weather Data for CASSIA"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{ERA5 Weather Data for CASSIA}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, message=FALSE}
+library(CASSIA)
+```
+
+ERA5 is the ECMWF global reanalysis product and is useful when SMEAR station
+data are not available — for example, at new sites or for multi-decadal
+hindcasts. This vignette explains the ERA5 workflow in CASSIA and demonstrates
+`calculate_VPD`, the key unit-conversion function.
+
+---
+
+## Overview of the ERA5 pipeline
+
+```
+ERA5 .nc files
+    └─► ERAS_reading_nc()   # reads, aggregates, bias-corrects hourly ERA5 to daily
+            └─► ERA5_CASSIA_preles.csv   →  CASSIA_cpp(preles = TRUE)
+            └─► ERA5_CASSIA_phydro.csv   →  CASSIA_cpp(phydro = TRUE)
+```
+
+The package ships with pre-processed ERA5 datasets for Hyytiälä (1960–2022)
+so you can run CASSIA without downloading any ERA5 files.
+
+---
+
+## calculate_VPD
+
+ERA5 provides dew-point temperature (`d2m`) and air temperature (`t2m`) rather
+than VPD directly. `calculate_VPD` converts these to relative humidity and VPD
+using the Magnus formula.
+
+```{r}
+# VPD for a warm, moderately humid summer day
+result <- calculate_VPD(dew_point_temp = 12, air_temp = 25)
+result$RH    # relative humidity (0–1)
+result$VPD   # vapour pressure deficit (hPa)
+```
+
+The output VPD is in **hPa**. PRELES expects VPD in kPa, so divide by 10 when
+preparing PRELES inputs:
+
+```{r}
+vpd_kPa <- result$VPD / 10
+vpd_kPa
+```
+
+### Applying to a weather data frame
+
+```{r, fig.width=6, fig.height=3}
+# Simulate dew-point / temperature pairs over a year
+T_air  <- 10 * sin(seq(0, pi, length.out = 365)) - 5   # -5 to +5 °C, boreal
+T_dew  <- T_air - 5                                     # 5 °C depression
+
+vpd_hPa <- mapply(function(dp, ta) calculate_VPD(dp, ta)$VPD, T_dew, T_air)
+
+plot(vpd_hPa, type = "l",
+     main = "Computed VPD over a synthetic year",
+     xlab = "Day of year", ylab = "VPD (hPa)")
+```
+
+---
+
+## Pre-processed ERA5 datasets in the package
+
+`ERAS_reading_nc` produces two CASSIA-ready files. Both are included as package
+datasets so that most users do not need to re-process the raw ERA5 NetCDF files.
+
+### ERA5_CASSIA_preles — for preles = TRUE
+
+```{r}
+head(ERA5_CASSIA_preles)
+```
+
+Column | Description | Unit
+-------|-------------|-----
+`date` | Date string (YYYY-MM-DD) | —
+`T` | Air temperature | °C
+`VPD` | Vapour pressure deficit | kPa
+`PAR` | Photosynthetically active radiation | mol m⁻² day⁻¹
+`Rain` | Precipitation | mm day⁻¹
+`CO2` | Atmospheric CO₂ | ppm
+`fAPAR` | Fraction of absorbed PAR | 0–1
+`TSA` | Soil temperature, A horizon | °C
+`TSB` | Soil temperature, B horizon | °C
+`MB` | Soil moisture, B horizon | m³ m⁻³
+
+Run CASSIA with PRELES photosynthesis on this dataset:
+
+```{r, eval=FALSE}
+df <- as.data.frame(ERA5_CASSIA_preles)
+df$dates <- as.Date(df$date)
+
+out <- CASSIA_cpp(weather = df, site = "Hyde", preles = TRUE)
+```
+
+### ERA5_CASSIA_phydro — for phydro = TRUE
+
+```{r}
+head(ERA5_CASSIA_phydro)
+```
+
+The phydro dataset includes additional columns needed for the hydraulic
+optimality sub-model (`PPFD`, `PPFD_max`, `SWP`):
+
+```{r, eval=FALSE}
+df_phydro <- as.data.frame(ERA5_CASSIA_phydro)
+df_phydro$dates <- as.Date(df_phydro$date)
+
+out_ph <- CASSIA_cpp(weather = df_phydro, site = "Hyde", phydro = TRUE)
+```
+
+---
+
+## ERAS_reading_nc: processing your own ERA5 files
+
+`ERAS_reading_nc` downloads and processes hourly ERA5 NetCDF files for a
+target location, aggregates to daily resolution, and bias-corrects against
+SMEAR II Hyytiälä observations. It requires:
+
+1. ERA5 NetCDF files in two sets — accumulated (`*_era5_accum.nc`: precipitation,
+   radiation) and instantaneous (`*_era5_instant.nc`: temperature, soil, moisture)
+2. Raw Hyytiälä SMEAR data files for the bias correction reference
+
+The function is designed for the Hyytiälä coordinates (lat 61.85°N, lon 24.29°E)
+and saves its output to disk. Adapt it for a new site by changing
+`lon_target`/`lat_target` and supplying appropriate reference data.
+
+```{r, eval=FALSE}
+ERAS_reading_nc(
+  path_nc   = "/path/to/era5/netcdf/files",
+  path_test = "/path/to/output/directory",
+  raw.directory = "/path/to/smear/raw/data"
+)
+```
+
+ERA5 data can be downloaded from the
+[Copernicus Climate Data Store](https://cds.climate.copernicus.eu) using the
+`ecmwfr` R package. The variables needed are: `2m_temperature` (t2m),
+`2m_dewpoint_temperature` (d2m), `total_precipitation` (tp),
+`surface_solar_radiation_downwards` (ssrd), `soil_temperature_level_1` (stl1),
+`soil_temperature_level_2` (stl2), `volumetric_soil_water_layer_1` (swvl1),
+and `volumetric_soil_water_layer_2` (swvl2).

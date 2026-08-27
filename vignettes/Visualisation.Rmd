@@ -1,0 +1,138 @@
+---
+title: "Visualising CASSIA Output"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Visualising CASSIA Output}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, message=FALSE}
+library(CASSIA)
+```
+
+## Run the model
+
+The examples below use the built-in Hyytiälä weather data (2015–2017) and the
+matching observation dataset `Hyde_daily_original`.
+
+```{r}
+weather_original$dates <- as.Date(
+  strptime(paste(rep(2015:2017, times = c(365, 366, 365)), weather_original$X),
+           format = "%Y %j"))
+
+out <- CASSIA_cpp(weather = weather_original, site = "Hyde")
+```
+
+`CASSIA_cpp` returns a named list:
+
+| Element | Contents |
+|---------|----------|
+| `out$Growth` | Daily carbon fluxes and organ growth (one row per day) |
+| `out$Sugar` | Daily sugar and starch pools (when `organ_level_sugar = TRUE`) |
+| `out$Preles` | Daily photosynthesis output: GPP, ET, soil water |
+| `out$Culm_Growth` | Cumulative growth totals |
+
+---
+
+## plot_weather_variables
+
+`plot_weather_variables` produces a multi-panel overview of the weather drivers.
+It accepts any data frame that has a `date` (or `Date`) column.
+
+```{r, fig.width=7, fig.height=5}
+# Add date column if not already present
+weather_original$date <- weather_original$dates
+plot_weather_variables(weather_original)
+```
+
+---
+
+## Inspecting output manually
+
+The Growth and Preles dataframes can be plotted with base R. The columns most
+commonly compared to observations are:
+
+```{r, fig.width=7, fig.height=4}
+dates <- weather_original$dates
+
+par(mfrow = c(1, 3))
+plot(dates, out$Growth$needle_growth,
+     type = "l", main = "Needle growth",
+     xlab = "Date", ylab = "kg C tree⁻¹ day⁻¹")
+plot(dates, out$Growth$root_growth,
+     type = "l", main = "Root growth",
+     xlab = "Date", ylab = "kg C tree⁻¹ day⁻¹")
+plot(dates, out$Preles$GPP,
+     type = "l", main = "GPP (PRELES)",
+     xlab = "Date", ylab = "g C m⁻² day⁻¹")
+```
+
+---
+
+## plot_comparison
+
+`plot_comparison` overlays model output on observations and adds a residual
+panel for each variable. Because it compares row-by-row, the model output and
+observation data must span the same dates.
+
+`Hyde_daily_original` covers 2015–2018 (four years); the run above covers
+2015–2017, so we subset to match:
+
+```{r, fig.width=7, fig.height=7}
+# Subset observations to the same three years
+hyde_obs <- Hyde_daily_original[Hyde_daily_original$year %in% 2015:2017, ]
+
+# Model column names → observation column names
+variables_new      <- c("bud_growth", "needle_growth", "root_growth")
+variables_original <- c("bud",        "needle_daily",  "root_daily")
+
+plot_comparison(out, variables_new, hyde_obs, variables_original)
+```
+
+The three-column layout for each variable shows: time series overlay,
+model-vs-observed scatter, and residuals. A point on the 1:1 line in the
+scatter panel (red) means perfect agreement.
+
+---
+
+## plot_sugar_starch_comparison
+
+The sugar/starch comparison overlays measured concentration data on the modelled
+organ pools. Run the model with the sugar sub-model active first:
+
+```{r}
+out_sugar <- CASSIA_cpp(weather = weather_original, site = "Hyde",
+                        organ_level_sugar = TRUE)
+names(out_sugar$Sugar)
+```
+
+The function also requires Hyytiälä sugar measurements (`original_data`) and Yu
+et al. needle data (`yu_data`), which are loaded via `load_data()` from the
+calibration data directory. If you have that directory set up:
+
+```{r, eval=FALSE}
+loaded <- load_data()   # see ?load_data for the required directory
+
+dates <- weather_original$dates
+plot_sugar_starch_comparison(out_sugar, dates,
+                             original_data = loaded$original_data,
+                             yu_data       = loaded$yu_data)
+```
+
+Without the calibration files you can still plot the modelled pools directly:
+
+```{r, fig.width=7, fig.height=4}
+sugar_total <- rowSums(out_sugar$Sugar[, c("sugar_needles", "sugar_phloem",
+                                            "sugar_roots", "sugar_xylem_sh",
+                                            "sugar_xylem_st")])
+starch_total <- rowSums(out_sugar$Sugar[, c("starch_needles", "starch_phloem",
+                                             "starch_roots", "starch_xylem_sh",
+                                             "starch_xylem_st")])
+
+par(mfrow = c(1, 2))
+plot(dates, sugar_total, type = "l", col = "blue",
+     main = "Total sugar (all organs)", xlab = "Date", ylab = "kg C tree⁻¹")
+plot(dates, starch_total, type = "l", col = "brown",
+     main = "Total starch (all organs)", xlab = "Date", ylab = "kg C tree⁻¹")
+```

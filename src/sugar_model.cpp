@@ -919,7 +919,7 @@ void sugar_model(int day,
     }
 
     // Write nitrogen capacity back to the struct so actual_growth() can use it.
-    // (The sperling model path does this already; the non-sperling path uses a
+    // (The organ-level sugar model path does this already; the non-organ-level-sugar path uses a
     // local scalar that was never propagated to the struct.)
     nitrogen_capacity.needles = nitrogen_capacity_all;
     nitrogen_capacity.bud     = nitrogen_capacity_all;
