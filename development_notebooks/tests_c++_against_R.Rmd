@@ -26,7 +26,7 @@ column is constructed from the day-of-year (`X`) column before the model is
 run.
 
 ```{r load-and-run}
-library(CASSIA)
+devtools::load_all(quiet = TRUE)
 library(ggplot2)
 library(patchwork)
 library(dplyr)

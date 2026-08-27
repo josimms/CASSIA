@@ -34,7 +34,7 @@ Numerical agreement with the base (non-sugar) model is covered separately in
 `tests_c++_against_R.Rmd`.
 
 ```{r load-libraries}
-library(CASSIA)
+devtools::load_all(quiet = TRUE)
 library(ggplot2)
 library(patchwork)
 library(dplyr)

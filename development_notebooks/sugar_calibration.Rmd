@@ -29,7 +29,7 @@ of the five organ pools and the fractional storage capacity of each organ.
 All external data are read from `~/Documents/CASSIA_Calibration/Processed_Data/`.
 
 ```{r libraries}
-library(CASSIA)
+devtools::load_all(quiet = TRUE)
 library(ggplot2)
 library(patchwork)
 library(dplyr)
