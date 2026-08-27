@@ -250,7 +250,8 @@ cl     <- makeCluster(ncores)
 clusterEvalQ(cl, library(CASSIA))
 clusterExport(cl, varlist = c(
   "CASSIA_cpp", "parameters_2015", "weather_2015",
-  "validate_sugar", "common_p", "ratios_p", "autumn_indices"
+  "validate_sugar", "common_p", "ratios_p", "autumn_indices",
+  "par_names"
 ))
 
 make_objective <- function(surplus_c = FALSE) {
