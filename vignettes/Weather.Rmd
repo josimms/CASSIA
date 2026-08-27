@@ -37,9 +37,10 @@ sub-model may be `NA`.
 | `preles = TRUE` | `PAR`, `VPD`, `CO2`, `fAPAR` | mol m⁻² day⁻¹, kPa, ppm, 0–1 |
 | `phydro = TRUE` | `PPFD`, `PPFD_max`, `VPD`, `CO2`, `Nitrogen`, `PA`, `SWP` | µmol m⁻² s⁻¹, µmol m⁻² s⁻¹, kPa, ppm, g m⁻², Pa, MPa |
 
-The built-in `weather_original` includes all columns for all sub-models.
-The model will give an informative error if column names are wrong, values
-are outside expected bounds, or required columns contain `NA`s.
+The built-in `weather_original` includes all columns needed for the default
+(`photosynthesis_as_input`) and PRELES sub-models. The phydro sub-model
+requires additional columns (`PPFD`, `PPFD_max`, `PA`, `SWP`) that are not
+included.
 
 ## Option 1: Use the built-in Hyytiälä data
 

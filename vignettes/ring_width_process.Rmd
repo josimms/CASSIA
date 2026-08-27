@@ -40,28 +40,28 @@ weather <- data.frame(
 )
 
 parameters <- list(
-  sD0_Trad           = 0,
-  diameter_start_day = 60,
-  sDc                = 0.02,
-  LD0                = 1,
+  sD0_Trad           = -3.72,
+  diameter_start_day = 79,
+  sDc                = 5.08,
+  LD0                = 1.29,
   tau_GPP            = 5,
-  tau_Ee             = 10,
-  tau_We             = 20,
-  tau_El             = 5,
-  tau_Wl             = 10,
-  cell_d_ew          = 30e-6,
-  cell_d_lw          = 15e-6,
-  h0                 = 20
+  tau_Ee             = 10.7,
+  tau_We             = 25.3,
+  tau_El             = 8.8,
+  tau_Wl             = 35.1,
+  cell_d_ew          = 35.7e-6,
+  cell_d_lw          = 24.2e-6,
+  h0                 = 17.9
 )
 
 common <- list(
-  Uggla             = 2,
-  osmotic_sugar_conc = 0.5,
-  gas_const         = 8.314,
-  abs_zero          = 273.15,
-  M_C               = 12,
-  a                 = 0.4,
-  b                 = 5
+  Uggla              = 1.95,
+  osmotic_sugar_conc = 2e6,
+  gas_const          = 8.314,
+  abs_zero           = 273.15,
+  M_C                = 12,
+  a                  = 0.185,
+  b                  = 18.4
 )
 
 ratio <- list(

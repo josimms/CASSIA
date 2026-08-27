@@ -76,9 +76,8 @@ growth, as these have the most direct link to ring width observations:
 signal. `diameter_start_day` sets the earliest possible start of growth
 regardless of temperature.
 
-This branch (`adding_externals`) also exposes additional experimental parameters
-as direct arguments to `CASSIA_cpp()`. These can be varied by passing them
-directly rather than through `parameters_p`:
+Additional parameters are exposed as direct arguments to `CASSIA_cpp()` and can
+be varied by passing them directly rather than through `parameters_p`:
 
 | Parameter | What it controls | Typical range |
 |-----------|-----------------|---------------|
@@ -105,10 +104,10 @@ sensitivity_dgs      <- run_sensitivity("diameter_start_day", seq(50, 200, lengt
 
 ## Plotting the results
 
-Extract the annual peak ring width across all runs. Here we use
-`ring_width` (cumulative ring width within the year, mm), taking the maximum
-per year as the final annual value. You could substitute any column from
-`out$Growth`.
+Extract the end-of-season wall growth across all runs. Here we use `wall.tot`
+(cumulative diameter wall growth, mm), taking the maximum per year as the
+final annual value — this is the ring-width equivalent in the default model.
+You could substitute any column from `out$Growth`.
 
 ```{r, eval=FALSE}
 extract_yearly <- function(sensitivity_list, param_name, output_col, fun = max) {
@@ -125,16 +124,16 @@ extract_yearly <- function(sensitivity_list, param_name, output_col, fun = max) 
 }
 
 plot_data <- bind_rows(
-  extract_yearly(sensitivity_sDc,      "sDc",                "ring_width"),
-  extract_yearly(sensitivity_sD0_Trad, "sD0.Trad",           "ring_width"),
-  extract_yearly(sensitivity_dgs,      "diameter_start_day", "ring_width")
+  extract_yearly(sensitivity_sDc,      "sDc",                "wall.tot"),
+  extract_yearly(sensitivity_sD0_Trad, "sD0.Trad",           "wall.tot"),
+  extract_yearly(sensitivity_dgs,      "diameter_start_day", "wall.tot")
 )
 
 library(ggplot2)
 ggplot(plot_data, aes(x = param_value, y = value, colour = factor(year))) +
   geom_line() +
   facet_wrap(~param_name, scales = "free_x") +
-  labs(y = "Annual ring width (mm)", colour = "Year")
+  labs(y = "End-of-season wall growth (mm)", colour = "Year")
 ```
 
 ## Interpreting the results

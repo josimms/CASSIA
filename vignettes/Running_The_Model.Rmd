@@ -78,7 +78,7 @@ The meaning of each parameter is explained in the CASSIA instruction booklet
 ## Weather data format
 
 The required columns depend on which photosynthesis sub-model is active.
-Columns not needed by the active sub-model may be `NA`.
+Columns not needed by the active sub-model do not need to be present.
 
 **Always required:**
 
@@ -99,7 +99,9 @@ Columns not needed by the active sub-model may be `NA`.
 | `preles = TRUE` | `PAR`, `VPD`, `CO2`, `fAPAR` | mol m⁻² day⁻¹, kPa, ppm, 0–1 |
 | `phydro = TRUE` | `PPFD`, `PPFD_max`, `VPD`, `CO2`, `Nitrogen`, `PA`, `SWP` | µmol m⁻² s⁻¹, µmol m⁻² s⁻¹, kPa, ppm, g m⁻², Pa, MPa |
 
-The built-in `weather_original` includes all columns used by any sub-model:
+The built-in `weather_original` covers the default and PRELES sub-models.
+The phydro sub-model requires additional columns (`PPFD`, `PPFD_max`, `PA`,
+`SWP`) that are not included. Current columns:
 
 ```{r}
 names(weather_original)
@@ -108,10 +110,9 @@ names(weather_original)
 See `?CASSIA_cpp` for the full parameter list and `vignette("Sensitivity_Analysis")`
 for guidance on fitting the model to a new site.
 
-## Experimental features (this branch)
+## Optional sub-models
 
-This branch (`adding_externals`) includes features not yet in the stable
-release. All are off by default and enabled by toggles:
+The following features are off by default and enabled by toggles:
 
 | Toggle | What it enables |
 |--------|----------------|

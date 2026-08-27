@@ -874,15 +874,18 @@ void sugar_model(int day,
       nitrogen_capacity_all = 1;
     } else {
       storage = std::max(0.0 , std::min(1.0 , ak * (1.0 - 1.0 / exp(parameters.alfa * (sugar.needles + starch.needles - parameters.Wala)))));
-      nitrogen_capacity_all = nitrogen_storage(nitrogen_balance/5.0, "all");
+      // Without nitrogen model, capacity is always 1 (matches original R model)
+      nitrogen_capacity_all = nitrogen_change ? nitrogen_storage(nitrogen_balance/5.0, "all") : 1.0;
       if ((sugar.needles + starch.needles) < 0.1) {
         storage_term.respiration = 0.0;
       } else {
         storage_term.respiration = 1.0;
       }
 
-      if ((tree_state.sH > parameters.sHc) & ((sugar.needles + starch.needles) > 0.07)) {
-        myco_allocation = PF * 0.3;
+      // Myco allocation: only when pool exceeds optimal + threshold (matches original R model)
+      double optimal_level_myco = parameters.sugar00 + parameters.starch00 + parameters.mycorrhiza_threshold;
+      if ((tree_state.sH > parameters.sHc) && (sugar.needles + starch.needles > optimal_level_myco)) {
+        myco_allocation = PF * parameters.growth_myco;
       } else {
         myco_allocation = 0.0;
       }

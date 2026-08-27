@@ -179,6 +179,9 @@ Rcpp::List CASSIA_yearly(int start_year,
     // Single-pool model: total sugar and starch live in the needles slot
     all_out.sugar_vector.needles[0]  = sugar.needles  = parameters.sugar00  = parameters.sugar0;
     all_out.starch_vector.needles[0] = starch.needles = parameters.starch00 = parameters.starch0;
+    // Pre-populate scalar totals for day 0 (sugar_model is skipped that day)
+    all_out.sugar[0]  = sugar.needles;
+    all_out.starch[0] = starch.needles;
   }
 
   // Nitrogen capacity and storage term start at 1 (non-limiting) before the
