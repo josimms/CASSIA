@@ -9,4 +9,6 @@ src/*.dll
 Instruction_Booklet
 *.html
 development_notebooks/cache/
+development_notebooks/*_cache/
+development_notebooks/*_files/
 CASSIA_equations/
