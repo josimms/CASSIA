@@ -76,6 +76,27 @@ growth, as these have the most direct link to ring width observations:
 signal. `diameter_start_day` sets the earliest possible start of growth
 regardless of temperature.
 
+This branch (`adding_externals`) also exposes additional experimental parameters
+as direct arguments to `CASSIA_cpp()`. These can be varied by passing them
+directly rather than through `parameters_p`:
+
+| Parameter | What it controls | Typical range |
+|-----------|-----------------|---------------|
+| `ratio_sugar` | Concentration difference ratios between organs (sugar transfer model) | vector `c(1–20, 0.1–1, 1–20, 1–20)` |
+| `tau.myco` | Sugar transfer time constant to mycorrhiza (days) | 1 – 30 |
+| `tau.t.needles` | Sugar transfer time constant to needles (days) | 1 – 30 |
+| `nitrogen_balance` | Baseline nitrogen balance | 10 – 50 |
+
+Pass these directly to `CASSIA_cpp()` when running sensitivity analyses on the
+sugar or nitrogen sub-models, e.g.:
+```{r, eval=FALSE}
+results_tau <- lapply(seq(1, 20, length.out = 10), function(tau) {
+  out <- CASSIA_cpp(weather_original, site = "Hyde",
+                    sperling_model = TRUE, tau.myco = tau)
+  list(tau = tau, result = out)
+})
+```
+
 ```{r, eval=FALSE}
 sensitivity_sDc      <- run_sensitivity("sDc",           seq(0, 10, length.out = 10), weather_original)
 sensitivity_sD0_Trad <- run_sensitivity("sD0.Trad",      seq(-7, 0,  length.out = 10), weather_original)

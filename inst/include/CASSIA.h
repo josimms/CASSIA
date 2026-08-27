@@ -3,6 +3,7 @@
 // isostrem and vector are also in function_structures
 #include "mycomodel.h"
 // This includes soil and mycorrhizal parameters
+#include "state_out.h"
 #include <numeric>
 #include <algorithm>
 #include <cmath>
@@ -14,6 +15,10 @@
 #include <map>
 #include <iomanip>
 #include <prelesglobals.h>
+#include <vector>
+#include <phydro.h>
+#include <map>
+#include <string>
 
 #ifndef CASSIA_H
 #define CASSIA_H
@@ -98,9 +103,6 @@ struct yearly_in {
   std::vector<double> wall_tot;
   std::vector<double> ew_cells;
   std::vector<double> lw_cells;
-
-  // Sugar
-
 };
 
 struct eternal_parameters {
@@ -114,76 +116,63 @@ yearly_in yearly_initial_conditions(double days_per_year);
  * sugar_model.cpp
  */
 
-carbo_balance sugar_model(int year,
-                          int day,
-                          double TAir,
-                          double PF,
+void sugar_model(int day,
+                 int days_gone,
 
-                          CASSIA_common common,
-                          CASSIA_parameters parameters,
+                 double TAir,
+                 double PAR,
+                 double PF,
 
-                          double D00,
-                          double sH,
-                          respiration_out resp,
+                 CASSIA_parameters parameters,
+                 CASSIA_common common,
 
-                          bool sperling_sugar_model,
-                          bool tree_alive,
-                          bool storage_grows,
-                          double needles_mass, // Repola
-                          double temperature_equilibrium,
+                 bool nitrogen_change,
+                 bool nitrogen_contrast,
+                 bool mycorrhiza_passive,
+                 bool surplus_c,
+                 bool tree_alive,
+                 bool new_sugar_model,
 
-                          growth_out pot_growth,
-
-                          carbo_tracker sugar,
-                          carbo_tracker starch,
-
-                          carbo_values_out parameters_in,
-                          bool output_year);
+                 const growth_state& tree_state,
+                 double& nitrogen_balance,
+                 double& winter_state,
+                 uptake_structre& uptake,
+                 carbo_tracker& sugar,
+                 carbo_tracker& starch,
+                 carbo_tracker& storage_term,
+                 growth_out& nitrogen_capacity,
+                 output_vector& out);
 
 /*
  * growth.cpp
  */
 
-growth_out growth(int day,
-                  int year,
-                  double TAir,
-                  double TSoil_A,
-                  double TSoil_B,
-                  double Soil_Moisture,
-                  double Soil_Moisture_Effect_Growth,
-                  double PF,
-                  double GPP_ref,
-                  double GPP_ref_average,
-                  std::vector<double> means_TAir,
-                  std::vector<double> means_Photosynthesis,
-                  std::vector<double> means_Soil_Moisture,
-                  bool root_as_Ding,
-                  bool xylogenesis_option,
-                  bool environmental_effect_xylogenesis,
-                  bool sD_estim_T_count,
-                  CASSIA_common common,
-                  CASSIA_parameters parameters,
-                  CASSIA_ratios ratio,
-                  double CH,
-                  double B0,
-                  double GPP_mean,
-                  double GPP_previous_sum,
+void growth(int day,
+            int days_gone,
+            int year,
 
-                  bool LH_estim,
-                  bool LN_estim,
-                  bool LD_estim,
-                  bool tests,
-                  bool soil_moisture_effect_on_shoot,
-                  bool soil_moisture_effect_on_needles,
-                  bool soil_moisture_effect_on_diameter,
-                  std::vector<int> driver_N,
-                  std::vector<int> driver_H,
-                  std::vector<int> driver_D,
+            growth_state& state,
+            output_vector& out,
 
-                  growth_values_out growth_previous,
-                  double last_year_HH,
-                  int no_day);
+            double TAir,
+            double TSoil_A,
+            double TSoil_B,
+            double Soil_Moisture,
+            double PF,
+            double GPP_ref,
+            Settings boolsettings,
 
+            const CASSIA_common& common,
+            const CASSIA_parameters& parameters,
+            const CASSIA_ratios& ratio,
+
+            double CH,
+            double B0,
+            double GPP_mean,
+            double GPP_previous_sum,
+
+            double last_year_HH,
+            int no_day);
 
 /*
  *  Cell enlargement
@@ -224,120 +213,57 @@ xylogenesis_out xylogenesis(int no_day,
  * Preles
  */
 
-struct photosynthesis_out {
-  double GPP;
-  double ET;
-  double SoilWater;
-  double fS;
-  double fW;
-  double fN;
-  double fCO2;
-  double theta_canopy;
-  double Throughfall;
-  double theta;
-  double theta_snow;
-  double S_state;
-  double PhenoS;
-  double Snowmelt;
-  double intercepted;
-  double Drainage;
-  double canw;
-  double fE;
-  double transp;
-  double evap;
-  double fWE;
-  double gpp380;
-};
+photosynthesis_out preles_cpp(int day,
+                              double I,
+                              double T,
+                              double P,
+                              double D,
+                              double CO2,
+                              double fAPAR,
+                              p1 Site_par,
+                              p2 GPP_par,
+                              p3 ET_par,
+                              p4 SnowRain_par,
+                              p5 Initials_snow,
+                              double LOGFLAG,
+                              int CO2model);
 
-struct photo_out_vector {
-  std::vector<double> GPP;
-  std::vector<double> ET;
-  std::vector<double> SoilWater;
-  std::vector<double> fS;
-  std::vector<double> fW;
-  std::vector<double> fE;
-  std::vector<double> fN;
-};
-
-photosynthesis_out preles(int day,
-                          double PAR, double TAir, double VPD, double Precip,
-                          double CO2, double fAPAR, double Nitrogen,
-                          p1 Site_par,
-                          p2 GPP_par,
-                          p3 ET_par,
-                          p4 SnowRain_par,
-                          p5 Water_par,
-                          p7 N_par,
-                          int etmodel,
-                          double theta,
-                          double theta_snow,
-                          double theta_canopy,
-                          double Throughfall,
-                          double S_state,
-                          double PhenoS,
-                          double Snowmelt,
-                          double intercepted,
-                          double Drainage,
-                          double canw,
-                          double fE,
-                          double transp,
-                          double evap,
-                          double fWE,
-                          double fW,
-                          double gpp380);
-
-Rcpp::List preles_test_cpp(int start_year, int end_year,
-                           Rcpp::DataFrame weather,
-                           std::vector<double> pPREL,
-                           int etmodel);
+Rcpp::DataFrame preles_test(Rcpp::DataFrame weather);
 
 /*
  * Respiration
  */
 
-respiration_out respiration(int day,
-                            CASSIA_parameters parameters,
-                            CASSIA_ratios ratios,
-                            repola_out repola,
-                            double TAir,
-                            double TSoil,
-                            bool temp_rise,
-                            bool Rm_acclimation,
-                            bool mN_varies,
-
-                            // parameters that I am not sure about
-                            double B0);
-
-Rcpp::List respiration_test_cpp(Rcpp::DataFrame pCASSIA_parameters,
-                                Rcpp::DataFrame pCASSIA_common,
-                                Rcpp::DataFrame pCASSIA_ratios,
-                                Rcpp::DataFrame pCASSIA_sperling,
-                                std::vector<double> extras_sperling,
-                                int ndays,
-                                int day,
-                                double TAir,
-                                double TSoil,
-                                bool temp_rise,
-                                bool Rm_acclimation,
-                                bool mN_varies,
-                                double B0);
+void respiration(int day,
+                 growth_state& tree_state,
+                 output_vector& out,
+                 const CASSIA_parameters& parameters,
+                 const CASSIA_ratios& ratios,
+                 double TAir,
+                 double TSoil,
+                 const Settings& settings,
+                 double B0);
 
 /*
  * Repola
  */
 
-repola_out repola(CASSIA_parameters parameters);
+repola_out repola(double diameter, double height, CASSIA_parameters parameters);
 
 /*
  * Actual growth
  */
 
-growth_out actual_growth(CASSIA_parameters parameters,
-                         CASSIA_common common,
-                         carbo_tracker storage,
-                         growth_out potential_growth,
-                         respiration_out resp,
-                         bool sperling_sugar_model);
+void actual_growth(int day,
+                   int days_gone,
+                   const CASSIA_parameters& parameters,
+                   const CASSIA_common& common,
+                   const carbo_tracker& storage,
+                   const photosynthesis_out& photosynthesis,
+                   growth_state& tree_state,
+                   output_vector& all_out,
+                   Settings boolsettings,
+                   growth_out nitrogen_capacity);
 
 /*
  * CASSIA_yearly
@@ -355,58 +281,16 @@ Rcpp::List CASSIA_yearly(int start_year,
                          Rcpp::DataFrame pCASSIA_ratios,
                          Rcpp::DataFrame pCASSIA_sperling,
 
-                         int no_trees,
-
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
 
+                         bool surplus_c,
+                         bool nitrogen_change,
+                         bool nitrogen_contrast,
+
+                         double nitrogen_capacity,
+
                          Rcpp::List settings);
-
-/*
- * Ecoevolutionary
- */
-
-Rcpp::List CASSIA_eeo(int start_year,
-                      int end_year,
-
-                      Rcpp::DataFrame weather,
-                      std::vector<double> GPP_ref,
-
-                      std::vector<double> pPREL,
-                      Rcpp::DataFrame pCASSIA_parameters,
-                      Rcpp::DataFrame pCASSIA_common,
-                      Rcpp::DataFrame pCASSIA_ratios,
-                      Rcpp::DataFrame pCASSIA_sperling,
-                      std::vector<double> parameters_R,
-
-                      double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
-                      double Throughfall,
-                      int trenching_year,
-
-                      Rcpp::List settings);
-
-/*
- * Soil
- */
-
-Rcpp::List CASSIA_soil(int start_year,
-                       int end_year,
-
-                       Rcpp::DataFrame weather,
-                       std::vector<double> GPP_ref,
-
-                       std::vector<double> pPREL,
-                       Rcpp::DataFrame pCASSIA_parameters,
-                       Rcpp::DataFrame pCASSIA_common,
-                       Rcpp::DataFrame pCASSIA_ratios,
-                       Rcpp::DataFrame pCASSIA_sperling,
-                       std::vector<double> parameters_R,
-
-                       double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
-                       double Throughfall,
-                       int trenching_year,
-
-                       Rcpp::List settings);
 
 /*
  * Parameters
@@ -416,7 +300,6 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters, Rcpp:
 CASSIA_common make_common(Rcpp::DataFrame input);
 CASSIA_ratios make_ratios(Rcpp::DataFrame input);
 MYCOFON_function_out MYCOFON_structure_conversion(Rcpp::List input);
-
 
 // Read from csv
 CASSIA_ratios read_ratios(const std::string& filename, const std::string& site);
@@ -432,91 +315,155 @@ p4 make_p4(std::vector<double> input);
 p5 make_p5(std::vector<double> input);
 p7 make_p7(std::vector<double> input);
 
+phydro_canopy_parameters parPhydro_initalise(std::vector<double> phydro_params);
+
+void print_phydro_parameters(const phydro_canopy_parameters& params);
+
 /*
  * Ring Width
  */
 
-struct ring_width_out {
-  double n_E_tot;
-  double n_W_tot;
-  double n_M_tot;
-
-  double ew_cells_tot;
-
-  double tot_mm;
-
-  double max_ew_cells_tot;
-  double max_ew_width_tot;
-};
-
-ring_width_out ring_width_generator(int day,
-                                    ring_width_out previous_value,
-                                    growth_values_out growth_previous,
-                                    CASSIA_common common,
-                                    CASSIA_parameters parameters,
-                                    double GD_tot);
-
-/*
- * Settings defined
- */
-
-// Define a struct to hold the settings
-struct Settings {
-  bool storage_reset;
-  bool storage_grows;
-
-  bool LN_estim;
-  bool mN_varies;
-
-  bool LD_estim;
-  bool sD_estim_T_count;
-
-  bool LH_estim;
-  bool trees_grow;
-  bool growth_decreases;
-  bool needle_mass_grows;
-
-  bool phloem_trigger;
-  bool mycorrhiza;
-  bool root_as_Ding;
-
-  bool sperling_model;
-  bool myco_model;
-  bool xylogensis_option;
-
-  bool PRELES_GPP;
-  bool environmental_effect_xylogenesis;
-
-  bool photosynthesis_as_input;
-  bool phydro;
-
-  int photoparameters;
-  bool temp_rise;
-  bool drought;
-  bool Rm_acclimation;
-
-  bool CASSIA_graphs;
-  bool tests;
-  bool etmodel;
-  bool LOGFLAG;
-
-  bool soil_moisture_effect_on_shoot;
-  bool soil_moisture_effect_on_needles;
-  bool soil_moisture_effect_on_diameter;
-  std::vector<int> driver_N;
-  std::vector<int> driver_H;
-  std::vector<int> driver_D;
-};
+void ring_width_generator(int day,
+                          int days_gone,
+                          growth_state& state,
+                          output_vector& all_out,
+                          const CASSIA_parameters& parameters);
 
 // Inporting settings function
 Settings parseSettings(Rcpp::List settingsList);
 
 /*
+ * Leap year
+ */
+
+int leap_year(int year);
+
+/*
  * Plant Fate Logic
  */
 
-//PlantAssimilationResult calc_plant_assimilation_rate(double fipar,
-  //                                                   double PAR, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
-    //                                                 phydro_canopy_parameters par, double lai, double n_layers, double crown_area, double height, double zeta);
+PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                     phydro_canopy_parameters par, double lai, double crown_area, double height, double zeta, int day);
+
+phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
+                                                    double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
+                                                    double TAir_assim, double PAR_assim, double VPD_assim, double CO2_assim, double SWP_assim, double PA_assim,
+                                                    phydro_canopy_parameters par, double zeta);
+
+void set_forcing_acclim(double TAir, double PAR, double VPD, double CO2, double SWP, double PA,
+                        double& TAir_assim, double& PAR_assim, double& VPD_assim, double& CO2_assim, double& SWP_assim, double& PA_assim,
+                        phydro_canopy_parameters par);
 
 #endif
+
+
+#ifndef READ_WEATHER_VARIABLES_H
+#define READ_WEATHER_VARIABLES_H
+
+
+struct weather_all {
+  std::vector<double> TAir;
+  std::vector<double> TSoil_A;
+  std::vector<double> TSoil_B;
+  std::vector<double> Soil_Moisture;
+  std::vector<double> Precip;
+  std::vector<double> Photosynthesis_IN;
+  std::vector<double> Nitrogen;
+  std::vector<double> PAR;
+  std::vector<double> CO2;
+  std::vector<double> VPD;
+  std::vector<double> fAPAR;
+  std::vector<double> PAR_max;
+  std::vector<double> PA;
+  std::vector<double> SWP;
+};
+
+weather_all readWeatherVariables(const Rcpp::DataFrame& weather, bool spp, bool preles, bool phydro);
+
+#endif
+
+/*
+ * Initalise
+ */
+
+carbo_tracker carbo_tracker_init();
+
+carbo_balance carbo_balance_init();
+
+/*
+ * Double to vectors
+ */
+
+void log_potential_growth(int day,
+                          int days_gone,
+                          const growth_state& tree_state,
+                          output_vector& growth_out);
+
+void log_actual_growth(int day,
+                       int days_gone,
+                       const growth_state& tree_state,
+                       output_vector& growth_out);
+
+void log_sugar(int day,
+               int days_gone,
+               const carbo_tracker& sugar,
+               const carbo_tracker& starch,
+               const carbo_tracker& storage_term,
+               const growth_out& nitrogen_capacity,
+               const double respiration_growth,
+               const double respiration_maintenance,
+               const double nitrogen_balance,
+               const uptake_structre& uptake,
+               const bool& tree_alive,
+               output_vector& out);
+
+void log_photosynthesis(int day,
+                        int days_gone,
+                        const photosynthesis_out& input,
+                        output_vector& out);
+
+
+/*
+ * LAI and fAPAR
+ */
+
+void compute_fAPAR_used(int day,
+                        int days_gone,
+                        double LAI,
+                        double max_needles,
+                        bool& fS_reached_one,
+                        bool& fN_reached_one,
+                        repola_out repola,
+                        const Settings& boolsettings,
+                        const CASSIA_parameters& parameters,
+                        const growth_state& tree_state,
+                        const photosynthesis_out& photosynthesis,
+                        const weather_all& climate,
+                        output_vector& all_out);
+
+/*
+ * Make dataframes
+ */
+
+Rcpp::DataFrame createGrowthDataFrame(const output_vector& out);
+
+// Generate DataFrame for sugar/starch/storage tracking
+Rcpp::DataFrame createSugarDataFrame(const output_vector& out);
+
+// Generate DataFrame for photosynthesis/preles outputs
+Rcpp::DataFrame createPrelesDataFrame(const output_vector& out);
+
+// Generate DataFrame for cumulative (culm) growth and related outputs
+Rcpp::DataFrame createCulmGrowthDataFrame(const output_vector& out);
+
+/*
+ * Initalise
+ */
+
+void initialize_output_vector(output_vector& out, int simulation_time);
+
+/*
+ * Test
+ */
+
+void printOutputVectorSizes(const output_vector& out);

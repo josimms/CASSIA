@@ -72,6 +72,16 @@ struct CASSIA_parameters {
   double sugar_roots0;
   double sugar_xylem_sh0;
   double sugar_xylem_st0;
+  double starch_needles00;
+  double starch_phloem00;
+  double starch_xylem_sh00;
+  double starch_xylem_st00;
+  double starch_roots00;
+  double sugar_needles00;
+  double sugar_phloem00;
+  double sugar_roots00;
+  double sugar_xylem_sh00;
+  double sugar_xylem_st00;
   double Wala_needles;
   double Wala_phloem;
   double Wala_xylem_sh;
@@ -119,10 +129,11 @@ struct CASSIA_parameters {
   double tau_emergancy_roots;
   double tau_emergancy_xylem_sh;
   double tau_emergancy_xylem_st;
-  double resistance_needles_to_phloem;
-  double resistance_phloem_to_roots;
-  double resistance_phloem_to_xylem_sh;
-  double resistance_phloem_to_xylem_st;
+  double percentage_needle_storage;
+  double percentage_xylem_sh_storage;
+  double percentage_xylem_st_storage;
+  double percentage_phloem_storage;
+  double percentage_roots_storage;
   double lower_bound_W;
   double tau_emergancy;
   double b0_repo;
@@ -133,6 +144,8 @@ struct CASSIA_parameters {
   double stem_no;
   double m_R_tot;
   double diameter_start_day;
+  double GPP_mean;
+  double GPP_initial;
 };
 
 struct CASSIA_common {
@@ -180,12 +193,12 @@ struct phydro_canopy_parameters {
   double infra_translation; // Conversion from area biomass ratio to nitrogen price
   double kphio; // Quantum yield
   double rd; // Dark respiration
-  double a_jmax = 50; // Nitorgen to jmax ratio
+  double a_jmax; // Nitorgen to jmax ratio
 
   double p50_leaf;        ///< Leaf or whole-plant hydraulic vulnerability [MPa] (calculated from Xylem P50 and Safety margin)
   double K_leaf;          ///< Leaf conductivity [m]
   double b_leaf;          ///< Shape parameter of leaf vulnerabilty curve [-]
-  double cbio; // TODO: what is this?
+  double cbio;            // kg biomass per mol CO2 = 12.011 gC / mol CO2 * 1e-3 kgC/gC * 2.04 kg biomass/kg
 
   // Environment
   int n_layers;
@@ -201,6 +214,10 @@ struct phydro_canopy_parameters {
   double qm;
   double fg; // fg upper canopy gap fraction
   double k_light;
+
+  // Weather
+  double tau_weather;
+  double dt;
 };
 
 /*

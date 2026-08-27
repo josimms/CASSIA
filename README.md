@@ -6,10 +6,10 @@ roots is modelled, with optional sugar dynamics, xylogenesis, and mycorrhizal
 interactions. Built-in parameters and weather data for Hyytiälä (SMEAR II) allow
 the model to run out of the box.
 
-> **This is the stable branch.** Experimental features (enzyme-driven sugar model,
-> p-hydro photosynthesis, mycorrhizal coupling) are developed on the
-> `adding_externals` branch. For support contact Joanna Simms:
-> joanna.x.simms@helsinki.fi
+> **Branches:** `main` is the stable, published version.
+> `adding_externals` is the development branch with experimental features
+> (enzyme-driven sugar model, p-hydro photosynthesis, mycorrhizal coupling).
+> For support contact Joanna Simms: joanna.x.simms@helsinki.fi
 
 ---
 
@@ -123,12 +123,13 @@ sensitivity analysis and parameter fitting.
 
 ```
 CASSIA/
-├── R/           # Exported R functions + roxygen2 documentation blocks
-├── src/         # C++ model core, compiled via Rcpp
-├── data/        # Built-in datasets (weather_original, parameters_p, …)
-├── data-raw/    # Scripts that built the data/ objects
-├── man/         # Auto-generated help files — do not edit by hand
-└── vignettes/   # User-facing tutorials (rendered on CRAN/GitHub)
+├── R/                    # Exported R functions + roxygen2 documentation blocks
+├── src/                  # C++ model core, compiled via Rcpp
+├── data/                 # Built-in datasets (weather_original, parameters_p, …)
+├── data-raw/             # Scripts that built the data/ objects
+├── man/                  # Auto-generated help files — do not edit by hand
+├── vignettes/            # User-facing tutorials (rendered on CRAN/GitHub)
+└── development_notebooks/ # Developer notebooks (model comparisons, calibration)
 ```
 
 The C++ model (`src/`) is compiled by Rcpp on install. The R wrapper

@@ -2,17 +2,12 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @export
-CASSIA_yearly <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, no_trees, needle_mass_in, Throughfall, settings) {
-    .Call(`_CASSIA_CASSIA_yearly`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, no_trees, needle_mass_in, Throughfall, settings)
+CASSIA_yearly <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings) {
+    .Call(`_CASSIA_CASSIA_yearly`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings)
 }
 
 replace_value_DataFrame <- function(df, value, ref) {
     .Call(`_CASSIA_replace_value_DataFrame`, df, value, ref)
-}
-
-#' @export
-CASSIA_soil <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings) {
-    .Call(`_CASSIA_CASSIA_soil`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings)
 }
 
 xylogenesis_wrapper <- function(no_day, day, pCASSIA_parameters, pCASSIA_common, pCASSIA_sperling, extras_sperling, xylogenesis_option, environmental_effect_xylogenesis, TAir, n_rows, max_ew_cells, n_E_pot_old, n_W_pot_old, n_M_pot_old, g, en_growth_vector, tau_W_old, carbon_daily_rate_ew, carbon_daily_rate_lw) {
@@ -25,10 +20,6 @@ plant_decision <- function(C_roots_NonStruct, N_roots_NonStruct, C_fungal_NonStr
 
 myco_decision <- function(N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt) {
     .Call(`_CASSIA_myco_decision`, N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt)
-}
-
-CASSIA_eeo <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings) {
-    .Call(`_CASSIA_CASSIA_eeo`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings)
 }
 
 myco_growth <- function(C_fungal, N_fungal, C_fungal_biomass, C_ecto, a, b, CN_ratio) {
@@ -59,16 +50,8 @@ Microbe_Uptake <- function(C_microbe, N_micorbe, C_exudates, C_soil_compartment,
     .Call(`_CASSIA_Microbe_Uptake`, C_microbe, N_micorbe, C_exudates, C_soil_compartment, NC_microbe_opt, NH4_avaliable, NO3_avaliable, Norg_avaliable, T, SWC, imobilisation, assimilation, N_limits_R, N_k_R, SWC_k_R, SOM_decomposers, FOM_Norg, tests)
 }
 
-preles_test_cpp <- function(start_year, end_year, weather, pPREL, etmodel) {
-    .Call(`_CASSIA_preles_test_cpp`, start_year, end_year, weather, pPREL, etmodel)
-}
-
-repola_test_cpp <- function(pCASSIA_parameters, pCASSIA_sperling) {
-    .Call(`_CASSIA_repola_test_cpp`, pCASSIA_parameters, pCASSIA_sperling)
-}
-
-respiration_test_cpp <- function(pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0) {
-    .Call(`_CASSIA_respiration_test_cpp`, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0)
+preles_test <- function(weather) {
+    .Call(`_CASSIA_preles_test`, weather)
 }
 
 printColumnNames <- function(df) {

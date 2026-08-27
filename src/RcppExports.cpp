@@ -13,8 +13,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // CASSIA_yearly
-Rcpp::List CASSIA_yearly(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> GPP_ref, std::vector<double> pPREL, Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, int no_trees, double needle_mass_in, double Throughfall, Rcpp::List settings);
-RcppExport SEXP _CASSIA_CASSIA_yearly(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP GPP_refSEXP, SEXP pPRELSEXP, SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP no_treesSEXP, SEXP needle_mass_inSEXP, SEXP ThroughfallSEXP, SEXP settingsSEXP) {
+Rcpp::List CASSIA_yearly(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> GPP_ref, std::vector<double> pPREL, Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, double needle_mass_in, double Throughfall, bool surplus_c, bool nitrogen_change, bool nitrogen_contrast, double nitrogen_balance, Rcpp::List settings);
+RcppExport SEXP _CASSIA_CASSIA_yearly(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP GPP_refSEXP, SEXP pPRELSEXP, SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP needle_mass_inSEXP, SEXP ThroughfallSEXP, SEXP surplus_cSEXP, SEXP nitrogen_changeSEXP, SEXP nitrogen_contrastSEXP, SEXP nitrogen_balanceSEXP, SEXP settingsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -27,11 +27,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_common(pCASSIA_commonSEXP);
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_ratios(pCASSIA_ratiosSEXP);
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_sperling(pCASSIA_sperlingSEXP);
-    Rcpp::traits::input_parameter< int >::type no_trees(no_treesSEXP);
     Rcpp::traits::input_parameter< double >::type needle_mass_in(needle_mass_inSEXP);
     Rcpp::traits::input_parameter< double >::type Throughfall(ThroughfallSEXP);
+    Rcpp::traits::input_parameter< bool >::type surplus_c(surplus_cSEXP);
+    Rcpp::traits::input_parameter< bool >::type nitrogen_change(nitrogen_changeSEXP);
+    Rcpp::traits::input_parameter< bool >::type nitrogen_contrast(nitrogen_contrastSEXP);
+    Rcpp::traits::input_parameter< double >::type nitrogen_balance(nitrogen_balanceSEXP);
     Rcpp::traits::input_parameter< Rcpp::List >::type settings(settingsSEXP);
-    rcpp_result_gen = Rcpp::wrap(CASSIA_yearly(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, no_trees, needle_mass_in, Throughfall, settings));
+    rcpp_result_gen = Rcpp::wrap(CASSIA_yearly(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -45,30 +48,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type value(valueSEXP);
     Rcpp::traits::input_parameter< int >::type ref(refSEXP);
     rcpp_result_gen = Rcpp::wrap(replace_value_DataFrame(df, value, ref));
-    return rcpp_result_gen;
-END_RCPP
-}
-// CASSIA_soil
-Rcpp::List CASSIA_soil(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> GPP_ref, std::vector<double> pPREL, Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, std::vector<double> parameters_R, double needle_mass_in, double Throughfall, int trenching_year, Rcpp::List settings);
-RcppExport SEXP _CASSIA_CASSIA_soil(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP GPP_refSEXP, SEXP pPRELSEXP, SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP parameters_RSEXP, SEXP needle_mass_inSEXP, SEXP ThroughfallSEXP, SEXP trenching_yearSEXP, SEXP settingsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type start_year(start_yearSEXP);
-    Rcpp::traits::input_parameter< int >::type end_year(end_yearSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type weather(weatherSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type GPP_ref(GPP_refSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type pPREL(pPRELSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_parameters(pCASSIA_parametersSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_common(pCASSIA_commonSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_ratios(pCASSIA_ratiosSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_sperling(pCASSIA_sperlingSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type parameters_R(parameters_RSEXP);
-    Rcpp::traits::input_parameter< double >::type needle_mass_in(needle_mass_inSEXP);
-    Rcpp::traits::input_parameter< double >::type Throughfall(ThroughfallSEXP);
-    Rcpp::traits::input_parameter< int >::type trenching_year(trenching_yearSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type settings(settingsSEXP);
-    rcpp_result_gen = Rcpp::wrap(CASSIA_soil(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -127,30 +106,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type N_roots_NonStruct(N_roots_NonStructSEXP);
     Rcpp::traits::input_parameter< double >::type NC_fungal_opt(NC_fungal_optSEXP);
     rcpp_result_gen = Rcpp::wrap(myco_decision(N_fungal_NonStruct, C_roots_NonStruct, N_roots_NonStruct, NC_fungal_opt));
-    return rcpp_result_gen;
-END_RCPP
-}
-// CASSIA_eeo
-Rcpp::List CASSIA_eeo(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> GPP_ref, std::vector<double> pPREL, Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, std::vector<double> parameters_R, double needle_mass_in, double Throughfall, int trenching_year, Rcpp::List settings);
-RcppExport SEXP _CASSIA_CASSIA_eeo(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP GPP_refSEXP, SEXP pPRELSEXP, SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP parameters_RSEXP, SEXP needle_mass_inSEXP, SEXP ThroughfallSEXP, SEXP trenching_yearSEXP, SEXP settingsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type start_year(start_yearSEXP);
-    Rcpp::traits::input_parameter< int >::type end_year(end_yearSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type weather(weatherSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type GPP_ref(GPP_refSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type pPREL(pPRELSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_parameters(pCASSIA_parametersSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_common(pCASSIA_commonSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_ratios(pCASSIA_ratiosSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_sperling(pCASSIA_sperlingSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type parameters_R(parameters_RSEXP);
-    Rcpp::traits::input_parameter< double >::type needle_mass_in(needle_mass_inSEXP);
-    Rcpp::traits::input_parameter< double >::type Throughfall(ThroughfallSEXP);
-    Rcpp::traits::input_parameter< int >::type trenching_year(trenching_yearSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type settings(settingsSEXP);
-    rcpp_result_gen = Rcpp::wrap(CASSIA_eeo(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, parameters_R, needle_mass_in, Throughfall, trenching_year, settings));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -299,52 +254,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// preles_test_cpp
-Rcpp::List preles_test_cpp(int start_year, int end_year, Rcpp::DataFrame weather, std::vector<double> pPREL, int etmodel);
-RcppExport SEXP _CASSIA_preles_test_cpp(SEXP start_yearSEXP, SEXP end_yearSEXP, SEXP weatherSEXP, SEXP pPRELSEXP, SEXP etmodelSEXP) {
+// preles_test
+Rcpp::DataFrame preles_test(Rcpp::DataFrame weather);
+RcppExport SEXP _CASSIA_preles_test(SEXP weatherSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type start_year(start_yearSEXP);
-    Rcpp::traits::input_parameter< int >::type end_year(end_yearSEXP);
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type weather(weatherSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type pPREL(pPRELSEXP);
-    Rcpp::traits::input_parameter< int >::type etmodel(etmodelSEXP);
-    rcpp_result_gen = Rcpp::wrap(preles_test_cpp(start_year, end_year, weather, pPREL, etmodel));
-    return rcpp_result_gen;
-END_RCPP
-}
-// repola_test_cpp
-Rcpp::List repola_test_cpp(Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_sperling);
-RcppExport SEXP _CASSIA_repola_test_cpp(SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_sperlingSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_parameters(pCASSIA_parametersSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_sperling(pCASSIA_sperlingSEXP);
-    rcpp_result_gen = Rcpp::wrap(repola_test_cpp(pCASSIA_parameters, pCASSIA_sperling));
-    return rcpp_result_gen;
-END_RCPP
-}
-// respiration_test_cpp
-Rcpp::List respiration_test_cpp(Rcpp::DataFrame pCASSIA_parameters, Rcpp::DataFrame pCASSIA_common, Rcpp::DataFrame pCASSIA_ratios, Rcpp::DataFrame pCASSIA_sperling, std::vector<double> extras_sperling, int day, double TAir, double TSoil, bool temp_rise, bool Rm_acclimation, bool mN_varies, double B0);
-RcppExport SEXP _CASSIA_respiration_test_cpp(SEXP pCASSIA_parametersSEXP, SEXP pCASSIA_commonSEXP, SEXP pCASSIA_ratiosSEXP, SEXP pCASSIA_sperlingSEXP, SEXP extras_sperlingSEXP, SEXP daySEXP, SEXP TAirSEXP, SEXP TSoilSEXP, SEXP temp_riseSEXP, SEXP Rm_acclimationSEXP, SEXP mN_variesSEXP, SEXP B0SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_parameters(pCASSIA_parametersSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_common(pCASSIA_commonSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_ratios(pCASSIA_ratiosSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pCASSIA_sperling(pCASSIA_sperlingSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type extras_sperling(extras_sperlingSEXP);
-    Rcpp::traits::input_parameter< int >::type day(daySEXP);
-    Rcpp::traits::input_parameter< double >::type TAir(TAirSEXP);
-    Rcpp::traits::input_parameter< double >::type TSoil(TSoilSEXP);
-    Rcpp::traits::input_parameter< bool >::type temp_rise(temp_riseSEXP);
-    Rcpp::traits::input_parameter< bool >::type Rm_acclimation(Rm_acclimationSEXP);
-    Rcpp::traits::input_parameter< bool >::type mN_varies(mN_variesSEXP);
-    Rcpp::traits::input_parameter< double >::type B0(B0SEXP);
-    rcpp_result_gen = Rcpp::wrap(respiration_test_cpp(pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, extras_sperling, day, TAir, TSoil, temp_rise, Rm_acclimation, mN_varies, B0));
+    rcpp_result_gen = Rcpp::wrap(preles_test(weather));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -398,13 +315,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_CASSIA_CASSIA_yearly", (DL_FUNC) &_CASSIA_CASSIA_yearly, 13},
+    {"_CASSIA_CASSIA_yearly", (DL_FUNC) &_CASSIA_CASSIA_yearly, 16},
     {"_CASSIA_replace_value_DataFrame", (DL_FUNC) &_CASSIA_replace_value_DataFrame, 3},
-    {"_CASSIA_CASSIA_soil", (DL_FUNC) &_CASSIA_CASSIA_soil, 14},
     {"_CASSIA_xylogenesis_wrapper", (DL_FUNC) &_CASSIA_xylogenesis_wrapper, 19},
     {"_CASSIA_plant_decision", (DL_FUNC) &_CASSIA_plant_decision, 5},
     {"_CASSIA_myco_decision", (DL_FUNC) &_CASSIA_myco_decision, 4},
-    {"_CASSIA_CASSIA_eeo", (DL_FUNC) &_CASSIA_CASSIA_eeo, 14},
     {"_CASSIA_myco_growth", (DL_FUNC) &_CASSIA_myco_growth, 7},
     {"_CASSIA_mycofon_balence", (DL_FUNC) &_CASSIA_mycofon_balence, 18},
     {"_CASSIA_uptake_N", (DL_FUNC) &_CASSIA_uptake_N, 6},
@@ -412,9 +327,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_CASSIA_Plant_N_Uptake", (DL_FUNC) &_CASSIA_Plant_N_Uptake, 11},
     {"_CASSIA_Fungal_N_Uptake", (DL_FUNC) &_CASSIA_Fungal_N_Uptake, 9},
     {"_CASSIA_Microbe_Uptake", (DL_FUNC) &_CASSIA_Microbe_Uptake, 18},
-    {"_CASSIA_preles_test_cpp", (DL_FUNC) &_CASSIA_preles_test_cpp, 5},
-    {"_CASSIA_repola_test_cpp", (DL_FUNC) &_CASSIA_repola_test_cpp, 2},
-    {"_CASSIA_respiration_test_cpp", (DL_FUNC) &_CASSIA_respiration_test_cpp, 12},
+    {"_CASSIA_preles_test", (DL_FUNC) &_CASSIA_preles_test, 1},
     {"_CASSIA_printColumnNames", (DL_FUNC) &_CASSIA_printColumnNames, 1},
     {"_CASSIA_symphony", (DL_FUNC) &_CASSIA_symphony, 1},
     {"_CASSIA_symphony_plus", (DL_FUNC) &_CASSIA_symphony_plus, 2},

@@ -1,8 +1,8 @@
 likelyhood_soil_models <- function(par, sum = T) {
   ### Test data
-  data_path = "~/Downloads"
+  data_path = "~/Downloads/CASSIA_Calibration/"
   # Data for the symphony model balance
-  data_symphony = read.delim(paste0(data_path, "korhonen_mineral_N.csv"), sep = ",", dec = ",")
+  mineral_N = read.delim(paste0(data_path, "korhonen_mineral_N.csv"), sep = ",", dec = ",")
   data_mycofon
 
   ### Input data

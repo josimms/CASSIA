@@ -1,0 +1,89 @@
+---
+title: "Sugar Model Comparison"
+author: "Joanna"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+new_parameters <- rep(0.5, 27)  # Example new parameters
+calibration = F
+parameters_all <- initialize_parameters(calibration, new_parameters)
+
+weather_original <- read_and_combine_weather_data(2015, 2018, base_path = "~/Documents/CASSIA/data/weather_original_")
+weather_original$date <- as.Date(strptime(paste(rep(2015:2018, times = c(365, 366, 365, 365)), weather_original$X), format = "%Y %j"))
+
+data_directory <- "~/Documents/CASSIA_Calibration/Processed_Data/"
+loaded_data <- load_data(data_directory)
+```
+
+## Basic
+
+```{r cars}
+CASSIA_new_output_sugar = CASSIA_cpp(weather = weather_original,
+                                     site = "Hyde",
+                                     pPREL = c(parameters_all$pPREL, parameters_all$N_parameters),
+                                     parameters = parameters_all$parameters_test,
+                                     common = common_p,
+                                     ratios = ratios_p,
+                                     sperling = sperling_p,
+                                     Throughfall = 1,
+                                     sperling_model = T,
+                                     mycorrhiza = F)
+
+plot_comparison(CASSIA_new_output_sugar, variables_new,
+                Hyde_daily_original_plot, variables_original, soil_processes)
+
+plot_sugar_starch_comparison(CASSIA_new_output_sugar, weather_original$date, loaded_data$original_data, loaded_data$yu_data) 
+```
+
+Calibration Weather
+
+```{r}
+weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
+weather_preles_1998_2022 <- weather_preles[substring(weather_preles$date, 1, 4) %in% 1998:2022,]
+```
+
+Parameters
+
+```{r}
+parameters_1998_2022 <- initialize_parameters(calibration, new_parameters)
+parameters_1998_2022$parameters_test[c("h0"),c("Hyde")] <- 12
+parameters_1998_2022$parameters_test[c("D0"),c("Hyde")] <- 0.1416
+parameters_1998_2022$parameters_test[c("GPP_mean"),c("Hyde")] <- 463.8833
+parameters_1998_2022$parameters_test[c("GPP_initial"),c("Hyde")] <- 460.0
+
+parameters_1998_2022$sperling_test[c("Ad0.needles", "Ad0.phloem", "Ad0.roots", "Ad0.xylem.sh", "Ad0.xylem.st"),c("Hyde")] <- c(0.1, 0.1, 0.1, 0.1, 0.1)
+parameters_1998_2022$sperling_test[c("lamda.needles", "lamda.phloem", "lamda.roots", "lamda.xylem.sh", "lamda.xylem.st"),c("Hyde")] <- c(1e-4, 1e-4, 1e-4, 1e-4, 1e-4)
+parameters_1998_2022$sperling_test[c("delta.needles", "delta.phloem", "delta.roots", "delta.xylem.sh", "delta.xylem.st"),c("Hyde")] <- c(25e-6, 25e-6, 25e-6, 25e-6, 25e-6)
+parameters_1998_2022$sperling_test[c("myco.thresh"),c("Hyde")] <- 0.3
+# These are not currently used!
+# parameters_1998_2022$sperling_test[c("k_np", "k_pr", "k_pxsh", "k_pxst", "myco.thresh"),c("Hyde")]
+```
+
+Simulation
+
+```{r}
+CASSIA_preles_1998_2022_sugar_mine <- CASSIA_cpp(weather = weather_preles_1998_2022,
+                                                site = "Hyde",
+                                                pPREL = c(parameters_1998_2022$pPREL, parameters_1998_2022$N_parameters),
+                                                parameters = parameters_1998_2022$parameters_test,
+                                                common = common_p,
+                                                ratios = ratios_p,
+                                                sperling = parameters_1998_2022$sperling_test,
+                                                needle_mass_in = parameters_1998_2022$needle_mass_in,
+                                                Throughfall = parameters_1998_2022$Throughfall,
+                                                photosynthesis_as_input = FALSE,
+                                                preles = TRUE,
+                                                fAPAR_Tian = TRUE,
+                                                sperling_model = TRUE)
+```
+
+Plot
+
+```{r}
+plot_sugar_starch_comparison(CASSIA_preles_1998_2022_sugar_mine, weather_preles_1998_2022$date, loaded_data$original_data, loaded_data$yu_data)
+```
+
+

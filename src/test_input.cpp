@@ -171,10 +171,11 @@ int CASSIA_parameter_test(CASSIA_parameters structure_params) {
   PRINT_PARAM(tau_emergancy_roots);
   PRINT_PARAM(tau_emergancy_xylem_sh);
   PRINT_PARAM(tau_emergancy_xylem_st);
-  PRINT_PARAM(resistance_needles_to_phloem);
-  PRINT_PARAM(resistance_phloem_to_roots);
-  PRINT_PARAM(resistance_phloem_to_xylem_sh);
-  PRINT_PARAM(resistance_phloem_to_xylem_st);
+  PRINT_PARAM(percentage_needle_storage);
+  PRINT_PARAM(percentage_phloem_storage);
+  PRINT_PARAM(percentage_xylem_sh_storage);
+  PRINT_PARAM(percentage_xylem_st_storage);
+  PRINT_PARAM(percentage_roots_storage);
   PRINT_PARAM(lower_bound_W);
   PRINT_PARAM(tau_emergancy);
   PRINT_PARAM(b0_repo);

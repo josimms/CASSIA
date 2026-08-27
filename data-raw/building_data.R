@@ -186,6 +186,8 @@ parameters_p[70,] <- c(0.118, NA, 0.118) # eki_repo TODO
 parameters_p[71,] <- c(3, NA, NA) # stem_no TODO
 parameters_p[72,] <- c(79, NA, NA) # diameter_start_day
 
+parameters_p[73,] <- c(4.5, NA, NA) # If we assume that the growth is around linear before 2001 and the value 15 years before 1998 is taken
+
 row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R", "sR0", "sRc", "growth.myco", "root.lifetime",
 "HH0", "sH0", "LH", "LH0", "sHc", "sN0", "LN", "LN0", "sNc", "HN0", "sD0.Trad", "LD", "LD0", "sDc", "sDc.T.count",
 "tau.Ee", "tau.El", "tau.We", "tau.Wl", "tau.GPP", "Uggla", "sB0", "sBc", "LB",
@@ -194,14 +196,14 @@ row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R",
 "density_tree", "carbon_share", "D0", "h0", "n_age", "n_lenght", "h_increment", "SLA", "LR0", "b0_repo", "b1_repo", "b2_repo",
 "lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st",
 "tau_emergancy_needles", "tau_emergancy_phloem", "tau_emergancy_roots", "tau_emergancy_xylem_sh", "tau_emergancy_xylem_st",
-"lower_bound_W", "tau_emergancy", "uk_repo", "eki_repo", "stem_no", "diameter_start_day")
+"lower_bound_W", "tau_emergancy", "uk_repo", "eki_repo", "stem_no", "diameter_start_day", "xylem_start_estimate")
 save(parameters_p, file = paste0(data.direct, "/parameters_p.RData"))
 
 ######
 ## Splerling parameters_p
 ######
 sperling_p <- data.frame(matrix(ncol = 3, nrow = 30))
-names(sperling_p) <- c("Hyde", "Lettosuo", "Flakaliden_c", "HF_China")
+names(sperling_p) <- c("Hyde", "Lettosuo", "Flakaliden_c")
 sperling_p[1,] <- c(0.3246781, 0.40, 0.40) # starch0
 sperling_p[2,] <- c(0.4184208, 0.35, 0.35) # sugar0
 sperling_p[3,] <- c(0.03, NA, NA) # starch.needles0
@@ -241,11 +243,12 @@ sperling_p[46,] <- c(0.832, NA, NA) # delta.phloem
 sperling_p[47,] <- c(0.853, NA, NA) # delta.roots
 sperling_p[48,] <- c(0.762, NA, NA) # delta.xylem.sh
 sperling_p[49,] <- c(0.294, NA, NA) # delta.xylem.st
-sperling_p[50,] <- c(0.3, NA, NA) # k_np
-sperling_p[51,] <- c(0.072, NA, NA) # k_pr
-sperling_p[52,] <- c(0.188, NA, NA) # k_pxsh
-sperling_p[53,] <- c(0.17, NA, NA) # k_pxst
-sperling_p[54,] <- c(0.025, NA, NA) # myco.thresh
+sperling_p[50,] <- c(0.11, NA, NA) # percentage_needle_storage
+sperling_p[51,] <- c(0.11, NA, NA) # percentage_phloem_storage
+sperling_p[52,] <- c(0.11, NA, NA) # percentage_xylem_sh_storage
+sperling_p[53,] <- c(0.11, NA, NA) # percentage_xylem_st_storage
+sperling_p[54,] <- c(0.11, NA, NA) # percentage_roots_storage
+sperling_p[55,] <- c(0.3, NA, NA) # myco.thresh
 
 row.names(sperling_p) <- c("starch0", "sugar0", "starch.needles0", "starch.phloem0", "starch.xylem.sh0", "starch.xylem.st0", "starch.roots0",
                      "sugar.needles0", "sugar.phloem0", "sugar.roots0", "sugar.xylem.sh0", "sugar.xylem.st0",
@@ -256,7 +259,7 @@ row.names(sperling_p) <- c("starch0", "sugar0", "starch.needles0", "starch.phloe
                      "Ad0.needles", "Ad0.phloem", "Ad0.roots", "Ad0.xylem.sh", "Ad0.xylem.st",
                      "lamda.needles", "lamda.phloem", "lamda.roots", "lamda.xylem.sh", "lamda.xylem.st",
                      "delta.needles", "delta.phloem", "delta.roots", "delta.xylem.sh", "delta.xylem.st",
-                     "k_np", "k_pr", "k_pxsh", "k_pxst", "myco.thresh")
+                     "percentage_needle_storage", "percentage_phloem_storage", "percentage_xylem_sh_storage", "percentage_xylem_st_storage", "percentage_roots_storage", "myco.thresh")
 
 save(sperling_p, file = paste0(data.direct, "/sperling_p.RData"))
 
