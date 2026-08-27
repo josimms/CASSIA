@@ -162,16 +162,31 @@ Rcpp::List CASSIA_yearly(int start_year,
     repola_values.needle_mass = needle_mass_in;
   }
 
-  all_out.starch_vector.needles[0] = starch.needles = parameters.starch_needles00 = parameters.starch_needles0;
-  all_out.sugar_vector.needles[0] = sugar.needles = parameters.sugar_needles00 = parameters.sugar_needles0;
-  all_out.starch_vector.phloem[0] = starch.phloem = parameters.starch_phloem00 = parameters.starch_phloem0;
-  all_out.sugar_vector.phloem[0] = sugar.phloem = parameters.sugar_phloem00 = parameters.sugar_phloem0;
-  all_out.starch_vector.roots[0] = starch.roots = parameters.starch_roots00 = parameters.starch_roots0;
-  all_out.sugar_vector.roots[0] = sugar.roots = parameters.sugar_roots00 = parameters.sugar_roots0;
-  all_out.starch_vector.xylem_sh[0] = starch.xylem_sh = parameters.starch_xylem_sh00 = parameters.starch_xylem_sh0;
-  all_out.sugar_vector.xylem_sh[0] = sugar.xylem_sh = parameters.sugar_xylem_sh00 = parameters.sugar_xylem_sh0;
-  all_out.starch_vector.xylem_st[0] = starch.xylem_st = parameters.starch_xylem_st00 = parameters.starch_xylem_st0;
-  all_out.sugar_vector.xylem_st[0] = sugar.xylem_st = parameters.sugar_xylem_st00 = parameters.sugar_xylem_st0;
+  // Sperling (multi-compartment) model uses per-organ initial values.
+  // Non-sperling model uses a single needle pool seeded from the aggregate sugar0/starch0.
+  if (boolsettings.sperling_model) {
+    all_out.starch_vector.needles[0] = starch.needles = parameters.starch_needles00 = parameters.starch_needles0;
+    all_out.sugar_vector.needles[0]  = sugar.needles  = parameters.sugar_needles00  = parameters.sugar_needles0;
+    all_out.starch_vector.phloem[0]  = starch.phloem  = parameters.starch_phloem00  = parameters.starch_phloem0;
+    all_out.sugar_vector.phloem[0]   = sugar.phloem   = parameters.sugar_phloem00   = parameters.sugar_phloem0;
+    all_out.starch_vector.roots[0]   = starch.roots   = parameters.starch_roots00   = parameters.starch_roots0;
+    all_out.sugar_vector.roots[0]    = sugar.roots    = parameters.sugar_roots00    = parameters.sugar_roots0;
+    all_out.starch_vector.xylem_sh[0] = starch.xylem_sh = parameters.starch_xylem_sh00 = parameters.starch_xylem_sh0;
+    all_out.sugar_vector.xylem_sh[0]  = sugar.xylem_sh  = parameters.sugar_xylem_sh00  = parameters.sugar_xylem_sh0;
+    all_out.starch_vector.xylem_st[0] = starch.xylem_st = parameters.starch_xylem_st00 = parameters.starch_xylem_st0;
+    all_out.sugar_vector.xylem_st[0]  = sugar.xylem_st  = parameters.sugar_xylem_st00  = parameters.sugar_xylem_st0;
+  } else {
+    // Single-pool model: total sugar and starch live in the needles slot
+    all_out.sugar_vector.needles[0]  = sugar.needles  = parameters.sugar00  = parameters.sugar0;
+    all_out.starch_vector.needles[0] = starch.needles = parameters.starch00 = parameters.starch0;
+  }
+
+  // Nitrogen capacity and storage term start at 1 (non-limiting) before the
+  // sugar model has run for the first time.
+  nitrogen_capacity.needles = nitrogen_capacity.bud = nitrogen_capacity.wall =
+    nitrogen_capacity.height = nitrogen_capacity.roots = 1.0;
+  storage_term.needles = storage_term.phloem = storage_term.roots =
+    storage_term.xylem_sh = storage_term.xylem_st = 1.0;
 
   all_out.nitrogen_capacity_vector.needles[0] = 1;
   all_out.nitrogen_capacity_vector.diameter[0] = 1;

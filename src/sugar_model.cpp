@@ -915,6 +915,15 @@ void sugar_model(int day,
       storage_term.xylem_st = storage;
     }
 
+    // Write nitrogen capacity back to the struct so actual_growth() can use it.
+    // (The sperling model path does this already; the non-sperling path uses a
+    // local scalar that was never propagated to the struct.)
+    nitrogen_capacity.needles = nitrogen_capacity_all;
+    nitrogen_capacity.bud     = nitrogen_capacity_all;
+    nitrogen_capacity.wall    = nitrogen_capacity_all;
+    nitrogen_capacity.height  = nitrogen_capacity_all;
+    nitrogen_capacity.roots   = nitrogen_capacity_all;
+
     if ((sugar.needles <= 0) && (starch.needles <= 0)) {
       std::cout << "Day: " << day << " No Storage! Plant died" << "\n";
       tree_alive = false;
