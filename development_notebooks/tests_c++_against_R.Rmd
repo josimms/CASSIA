@@ -158,6 +158,35 @@ p5 <- plot_pair("height_growth", "height_daily", "Height growth", units = "m day
   theme(legend.position = "bottom")
 ```
 
+### Known residual difference: height and needle growth
+
+Bud, diameter, and root growth match the original R model almost exactly
+(correlation ≥ 0.99). Height and needle growth match less exactly
+(correlation ≈ 0.98), and this is visible in the panels above as small,
+real day-to-day differences rather than plotting noise. Two distinct,
+understood effects are responsible:
+
+- **Height growth**'s mismatch is concentrated in a short window at the
+  *start* of each year's growing season (a few weeks in May-early June
+  for 2016) - dropping just the handful of days with the largest error
+  raises the correlation to ≈ 0.99. The phenology function that switches
+  height growth on is a sine curve that is steepest right at onset, so a
+  fractional-day-scale timing difference between the two models' internal
+  state produces a disproportionately large swing in daily values for a
+  few days there, even though the underlying phenology clock (`sH`) is
+  otherwise correct. Outside that onset window, height growth matches
+  almost exactly.
+- **Needle growth** carries that same onset-window effect, plus an
+  additional structural cause that spreads across more of the growing
+  season: R scales daily needle growth by `max(HH)`, the *eventual total*
+  height growth reached later in that same year - only possible because R
+  computes each year's full trajectory in one vectorized pass before
+  using it. The C++ model runs day-by-day and cannot look ahead within
+  the year it is currently simulating, so it uses `last_year_HH` (the
+  previous year's final total) instead. This is an unavoidable
+  consequence of the C++ model's causal, day-by-day design rather than a
+  bug to fix.
+
 ---
 
 ## 3  Carbon storage
