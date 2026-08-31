@@ -11,9 +11,11 @@ update_model_settings <- function(settings) {
       settings$organ_level_sugar <- TRUE
       warning("organ_level_sugar set to TRUE as it should control allocation in myco_model.")
     }
-    if (!settings$PRELES_GPP) {
-      settings$PRELES_GPP <- TRUE
-      warning("PRELES_GPP set to TRUE as PRELES should control the nitrogen effect in myco_model.")
+    if (!settings$preles) {
+      settings$preles <- TRUE
+      settings$photosynthesis_as_input <- FALSE
+      settings$phydro <- FALSE
+      warning("preles set to TRUE (photosynthesis_as_input and phydro set to FALSE) as PRELES should control the nitrogen effect in myco_model.")
     }
   }
 
