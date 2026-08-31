@@ -65,7 +65,11 @@ parameters_p[7,] <- c(-2.5, -2.5, -3) # sR0
 parameters_p[8,] <- c(30, 30, 25) # sRc
 
 #### Mycorrhiza
-parameters_p[9,] <- c(0.1, 0.1, 0.1) # growth.myco
+# Hyde: 0.3, backed out from Hyde_daily_original (its mycorrhiza_daily = P * 0.3
+# exactly, every day checked) - the value here had drifted to 0.1, which was
+# silently starving mycorrhiza allocation and inflating starch. Lettosuo/Väriö
+# have no equivalent reference run to check against, so left at 0.1.
+parameters_p[9,] <- c(0.3, 0.1, 0.1) # growth.myco
 # years
 # Lettosuo: years, control site, 0.92 warmed, fertilized, irrigated - depends on nutrient availability, soil temperature etc. (Leppälammi-Kujansuu et al. 2014, Plant and soil) -affects probably also root mass!
 parameters_p[10,] <- c(1.7, 2.01, 2) # root.lifetime

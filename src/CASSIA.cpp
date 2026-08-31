@@ -367,7 +367,7 @@ Rcpp::List CASSIA_yearly(int start_year,
              days_per_year);
 
       // Saved for the next iteration
-      release[days_gone + day] = tree_state.en_pot_growth;
+      release[days_gone + day] = tree_state.use;
       int lim = static_cast<int>(std::ceil(parameters.tau_Ee));
       if (day > (lim - 1)) {
         tree_state.release = release[days_gone + day - lim];
