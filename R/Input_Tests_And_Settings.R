@@ -25,8 +25,8 @@ update_model_settings <- function(settings) {
   }
 
   if (!settings$organ_level_sugar && settings$phloem_trigger) {
-    settings$phloem.trigger <- FALSE
-    warning("phloem.trigger set to FALSE as this feature requires the organ-level sugar model.")
+    settings$phloem_trigger <- FALSE
+    warning("phloem_trigger set to FALSE as this feature requires the organ-level sugar model.")
   }
 
   if (settings$xylogenesis) {
