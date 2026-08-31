@@ -191,6 +191,13 @@ Rcpp::List CASSIA_yearly(int start_year,
   storage_term.needles = storage_term.phloem = storage_term.roots =
     storage_term.xylem_sh = storage_term.xylem_st = 1.0;
 
+  // log_sugar() (and therefore storage_term_vector) is never reached on day 0
+  // of the first year, since sugar_model() is skipped that day (see below) -
+  // pre-populate it here so the "storage" output starts at 1, not 0.
+  all_out.storage_term_vector.needles[0] = all_out.storage_term_vector.phloem[0] =
+    all_out.storage_term_vector.roots[0] = all_out.storage_term_vector.xylem_sh[0] =
+    all_out.storage_term_vector.xylem_st[0] = 1.0;
+
   all_out.nitrogen_capacity_vector.needles[0] = 1;
   all_out.nitrogen_capacity_vector.diameter[0] = 1;
   all_out.nitrogen_capacity_vector.height[0] = 1;

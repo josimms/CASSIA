@@ -856,9 +856,6 @@ void sugar_model(int day,
 
     }
   } else {
-    double respiration_growth = 0.0;
-    double respiration_maintainence = 0.0;
-
     // Model
     double ak = 1 / (1 - 1/exp(parameters.alfa * (parameters.sugar00 + parameters.starch00 - parameters.Wala)));
     double storage{}, storage_term_Rm{}, sugar_all{}, starch_all{}, to_sugar{}, to_starch{};
@@ -871,6 +868,8 @@ void sugar_model(int day,
       to_sugar = 0;
       to_starch = 0;
       storage = storage_term.respiration = 1;
+      storage_term.needles = storage_term.phloem = storage_term.roots =
+        storage_term.xylem_sh = storage_term.xylem_st = 1;
       nitrogen_capacity_all = 1;
     } else {
       storage = std::max(0.0 , std::min(1.0 , ak * (1.0 - 1.0 / exp(parameters.alfa * (sugar.needles + starch.needles - parameters.Wala)))));
@@ -953,10 +952,10 @@ void sugar_model(int day,
     nitrogen_capacity.wall = nitrogen_capacity_all;
     nitrogen_capacity.height = nitrogen_capacity_all;
 
-    respiration_growth = (common.Rg_S) * std::min(storage, nitrogen_capacity_all) * tree_state.height -
-      (common.Rg_S) * std::min(storage, nitrogen_capacity_all) * tree_state.diameter -
-      (common.Rg_N) * std::min(storage, nitrogen_capacity_all) * tree_state.needles -
-      (common.Rg_R) * std::min(storage, nitrogen_capacity_all) * tree_state.roots -
+    respiration_growth = (common.Rg_S) * std::min(storage, nitrogen_capacity_all) * tree_state.height +
+      (common.Rg_S) * std::min(storage, nitrogen_capacity_all) * tree_state.diameter +
+      (common.Rg_N) * std::min(storage, nitrogen_capacity_all) * tree_state.needles +
+      (common.Rg_R) * std::min(storage, nitrogen_capacity_all) * tree_state.roots +
       (common.Rg_N) * std::min(storage, nitrogen_capacity_all) * tree_state.bud;
     respiration_maintainence = storage_term.respiration * tree_state.Rm_a;
   }
