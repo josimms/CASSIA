@@ -111,6 +111,12 @@ metrics <- rbind(
              check.names = FALSE)
 )
 
+metrics <- rbind(
+  metrics,
+  make_row("respiration_growth",      "Rg", "Respiration (growth)"),
+  make_row("respiration_maintenance", "Rm", "Respiration (maintenance)")
+)
+
 kable(metrics, align = c("l", "r", "r", "r"),
       caption = "Mean values over 2015–2017; ratio = C++ / original")
 ```
@@ -269,5 +275,38 @@ pa1 <- make_pot_act("bud_growth_potential",    "bud_growth",    "Bud growth")
 pa2 <- make_pot_act("needle_growth_potential", "needle_growth", "Needle growth")
 
 (pa1 / pa2) + plot_layout(ncol = 1, guides = "collect") &
+  theme(legend.position = "bottom")
+```
+
+---
+
+## 6  Respiration
+
+`respiration_growth` and `respiration_maintenance` are the C++ model's
+per-day growth- and maintenance-respiration costs, compared against the
+original R model's `Rg` and `Rm` columns.
+
+```{r respiration-plots, fig.height = 8}
+resp_colours <- c("Original R" = "black", "C++" = "firebrick")
+
+make_resp <- function(new_col, orig_col, title) {
+  df <- data.frame(
+    dates = rep(aligned$dates, 2),
+    value = c(aligned[[orig_col]], aligned[[new_col]]),
+    Model = rep(c("Original R", "C++"), each = nrow(aligned))
+  )
+  ggplot(df, aes(x = dates, y = value, colour = Model)) +
+    geom_line(linewidth = 1.1) +
+    scale_colour_manual(values = resp_colours) +
+    scale_x_date(date_breaks = "6 months", date_labels = "%b %Y") +
+    labs(title = title, x = NULL, y = "kg C stem⁻¹ day⁻¹", colour = NULL) +
+    theme_bw(base_size = 11) +
+    theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+}
+
+rp1 <- make_resp("respiration_growth",      "Rg", "Growth respiration")
+rp2 <- make_resp("respiration_maintenance", "Rm", "Maintenance respiration")
+
+(rp1 / rp2) + plot_layout(ncol = 1, guides = "collect") &
   theme(legend.position = "bottom")
 ```
