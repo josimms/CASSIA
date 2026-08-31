@@ -897,12 +897,12 @@ void sugar_model(int day,
         (1 + common.Rg_N) * std::min(storage, nitrogen_capacity_all) * tree_state.bud -
         myco_allocation;
 
-      if (sugar_all < parameters.sugar00) {
-        to_sugar = std::min(starch.needles, (parameters.sugar00 - sugar_all) / 2.0);
+      if (sugar_all < parameters.sugar_level) {
+        to_sugar = std::min(starch.needles, (parameters.sugar_level - sugar_all) / parameters.tau_t);
         to_starch = 0;
-      } else if (sugar_all > parameters.sugar00) {
+      } else if (sugar_all > parameters.sugar_level) {
         to_sugar = 0;
-        to_starch = (sugar_all - parameters.sugar00) / 2.0;
+        to_starch = (sugar_all - parameters.sugar_level) / parameters.tau_s;
       } else {
         to_sugar = 0;
         to_starch = 0;
