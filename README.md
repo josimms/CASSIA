@@ -35,9 +35,11 @@ height or needle growth (shoot measurements, allometry), fine-root turnover
 (minirhizotrons, biomass), phenology (bud burst, senescence dates), or soil
 nitrogen pools and fluxes. Get in touch if you have data and want to collaborate.
 
-> **Branches:** `main` is the stable, published version.
-> `adding_externals` is the development branch with experimental features
-> (enzyme-driven sugar model, p-hydro photosynthesis, mycorrhizal coupling).
+> **Branches:** `main` is the stable, published version. `adding_externals`
+> (the former development branch for the enzyme-driven sugar model, p-hydro
+> photosynthesis, and mycorrhizal coupling) was fully merged into `main` on
+> 2026-08-27 and has no content of its own anymore — new development happens
+> directly on `main`.
 > For support contact Joanna Simms: joanna.x.simms@helsinki.fi
 
 ---
@@ -92,9 +94,11 @@ off the GPP correction on needle elongation:
 out2 <- CASSIA_cpp(weather = weather_original, site = "Hyde", LN_estim = FALSE)
 ```
 
-The full list of toggles is in `?CASSIA_cpp`. If you choose a combination of
-toggles that cannot coexist, the model will warn you and adjust automatically —
-check those warnings carefully.
+The full list of toggles, including which ones automatically adjust others
+(e.g. `myco_model = TRUE` also switches on `organ_level_sugar` and `preles`),
+is in `?CASSIA_cpp`. Most incompatible combinations are auto-adjusted with a
+warning — check those carefully — but selecting more or fewer than one of
+`photosynthesis_as_input`/`preles`/`phydro` is a hard error instead.
 
 ### Changing parameters
 
@@ -114,18 +118,28 @@ the original articles listed below.
 
 ### Using your own weather data
 
-The weather dataframe must have these columns (in these units):
+The weather dataframe must always have these columns (in these units):
 
 | Column | Description | Units |
 |--------|-------------|-------|
-| `X` | Day of year | integer |
+| `dates` | Calendar date | `Date` class |
 | `T` | Air temperature | °C |
-| `P` | Photosynthesis per tree (when `photosynthesis_as_input = TRUE`) | g C m⁻² day⁻¹ |
 | `TSA` | Soil temperature, A horizon | °C |
 | `TSB` | Soil temperature, B horizon | °C |
 | `MB` | Soil moisture, B horizon | m³ m⁻³ |
 | `Rain` | Precipitation | mm day⁻¹ |
-| `dates` | Calendar date | `Date` class |
+
+Plus, depending on which photosynthesis sub-model you select:
+
+| Column(s) | Needed when |
+|-----------|-------------|
+| `P` | `photosynthesis_as_input = TRUE` (the default) — GPP per tree, g C m⁻² day⁻¹ |
+| `PAR`, `VPD`, `CO2`, `fAPAR` | `preles = TRUE` |
+| `PPFD`, `PPFD_max`, `VPD`, `CO2`, `Nitrogen`, `PA`, `SWP` | `phydro = TRUE` (not yet functional — see Known limitations) |
+
+The built-in `weather_original` dataset also has an `X` (day-of-year) column,
+but that is only used by the Quick Start example above to construct `dates` —
+it is not itself read by the model, so your own weather data does not need it.
 
 The scripts `R/Hyytiala_Weather_Fast.R` and `R/ERAS_weather_processing.R` show
 how raw station and ERA5 data are formatted. The model will give an informative
@@ -159,7 +173,9 @@ sensitivity analysis and parameter fitting.
 | **Nitrogen and C/N transfer** | The nitrogen co-limitation and mycorrhizal trading sub-models are under active development. Toggles exist but results should be treated as preliminary. |
 | **p-hydro photosynthesis** (`phydro = TRUE`) | The hydraulic optimality code compiles and the toggle is accepted, but the p-hydro GPP call is not yet wired into the main yearly loop — the model will run but GPP will be zero. Use `preles = TRUE` or the default `photosynthesis_as_input = TRUE` instead. |
 | **Eco-evolutionary variant** (`ecoevolutionary = TRUE`) | The toggle exists in the interface but the compiled export (`CASSIA_eeo`) is currently disabled. Passing `ecoevolutionary = TRUE` will error. |
-| **Lettosuo and Väriö parameterisation** | Parameters for these sites are included but have not been fully calibrated. Results for non-Hyde sites should be treated as indicative only. |
+| **Soil-coupled variant** (`soil = TRUE`) | Same situation as `ecoevolutionary`: the compiled export (`CASSIA_soil`) is currently disabled. Passing `soil = TRUE` will error. |
+| **Sites other than `"Hyde"`** | `"Hyde"` is the only fully-calibrated site — treat other sites' results as indicative only. `"Lettosuo"` runs (present in both `parameters_p` and `ratios_p`) but isn't fully calibrated. `parameters_p` also has a `"Väriö"` column, but `ratios_p` does not, so `site = "Väriö"` isn't usable as-is. `validate_site()` additionally accepts `"Flakaliden_c"` and `"HF_China"`, but neither exists as a column in `parameters_p` — passing either will fail once the model tries to read parameters, not at the site-name check. |
+| **Sugar-transfer arguments** (`ratio_sugar`, `tau.myco`, `tau.t.needles`, `tau.t.phloem`, `tau.t.roots`, `tau.t.xylem.sh`, `tau.t.xylem.st`) | Accepted by `CASSIA_cpp()` and documented, but currently have no effect — the values actually used come from `sperling_p` regardless of what you pass here. |
 | **New sites** | The model is calibrated for Hyytiälä (Scots pine, boreal Finland). Applying it to other species or climate zones requires re-calibration — see `vignette("Sensitivity_Analysis")`. |
 
 ---
@@ -196,14 +212,19 @@ devtools::document()
 
 ### Adding a new site
 
-1. Add a column to `parameters_p`, `ratios_p`, and `common_p` with the site name.
-2. Rebuild the data objects:
+1. Add a column to `parameters_p` and `ratios_p` with the site name (both are
+   site-indexed dataframes). `common_p` is a single row shared by every site —
+   there is nothing site-specific to add there.
+2. Add the site name to `validate_site()`'s `valid_sites` vector in
+   `R/Input_Tests_And_Settings.R` (it currently lists `"Flakaliden_c"` and
+   `"HF_China"`, neither of which has a `parameters_p` column — see Known
+   limitations — so check it actually matches your site columns).
+3. Rebuild the data objects:
    ```r
    usethis::use_data(parameters_p, overwrite = TRUE)
    usethis::use_data(ratios_p, overwrite = TRUE)
-   usethis::use_data(common_p, overwrite = TRUE)
    ```
-3. Pass the new site name to `CASSIA_cpp(..., site = "YourSite")`.
+4. Pass the new site name to `CASSIA_cpp(..., site = "YourSite")`.
 
 The `data-raw/` scripts show how the built-in parameter tables were constructed —
 use them as templates.
