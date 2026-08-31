@@ -165,7 +165,8 @@ with tree height and diameter. Default \code{FALSE}.}
 
 \item{LN_estim}{Logical. If \code{TRUE} (default), needle elongation (LN) is
 scaled by the previous year's July-August GPP. If \code{FALSE}, a fixed
-coefficient is used.}
+coefficient is used. Automatically set to \code{FALSE} when
+\code{xylogenesis = TRUE}.}
 
 \item{mN_varies}{Logical. If \code{TRUE} (default), needle mass in
 maintenance respiration uses the Repola model. If \code{FALSE}, constant.}
@@ -210,11 +211,13 @@ needle mass is fixed after the first iteration.}
 
 \item{phloem_trigger}{Logical. If \code{TRUE}, bud burst is triggered when
 phloem sugar first drops below a threshold (requires
-\code{organ_level_sugar = TRUE}). Default \code{FALSE}.}
+\code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
+to \code{FALSE} when \code{organ_level_sugar = FALSE} or
+\code{xylogenesis = TRUE}.}
 
 \item{mycorrhiza}{Logical. If \code{TRUE} (default), carbon allocation to
 mycorrhiza is included. Automatically \code{FALSE} when
-\code{organ_level_sugar = TRUE}.}
+\code{organ_level_sugar = TRUE} or \code{xylogenesis = TRUE}.}
 
 \item{root_as_Ding}{Logical. If \code{TRUE} (default), root growth follows
 Ding et al. (2020) with fibrous/non-fibrous root stages.}
@@ -222,10 +225,16 @@ Ding et al. (2020) with fibrous/non-fibrous root stages.}
 \item{organ_level_sugar}{Logical. If \code{TRUE}, uses the organ-level sugar
 model with per-organ concentration pools (requires \code{sperling_p}
 parameters). If \code{FALSE} (default), uses the Schiestl-Aalto (2019)
-equilibrium approach with a single aggregate pool.}
+equilibrium approach with a single aggregate pool (this path also reads
+\code{sperling_p} - for its equilibrium sugar level and transfer time
+constants, not just per-organ pools). Automatically set to \code{TRUE}
+when \code{myco_model = TRUE}.}
 
-\item{myco_model}{Logical. Enable experimental mycorrhizal model.
-Default \code{FALSE}.}
+\item{myco_model}{Logical. Enable experimental mycorrhizal model. When
+\code{TRUE}, forces \code{organ_level_sugar = TRUE} and
+\code{preles = TRUE} (with \code{photosynthesis_as_input} and
+\code{phydro} set to \code{FALSE}), since PRELES is required to compute
+the nitrogen effect this model depends on. Default \code{FALSE}.}
 
 \item{xylogenesis}{Logical. If \code{TRUE}, xylogenesis controls cell growth
 with early/late-wood stages. Default \code{FALSE}.}
@@ -298,7 +307,9 @@ variant \code{CASSIA_eeo}. Default \code{FALSE}.}
 model. Default \code{FALSE}.}
 
 \item{preles}{Logical. If \code{TRUE}, GPP is calculated via PRELES.
-Default \code{FALSE}.}
+Default \code{FALSE}. Automatically set to \code{TRUE} (with
+\code{photosynthesis_as_input} and \code{phydro} forced to
+\code{FALSE}) when \code{myco_model = TRUE}.}
 
 \item{tests}{Logical. Enable internal diagnostic tests. Default \code{FALSE}.}
 }
