@@ -40,6 +40,8 @@ void growth(int day,
     if (state.g < 0) {
       state.g = 0;
     }
+  } else {
+    state.g = 0;
   }
 
   /*
@@ -69,7 +71,7 @@ void growth(int day,
     }
   }
   state.GH = state.g * state.fH * LH;
-  state.height = 0.02405282 * 200.0 * state.GH / 1000.0 * ratio.form_factor;
+  state.height = B0 * CH * state.GH / 1000.0 * ratio.form_factor;
 
   if (day == 0) {
     state.HH = parameters.HH0 + state.GH;
