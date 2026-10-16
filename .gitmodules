@@ -4,3 +4,4 @@
 [submodule "external/phydro"]
 	path = external/phydro
 	url = https://github.com/josimms/phydro
+	branch = develop
