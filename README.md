@@ -53,6 +53,26 @@ install.packages("devtools")
 devtools::install_github("josimms/CASSIA")
 ```
 
+CASSIA needs a C++14 compiler recent enough to build the bundled `phydro`
+headers (`external/phydro`) — GCC 8 or newer, or a correspondingly recent
+clang. On distributions that still ship an older default compiler (e.g.
+openSUSE Leap's system GCC 7.5), the build fails with an error like:
+
+```
+error: 'PHydroResultNitrogen' in namespace 'phydro' does not name a type
+```
+
+If you hit this and a newer compiler is already installed (check with
+`g++-14 -v`, `g++-12 -v`, etc.), point R at it by adding a `~/.R/Makevars`
+with:
+
+```
+CXX=g++-14
+CXX14=g++-14
+```
+
+then retry the install.
+
 ### Quick start
 
 The package includes built-in Hyytiälä weather data (2015–2017), so you can run
