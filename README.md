@@ -48,25 +48,27 @@ nitrogen pools and fluxes. Get in touch if you have data and want to collaborate
 
 ### Install
 
-CASSIA depends on the `external/phydro` git submodule. `devtools::install_github()`
-downloads a plain GitHub tarball and does **not** reliably resolve submodules to
-the exact commit CASSIA needs — it can silently build against stale submodule
-content, which fails with an error like:
+```r
+install.packages("devtools")
+devtools::install_github("josimms/CASSIA")
+```
+
+CASSIA depends on the `external/phydro` git submodule, which is pinned (via
+`branch = develop` in `.gitmodules`) to the branch that actually has the code
+CASSIA needs. If install fails with an error like:
 
 ```
 error: 'PHydroResultNitrogen' in namespace 'phydro' does not name a type
 ```
 
-(This is not a compiler-version issue — it reproduces on fully up-to-date GCC
-and clang too.) To install reliably, clone the repo with submodules and
-install from source instead:
+it means that pin has drifted out of sync again — clone with submodules and
+install from source instead, which always resolves correctly:
 
 ```bash
 git clone --recurse-submodules https://github.com/josimms/CASSIA.git
 ```
 
 ```r
-install.packages("devtools")
 devtools::install("CASSIA")
 ```
 
