@@ -56,7 +56,6 @@ phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
     VPD,           // vpd [kPa]
     CO2,	       // co2 [ppm]
     PA,            // surface pressure [Pa]
-    Nitrogen, // TODO: this should be the nitrogen_store when there is one
     fapar,                     // fraction of absorbed PAR
     par.kphio,                 // phi0 - quantum yield
     SWP,           // soil water potential [MPa]
