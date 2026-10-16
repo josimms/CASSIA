@@ -48,30 +48,30 @@ nitrogen pools and fluxes. Get in touch if you have data and want to collaborate
 
 ### Install
 
-```r
-install.packages("devtools")
-devtools::install_github("josimms/CASSIA")
-```
-
-CASSIA needs a C++14 compiler recent enough to build the bundled `phydro`
-headers (`external/phydro`) — GCC 8 or newer, or a correspondingly recent
-clang. On distributions that still ship an older default compiler (e.g.
-openSUSE Leap's system GCC 7.5), the build fails with an error like:
+CASSIA depends on the `external/phydro` git submodule. `devtools::install_github()`
+downloads a plain GitHub tarball and does **not** reliably resolve submodules to
+the exact commit CASSIA needs — it can silently build against stale submodule
+content, which fails with an error like:
 
 ```
 error: 'PHydroResultNitrogen' in namespace 'phydro' does not name a type
 ```
 
-If you hit this and a newer compiler is already installed (check with
-`g++-14 -v`, `g++-12 -v`, etc.), point R at it by adding a `~/.R/Makevars`
-with:
+(This is not a compiler-version issue — it reproduces on fully up-to-date GCC
+and clang too.) To install reliably, clone the repo with submodules and
+install from source instead:
 
-```
-CXX=g++-14
-CXX14=g++-14
+```bash
+git clone --recurse-submodules https://github.com/josimms/CASSIA.git
 ```
 
-then retry the install.
+```r
+install.packages("devtools")
+devtools::install("CASSIA")
+```
+
+If you already cloned without `--recurse-submodules`, run
+`git submodule update --init --recursive` inside the `CASSIA` directory first.
 
 ### Quick start
 

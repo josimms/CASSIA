@@ -10,7 +10,7 @@ Description: CASSIA (Carbon Allocation Sink Source Interactions and Allocation)
     water balance. Optional extensions include xylogenesis, mycorrhizal
     interactions, and linkage to soil and photosynthesis models (PRELES, p-hydro).
 License: GPL-3
-SystemRequirements: C++14, GCC >= 8 (or equivalent); the bundled phydro
+SystemRequirements: C++17, GCC >= 8 (or equivalent); the bundled phydro
     headers fail to compile under older default compilers such as GCC 7.5
     on openSUSE Leap.
 Encoding: UTF-8
