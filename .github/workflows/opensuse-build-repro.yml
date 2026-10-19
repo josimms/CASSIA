@@ -20,59 +20,77 @@ jobs:
     steps:
       - name: Install system dependencies (incl. git, needed by checkout)
         run: |
-          set +e
-          {
-            zypper --non-interactive refresh
-            zypper --non-interactive install -y \
-              R-base R-base-devel gcc-c++ gcc make git-core tar gzip \
-              eigen3-devel netcdf-devel
-            echo "ZYPPER_EXIT=$?"
-          } > /tmp/build.log 2>&1
-          cat /tmp/build.log
+          zypper --non-interactive refresh
+          zypper --non-interactive install -y \
+            R-base R-base-devel gcc-c++ gcc make git-core tar gzip curl \
+            eigen3-devel netcdf-devel
 
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install R package dependencies
+        id: rdeps
+        continue-on-error: true
         run: |
-          set +e
-          {
-            Rscript -e 'install.packages(c("Rcpp","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")'
-            echo "RDEPS_EXIT=$?"
-          } >> /tmp/build.log 2>&1
-          tail -n 200 /tmp/build.log
+          Rscript -e 'install.packages(c("Rcpp","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")' 2>&1 | tee /tmp/build.log
 
       - name: R CMD INSTALL (what install_github does under the hood)
+        id: install
+        if: always()
+        continue-on-error: true
         run: |
-          set +e
-          {
-            echo "=== R CMD INSTALL ==="
-            R CMD INSTALL --preclean .
-            echo "INSTALL_EXIT=$?"
-          } >> /tmp/build.log 2>&1
-          tail -n 300 /tmp/build.log
+          echo "=== R CMD INSTALL ===" | tee -a /tmp/build.log
+          R CMD INSTALL --preclean . 2>&1 | tee -a /tmp/build.log
+          exit "${PIPESTATUS[0]}"
 
       - name: Smoke test
+        id: smoke
+        if: always()
+        continue-on-error: true
         run: |
-          set +e
-          {
-            echo "=== Smoke test ==="
-            Rscript -e 'library(CASSIA); cat("CASSIA loaded OK, version:", as.character(packageVersion("CASSIA")), "\n")'
-            echo "SMOKE_EXIT=$?"
-          } >> /tmp/build.log 2>&1
-          tail -n 50 /tmp/build.log
+          echo "=== Smoke test ===" | tee -a /tmp/build.log
+          Rscript -e 'library(CASSIA); cat("CASSIA loaded OK, version:", as.character(packageVersion("CASSIA")), "\n")' 2>&1 | tee -a /tmp/build.log
+          exit "${PIPESTATUS[0]}"
 
-      - name: Push build log to a per-image branch
+      - name: Record real outcome in the log
         if: always()
         run: |
+          {
+            echo "=== SUMMARY ==="
+            echo "rdeps outcome:   ${{ steps.rdeps.outcome }}"
+            echo "install outcome: ${{ steps.install.outcome }}"
+            echo "smoke outcome:   ${{ steps.smoke.outcome }}"
+          } | tee -a /tmp/build.log
+
+      - name: Push build log to a per-image branch via API (no git push needed)
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -x
           safe_image=$(echo "${{ matrix.image }}" | tr '/:.' '___')
-          git config user.email "ci-bot@users.noreply.github.com"
-          git config user.name "CI Bot"
-          git checkout --orphan "ci-logs/${safe_image}"
-          git rm -rf --cached . > /dev/null 2>&1 || true
-          mkdir -p ci-logs
-          cp /tmp/build.log "ci-logs/${safe_image}.log"
-          git add "ci-logs/${safe_image}.log"
-          git commit -m "CI log for ${{ matrix.image }}"
-          git push --force origin "HEAD:ci-logs/${safe_image}"
+          branch="ci-logs/${safe_image}"
+          repo="${{ github.repository }}"
+          base_sha=$(curl -s -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${repo}/git/ref/heads/ci-opensuse-repro" | python3 -c "import json,sys; print(json.load(sys.stdin)['object']['sha'])")
+          curl -s -X POST -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${repo}/git/refs" \
+            -d "{\"ref\":\"refs/heads/${branch}\",\"sha\":\"${base_sha}\"}" || true
+          content_b64=$(base64 -w0 /tmp/build.log)
+          # Need the file's current sha if it already exists on that branch, for update
+          existing_sha=$(curl -s -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${repo}/contents/ci-logs/${safe_image}.log?ref=${branch}" | python3 -c "import json,sys
+d=json.load(sys.stdin)
+print(d.get('sha',''))" 2>/dev/null)
+          payload=$(python3 -c "
+import json
+d = {'message': 'CI log for ${{ matrix.image }}', 'content': '''${content_b64}''', 'branch': '${branch}'}
+sha = '''${existing_sha}'''
+if sha:
+    d['sha'] = sha
+print(json.dumps(d))
+")
+          curl -s -X PUT -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${repo}/contents/ci-logs/${safe_image}.log" \
+            -d "${payload}"
