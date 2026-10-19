@@ -18,11 +18,7 @@ jobs:
       matrix:
         image: ["opensuse/leap:15.5", "opensuse/leap:16.0"]
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install system dependencies
+      - name: Install system dependencies (incl. git, needed by checkout)
         run: |
           set +e
           {
@@ -33,6 +29,10 @@ jobs:
             echo "ZYPPER_EXIT=$?"
           } > /tmp/build.log 2>&1
           cat /tmp/build.log
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install R package dependencies
         run: |
