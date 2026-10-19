@@ -1,0 +1,847 @@
+also installing the dependencies 'utf8', 'pkgconfig', 'withr', 'DEoptimR', 'cpp11', 'cli', 'generics', 'glue', 'lifecycle', 'magrittr', 'pillar', 'R6', 'rlang', 'tibble', 'tidyselect', 'vctrs', 'robustbase', 'solartime', 'timechange'
+
+trying URL 'https://cloud.r-project.org/src/contrib/utf8_1.2.6.tar.gz'
+Content type 'application/x-gzip' length 243856 bytes (238 KB)
+==================================================
+downloaded 238 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/pkgconfig_2.0.3.tar.gz'
+Content type 'application/x-gzip' length 6080 bytes
+==================================================
+downloaded 6080 bytes
+
+trying URL 'https://cloud.r-project.org/src/contrib/withr_3.0.3.tar.gz'
+Content type 'application/x-gzip' length 103968 bytes (101 KB)
+==================================================
+downloaded 101 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/DEoptimR_1.2-2.tar.gz'
+Content type 'application/x-gzip' length 24326 bytes (23 KB)
+==================================================
+downloaded 23 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/cpp11_0.5.5.tar.gz'
+Content type 'application/x-gzip' length 304823 bytes (297 KB)
+==================================================
+downloaded 297 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/cli_3.6.6.tar.gz'
+Content type 'application/x-gzip' length 644134 bytes (629 KB)
+==================================================
+downloaded 629 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/generics_0.1.4.tar.gz'
+Content type 'application/x-gzip' length 47224 bytes (46 KB)
+==================================================
+downloaded 46 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/glue_1.8.1.tar.gz'
+Content type 'application/x-gzip' length 129786 bytes (126 KB)
+==================================================
+downloaded 126 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/lifecycle_1.0.5.tar.gz'
+Content type 'application/x-gzip' length 107137 bytes (104 KB)
+==================================================
+downloaded 104 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/magrittr_2.0.5.tar.gz'
+Content type 'application/x-gzip' length 281813 bytes (275 KB)
+==================================================
+downloaded 275 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/pillar_1.11.1.tar.gz'
+Content type 'application/x-gzip' length 409508 bytes (399 KB)
+==================================================
+downloaded 399 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/R6_2.6.1.tar.gz'
+Content type 'application/x-gzip' length 64507 bytes (62 KB)
+==================================================
+downloaded 62 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/rlang_1.3.0.tar.gz'
+Content type 'application/x-gzip' length 784080 bytes (765 KB)
+==================================================
+downloaded 765 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/tibble_3.3.1.tar.gz'
+Content type 'application/x-gzip' length 557135 bytes (544 KB)
+==================================================
+downloaded 544 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/tidyselect_1.2.1.tar.gz'
+Content type 'application/x-gzip' length 103591 bytes (101 KB)
+==================================================
+downloaded 101 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/vctrs_0.7.3.tar.gz'
+Content type 'application/x-gzip' length 1083213 bytes (1.0 MB)
+==================================================
+downloaded 1.0 MB
+
+trying URL 'https://cloud.r-project.org/src/contrib/robustbase_0.99-7.tar.gz'
+Content type 'application/x-gzip' length 2324260 bytes (2.2 MB)
+==================================================
+downloaded 2.2 MB
+
+trying URL 'https://cloud.r-project.org/src/contrib/solartime_0.0.4.tar.gz'
+Content type 'application/x-gzip' length 64863 bytes (63 KB)
+==================================================
+downloaded 63 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/timechange_0.4.0.tar.gz'
+Content type 'application/x-gzip' length 103966 bytes (101 KB)
+==================================================
+downloaded 101 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/Rcpp_1.1.2.tar.gz'
+Content type 'application/x-gzip' length 1892159 bytes (1.8 MB)
+==================================================
+downloaded 1.8 MB
+
+trying URL 'https://cloud.r-project.org/src/contrib/data.table_1.18.6.1.tar.gz'
+Content type 'application/x-gzip' length 6028881 bytes (5.7 MB)
+==================================================
+downloaded 5.7 MB
+
+trying URL 'https://cloud.r-project.org/src/contrib/dplyr_1.2.1.tar.gz'
+Content type 'application/x-gzip' length 923509 bytes (901 KB)
+==================================================
+downloaded 901 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/ncdf4_1.24.tar.gz'
+Content type 'application/x-gzip' length 126032 bytes (123 KB)
+==================================================
+downloaded 123 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/bigleaf_0.8.2.tar.gz'
+Content type 'application/x-gzip' length 867793 bytes (847 KB)
+==================================================
+downloaded 847 KB
+
+trying URL 'https://cloud.r-project.org/src/contrib/lubridate_1.9.5.tar.gz'
+Content type 'application/x-gzip' length 429855 bytes (419 KB)
+==================================================
+downloaded 419 KB
+
+* installing *source* package 'utf8' ...
+** package 'utf8' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c as_utf8.c -o as_utf8.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c bytes.c -o bytes.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c context.c -o context.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.c -o init.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c render.c -o render.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c render_table.c -o render_table.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c string.c -o string.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c text.c -o text.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8_encode.c -o utf8_encode.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8_format.c -o utf8_format.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8_normalize.c -o utf8_normalize.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8_valid.c -o utf8_valid.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8_width.c -o utf8_width.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c util.c -o util.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/array.c -o utf8lite/src/array.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/char.c -o utf8lite/src/char.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/encode.c -o utf8lite/src/encode.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/error.c -o utf8lite/src/error.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/escape.c -o utf8lite/src/escape.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/graph.c -o utf8lite/src/graph.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/graphscan.c -o utf8lite/src/graphscan.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/normalize.c -o utf8lite/src/normalize.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/render.c -o utf8lite/src/render.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/text.c -o utf8lite/src/text.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/textassign.c -o utf8lite/src/textassign.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/textiter.c -o utf8lite/src/textiter.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -Iutf8lite/src -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8lite/src/textmap.c -o utf8lite/src/textmap.o
+ar rcs libcutf8lite.a utf8lite/src/array.o utf8lite/src/char.o utf8lite/src/encode.o utf8lite/src/error.o utf8lite/src/escape.o utf8lite/src/graph.o utf8lite/src/graphscan.o utf8lite/src/normalize.o utf8lite/src/render.o utf8lite/src/text.o utf8lite/src/textassign.o utf8lite/src/textiter.o utf8lite/src/textmap.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o utf8.so as_utf8.o bytes.o context.o init.o render.o render_table.o string.o text.o utf8_encode.o utf8_format.o utf8_normalize.o utf8_valid.o utf8_width.o util.o -L. -lcutf8lite -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-utf8/00new/utf8/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (utf8)
+* installing *source* package 'pkgconfig' ...
+** package 'pkgconfig' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (pkgconfig)
+* installing *source* package 'withr' ...
+** package 'withr' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (withr)
+* installing *source* package 'DEoptimR' ...
+** package 'DEoptimR' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (DEoptimR)
+* installing *source* package 'cpp11' ...
+** package 'cpp11' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (cpp11)
+* installing *source* package 'cli' ...
+** package 'cli' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c ansi.c -o ansi.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cleancall.c -o cleancall.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c diff.c -o diff.o
+diff.c: In function 'clic_diff_chr':
+diff.c:85:7: warning: 'sn' may be used uninitialized in this function [-Wmaybe-uninitialized]
+   int sn;
+       ^~
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c errors.c -o errors.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c glue.c -o glue.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.c -o init.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c inst.c -o inst.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c keypress-unix.c -o keypress-unix.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c keypress-win.c -o keypress-win.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c keypress.c -o keypress.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c md5.c -o md5.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c progress-altrep.c -o progress-altrep.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c progress.c -o progress.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c sha1.c -o sha1.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c sha256.c -o sha256.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c thread.c -o thread.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c tty.c -o tty.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utf8.c -o utf8.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utils.c -o utils.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c vt.c -o vt.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c vtparse.c -o vtparse.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c vtparse_table.c -o vtparse_table.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c win-utf8.c -o win-utf8.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c winfiles.c -o winfiles.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c xxhash.c -o xxhash.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c xxhash2.c -o xxhash2.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o cli.so ansi.o cleancall.o diff.o errors.o glue.o init.o inst.o keypress-unix.o keypress-win.o keypress.o md5.o progress-altrep.o progress.o sha1.o sha256.o thread.o tty.o utf8.o utils.o vt.o vtparse.o vtparse_table.o win-utf8.o winfiles.o xxhash.o xxhash2.o -lpthread -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-cli/00new/cli/libs
+** R
+** exec
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (cli)
+* installing *source* package 'generics' ...
+** package 'generics' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (generics)
+* installing *source* package 'glue' ...
+** package 'glue' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c glue.c -o glue.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.c -o init.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c trim.c -o trim.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o glue.so glue.o init.o trim.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-glue/00new/glue/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (glue)
+* installing *source* package 'magrittr' ...
+** package 'magrittr' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c pipe.c -o pipe.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utils.c -o utils.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o magrittr.so pipe.o utils.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-magrittr/00new/magrittr/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (magrittr)
+* installing *source* package 'R6' ...
+** package 'R6' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (R6)
+* installing *source* package 'rlang' ...
+** package 'rlang' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang/  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c capture.c -o capture.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang/  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c internal.c -o internal.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang/  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c rlang.c -o rlang.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang/  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c version.c -o version.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o rlang.so capture.o internal.o rlang.o version.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-rlang/00new/rlang/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (rlang)
+* installing *source* package 'Rcpp' ...
+** package 'Rcpp' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include/  -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c api.cpp -o api.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include/  -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c attributes.cpp -o attributes.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include/  -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c barrier.cpp -o barrier.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include/  -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c date.cpp -o date.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include/  -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c module.cpp -o module.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I../inst/include/  -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c rcpp_init.cpp -o rcpp_init.o
+g++ -std=gnu++14 -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o Rcpp.so api.o attributes.o barrier.o date.o module.o rcpp_init.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-Rcpp/00new/Rcpp/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (Rcpp)
+* installing *source* package 'data.table' ...
+** package 'data.table' successfully unpacked and MD5 sums checked
+** using staged installation
+gcc 7.5.0
+zlib 1.2.13 is available ok
+* checking if R installation supports OpenMP without any extra hints... yes
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c assign.c -o assign.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c between.c -o between.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c bmerge.c -o bmerge.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c chmatch.c -o chmatch.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cj.c -o cj.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c coalesce.c -o coalesce.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c deleterows.c -o deleterows.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c dogroups.c -o dogroups.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fastmean.c -o fastmean.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fcast.c -o fcast.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fifelse.c -o fifelse.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fmelt.c -o fmelt.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c forder.c -o forder.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c frank.c -o frank.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fread.c -o fread.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c freadR.c -o freadR.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c froll.c -o froll.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c frollR.c -o frollR.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c frolladaptive.c -o frolladaptive.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c frollapply.c -o frollapply.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fsort.c -o fsort.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fwrite.c -o fwrite.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fwriteR.c -o fwriteR.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c gsumm.c -o gsumm.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c hash.c -o hash.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c idatetime.c -o idatetime.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c ijoin.c -o ijoin.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.c -o init.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c inrange.c -o inrange.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c mergelist.c -o mergelist.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c nafill.c -o nafill.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c negate.c -o negate.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c nqrecreateindices.c -o nqrecreateindices.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c openmp-utils.c -o openmp-utils.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c programming.c -o programming.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c quickselect.c -o quickselect.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c rbindlist.c -o rbindlist.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c reorder.c -o reorder.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c shellsort.c -o shellsort.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c shift.c -o shift.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c snprintf.c -o snprintf.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c subset.c -o subset.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c transpose.c -o transpose.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c types.c -o types.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c uniqlist.c -o uniqlist.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utils.c -o utils.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c vecseq.c -o vecseq.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include  -fvisibility=hidden  -fopenmp  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c wrappers.c -o wrappers.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o data.table.so assign.o between.o bmerge.o chmatch.o cj.o coalesce.o deleterows.o dogroups.o fastmean.o fcast.o fifelse.o fmelt.o forder.o frank.o fread.o freadR.o froll.o frollR.o frolladaptive.o frollapply.o fsort.o fwrite.o fwriteR.o gsumm.o hash.o idatetime.o ijoin.o init.o inrange.o mergelist.o nafill.o negate.o nqrecreateindices.o openmp-utils.o programming.o quickselect.o rbindlist.o reorder.o shellsort.o shift.o snprintf.o subset.o transpose.o types.o uniqlist.o utils.o vecseq.o wrappers.o -fvisibility=hidden -fopenmp -lz -L/usr/lib64/R/lib -lR
+PKG_CFLAGS = -fvisibility=hidden -fopenmp
+PKG_LIBS = -fvisibility=hidden -fopenmp -lz
+if [ "data.table.so" != "data_table.so" ]; then mv data.table.so data_table.so; fi
+if [ "" != "Windows_NT" ] && [ `uname -s` = 'Darwin' ]; then install_name_tool -id data_table.so data_table.so; fi
+installing to /usr/lib64/R/library/00LOCK-data.table/00new/data.table/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (data.table)
+* installing *source* package 'ncdf4' ...
+** package 'ncdf4' successfully unpacked and MD5 sums checked
+** using staged installation
+configure.ac: starting
+checking for nc-config... yes
+Using nc-config: nc-config
+Output of nc-config --all:
+
+This netCDF 4.7.4 has been built with the following features: 
+
+  --cc            -> gcc
+  --cflags        -> -I/usr/include 
+  --libs          -> -L/usr/lib64 -lnetcdf
+  --static        -> -lhdf5_hl -lhdf5 -lm -ldl -lz -lcurl 
+
+  --has-c++       -> no
+  --cxx           -> 
+
+  --has-c++4      -> no
+  --cxx4          -> 
+
+  --has-fortran   -> no
+  --has-dap       -> yes
+  --has-dap2      -> yes
+  --has-dap4      -> yes
+  --has-nc2       -> yes
+  --has-nc4       -> yes
+  --has-hdf5      -> yes
+  --has-hdf4      -> no
+  --has-logging   -> no
+  --has-pnetcdf   -> no
+  --has-szlib     -> no
+  --has-cdf5      -> yes
+  --has-parallel4 -> no
+  --has-parallel  -> no
+
+  --prefix        -> /usr
+  --includedir    -> /usr/include
+  --libdir        -> /usr/lib64
+  --version       -> netCDF 4.7.4
+
+---
+netcdf.m4: about to set rpath, here is source string: >-L/usr/lib64 -lnetcdf<
+netcdf.m4: final rpath:   -Wl,-rpath,/usr/lib64
+Netcdf library version: netCDF 4.7.4
+Netcdf library has version 4 interface present: yes
+Netcdf library was compiled with C compiler: gcc
+configure: creating ./config.status
+config.status: creating src/Makevars
+ 
+**********************  Results of ncdf4 package configure *******************
+ 
+netCDF v4 CPP flags      = -I/usr/include
+netCDF v4 LD flags       =   -Wl,-rpath,/usr/lib64 -L/usr/lib64 -lnetcdf 
+netCDF v4 runtime path   =   -Wl,-rpath,/usr/lib64
+ 
+netCDF C compiler used   = gcc
+R      C compiler used   = gcc -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g
+ 
+******************************************************************************
+ 
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I/usr/include  -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c ncdf.c -o ncdf.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o ncdf4.so ncdf.o -Wl,-rpath,/usr/lib64 -L/usr/lib64 -lnetcdf -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-ncdf4/00new/ncdf4/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (ncdf4)
+* installing *source* package 'lifecycle' ...
+** package 'lifecycle' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (lifecycle)
+* installing *source* package 'robustbase' ...
+** package 'robustbase' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c R-rng4ftn.c -o R-rng4ftn.o
+gfortran -fno-optimize-sibling-calls  -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c eigen.f -o eigen.o
+make: gfortran: Command not found
+make: *** [/usr/lib64/R/etc/Makeconf:192: eigen.o] Error 127
+ERROR: compilation failed for package 'robustbase'
+* removing '/usr/lib64/R/library/robustbase'
+* installing *source* package 'timechange' ...
+** package 'timechange' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c common.cpp -o common.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cpp11.cpp -o cpp11.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c get.cpp -o get.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c parse.c -o parse.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c round.cpp -o round.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c tzone.cpp -o tzone.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c update.cpp -o update.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/time_zone_fixed.cc -o cctz/src/time_zone_fixed.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/time_zone_if.cc -o cctz/src/time_zone_if.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/time_zone_impl.cc -o cctz/src/time_zone_impl.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/time_zone_info.cc -o cctz/src/time_zone_info.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/time_zone_libc.cc -o cctz/src/time_zone_libc.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/time_zone_lookup.cc -o cctz/src/time_zone_lookup.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/time_zone_posix.cc -o cctz/src/time_zone_posix.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG -I. -I./cctz/src/ -I'/usr/lib64/R/library/cpp11/include' -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cctz/src/zone_info_source.cc -o cctz/src/zone_info_source.o
+ar rcs libcctz.a ./cctz/src/time_zone_fixed.o ./cctz/src/time_zone_if.o ./cctz/src/time_zone_impl.o ./cctz/src/time_zone_info.o ./cctz/src/time_zone_libc.o ./cctz/src/time_zone_lookup.o ./cctz/src/time_zone_posix.o ./cctz/src/zone_info_source.o
+g++ -std=gnu++14 -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o timechange.so common.o cpp11.o get.o parse.o round.o tzone.o update.o -L. -lcctz -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-timechange/00new/timechange/libs
+** R
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (timechange)
+* installing *source* package 'vctrs' ...
+** package 'vctrs' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c altrep-lazy-character.c -o altrep-lazy-character.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c altrep-rle.c -o altrep-rle.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c altrep.c -o altrep.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c arg-counter.c -o arg-counter.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c arg.c -o arg.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c assert.c -o assert.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c bind.c -o bind.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c c.c -o c.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c callables.c -o callables.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c case-when.c -o case-when.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cast-bare.c -o cast-bare.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cast-dispatch.c -o cast-dispatch.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c cast.c -o cast.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c compare.c -o compare.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c complete.c -o complete.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c conditions.c -o conditions.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c dictionary.c -o dictionary.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c dim.c -o dim.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c empty.c -o empty.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c encoding.c -o encoding.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c equal.c -o equal.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c expand.c -o expand.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fields.c -o fields.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c fill.c -o fill.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c globals.c -o globals.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c group.c -o group.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c growable.c -o growable.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c hash.c -o hash.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c if-else.c -o if-else.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.c -o init.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c interval.c -o interval.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c list-combine.c -o list-combine.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c list-unchop.c -o list-unchop.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c match-joint.c -o match-joint.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c match.c -o match.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c missing.c -o missing.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c names.c -o names.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c order-collate.c -o order-collate.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c order-groups.c -o order-groups.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c order-sortedness.c -o order-sortedness.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c order.c -o order.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c parallel.c -o parallel.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c poly-op.c -o poly-op.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c proxy-restore.c -o proxy-restore.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c proxy.c -o proxy.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c ptype-common.c -o ptype-common.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c ptype.c -o ptype.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c ptype2-dispatch.c -o ptype2-dispatch.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c ptype2.c -o ptype2.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c rank.c -o rank.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c recode.c -o recode.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c rep.c -o rep.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c rlang-dev.c -o rlang-dev.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c rlang.c -o rlang.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c runs.c -o runs.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c set.c -o set.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c shape.c -o shape.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c size-common.c -o size-common.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c size.c -o size.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c slice-array.c -o slice-array.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c slice-assign-array.c -o slice-assign-array.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c slice-assign.c -o slice-assign.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c slice-chop.c -o slice-chop.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c slice-interleave.c -o slice-interleave.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c slice.c -o slice.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c split.c -o split.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c subscript-loc.c -o subscript-loc.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c subscript.c -o subscript.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c type-data-frame.c -o type-data-frame.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c type-date-time.c -o type-date-time.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c type-factor.c -o type-factor.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c type-info.c -o type-info.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c type-integer64.c -o type-integer64.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c type-tibble.c -o type-tibble.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c typeof2-s3.c -o typeof2-s3.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c typeof2.c -o typeof2.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c unspecified.c -o unspecified.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utils-dispatch.c -o utils-dispatch.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utils.c -o utils.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG -I./rlang  -I/usr/local/include  -fvisibility=hidden -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c version.c -o version.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o vctrs.so altrep-lazy-character.o altrep-rle.o altrep.o arg-counter.o arg.o assert.o bind.o c.o callables.o case-when.o cast-bare.o cast-dispatch.o cast.o compare.o complete.o conditions.o dictionary.o dim.o empty.o encoding.o equal.o expand.o fields.o fill.o globals.o group.o growable.o hash.o if-else.o init.o interval.o list-combine.o list-unchop.o match-joint.o match.o missing.o names.o order-collate.o order-groups.o order-sortedness.o order.o parallel.o poly-op.o proxy-restore.o proxy.o ptype-common.o ptype.o ptype2-dispatch.o ptype2.o rank.o recode.o rep.o rlang-dev.o rlang.o runs.o set.o shape.o size-common.o size.o slice-array.o slice-assign-array.o slice-assign.o slice-chop.o slice-interleave.o slice.o split.o subscript-loc.o subscript.o type-data-frame.o type-date-time.o type-factor.o type-info.o type-integer64.o type-tibble.o typeof2-s3.o typeof2.o unspecified.o utils-dispatch.o utils.o version.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-vctrs/00new/vctrs/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (vctrs)
+* installing *source* package 'lubridate' ...
+** package 'lubridate' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c datetime.c -o datetime.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.c -o init.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c period.c -o period.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c tparse.c -o tparse.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c utils.c -o utils.o
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o lubridate.so datetime.o init.o period.o tparse.o utils.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-lubridate/00new/lubridate/libs
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (lubridate)
+* installing *source* package 'pillar' ...
+** package 'pillar' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (pillar)
+* installing *source* package 'tidyselect' ...
+** package 'tidyselect' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (tidyselect)
+* installing *source* package 'solartime' ...
+** package 'solartime' successfully unpacked and MD5 sums checked
+** using staged installation
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (solartime)
+* installing *source* package 'tibble' ...
+** package 'tibble' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c attributes.c -o attributes.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c coerce.c -o coerce.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.c -o init.o
+gcc -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c matrixToDataFrame.c -o matrixToDataFrame.o
+matrixToDataFrame.c:7:13: warning: 'pairlist_shallow_copy' defined but not used [-Wunused-function]
+ static SEXP pairlist_shallow_copy(SEXP p) {
+             ^~~~~~~~~~~~~~~~~~~~~
+gcc -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o tibble.so attributes.o coerce.o init.o matrixToDataFrame.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-tibble/00new/tibble/libs
+** R
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (tibble)
+ERROR: dependency 'robustbase' is not available for package 'bigleaf'
+* removing '/usr/lib64/R/library/bigleaf'
+* installing *source* package 'dplyr' ...
+** package 'dplyr' successfully unpacked and MD5 sums checked
+** using staged installation
+** libs
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c chop.cpp -o chop.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c filter.cpp -o filter.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c funs.cpp -o funs.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c group_by.cpp -o group_by.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c group_data.cpp -o group_data.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c imports.cpp -o imports.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c init.cpp -o init.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c mask.cpp -o mask.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c mutate.cpp -o mutate.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c reconstruct.cpp -o reconstruct.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c slice.cpp -o slice.o
+g++ -std=gnu++14 -I"/usr/lib64/R/include" -DNDEBUG   -I/usr/local/include   -fpic  -fmessage-length=0 -grecord-gcc-switches -O2 -Wall -D_FORTIFY_SOURCE=2 -fstack-protector-strong -funwind-tables -fasynchronous-unwind-tables -fstack-clash-protection -g  -c summarise.cpp -o summarise.o
+g++ -std=gnu++14 -shared -L/usr/lib64/R/lib -L/usr/local/lib64 -o dplyr.so chop.o filter.o funs.o group_by.o group_data.o imports.o init.o mask.o mutate.o reconstruct.o slice.o summarise.o -L/usr/lib64/R/lib -lR
+installing to /usr/lib64/R/library/00LOCK-dplyr/00new/dplyr/libs
+** R
+** data
+*** moving datasets to lazyload DB
+** inst
+** byte-compile and prepare package for lazy loading
+** help
+*** installing help indices
+*** copying figures
+** building package indices
+** installing vignettes
+** testing if installed package can be loaded from temporary location
+** checking absolute paths in shared objects and dynamic libraries
+** testing if installed package can be loaded from final location
+** testing if installed package keeps a record of temporary installation path
+* DONE (dplyr)
+
+The downloaded source packages are in
+	'/tmp/RtmpdMWODg/downloaded_packages'
+Updating HTML index of packages in '.Library'
+Making 'packages.html' ... done
+Warning messages:
+1: In install.packages(c("Rcpp", "data.table", "dplyr", "ncdf4", "bigleaf",  :
+  installation of package 'robustbase' had non-zero exit status
+2: In install.packages(c("Rcpp", "data.table", "dplyr", "ncdf4", "bigleaf",  :
+  installation of package 'bigleaf' had non-zero exit status
+=== R CMD INSTALL ===
+* installing to library '/usr/lib64/R/library'
+ERROR: dependency 'bigleaf' is not available for package 'CASSIA'
+* removing '/usr/lib64/R/library/CASSIA'
+=== Smoke test ===
+Error in library(CASSIA) : there is no package called 'CASSIA'
+Execution halted
+=== SUMMARY ===
+rdeps outcome:   success
+install outcome: failure
+smoke outcome:   failure
