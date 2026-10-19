@@ -48,8 +48,11 @@ PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(EXTERNAL_OBJS)
 all: $(SHLIB)
 
 # Rules for compiling .c files into object files
+# Must use ALL_CPPFLAGS/ALL_CFLAGS (not just CFLAGS) so the PIC/PIE flags R
+# adds via CPICFLAGS are applied here too, otherwise these objects fail to
+# link into the package's shared object on toolchains that enforce PIE.
 %.o: %.c
-	$(CC) $(CFLAGS) $(PKG_CPPFLAGS) -c $< -o $@
+	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) -c $< -o $@
 
 # Rule for linking object files into the shared library
 $(SHLIB): $(FS_MODEL_SRC:.c=.o) $(EXTERNAL_OBJS)

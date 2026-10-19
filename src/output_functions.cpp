@@ -33,37 +33,40 @@ Rcpp::DataFrame createGrowthDataFrame(const output_vector& out) {
 // df2
 
 Rcpp::DataFrame createSugarDataFrame(const output_vector& out) {
-  return Rcpp::DataFrame::create(
-    Rcpp::_["sugar"] = out.sugar,
-    Rcpp::_["starch"] = out.starch,
-    Rcpp::_["storage"] = out.storage_term_vector.needles, // adjust if total needed
-    Rcpp::_["starch_needles"] = out.starch_vector.needles,
-    Rcpp::_["starch_phloem"] = out.starch_vector.phloem,
-    Rcpp::_["starch_xylem_sh"] = out.starch_vector.xylem_sh,
-    Rcpp::_["starch_xylem_st"] = out.starch_vector.xylem_st,
-    Rcpp::_["starch_roots"] = out.starch_vector.roots,
-    Rcpp::_["sugar_needles"] = out.sugar_vector.needles,
-    Rcpp::_["sugar_phloem"] = out.sugar_vector.phloem,
-    Rcpp::_["sugar_xylem_sh"] = out.sugar_vector.xylem_sh,
-    Rcpp::_["sugar_xylem_st"] = out.sugar_vector.xylem_st,
-    Rcpp::_["sugar_roots"] = out.sugar_vector.roots,
-    Rcpp::_["sugar_to_mycorrhiza"] = out.sugar_vector.to_mycorrhiza,
-    Rcpp::_["sugar_out_surplus"] = out.sugar_vector.surplus,
-    Rcpp::_["storage_term_needles"] = out.storage_term_vector.needles,
-    Rcpp::_["storage_term_phloem"] = out.storage_term_vector.phloem,
-    Rcpp::_["storage_term_xylem_sh"] = out.storage_term_vector.xylem_sh,
-    Rcpp::_["storage_term_xylem_st"] = out.storage_term_vector.xylem_st,
-    Rcpp::_["storage_term_roots"] = out.storage_term_vector.roots,
-    Rcpp::_["n_E_pot"] = out.nitrogen_capacity_vector.height,   // adjust if needed
-    Rcpp::_["n_W_pot"] = out.nitrogen_capacity_vector.diameter,
-    Rcpp::_["n_M_pot"] = out.nitrogen_capacity_vector.mycorrhiza,
-    Rcpp::_["nitrogen_balance"] = out.nitrogen_balance,
-    Rcpp::_["nitrogen_capacity_needles"] = out.nitrogen_capacity_vector.needles,
-    Rcpp::_["nitrogen_capacity_wall"] = out.nitrogen_capacity_vector.diameter,
-    Rcpp::_["nitrogen_capacity_height"] = out.nitrogen_capacity_vector.height,
-    Rcpp::_["nitrogen_capacity_bud"] = out.nitrogen_capacity_vector.bud,
-    Rcpp::_["nitrogen_capacity_roots"] = out.nitrogen_capacity_vector.roots
-  );
+  // Rcpp::DataFrame::create()/List::create() only generate overloads up to
+  // 20 arguments on some Rcpp versions, but this data frame has 29 columns,
+  // so it is built with push_back() instead, which has no such limit.
+  Rcpp::List lst;
+  lst.push_back(out.sugar, "sugar");
+  lst.push_back(out.starch, "starch");
+  lst.push_back(out.storage_term_vector.needles, "storage"); // adjust if total needed
+  lst.push_back(out.starch_vector.needles, "starch_needles");
+  lst.push_back(out.starch_vector.phloem, "starch_phloem");
+  lst.push_back(out.starch_vector.xylem_sh, "starch_xylem_sh");
+  lst.push_back(out.starch_vector.xylem_st, "starch_xylem_st");
+  lst.push_back(out.starch_vector.roots, "starch_roots");
+  lst.push_back(out.sugar_vector.needles, "sugar_needles");
+  lst.push_back(out.sugar_vector.phloem, "sugar_phloem");
+  lst.push_back(out.sugar_vector.xylem_sh, "sugar_xylem_sh");
+  lst.push_back(out.sugar_vector.xylem_st, "sugar_xylem_st");
+  lst.push_back(out.sugar_vector.roots, "sugar_roots");
+  lst.push_back(out.sugar_vector.to_mycorrhiza, "sugar_to_mycorrhiza");
+  lst.push_back(out.sugar_vector.surplus, "sugar_out_surplus");
+  lst.push_back(out.storage_term_vector.needles, "storage_term_needles");
+  lst.push_back(out.storage_term_vector.phloem, "storage_term_phloem");
+  lst.push_back(out.storage_term_vector.xylem_sh, "storage_term_xylem_sh");
+  lst.push_back(out.storage_term_vector.xylem_st, "storage_term_xylem_st");
+  lst.push_back(out.storage_term_vector.roots, "storage_term_roots");
+  lst.push_back(out.nitrogen_capacity_vector.height, "n_E_pot"); // adjust if needed
+  lst.push_back(out.nitrogen_capacity_vector.diameter, "n_W_pot");
+  lst.push_back(out.nitrogen_capacity_vector.mycorrhiza, "n_M_pot");
+  lst.push_back(out.nitrogen_balance, "nitrogen_balance");
+  lst.push_back(out.nitrogen_capacity_vector.needles, "nitrogen_capacity_needles");
+  lst.push_back(out.nitrogen_capacity_vector.diameter, "nitrogen_capacity_wall");
+  lst.push_back(out.nitrogen_capacity_vector.height, "nitrogen_capacity_height");
+  lst.push_back(out.nitrogen_capacity_vector.bud, "nitrogen_capacity_bud");
+  lst.push_back(out.nitrogen_capacity_vector.roots, "nitrogen_capacity_roots");
+  return Rcpp::DataFrame(lst);
 }
 
 // df3
