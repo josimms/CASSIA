@@ -22,7 +22,7 @@ jobs:
         run: |
           zypper --non-interactive refresh
           zypper --non-interactive install -y \
-            R-base R-base-devel gcc-c++ gcc make git-core tar gzip curl jq \
+            R-base R-base-devel gcc-c++ gcc gcc-fortran make git-core tar gzip curl jq \
             eigen3-devel netcdf-devel
 
       - uses: actions/checkout@v4
@@ -72,9 +72,32 @@ jobs:
           safe_image=$(echo "${{ matrix.image }}" | tr '/:.' '___')
           branch="ci-logs/${safe_image}"
           repo="${{ github.repository }}"
-          base_sha=$(curl -s -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/git/ref/heads/ci-opensuse-repro" | jq -r .object.sha)
-          curl -s -X POST -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/git/refs" -d "{\"ref\":\"refs/heads/${branch}\",\"sha\":\"${base_sha}\"}" || true
+          api="https://api.github.com/repos/${repo}"
+          auth=(-H "Authorization: token ${GH_TOKEN}")
+
+          for i in 1 2 3 4 5; do
+            base_sha=$(curl -s "${auth[@]}" "${api}/git/ref/heads/ci-opensuse-repro" | jq -r '.object.sha // empty')
+            [ -n "$base_sha" ] && break
+            sleep 5
+          done
+          echo "base_sha=${base_sha}"
+
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /tmp/ref_resp.json -w '%{http_code}' -X POST "${auth[@]}" "${api}/git/refs" -d "{\"ref\":\"refs/heads/${branch}\",\"sha\":\"${base_sha}\"}")
+            echo "create-ref http_code=${code}"; cat /tmp/ref_resp.json
+            # 201 = created, 422 = already exists -- both fine
+            if [ "$code" = "201" ] || [ "$code" = "422" ]; then break; fi
+            sleep 5
+          done
+
           content_b64=$(base64 -w0 /tmp/build.log)
-          existing_sha=$(curl -s -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/contents/ci-logs/${safe_image}.log?ref=${branch}" | jq -r '.sha // empty')
-          jq -n --arg msg "CI log for ${{ matrix.image }}" --arg content "$content_b64" --arg branch "$branch" --arg sha "$existing_sha" '{message:$msg, content:$content, branch:$branch} + (if $sha != "" then {sha:$sha} else {} end)' > /tmp/payload.json
-          curl -s -X PUT -H "Authorization: token ${GH_TOKEN}" "https://api.github.com/repos/${repo}/contents/ci-logs/${safe_image}.log" -d @/tmp/payload.json
+
+          for i in 1 2 3 4 5; do
+            existing_sha=$(curl -s "${auth[@]}" "${api}/contents/ci-logs/${safe_image}.log?ref=${branch}" | jq -r '.sha // empty')
+            jq -n --arg msg "CI log for ${{ matrix.image }}" --arg content "$content_b64" --arg branch "$branch" --arg sha "$existing_sha" \
+              '{message:$msg, content:$content, branch:$branch} + (if $sha != "" then {sha:$sha} else {} end)' > /tmp/payload.json
+            code=$(curl -s -o /tmp/put_resp.json -w '%{http_code}' -X PUT "${auth[@]}" "${api}/contents/ci-logs/${safe_image}.log" -d @/tmp/payload.json)
+            echo "put-content http_code=${code}"; cat /tmp/put_resp.json
+            if [ "$code" = "200" ] || [ "$code" = "201" ]; then break; fi
+            sleep 5
+          done
