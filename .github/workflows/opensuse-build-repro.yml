@@ -1,0 +1,43 @@
+name: OpenSUSE build repro (temporary)
+
+on:
+  push:
+    branches: [ci-opensuse-repro]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["opensuse/leap:15.5", "opensuse/leap:16.0"]
+    steps:
+      - name: Install system dependencies
+        run: |
+          zypper --non-interactive refresh
+          zypper --non-interactive install -y \
+            R-base R-base-devel gcc-c++ gcc make git-core tar gzip \
+            eigen3-devel netcdf-devel
+
+      - name: Clone CASSIA at this commit (with submodules)
+        run: |
+          git clone https://github.com/josimms/CASSIA.git /tmp/CASSIA
+          cd /tmp/CASSIA
+          git checkout "${GITHUB_SHA}"
+          git submodule update --init --recursive
+
+      - name: Install R package dependencies
+        run: |
+          Rscript -e 'install.packages(c("Rcpp","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")'
+
+      - name: R CMD INSTALL (what install_github does under the hood)
+        run: |
+          cd /tmp/CASSIA
+          R CMD INSTALL --preclean .
+
+      - name: Smoke test
+        run: |
+          Rscript -e 'library(CASSIA); cat("CASSIA loaded OK, version:", as.character(packageVersion("CASSIA")), "\n")'
