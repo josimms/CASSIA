@@ -5,6 +5,9 @@ on:
     branches: [ci-opensuse-repro]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,29 +18,61 @@ jobs:
       matrix:
         image: ["opensuse/leap:15.5", "opensuse/leap:16.0"]
     steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       - name: Install system dependencies
         run: |
-          zypper --non-interactive refresh
-          zypper --non-interactive install -y \
-            R-base R-base-devel gcc-c++ gcc make git-core tar gzip \
-            eigen3-devel netcdf-devel
-
-      - name: Clone CASSIA at this commit (with submodules)
-        run: |
-          git clone https://github.com/josimms/CASSIA.git /tmp/CASSIA
-          cd /tmp/CASSIA
-          git checkout "${GITHUB_SHA}"
-          git submodule update --init --recursive
+          set +e
+          {
+            zypper --non-interactive refresh
+            zypper --non-interactive install -y \
+              R-base R-base-devel gcc-c++ gcc make git-core tar gzip \
+              eigen3-devel netcdf-devel
+            echo "ZYPPER_EXIT=$?"
+          } > /tmp/build.log 2>&1
+          cat /tmp/build.log
 
       - name: Install R package dependencies
         run: |
-          Rscript -e 'install.packages(c("Rcpp","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")'
+          set +e
+          {
+            Rscript -e 'install.packages(c("Rcpp","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")'
+            echo "RDEPS_EXIT=$?"
+          } >> /tmp/build.log 2>&1
+          tail -n 200 /tmp/build.log
 
       - name: R CMD INSTALL (what install_github does under the hood)
         run: |
-          cd /tmp/CASSIA
-          R CMD INSTALL --preclean .
+          set +e
+          {
+            echo "=== R CMD INSTALL ==="
+            R CMD INSTALL --preclean .
+            echo "INSTALL_EXIT=$?"
+          } >> /tmp/build.log 2>&1
+          tail -n 300 /tmp/build.log
 
       - name: Smoke test
         run: |
-          Rscript -e 'library(CASSIA); cat("CASSIA loaded OK, version:", as.character(packageVersion("CASSIA")), "\n")'
+          set +e
+          {
+            echo "=== Smoke test ==="
+            Rscript -e 'library(CASSIA); cat("CASSIA loaded OK, version:", as.character(packageVersion("CASSIA")), "\n")'
+            echo "SMOKE_EXIT=$?"
+          } >> /tmp/build.log 2>&1
+          tail -n 50 /tmp/build.log
+
+      - name: Push build log to a per-image branch
+        if: always()
+        run: |
+          safe_image=$(echo "${{ matrix.image }}" | tr '/:.' '___')
+          git config user.email "ci-bot@users.noreply.github.com"
+          git config user.name "CI Bot"
+          git checkout --orphan "ci-logs/${safe_image}"
+          git rm -rf --cached . > /dev/null 2>&1 || true
+          mkdir -p ci-logs
+          cp /tmp/build.log "ci-logs/${safe_image}.log"
+          git add "ci-logs/${safe_image}.log"
+          git commit -m "CI log for ${{ matrix.image }}"
+          git push --force origin "HEAD:ci-logs/${safe_image}"
