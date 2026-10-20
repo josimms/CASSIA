@@ -38,7 +38,8 @@ PKG_CPPFLAGS = -I../inst/include \
 
 # Compiler flags
 PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) \
-	-Wno-unused-variable
+	-Wno-unused-variable \
+	-Wno-ignored-attributes
 
 # Linker flags
 PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(EXTERNAL_OBJS)
