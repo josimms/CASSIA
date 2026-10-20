@@ -16,8 +16,8 @@ SystemRequirements: C++17, GCC >= 8 (or equivalent); the bundled phydro
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
-Imports: Rcpp (>= 1.0.9), data.table, dplyr, ncdf4, bigleaf, lubridate
-LinkingTo: Rcpp
+Imports: Rcpp (>= 1.0.9), RcppEigen, data.table, dplyr, ncdf4, bigleaf, lubridate
+LinkingTo: Rcpp, RcppEigen
 Suggests:
     knitr,
     rmarkdown,

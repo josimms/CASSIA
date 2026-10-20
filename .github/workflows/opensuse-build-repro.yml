@@ -23,7 +23,7 @@ jobs:
           zypper --non-interactive refresh
           zypper --non-interactive install -y \
             R-base R-base-devel gcc-c++ gcc gcc-fortran make git-core tar gzip curl jq \
-            eigen3-devel netcdf-devel
+            netcdf-devel
 
       - uses: actions/checkout@v4
         with:
@@ -33,7 +33,7 @@ jobs:
         id: rdeps
         continue-on-error: true
         run: |
-          Rscript -e 'install.packages(c("Rcpp","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")' 2>&1 | tee /tmp/build.log
+          Rscript -e 'install.packages(c("Rcpp","RcppEigen","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")' 2>&1 | tee /tmp/build.log
 
       - name: R CMD INSTALL (what install_github does under the hood)
         id: install

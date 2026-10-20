@@ -26,7 +26,6 @@ PKG_CPPFLAGS = -I../inst/include \
 	-I$(PHYDRO_PATH)/inst/include \
 	-I$(PHYDRO_PATH)/inst/LBFGSpp/include \
 	-I$(LIBPSPM_PATH)/include \
-	-I/usr/include/eigen3 \
 	-I$(RPREBASSO_PATH)/src \
 	-I"$(R_PACKAGE_DIR)/inst/include" \
 	-I"$(R_PACKAGE_DIR)/include" \
