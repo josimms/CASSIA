@@ -396,8 +396,6 @@ CASSIA_cpp <- function(
     stop("No photosynthesis model is selected.")
   }
 
-  # TODO: add the weather tests again
-
   #####
   ## Model conditions derived from model inputs
   #####
@@ -408,6 +406,23 @@ CASSIA_cpp <- function(
   }
   start_year <- date_range[1]
   end_year <- date_range[2]
+
+  # The C++ core sizes the whole simulation (output buffers and the day loop)
+  # from start_year/end_year alone, assuming weather runs from 1 Jan of
+  # start_year to 31 Dec of end_year with no gaps. If it doesn't, the C++ loop
+  # reads past the end of the weather vectors (out-of-bounds, silently
+  # returning garbage instead of erroring) for every day beyond the real data.
+  expected_start <- as.Date(sprintf("%d-01-01", start_year))
+  expected_end <- as.Date(sprintf("%d-12-31", end_year))
+  expected_days <- as.integer(expected_end - expected_start) + 1
+  if (weather$dates[1] != expected_start ||
+      weather$dates[nrow(weather)] != expected_end ||
+      nrow(weather) != expected_days) {
+    stop(sprintf(
+      "weather must cover complete calendar years with no gaps: expected %d rows from %s to %s, got %d rows from %s to %s.",
+      expected_days, expected_start, expected_end,
+      nrow(weather), weather$dates[1], weather$dates[nrow(weather)]))
+  }
 
   if (soil) {
     out <- CASSIA_soil(start_year, end_year, weather, GPP_ref_in,
