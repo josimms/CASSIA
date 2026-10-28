@@ -1,0 +1,69 @@
+name: OpenSUSE build repro (temporary)
+
+on:
+  push:
+    branches: [ci-opensuse-repro]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["opensuse/leap:15.5", "opensuse/leap:16.0"]
+    steps:
+      - name: Install system dependencies (incl. git, needed by checkout)
+        run: |
+          zypper --non-interactive refresh
+          zypper --non-interactive install -y \
+            R-base R-base-devel gcc-c++ gcc gcc-fortran make git-core tar gzip curl \
+            netcdf-devel
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install R package dependencies
+        id: rdeps
+        continue-on-error: true
+        run: |
+          Rscript -e 'install.packages(c("Rcpp","RcppEigen","data.table","dplyr","ncdf4","bigleaf","lubridate"), repos="https://cloud.r-project.org")' 2>&1 | tee /tmp/build.log
+
+      - name: R CMD INSTALL (what install_github does under the hood)
+        id: install
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "=== R CMD INSTALL ===" | tee -a /tmp/build.log
+          R CMD INSTALL --preclean . 2>&1 | tee -a /tmp/build.log
+          exit "${PIPESTATUS[0]}"
+
+      - name: Smoke test
+        id: smoke
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "=== Smoke test ===" | tee -a /tmp/build.log
+          Rscript -e 'library(CASSIA); cat("CASSIA loaded OK, version:", as.character(packageVersion("CASSIA")), "\n")' 2>&1 | tee -a /tmp/build.log
+          exit "${PIPESTATUS[0]}"
+
+      - name: Record real outcome in the log
+        if: always()
+        run: |
+          {
+            echo "=== SUMMARY ==="
+            echo "rdeps outcome:   ${{ steps.rdeps.outcome }}"
+            echo "install outcome: ${{ steps.install.outcome }}"
+            echo "smoke outcome:   ${{ steps.smoke.outcome }}"
+          } | tee -a /tmp/build.log
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ strategy.job-index }}
+          path: /tmp/build.log
+          retention-days: 7
