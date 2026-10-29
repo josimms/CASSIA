@@ -58,12 +58,29 @@ void ring_width_generator(int day,
     index_ref = 0;
   }
 
+  // state.tot_mm and state.pot_mm are already cumulative WITHIN THE CURRENT
+  // YEAR (reset to ~0 at day<1 above, then grow through the growing season).
+  // Diameter must therefore be re-based on the diameter at the START of this
+  // year (days_gone - 1, i.e. the last day of the previous year, or the
+  // pre-set initial value for year 1) every day, NOT on yesterday's diameter
+  // (index_ref = day + days_gone - 1). Using index_ref here was adding the
+  // whole season-to-date cumulative total on top of itself every day of the
+  // growing season (yesterday's diameter already included yesterday's
+  // cumulative tot_mm), producing a roughly quadratic within-year blowup -
+  // confirmed this session: annual diameter growth was coming out in metres
+  // instead of millimetres, under both phydro and PRELES (not a
+  // photosynthesis-pathway-specific bug).
+  int year_start_ref = days_gone - 1;
+  if (year_start_ref < 0) {
+    year_start_ref = 0;
+  }
+
   // NOTE: Already cumulative
   all_out.ring_width[day + days_gone] = state.tot_mm;
 
-  all_out.culm_growth.diameter[day + days_gone] = all_out.culm_growth.diameter[index_ref] + 2.0*state.tot_mm/1000.0;
+  all_out.culm_growth.diameter[day + days_gone] = all_out.culm_growth.diameter[year_start_ref] + 2.0*state.tot_mm/1000.0;
 
-  all_out.culm_growth.diameter_potential[day + days_gone] = all_out.culm_growth.diameter_potential[index_ref] + 2.0*state.pot_mm/1000.0;
+  all_out.culm_growth.diameter_potential[day + days_gone] = all_out.culm_growth.diameter_potential[year_start_ref] + 2.0*state.pot_mm/1000.0;
 
   /*
    * Commented out the ring width based calculations of the xylem and phloem growth!
