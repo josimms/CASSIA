@@ -442,19 +442,7 @@ ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
 ### 4. Model vs. observations (SMEAR EC)
 
 Each model plotted against real SMEAR eddy-covariance GPP - the actual
-data, not another model - day by day. SMEAR is nominally ecosystem-scale
-(sums photosynthesis across the flux footprint) while CASSIA simulates one
-tree, so some offset was expected - but SPP tracks SMEAR almost exactly
-(r = 0.995, see Section 5), which only makes sense if SPP's own
-calibration used a GPP target very close to (or identical to) this exact
-series. All three models are genuinely calibrated for Hyytiälä - PRELES
-and p-hydro's boreal parameters both trace to Hyytiälä-specific sources
-too (not a "SPP is calibrated, the others aren't" story) - but that isn't
-the same claim as "all three were fit to reproduce this particular daily
-GPP series." SPP's near-1:1 fit most likely reflects that it was, directly;
-PRELES and p-hydro's calibration targets were evidently something else
-(different variables, periods, or aggregation), which is why they still
-track SMEAR reasonably but without SPP's near-exact match.
+data, not another model - day by day.
 
 ```{r gpp-scatter, fig.height=4.5}
 gpp_vals <- list(
