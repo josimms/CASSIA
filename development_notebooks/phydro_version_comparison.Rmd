@@ -51,9 +51,9 @@ organ_cols <- c(
   height   = "#4169E1"
 )
 model_cols <- c(
-  "Original" = "#009E73",
+  "Original" = "#0072B2",
   "PRELES"   = "#E69F00",
-  "phydro"   = "#0072B2"
+  "phydro"   = "#009E73"
 )
 
 # All weather-loading and model-run chunks are gated on this flag.
@@ -356,12 +356,12 @@ gpp_long <- reshape(gpp_df,
 gpp_long$model <- factor(gpp_long$model, levels = c("Original", "PRELES", "phydro"))
 
 ggplot() +
-  geom_point(data = smear,
-             aes(x = Date, y = GPP_mean),
-             colour = "grey70", size = 0.5, alpha = 0.6) +
   geom_line(data = gpp_long,
             aes(x = date, y = GPP, colour = model, linewidth = model),
             alpha = 0.85) +
+  geom_point(data = smear,
+             aes(x = Date, y = GPP_mean),
+             colour = "grey40", size = 0.6, alpha = 0.7) +
   scale_colour_manual(values = model_cols) +
   scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
   annotate("text", x = min(dates) + 30, y = max(smear$GPP_mean, na.rm = TRUE) * 0.9,
@@ -433,11 +433,97 @@ ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
   theme_bw() + theme(legend.position = "bottom")
 ```
 
+### 4. Model vs. model agreement
+
+PRELES and p-hydro plotted against the Original (SPP) baseline, day by day.
+Points on the 1:1 line (dashed) indicate perfect agreement with Original;
+scatter and slope away from it show where and how much each model diverges.
+
+```{r gpp-scatter, fig.height=4.5}
+scatter_df <- data.frame(
+  date     = dates,
+  Original = CASSIA_original$Preles$GPP,
+  PRELES   = CASSIA_preles$Preles$GPP,
+  phydro   = CASSIA_phydro$Preles$GPP
+)
+scatter_long <- reshape(scatter_df,
+  varying = c("PRELES", "phydro"), v.names = "GPP",
+  timevar = "model", times = c("PRELES", "phydro"), direction = "long"
+)
+scatter_long$model <- factor(scatter_long$model, levels = c("PRELES", "phydro"))
+
+gpp_max <- max(scatter_df$Original, scatter_df$PRELES, scatter_df$phydro, na.rm = TRUE)
+
+ggplot(scatter_long, aes(x = Original, y = GPP, colour = model)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey40") +
+  geom_point(alpha = 0.35, size = 0.8) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
+  scale_colour_manual(values = model_cols, guide = "none") +
+  coord_equal(xlim = c(0, gpp_max), ylim = c(0, gpp_max)) +
+  facet_wrap(~model) +
+  labs(title = "PRELES and p-hydro vs. Original (SPP) GPP, daily 2015–2017",
+       subtitle = "Dashed line = 1:1 agreement; solid line = fitted trend",
+       x = "Original GPP (g C m⁻² day⁻¹)", y = "Model GPP (g C m⁻² day⁻¹)") +
+  theme_bw()
+```
+
+### 5. Residual statistics
+
+Formal agreement statistics, each model vs. the Original (SPP) baseline:
+Pearson correlation (r), R², root-mean-square error (RMSE), mean bias
+(model − Original, positive = overestimate), and mean absolute error (MAE),
+all in g C m⁻² day⁻¹ except r and R².
+
+```{r gpp-stats}
+gpp_stats <- function(model_vec, ref_vec, label) {
+  resid <- model_vec - ref_vec
+  r <- cor(model_vec, ref_vec, use = "complete.obs")
+  data.frame(
+    Model       = label,
+    r           = round(r, 3),
+    `R-squared` = round(r^2, 3),
+    RMSE        = round(sqrt(mean(resid^2, na.rm = TRUE)), 3),
+    `Mean bias` = round(mean(resid, na.rm = TRUE), 3),
+    MAE         = round(mean(abs(resid), na.rm = TRUE), 3),
+    check.names = FALSE
+  )
+}
+
+knitr::kable(
+  rbind(
+    gpp_stats(CASSIA_preles$Preles$GPP, CASSIA_original$Preles$GPP, "PRELES"),
+    gpp_stats(CASSIA_phydro$Preles$GPP, CASSIA_original$Preles$GPP, "p-hydro")
+  ),
+  caption = "Daily GPP agreement with Original (SPP), 2015–2017"
+)
+```
+
+```{r gpp-residual-density, fig.height=3.5}
+resid_df <- data.frame(
+  date   = dates,
+  PRELES = CASSIA_preles$Preles$GPP - CASSIA_original$Preles$GPP,
+  phydro = CASSIA_phydro$Preles$GPP - CASSIA_original$Preles$GPP
+)
+resid_long <- reshape(resid_df,
+  varying = c("PRELES", "phydro"), v.names = "resid",
+  timevar = "model", times = c("PRELES", "phydro"), direction = "long"
+)
+resid_long$model <- factor(resid_long$model, levels = c("PRELES", "phydro"))
+
+ggplot(resid_long, aes(x = resid, fill = model)) +
+  geom_density(alpha = 0.5, colour = NA) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey40") +
+  scale_fill_manual(values = model_cols) +
+  labs(title = "Distribution of daily GPP residuals vs. Original (SPP)",
+       x = "Model GPP − Original GPP (g C m⁻² day⁻¹)", y = "Density", fill = "Model") +
+  theme_bw() + theme(legend.position = "bottom")
+```
+
 ---
 
 ## Growth comparison
 
-### 4. Annual carbon budget
+### 6. Annual carbon budget
 
 If carbon allocation is functioning correctly, differences in GPP between
 models should scale through to proportional differences in growth.
@@ -489,7 +575,7 @@ ggplot(budget_long, aes(x = factor(year), y = value, fill = flux)) +
   theme_bw() + theme(legend.position = "bottom")
 ```
 
-### 5. Growth by organ
+### 7. Growth by organ
 
 Organ-level breakdown of annual growth carbon. If allocation is working
 correctly across all three runs, the proportions (diameter : needle : root :
@@ -531,7 +617,7 @@ ggplot(growth_long, aes(x = factor(year), y = value, fill = organ)) +
   theme_bw() + theme(legend.position = "bottom")
 ```
 
-### 6. Cumulative ring width
+### 8. Cumulative ring width
 
 Ring width is the most directly observable output that can be compared against
 dendrometer or core data. Inter-model differences in final ring width indicate
