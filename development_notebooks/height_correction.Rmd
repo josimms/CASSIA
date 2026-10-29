@@ -38,6 +38,7 @@ sub-model is needed here.
 devtools::load_all(quiet = TRUE)
 library(ggplot2)
 library(data.table)
+library(patchwork)
 ```
 
 ---
@@ -211,4 +212,63 @@ ggplot(diameter_long, aes(x = dates, y = value, colour = Scenario)) +
        x = NULL, y = "Diameter (m)", colour = "N level") +
   theme_bw(base_size = 11) +
   theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
+```
+
+---
+
+## 5  Publication figure: height and diameter side by side
+
+Single Control trajectory (the N-level comparison above isn't the point
+here), clean two-panel layout, consistent styling. Observed SMEAR data
+(basal-area-weighted mean, confirmed - not median) are the triangles.
+
+```{r pub-figure, fig.width = 12, fig.height = 5.5}
+pub_theme <- theme_bw(base_size = 13) +
+  theme(plot.title     = element_text(face = "bold", size = 13),
+        plot.subtitle   = element_text(size = 10, colour = "grey30"),
+        panel.grid.minor = element_blank(),
+        legend.position  = "bottom")
+
+model_col <- "#1b7837"   # dark green: simulated
+obs_col   <- "#762a83"   # purple: observed, high contrast against model_col
+
+p_height <- ggplot() +
+  geom_line(data = data.frame(dates = dates_1998_2022,
+                              value = CASSIA_long$Culm_Growth$culm_growth_height),
+            aes(x = dates, y = value, colour = "Simulated"), linewidth = 0.9) +
+  geom_point(data = transform(obs_height, Scenario = "Observed (SMEAR, BA-weighted mean)"),
+             aes(x = dates, y = value, colour = "Observed (SMEAR, BA-weighted mean)"),
+             shape = 17, size = 3) +
+  scale_colour_manual(name = NULL,
+                       values = c(Simulated = model_col,
+                                  "Observed (SMEAR, BA-weighted mean)" = obs_col)) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  coord_cartesian(ylim = c(12, NA)) +
+  labs(title = "Height", subtitle = "organ_level_sugar = FALSE",
+       x = NULL, y = "Height (m)") +
+  pub_theme
+
+p_diameter <- ggplot() +
+  geom_line(data = data.frame(dates = dates_1998_2022,
+                              value = CASSIA_long$Culm_Growth$culm_growth_diameter),
+            aes(x = dates, y = value, colour = "Simulated"), linewidth = 0.9) +
+  geom_point(data = transform(obs_diameter, Scenario = "Observed (SMEAR, BA-weighted mean)"),
+             aes(x = dates, y = value, colour = "Observed (SMEAR, BA-weighted mean)"),
+             shape = 17, size = 3) +
+  scale_colour_manual(name = NULL,
+                       values = c(Simulated = model_col,
+                                  "Observed (SMEAR, BA-weighted mean)" = obs_col)) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = "Diameter", subtitle = "organ_level_sugar = FALSE",
+       x = NULL, y = "Diameter (m)") +
+  pub_theme
+
+(p_height | p_diameter) +
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "CASSIA vs. observed Hyytiälä stand growth, 1998–2022",
+    theme = theme(plot.title = element_text(face = "bold", size = 15))
+  ) &
+  theme(legend.position = "bottom")
+```
 ```
