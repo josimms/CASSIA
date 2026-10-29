@@ -261,7 +261,18 @@ PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max,
                                       PAR, PAR_max, TAir, VPD, Precip, CO2, Nitrogen, PA, SWP,
                                       TAir_assim, PAR_assim, VPD_assim, CO2_assim, SWP_assim, PA_assim,
                                       par, zeta, day);
-    plant_assim.gpp        = (res.a + res.vcmax * par.rd) * ca_total;
+    // gpp is reported to the rest of CASSIA (photosynthesis.GPP) as a per-area
+    // rate in g C/m2/day, matching the PRELES/photosynthesis_as_input
+    // convention - so it must NOT be multiplied by ca_total here (that would
+    // make it a whole-tree absolute total, which silently scales with tree
+    // size/crown growth - confirmed as the cause of GPP escalating ~3.5x
+    // across a 3-year run despite near-flat weather). Confirmed against the
+    // Plant-FATE/TreeLife companion codebase (src/plant.tpp divides this
+    // same field by crown_area to get a per-area derivative, i.e. it is NOT
+    // already per-area before that division). rleaf has no downstream
+    // consumer in CASSIA (grep confirms), so its whole-tree-total scaling is
+    // left as-is rather than guessing at an unused convention.
+    plant_assim.gpp        = (res.a + res.vcmax * par.rd);
     plant_assim.rleaf      = (res.vcmax * par.rd) * ca_total;
     plant_assim.trans      = res.e * ca_total;
     plant_assim.dpsi_avg   = res.dpsi;
@@ -272,7 +283,11 @@ PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max,
     plant_assim.nitrogen_avg     = res.n_leaf;
   }
 
-  plant_assim.gpp   *= (86400 * 1e-6 * par.cbio);        // umol co2/s ----> umol co2/unit_t --> mol co2/unit_t --> kg/unit_t
+  // g C/m2/day, not kg biomass/unit_t: par.cbio (2.45e-2 kg biomass/mol CO2)
+  // bakes in a ~2.04x carbon-to-biomass inflation factor that does not
+  // belong in a quantity reported and consumed elsewhere as g C. Use the
+  // direct carbon-mass conversion instead: umol CO2/m2/s -> g C/m2/day.
+  plant_assim.gpp   *= (86400 * 1e-6 * 12.011);
   plant_assim.rleaf *= (86400 * 1e-6 * par.cbio);        // umol co2/s ----> umol co2/unit_t --> mol co2/unit_t --> kg/unit_t
   plant_assim.trans *= (86400 * 18e-3);                  // mol h2o/s  ----> mol h2o/unit_t  --> kg h2o /unit_t
 
