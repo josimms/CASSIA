@@ -194,6 +194,11 @@ PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max,
     ca_cumm += ca_layer;
 
   }
+  if (!(fabs(ca_cumm / crown_area - 1) < 1e-6)) {
+    Rcpp::Rcout << "DEBUG ca_cumm/crown_area assert about to fail: "
+                << "day=" << day << " height=" << height << " crown_area=" << crown_area
+                << " ca_cumm=" << ca_cumm << " ratio=" << (ca_cumm / crown_area) << "\n";
+  }
   assert(fabs(ca_cumm / crown_area - 1) < 1e-6);
   double ca_total = crown_area;                   // total crown area
   plant_assim.c_open_avg /= ca_total;                // unitless

@@ -258,8 +258,27 @@ CASSIA_cpp <- function(
               160.0, 0.0, 0.0, 20.0,
               -999.9, -999.9, -999.9,
               1/0.012, 0.0),
-    phydro_param = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
-               0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
+    # phydro_param: [alpha, gamma, infra_translation, kphio, rd, a_jmax, k_light,
+    # p50_leaf, K_leaf, b_leaf, cbio, m, n, fg, z_star(4), canopy_openness(4)].
+    # Cross-checked 2026-10-29 against the working boreal config in the
+    # Plant-FATE/TreeLife companion codebase
+    # (~/Documents/Austria/Plant-FATE/vignettes/p_test_boreal_no_obligate.ini).
+    # alpha, gamma, rd, k_light, b_leaf, cbio, m all matched exactly. Five did
+    # not and are corrected here:
+    #   kphio:  0.026263945805926 -> 0.08    (ini has 0.08, with the old value
+    #           literally left in a comment: "kphio = 0.08 # 0.026263945805926")
+    #   a_jmax: 50 -> 7400                   (ini: 7400; this file's own comment
+    #           already flagged it as unresolved: "TODO: 800 or 50?")
+    #   K_leaf: 4.1311874912949e17 -> 4.1311874912949e-17 (sign-flipped exponent
+    #           on an otherwise-identical calibrated value - off by 1e34)
+    #   n:      1.1 -> 1.5                   (ini: 1.5)
+    #   fg:     0.1 -> 0.15                  (ini: 0.15)
+    # p50_leaf and z_star/canopy_openness were not verifiable against this ini
+    # (p50_leaf is coordination-derived in Plant-FATE, not a fixed constant;
+    # z_star/canopy_openness were already flagged in structures_read.cpp as
+    # "This value is random") - left unchanged.
+    phydro_param = c(0.1008, 0.180496537959982, 5, 0.08, 0.011, 7400,
+               0.5, -0.857817410110663, 4.1311874912949e-17, 1, 2.45e-2, 2.0, 1.5, 0.15,
                15, 10, 5, 0, 1, exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)),
 
     #####
@@ -438,7 +457,7 @@ CASSIA_cpp <- function(
                       updated_settings)
   } else {
     out <- CASSIA_yearly(start_year, end_year, weather, GPP_ref_in,
-                         pPREL, t(parameters), common, t(ratios), t(sperling), no_trees,
+                         pPREL, t(parameters), common, t(ratios), t(sperling), phydro_param, no_trees,
                          needle_mass_in,
                          Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance,
                          updated_settings)

@@ -281,6 +281,10 @@ Rcpp::List CASSIA_yearly(int start_year,
                          Rcpp::DataFrame pCASSIA_ratios,
                          Rcpp::DataFrame pCASSIA_sperling,
 
+                         std::vector<double> pPhydro,
+
+                         int no_trees,
+
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
                          double Throughfall,
 
@@ -288,7 +292,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                          bool nitrogen_change,
                          bool nitrogen_contrast,
 
-                         double nitrogen_capacity,
+                         double nitrogen_balance,
 
                          Rcpp::List settings);
 

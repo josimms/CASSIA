@@ -69,6 +69,8 @@ Rcpp::List CASSIA_yearly(int start_year,
                          Rcpp::DataFrame pCASSIA_ratios,
                          Rcpp::DataFrame pCASSIA_sperling,
 
+                         std::vector<double> pPhydro,
+
                          int no_trees,
 
                          double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
@@ -98,6 +100,7 @@ Rcpp::List CASSIA_yearly(int start_year,
   CASSIA_ratios ratios = make_ratios(pCASSIA_ratios);
 
   Settings boolsettings = parseSettings(settings);
+  phydro_canopy_parameters parPhydro = parPhydro_initalise(pPhydro);
 
   /*
    * Weather input made into vectors
@@ -332,6 +335,60 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis = preles_cpp(day, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
                                     climate.VPD[days_gone + day], climate.CO2[days_gone + day], all_out.fAPAR[days_gone + day],
                                     parSite, parGPP, parET, parSnowRain, parWater, 0.0, 1);
+        photosynthesis_per_stem = photosynthesis.GPP / no_trees * 10000/1000;
+      } else if (boolsettings.phydro) {
+        // Wired in 2026-10-29: calc_plant_assimilation_rate() and parPhydro_initalise()
+        // already existed (used by the disabled CASSIA_eeo export) but this branch was
+        // simply missing from the main dispatch, which is why phydro=TRUE silently gave
+        // GPP=0 before. crown_area formula and the zeta proxy are adapted from the
+        // commented-out ecoevolutionary.cpp reference (which itself flags "TODO:
+        // something wrong here!" on the crown_area line) - first working pass, not
+        // verified against real canopy geometry.
+        int index_ref = days_gone + day - 1;
+        if (index_ref < 0) index_ref = 0;
+
+        double height_prev = all_out.culm_growth.height[index_ref];
+        double diameter_prev = all_out.culm_growth.diameter[index_ref];
+        double crown_area = M_PI * 6000 / (4 * 75) * height_prev * diameter_prev;
+        double zeta = LAI / all_out.culm_growth.roots[index_ref];
+
+        parPhydro.tau_weather = 7;
+        parPhydro.dt = (day == 0) ? 0.0 : 1.0 / days_per_year;
+
+        // Unit conversions confirmed 2026-10-29 against the Plant-FATE/TreeLife
+        // companion codebase (~/Documents/Austria/Plant-FATE/src/climate_stream.cpp),
+        // which applies the same two conversions to the same raw ERA5-style input
+        // before calling phydro: VPD is stored in hPa here (ERA5_CASSIA_phydro.csv
+        // ranges 0-20.6, too high for kPa) and must become Pa; SWP is stored as a
+        // positive magnitude ("-MPa" with the sign already stripped, range
+        // 0.017-0.133) and must be negated to a true soil water potential. Without
+        // these the phydro solver failed to converge on 364/365 days in testing and
+        // the one "successful" day produced a physically impossible GPP (~-2.5e23).
+        double VPD_pa = climate.VPD[days_gone + day] * 100.0;   // hPa -> Pa
+        double SWP_mpa = climate.SWP[days_gone + day] * (-1.0); // positive magnitude -> true (negative) MPa
+
+        // The phydro solver (LBFGS line search) occasionally fails to converge,
+        // most often in cold weather. Rather than aborting the whole run, fall
+        // back to the previous day's photosynthesis values and keep going -
+        // photosynthesis.GPP/ET already hold the last successfully-computed
+        // day's values at this point, so simply skipping the overwrite below
+        // achieves the carry-forward. A warning with the day/year is printed
+        // so the frequency of these misfires can be counted afterward.
+        try {
+          PlantAssimilationResult photosynthesis_phydro = calc_plant_assimilation_rate(
+            climate.PAR[days_gone + day], climate.PAR_max[days_gone + day], climate.TAir[days_gone + day],
+            VPD_pa, climate.Precip[days_gone + day], climate.CO2[days_gone + day],
+            climate.Nitrogen[days_gone + day], climate.PA[days_gone + day], SWP_mpa,
+            parPhydro, LAI, crown_area, height_prev, zeta, day);
+
+          photosynthesis.GPP = photosynthesis_phydro.gpp;
+          photosynthesis.ET = photosynthesis_phydro.trans;
+          photosynthesis.SoilWater = 0.0;
+        } catch (const std::exception& e) {
+          Rcpp::Rcout << "Warning: phydro solver did not converge on day " << (day + 1)
+                      << " of year " << year << " (" << e.what()
+                      << ") - using previous day's photosynthesis values.\n";
+        }
         photosynthesis_per_stem = photosynthesis.GPP / no_trees * 10000/1000;
       } else {
         std::cout << "There is no photosynthesis model chosen!\n";
