@@ -11,13 +11,14 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
-                      fig.width = 12, fig.height = 5)
+                      fig.width = 12, fig.height = 5,
+                      fig.path = "../manuscript/figures/sugar_model_comparison-")
 ```
 
 ## What this document shows
 
 This notebook validates the multi-pool sugar model (Sperling et al. 2019) by running
-CASSIA with `sperling_model = TRUE` and comparing simulated organ-level sugar and starch
+CASSIA with `organ_level_sugar = TRUE` and comparing simulated organ-level sugar and starch
 pools against observed concentrations from Hyytiälä.
 
 Two simulation periods are shown:
@@ -73,7 +74,7 @@ out_base <- CASSIA_cpp(
   ratios         = ratios_p,
   sperling       = sperling_p,
   Throughfall    = 1,
-  sperling_model = TRUE,
+  organ_level_sugar = TRUE,
   mycorrhiza     = FALSE
 )
 
@@ -321,7 +322,7 @@ out_long <- CASSIA_cpp(
   photosynthesis_as_input = FALSE,
   preles                  = TRUE,
   fAPAR_Tian              = TRUE,
-  sperling_model          = TRUE
+  organ_level_sugar          = TRUE
 )
 
 su_long <- out_long$Sugar

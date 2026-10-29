@@ -10,7 +10,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
-                      fig.width = 9, fig.height = 4)
+                      fig.width = 9, fig.height = 4,
+                      fig.path = "../manuscript/figures/sugar_transfer_optimisation-")
 library(Rsolnp)
 library(ggplot2)
 library(reshape2)

@@ -11,7 +11,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
-                      fig.width = 12, fig.height = 5)
+                      fig.width = 12, fig.height = 5,
+                      fig.path = "../manuscript/figures/sugar_calibration-")
 ```
 
 ## What this document does
@@ -260,7 +261,7 @@ make_objective <- function(surplus_c = FALSE) {
         photosynthesis_as_input = FALSE,
         preles                  = TRUE,
         fAPAR_Tian              = TRUE,
-        sperling_model          = TRUE,
+        organ_level_sugar          = TRUE,
         surplus_c               = surplus_c
       )
       model_values <- c(
@@ -342,7 +343,7 @@ CASSIA_2015 <- CASSIA_cpp(
   photosynthesis_as_input = FALSE,
   preles                  = TRUE,
   fAPAR_Tian              = TRUE,
-  sperling_model          = TRUE,
+  organ_level_sugar          = TRUE,
   needle_mass_grows       = TRUE
 )
 
@@ -413,7 +414,7 @@ CASSIA_long <- CASSIA_cpp(
   photosynthesis_as_input = FALSE,
   preles                  = TRUE,
   fAPAR_Tian              = TRUE,
-  sperling_model          = TRUE,
+  organ_level_sugar          = TRUE,
   needle_mass_grows       = TRUE
 )
 
@@ -534,7 +535,7 @@ CASSIA_surplus_c <- CASSIA_cpp(
   photosynthesis_as_input = FALSE,
   preles                  = TRUE,
   fAPAR_Tian              = TRUE,
-  sperling_model          = TRUE,
+  organ_level_sugar          = TRUE,
   surplus_c               = TRUE
 )
 ```
@@ -607,7 +608,7 @@ run_nitrogen <- function(nitrogen_balance, nitrogen_change = FALSE,
     nitrogen_contrast       = nitrogen_contrast,
     preles                  = TRUE,
     fAPAR_Tian              = TRUE,
-    sperling_model          = TRUE
+    organ_level_sugar          = TRUE
   )
 }
 
