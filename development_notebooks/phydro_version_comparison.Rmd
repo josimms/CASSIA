@@ -355,21 +355,27 @@ gpp_long <- reshape(gpp_df,
 )
 gpp_long$model <- factor(gpp_long$model, levels = c("Original", "PRELES", "phydro"))
 
+legend_cols <- c(model_cols, "SMEAR EC (obs.)" = "grey40")
+
 ggplot() +
   geom_line(data = gpp_long,
             aes(x = date, y = GPP, colour = model, linewidth = model),
             alpha = 0.85) +
   geom_point(data = smear,
-             aes(x = Date, y = GPP_mean),
-             colour = "grey40", size = 0.6, alpha = 0.7) +
-  scale_colour_manual(values = model_cols) +
+             aes(x = Date, y = GPP_mean, colour = "SMEAR EC (obs.)"),
+             size = 0.6, alpha = 0.7) +
+  scale_colour_manual(values = legend_cols,
+                       breaks = c("Original", "PRELES", "phydro", "SMEAR EC (obs.)")) +
   scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
-  annotate("text", x = min(dates) + 30, y = max(smear$GPP_mean, na.rm = TRUE) * 0.9,
-           label = "SMEAR EC (obs.)", colour = "grey50", size = 3, hjust = 0) +
   labs(title = "Daily GPP: Original (SPP) vs PRELES vs p-hydro (2015–2017)",
        subtitle = "Grey = SMEAR eddy covariance (ecosystem); model lines = single-tree",
-       x = NULL, y = "GPP (g C m⁻² day⁻¹)", colour = "Model") +
-  guides(linewidth = "none") +
+       x = NULL, y = "GPP (g C m⁻² day⁻¹)", colour = NULL) +
+  guides(linewidth = "none",
+         colour = guide_legend(override.aes = list(
+           linetype = c("solid", "solid", "solid", "blank"),
+           shape    = c(NA, NA, NA, 16),
+           size     = c(1, 1, 1, 2)
+         ))) +
   theme_bw() + theme(legend.position = "bottom")
 ```
 
@@ -435,51 +441,61 @@ ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
 
 ### 4. Model vs. model agreement
 
-PRELES and p-hydro plotted against the Original (SPP) baseline, day by day.
-Points on the 1:1 line (dashed) indicate perfect agreement with Original;
-scatter and slope away from it show where and how much each model diverges.
+All three models compared pairwise (PRELES vs. Original, phydro vs.
+Original, phydro vs. PRELES), day by day - not just the other two against
+a fixed Original baseline. Points on the 1:1 line (dashed) indicate perfect
+agreement; scatter and slope away from it show where and how much each
+pair diverges.
 
 ```{r gpp-scatter, fig.height=4.5}
-scatter_df <- data.frame(
-  date     = dates,
+gpp_pairs <- list(
+  c(x = "Original", y = "PRELES"),
+  c(x = "Original", y = "phydro"),
+  c(x = "PRELES",   y = "phydro")
+)
+gpp_vals <- list(
   Original = CASSIA_original$Preles$GPP,
   PRELES   = CASSIA_preles$Preles$GPP,
   phydro   = CASSIA_phydro$Preles$GPP
 )
-scatter_long <- reshape(scatter_df,
-  varying = c("PRELES", "phydro"), v.names = "GPP",
-  timevar = "model", times = c("PRELES", "phydro"), direction = "long"
-)
-scatter_long$model <- factor(scatter_long$model, levels = c("PRELES", "phydro"))
+gpp_max <- max(unlist(gpp_vals), na.rm = TRUE)
 
-gpp_max <- max(scatter_df$Original, scatter_df$PRELES, scatter_df$phydro, na.rm = TRUE)
+pair_df <- do.call(rbind, lapply(gpp_pairs, function(p) {
+  data.frame(
+    pair = paste(p["y"], "vs.", p["x"]),
+    x    = gpp_vals[[p["x"]]],
+    y    = gpp_vals[[p["y"]]],
+    yvar = p["y"]
+  )
+}))
+pair_df$pair <- factor(pair_df$pair, levels = sapply(gpp_pairs, function(p) paste(p["y"], "vs.", p["x"])))
 
-ggplot(scatter_long, aes(x = Original, y = GPP, colour = model)) +
+ggplot(pair_df, aes(x = x, y = y, colour = yvar)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey40") +
   geom_point(alpha = 0.35, size = 0.8) +
   geom_smooth(method = "lm", se = FALSE, linewidth = 0.8) +
   scale_colour_manual(values = model_cols, guide = "none") +
   coord_equal(xlim = c(0, gpp_max), ylim = c(0, gpp_max)) +
-  facet_wrap(~model) +
-  labs(title = "PRELES and p-hydro vs. Original (SPP) GPP, daily 2015–2017",
+  facet_wrap(~pair) +
+  labs(title = "Pairwise GPP agreement, all three models, daily 2015–2017",
        subtitle = "Dashed line = 1:1 agreement; solid line = fitted trend",
-       x = "Original GPP (g C m⁻² day⁻¹)", y = "Model GPP (g C m⁻² day⁻¹)") +
+       x = "GPP (g C m⁻² day⁻¹)", y = "GPP (g C m⁻² day⁻¹)") +
   theme_bw()
 ```
 
 ### 5. Residual statistics
 
-Formal agreement statistics, each model vs. the Original (SPP) baseline:
-Pearson correlation (r), R², root-mean-square error (RMSE), mean bias
-(model − Original, positive = overestimate), and mean absolute error (MAE),
-all in g C m⁻² day⁻¹ except r and R².
+Formal pairwise agreement statistics: Pearson correlation (r), R²,
+root-mean-square error (RMSE), mean bias (second model − first, positive =
+second is higher), and mean absolute error (MAE), all in g C m⁻² day⁻¹
+except r and R².
 
 ```{r gpp-stats}
-gpp_stats <- function(model_vec, ref_vec, label) {
-  resid <- model_vec - ref_vec
-  r <- cor(model_vec, ref_vec, use = "complete.obs")
+gpp_stats <- function(y_vec, x_vec, label) {
+  resid <- y_vec - x_vec
+  r <- cor(y_vec, x_vec, use = "complete.obs")
   data.frame(
-    Model       = label,
+    Comparison  = label,
     r           = round(r, 3),
     `R-squared` = round(r^2, 3),
     RMSE        = round(sqrt(mean(resid^2, na.rm = TRUE)), 3),
@@ -490,33 +506,29 @@ gpp_stats <- function(model_vec, ref_vec, label) {
 }
 
 knitr::kable(
-  rbind(
-    gpp_stats(CASSIA_preles$Preles$GPP, CASSIA_original$Preles$GPP, "PRELES"),
-    gpp_stats(CASSIA_phydro$Preles$GPP, CASSIA_original$Preles$GPP, "p-hydro")
-  ),
-  caption = "Daily GPP agreement with Original (SPP), 2015–2017"
+  do.call(rbind, lapply(gpp_pairs, function(p) {
+    gpp_stats(gpp_vals[[p["y"]]], gpp_vals[[p["x"]]], paste(p["y"], "vs.", p["x"]))
+  })),
+  caption = "Daily GPP agreement, all pairwise model comparisons, 2015–2017"
 )
 ```
 
 ```{r gpp-residual-density, fig.height=3.5}
-resid_df <- data.frame(
-  date   = dates,
-  PRELES = CASSIA_preles$Preles$GPP - CASSIA_original$Preles$GPP,
-  phydro = CASSIA_phydro$Preles$GPP - CASSIA_original$Preles$GPP
-)
-resid_long <- reshape(resid_df,
-  varying = c("PRELES", "phydro"), v.names = "resid",
-  timevar = "model", times = c("PRELES", "phydro"), direction = "long"
-)
-resid_long$model <- factor(resid_long$model, levels = c("PRELES", "phydro"))
+resid_df <- do.call(rbind, lapply(gpp_pairs, function(p) {
+  data.frame(pair = paste(p["y"], "vs.", p["x"]),
+             resid = gpp_vals[[p["y"]]] - gpp_vals[[p["x"]]],
+             yvar = p["y"])
+}))
+resid_df$pair <- factor(resid_df$pair, levels = sapply(gpp_pairs, function(p) paste(p["y"], "vs.", p["x"])))
 
-ggplot(resid_long, aes(x = resid, fill = model)) +
+ggplot(resid_df, aes(x = resid, fill = yvar)) +
   geom_density(alpha = 0.5, colour = NA) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey40") +
-  scale_fill_manual(values = model_cols) +
-  labs(title = "Distribution of daily GPP residuals vs. Original (SPP)",
-       x = "Model GPP − Original GPP (g C m⁻² day⁻¹)", y = "Density", fill = "Model") +
-  theme_bw() + theme(legend.position = "bottom")
+  scale_fill_manual(values = model_cols, guide = "none") +
+  facet_wrap(~pair, ncol = 1) +
+  labs(title = "Distribution of pairwise daily GPP residuals",
+       x = "GPP difference (g C m⁻² day⁻¹)", y = "Density") +
+  theme_bw()
 ```
 
 ---
