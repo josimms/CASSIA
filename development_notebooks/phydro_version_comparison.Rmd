@@ -22,7 +22,7 @@ mechanistic complexity, and ability to respond to climate variability:
 
 | Sub-model | Toggle | Driver | Key feature |
 |-----------|--------|--------|-------------|
-| **SPP (Original)** | `photosynthesis_as_input = TRUE` | Pre-computed GPP in weather `P` column | Calibrated to Hyytiälä; the standard development baseline |
+| **SPP** | `photosynthesis_as_input = TRUE` | Pre-computed GPP in weather `P` column | Calibrated to Hyytiälä; the standard development baseline |
 | **PRELES** | `preles = TRUE` | PAR, VPD, CO₂, fAPAR | Empirical light-use efficiency; `fAPAR_Tian = TRUE` improves seasonal shape |
 | **p-hydro** | `phydro = TRUE` | PPFD, VPD, SWP, atmospheric pressure | Hydraulic optimality; drought-sensitive |
 
@@ -51,9 +51,9 @@ organ_cols <- c(
   height   = "#4169E1"
 )
 model_cols <- c(
-  "Original" = "#0072B2",
-  "PRELES"   = "#E69F00",
-  "phydro"   = "#009E73"
+  "SPP"    = "#0072B2",
+  "PRELES" = "#E69F00",
+  "phydro" = "#009E73"
 )
 
 # All weather-loading and model-run chunks are gated on this flag.
@@ -69,7 +69,7 @@ SPP uses the built-in `weather_original` (2015–2017). PRELES and p-hydro each
 require different ERA5 columns, so separate files are loaded. SMEAR eddy
 covariance GPP is used as an observational reference in the comparison plots.
 
-### Original (SPP) — built-in package data
+### SPP — built-in package data
 
 ```{r weather-original, eval=DATA_AVAILABLE}
 data("weather_original")
@@ -184,7 +184,7 @@ p_vpd  <- ggplot() +
 
 ## Model runs
 
-### Original (SPP)
+### SPP
 
 GPP is taken directly from the `P` column of `weather_original`, which was
 pre-computed by the SPP (Scots Pine Process) model. This is the calibrated
@@ -344,16 +344,16 @@ dates <- as.Date(doy - 1, origin = paste0(year, "-01-01"))
 
 gpp_df <- data.frame(
   date     = dates,
-  Original = CASSIA_original$Preles$GPP,
+  SPP = CASSIA_original$Preles$GPP,
   PRELES   = CASSIA_preles$Preles$GPP,
   phydro   = CASSIA_phydro$Preles$GPP
 )
 gpp_long <- reshape(gpp_df,
-  varying = c("Original", "PRELES", "phydro"), v.names = "GPP",
-  timevar = "model", times = c("Original", "PRELES", "phydro"),
+  varying = c("SPP", "PRELES", "phydro"), v.names = "GPP",
+  timevar = "model", times = c("SPP", "PRELES", "phydro"),
   direction = "long"
 )
-gpp_long$model <- factor(gpp_long$model, levels = c("Original", "PRELES", "phydro"))
+gpp_long$model <- factor(gpp_long$model, levels = c("SPP", "PRELES", "phydro"))
 
 legend_cols <- c(model_cols, "SMEAR EC (obs.)" = "grey40")
 
@@ -365,9 +365,9 @@ ggplot() +
              aes(x = Date, y = GPP_mean, colour = "SMEAR EC (obs.)"),
              size = 0.6, alpha = 0.7) +
   scale_colour_manual(values = legend_cols,
-                       breaks = c("Original", "PRELES", "phydro", "SMEAR EC (obs.)")) +
-  scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
-  labs(title = "Daily GPP: Original (SPP) vs PRELES vs p-hydro (2015–2017)",
+                       breaks = c("SPP", "PRELES", "phydro", "SMEAR EC (obs.)")) +
+  scale_linewidth_manual(values = c(SPP = 1.1, PRELES = 0.7, phydro = 0.7)) +
+  labs(title = "Daily GPP: SPP vs PRELES vs p-hydro (2015–2017)",
        subtitle = "Grey = SMEAR eddy covariance (ecosystem); model lines = single-tree",
        x = NULL, y = "GPP (g C m⁻² day⁻¹)", colour = NULL) +
   guides(linewidth = "none",
@@ -379,7 +379,7 @@ ggplot() +
   theme_bw() + theme(legend.position = "bottom")
 ```
 
-### 2. Deviation from Original (SPP baseline)
+### 2. Deviation from SPP
 
 Positive = model predicts more GPP than the SPP baseline; negative = less.
 Any sustained bias in one season or year would indicate a structural difference
@@ -402,7 +402,7 @@ ggplot(diff_long, aes(x = date, y = diff, fill = diff > 0)) +
   geom_hline(yintercept = 0, linewidth = 0.4) +
   scale_fill_manual(values = c("TRUE" = "#56B4E9", "FALSE" = "#D55E00")) +
   facet_wrap(~model, ncol = 1) +
-  labs(title = "GPP deviation from Original (SPP baseline)",
+  labs(title = "GPP deviation from SPP",
        subtitle = "Blue = model higher than baseline; orange = model lower",
        x = NULL, y = "Δ GPP (g C m⁻² day⁻¹)") +
   theme_bw()
@@ -416,23 +416,23 @@ agree on the shape and timing of the growing season.
 ```{r seasonal-gpp, fig.height=4}
 doy_gpp <- data.frame(
   doy      = doy,
-  Original = CASSIA_original$Preles$GPP,
+  SPP = CASSIA_original$Preles$GPP,
   PRELES   = CASSIA_preles$Preles$GPP,
   phydro   = CASSIA_phydro$Preles$GPP
 )
-doy_agg  <- aggregate(cbind(Original, PRELES, phydro) ~ doy,
+doy_agg  <- aggregate(cbind(SPP, PRELES, phydro) ~ doy,
                       data = doy_gpp, FUN = mean)
 doy_long <- reshape(doy_agg,
-  varying = c("Original", "PRELES", "phydro"), v.names = "GPP",
-  timevar = "model", times = c("Original", "PRELES", "phydro"),
+  varying = c("SPP", "PRELES", "phydro"), v.names = "GPP",
+  timevar = "model", times = c("SPP", "PRELES", "phydro"),
   direction = "long"
 )
-doy_long$model <- factor(doy_long$model, levels = c("Original", "PRELES", "phydro"))
+doy_long$model <- factor(doy_long$model, levels = c("SPP", "PRELES", "phydro"))
 
 ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
   geom_line() +
   scale_colour_manual(values = model_cols) +
-  scale_linewidth_manual(values = c(Original = 1.1, PRELES = 0.7, phydro = 0.7)) +
+  scale_linewidth_manual(values = c(SPP = 1.1, PRELES = 0.7, phydro = 0.7)) +
   labs(title = "Mean GPP by day of year (averaged 2015–2017)",
        x = "Day of year", y = "GPP (g C m⁻² day⁻¹)", colour = "Model") +
   guides(linewidth = "none") +
@@ -441,20 +441,20 @@ ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
 
 ### 4. Model vs. model agreement
 
-All three models compared pairwise (PRELES vs. Original, phydro vs.
-Original, phydro vs. PRELES), day by day - not just the other two against
-a fixed Original baseline. Points on the 1:1 line (dashed) indicate perfect
+All three models compared pairwise (PRELES vs. SPP, phydro vs.
+SPP, phydro vs. PRELES), day by day - not just the other two against
+a fixed SPP baseline. Points on the 1:1 line (dashed) indicate perfect
 agreement; scatter and slope away from it show where and how much each
 pair diverges.
 
 ```{r gpp-scatter, fig.height=4.5}
 gpp_pairs <- list(
-  c(x = "Original", y = "PRELES"),
-  c(x = "Original", y = "phydro"),
+  c(x = "SPP", y = "PRELES"),
+  c(x = "SPP", y = "phydro"),
   c(x = "PRELES",   y = "phydro")
 )
 gpp_vals <- list(
-  Original = CASSIA_original$Preles$GPP,
+  SPP = CASSIA_original$Preles$GPP,
   PRELES   = CASSIA_preles$Preles$GPP,
   phydro   = CASSIA_phydro$Preles$GPP
 )
@@ -555,7 +555,7 @@ budget_model <- function(model_out, model_name) {
 }
 
 budget <- rbind(
-  budget_model(CASSIA_original, "Original"),
+  budget_model(CASSIA_original, "SPP"),
   budget_model(CASSIA_preles,   "PRELES"),
   budget_model(CASSIA_phydro,   "phydro")
 )
@@ -564,7 +564,7 @@ budget_annual <- aggregate(
   data = budget, FUN = sum, na.rm = TRUE
 )
 budget_annual$model <- factor(budget_annual$model,
-                               levels = c("Original", "PRELES", "phydro"))
+                               levels = c("SPP", "PRELES", "phydro"))
 
 budget_long <- reshape(budget_annual,
   varying = c("GPP", "growth_total", "resp_growth", "resp_maint"),
@@ -602,7 +602,7 @@ growth_model <- function(model_out, model_name) {
 }
 
 growth <- rbind(
-  growth_model(CASSIA_original, "Original"),
+  growth_model(CASSIA_original, "SPP"),
   growth_model(CASSIA_preles,   "PRELES"),
   growth_model(CASSIA_phydro,   "phydro")
 )
@@ -611,7 +611,7 @@ growth_annual <- aggregate(
   data = growth, FUN = sum, na.rm = TRUE
 )
 growth_annual$model <- factor(growth_annual$model,
-                               levels = c("Original", "PRELES", "phydro"))
+                               levels = c("SPP", "PRELES", "phydro"))
 
 growth_long <- reshape(growth_annual,
   varying = c("diameter", "needle", "root", "height"),
@@ -637,14 +637,14 @@ whether the GPP divergence translates into a detectable structural outcome.
 
 ```{r ring-width, fig.height=5}
 rw_df <- rbind(
-  data.frame(model = "Original", year = year, doy = doy,
+  data.frame(model = "SPP", year = year, doy = doy,
              rw = CASSIA_original$Growth$ring_width),
   data.frame(model = "PRELES",   year = year, doy = doy,
              rw = CASSIA_preles$Growth$ring_width),
   data.frame(model = "phydro",   year = year, doy = doy,
              rw = CASSIA_phydro$Growth$ring_width)
 )
-rw_df$model <- factor(rw_df$model, levels = c("Original", "PRELES", "phydro"))
+rw_df$model <- factor(rw_df$model, levels = c("SPP", "PRELES", "phydro"))
 
 ggplot(rw_df, aes(x = doy, y = rw,
                   colour = factor(year), linetype = model,
@@ -653,11 +653,11 @@ ggplot(rw_df, aes(x = doy, y = rw,
   scale_colour_manual(values = c("2015" = "#1b7837",
                                  "2016" = "#762a83",
                                  "2017" = "#e08214")) +
-  scale_linetype_manual(values = c(Original = "solid",
+  scale_linetype_manual(values = c(SPP = "solid",
                                    PRELES   = "dashed",
                                    phydro   = "dotted")) +
   labs(title = "Cumulative ring width by year and photosynthesis source",
-       subtitle = "Solid = Original (SPP), dashed = PRELES, dotted = p-hydro",
+       subtitle = "Solid = SPP, dashed = PRELES, dotted = p-hydro",
        x = "Day of year", y = "Ring width (mm)",
        colour = "Year", linetype = "Model") +
   theme_bw() + theme(legend.position = "bottom")
@@ -686,7 +686,7 @@ summary_model <- function(model_out, model_name) {
 
 knitr::kable(
   rbind(
-    summary_model(CASSIA_original, "Original (SPP)"),
+    summary_model(CASSIA_original, "SPP"),
     summary_model(CASSIA_preles,   "PRELES"),
     summary_model(CASSIA_phydro,   "p-hydro")
   ),
