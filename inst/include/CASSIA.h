@@ -352,7 +352,9 @@ PlantAssimilationResult calc_plant_assimilation_rate(double PAR, double PAR_max,
 phydro::PHydroResultNitrogen leaf_assimilation_rate(double fipar, double fapar,
                                                     double PAR, double PAR_max, double TAir, double VPD, double Precip, double CO2, double Nitrogen, double PA, double SWP,
                                                     double TAir_assim, double PAR_assim, double VPD_assim, double CO2_assim, double SWP_assim, double PA_assim,
-                                                    phydro_canopy_parameters par, double zeta);
+                                                    phydro_canopy_parameters par, double zeta, int day);
+
+double day_length_fraction(double lat_deg, int day_of_year);
 
 void set_forcing_acclim(double TAir, double PAR, double VPD, double CO2, double SWP, double PA,
                         double& TAir_assim, double& PAR_assim, double& VPD_assim, double& CO2_assim, double& SWP_assim, double& PA_assim,

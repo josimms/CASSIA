@@ -350,7 +350,18 @@ Rcpp::List CASSIA_yearly(int start_year,
         double height_prev = all_out.culm_growth.height[index_ref];
         double diameter_prev = all_out.culm_growth.diameter[index_ref];
         double crown_area = M_PI * 6000 / (4 * 75) * height_prev * diameter_prev;
-        double zeta = LAI / all_out.culm_growth.roots[index_ref];
+
+        // Phydro-local LAI, kept separate from the shared `LAI` (=5, used by
+        // compute_fAPAR_used()/preles above with its own 0.52-coefficient
+        // fAPAR formula - changing that shared constant would alter the
+        // preles/photosynthesis_as_input paths too). 4 is the real,
+        // site-calibrated value for Hyytiala ("lai0 = 4 # (Hyytiala data)" in
+        // the Plant-FATE/TreeLife companion codebase's boreal config),
+        // confirmed 2026-10-29. calc_plant_assimilation_rate() used to ignore
+        // whatever lai it was given anyway (see the fix to PlantFateLogic.cpp
+        // removing its internal `lai = 1.8` Amazon-borrowed override).
+        double LAI_phydro = 4.0;
+        double zeta = LAI_phydro / all_out.culm_growth.roots[index_ref];
 
         parPhydro.tau_weather = 7;
         parPhydro.dt = (day == 0) ? 0.0 : 1.0 / days_per_year;
@@ -379,11 +390,28 @@ Rcpp::List CASSIA_yearly(int start_year,
             climate.PAR[days_gone + day], climate.PAR_max[days_gone + day], climate.TAir[days_gone + day],
             VPD_pa, climate.Precip[days_gone + day], climate.CO2[days_gone + day],
             climate.Nitrogen[days_gone + day], climate.PA[days_gone + day], SWP_mpa,
-            parPhydro, LAI, crown_area, height_prev, zeta, day);
+            parPhydro, LAI_phydro, crown_area, height_prev, zeta, day);
 
-          photosynthesis.GPP = photosynthesis_phydro.gpp;
-          photosynthesis.ET = photosynthesis_phydro.trans;
-          photosynthesis.SoilWater = 0.0;
+          // The solver can also return "successfully" (no exception) with a
+          // NaN/Inf result - e.g. a 0/0 or similar inside the optimiser that
+          // doesn't itself throw. Found 2026-10-29: this happened silently on
+          // day 4 of a 2015 test run, and because photosynthesis.GPP feeds a
+          // cumulative smoothing term (state.S_GPP in growth.cpp) that is
+          // never reset, a single silent NaN here permanently poisons every
+          // later day, surfacing ~77 days later as a diameter/crown_area NaN
+          // crash with no clue it started here. Treat non-finite output the
+          // same as a thrown exception: warn and keep the previous day's
+          // values rather than letting it propagate.
+          if (!std::isfinite(photosynthesis_phydro.gpp) || !std::isfinite(photosynthesis_phydro.trans)) {
+            Rcpp::Rcout << "Warning: phydro solver returned a non-finite result on day " << (day + 1)
+                        << " of year " << year << " (gpp=" << photosynthesis_phydro.gpp
+                        << ", trans=" << photosynthesis_phydro.trans
+                        << ") - using previous day's photosynthesis values.\n";
+          } else {
+            photosynthesis.GPP = photosynthesis_phydro.gpp;
+            photosynthesis.ET = photosynthesis_phydro.trans;
+            photosynthesis.SoilWater = 0.0;
+          }
         } catch (const std::exception& e) {
           Rcpp::Rcout << "Warning: phydro solver did not converge on day " << (day + 1)
                       << " of year " << year << " (" << e.what()

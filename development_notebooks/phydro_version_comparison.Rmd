@@ -10,7 +10,8 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE,
-                      fig.width = 10, fig.height = 5)
+                      fig.width = 10, fig.height = 5,
+                      fig.path = "../manuscript/figures/phydro_comparison-")
 ```
 
 ## Overview
@@ -93,12 +94,16 @@ weather_preles <- weather_preles[format(weather_preles$dates, "%Y") %in% 2015:20
 
 Additional columns beyond PRELES: `PPFD`, `PPFD_max`, `SWP`. `Nitrogen` and
 `PA` are added here as placeholders; fit from deposition data if available.
+`Nitrogen` is leaf nitrogen concentration (kg N/kg leaf) in phydro's units,
+not a raw count - 0.02 is a literature-typical conifer-needle value (see
+manuscript/paper_plan.Rmd for how this was cross-checked against the
+Plant-FATE companion codebase).
 
 ```{r weather-phydro, eval=DATA_AVAILABLE}
 weather_phydro <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_phydro.csv")
 names(weather_phydro)[names(weather_phydro) == "date"] <- "dates"
 weather_phydro$dates    <- as.Date(weather_phydro$dates)
-weather_phydro$Nitrogen <- 1        # placeholder
+weather_phydro$Nitrogen <- 0.02     # placeholder, see note above
 weather_phydro$PA       <- 101325   # sea-level atmospheric pressure (Pa)
 # Restrict to the same 2015-2017 window as weather_original
 weather_phydro <- weather_phydro[format(weather_phydro$dates, "%Y") %in% 2015:2017, ]
@@ -227,28 +232,24 @@ CASSIA_preles <- CASSIA_cpp(
 
 ### p-hydro
 
-The calibrated `phydro_parameters_in` vector specifies the hydraulic parameters.
 A separate ERA5 file is used because p-hydro requires `PPFD`, `PPFD_max`, `SWP`,
-and `PA` columns that the PRELES file does not contain.
+and `PA` columns that the PRELES file does not contain. The default
+`phydro_param` (in `R/CASSIA_cpp.R`) is used rather than a locally-specified
+vector - it was corrected 2026-10-29 by cross-checking field-by-field against
+the working boreal config in the Plant-FATE/TreeLife companion codebase (5
+real parameter errors fixed: `kphio`, `a_jmax`, a sign-flipped `K_leaf`
+exponent, `n`, `fg` - see `manuscript/paper_plan.Rmd` for the full story).
 Note: `ecoevolutionary = TRUE` is not currently compiled into the package
 (`CASSIA_eeo` export is disabled in `src/ecoevolutionary.cpp`).
 
-> **Note:** The p-hydro photosynthesis call (`calc_plant_assimilation_rate` in
-> `src/PlantFateLogic.cpp`) is not yet wired into the main `CASSIA_yearly`
-> loop in `src/CASSIA.cpp`. The photosynthesis dispatch currently only handles
-> SPP and PRELES; when `phydro = TRUE` is set, GPP returns zero. The underlying
-> phydro library and canopy integration code compile correctly — this is purely
-> a wiring issue. If you need p-hydro output, get in touch before running this
-> section.
+> **Note (updated 2026-10-29):** p-hydro is now wired into the main
+> `CASSIA_yearly` loop and produces real GPP. The solver occasionally fails
+> to converge, or (rarer) returns a silent non-finite result - both are
+> caught and logged as a console warning, falling back to the previous day's
+> values rather than aborting the run. Expect to see a handful of these
+> warnings below; that's expected, not a bug in this notebook.
 
-```{r phydro-run, eval=FALSE}
-phydro_parameters_in <- c(
-  0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50,
-  0.5, -0.857817410110663, 4.1311874912949e17, 1, 2.45e-2, 2.0, 1.1, 0.1,
-  15, 10, 5, 0, 1,
-  exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)
-)
-
+```{r phydro-run, eval=DATA_AVAILABLE}
 CASSIA_phydro <- CASSIA_cpp(
   weather                 = weather_phydro,
   site                    = "Hyde",
@@ -259,20 +260,10 @@ CASSIA_phydro <- CASSIA_cpp(
   sperling                = parameters_all$sperling_test,
   needle_mass_in          = parameters_all$needle_mass_in,
   Throughfall             = parameters_all$Throughfall,
-  phydro_param            = phydro_parameters_in,
   photosynthesis_as_input = FALSE,
   phydro                  = TRUE,
   CASSIA_graphs           = FALSE
 )
-```
-
-```{r phydro-placeholder, eval=DATA_AVAILABLE}
-# Placeholder: phydro GPP is not yet wired into CASSIA_yearly.
-# GPP is set to NA so it is absent from comparison plots rather than
-# showing a misleading zero line. Growth columns mirror CASSIA_preles
-# so the comparison framework below does not error.
-CASSIA_phydro <- CASSIA_preles
-CASSIA_phydro$Preles$GPP[] <- 0
 ```
 
 ---
