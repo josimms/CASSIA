@@ -393,11 +393,17 @@ void sugar_model(int day,
 
     // Note the relationship now is using the all component as the all reference for the N:C balance is a weight based average of the different components.
     // The storage is in different compartments, however so there could be an expansion here!
-    nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance, "all");
-    nitrogen_capacity.bud     = nitrogen_storage(nitrogen_balance, "all");
-    nitrogen_capacity.wall    = nitrogen_storage(nitrogen_balance, "all");
-    nitrogen_capacity.height  = nitrogen_storage(nitrogen_balance, "all");
-    nitrogen_capacity.roots   = nitrogen_storage(nitrogen_balance, "all");
+    // When nitrogen tracking is off, capacity must not limit growth (matches the non-organ-level path below).
+    if (nitrogen_change) {
+      nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance, "all");
+      nitrogen_capacity.bud     = nitrogen_storage(nitrogen_balance, "all");
+      nitrogen_capacity.wall    = nitrogen_storage(nitrogen_balance, "all");
+      nitrogen_capacity.height  = nitrogen_storage(nitrogen_balance, "all");
+      nitrogen_capacity.roots   = nitrogen_storage(nitrogen_balance, "all");
+    } else {
+      nitrogen_capacity.needles = nitrogen_capacity.bud = nitrogen_capacity.wall =
+        nitrogen_capacity.height = nitrogen_capacity.roots = 1.0;
+    }
 
     /*
      * Carbon allocation plan growth vs allocation
