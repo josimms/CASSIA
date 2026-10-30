@@ -99,17 +99,27 @@ diameter_df <- filter_smear(c("BA weighted mean DBH pine",
 # Keep only the primary measurement for cleaner scenario plots
 height_df   <- height_df[height_df$variable == "tree_height_baseal_area_weighted_mean", ]
 diameter_df <- diameter_df[diameter_df$variable == "pine diameter BA weighted mean", ]
+
+obs_height <- data.frame(
+  dates = as.Date(paste0(height_df$date, "-12-31")),
+  value = height_df$amount
+)
+obs_diameter <- data.frame(
+  dates = as.Date(paste0(diameter_df$date, "-12-31")),
+  value = diameter_df$amount / 100  # cm -> m, to match culm_growth_diameter's units
+)
 ```
 
 ---
 
-## 2  Nitrogen scenarios (organ_level_sugar = FALSE)
+## 2  Baseline run (organ_level_sugar = FALSE)
 
-Same three constant nitrogen levels as `sugar_calibration.Rmd` (30/50/100%
-of the baseline 25 kg N ha⁻¹ yr⁻¹), plus Control - but on the default sugar
-pathway.
+Single control run on the default (non-organ-level) sugar pathway, used as
+the "Simulated" trajectory below. Nitrogen has no effect in this
+configuration (see `nitrogen_scenarios.Rmd`), so a single run stands in for
+all nitrogen levels here.
 
-```{r run-nitrogen}
+```{r run-baseline}
 run_nitrogen <- function(nitrogen_balance, nitrogen_change = FALSE,
                          nitrogen_contrast = FALSE) {
   CASSIA_cpp(
@@ -133,93 +143,14 @@ run_nitrogen <- function(nitrogen_balance, nitrogen_change = FALSE,
   )
 }
 
-CASSIA_long     <- run_nitrogen(25)
-CASSIA_N_high   <- run_nitrogen(25)
-CASSIA_N_medium <- run_nitrogen(25 * 0.5)
-CASSIA_N_low    <- run_nitrogen(25 * 0.3)
+CASSIA_long <- run_nitrogen(25)
 ```
 
 ---
 
-## 3  Cumulative height vs. observations
+## 3  Publication figure: height and diameter side by side
 
-```{r plot-nitrogen-height, fig.height = 5}
-nitrogen_cols <- c(Control = "#4daf4a", High = "#377eb8",
-                   Medium  = "#ff7f00", Low  = "#e41a1c")
-
-height_long <- rbind(
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_long$Culm_Growth$culm_growth_height,  Scenario = "Control"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_high$Culm_Growth$culm_growth_height, Scenario = "High"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_medium$Culm_Growth$culm_growth_height, Scenario = "Medium"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_low$Culm_Growth$culm_growth_height, Scenario = "Low")
-)
-
-obs_height <- data.frame(
-  dates = as.Date(paste0(height_df$date, "-12-31")),
-  value = height_df$amount
-)
-
-ggplot(height_long, aes(x = dates, y = value, colour = Scenario)) +
-  geom_line(linewidth = 0.7) +
-  geom_point(data = obs_height, aes(x = dates, y = value),
-             colour = "#4daf4a", shape = 17, size = 2.5, inherit.aes = FALSE) +
-  scale_colour_manual(values = nitrogen_cols) +
-  scale_x_date(date_breaks = "4 years", date_labels = "%Y") +
-  coord_cartesian(ylim = c(12, NA)) +
-  labs(title = "Cumulative height (organ_level_sugar = FALSE) vs observations",
-       x = NULL, y = "Height (m)", colour = "N level") +
-  theme_bw(base_size = 11) +
-  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
-```
-
----
-
-## 4  Cumulative diameter vs. observations
-
-Added alongside height since the original request was "height and
-diameter" together. `culm_growth_diameter` was fixed this session
-(`ring_width.cpp` re-basing bug, commit `afa97ea`) - this is the first
-long multi-year run checking it since that fix.
-
-```{r plot-nitrogen-diameter, fig.height = 5}
-diameter_long <- rbind(
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_long$Culm_Growth$culm_growth_diameter,  Scenario = "Control"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_high$Culm_Growth$culm_growth_diameter, Scenario = "High"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_medium$Culm_Growth$culm_growth_diameter, Scenario = "Medium"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_low$Culm_Growth$culm_growth_diameter, Scenario = "Low")
-)
-
-obs_diameter <- data.frame(
-  dates = as.Date(paste0(diameter_df$date, "-12-31")),
-  value = diameter_df$amount / 100  # cm -> m, to match culm_growth_diameter's units
-)
-
-ggplot(diameter_long, aes(x = dates, y = value, colour = Scenario)) +
-  geom_line(linewidth = 0.7) +
-  geom_point(data = obs_diameter, aes(x = dates, y = value),
-             colour = "#4daf4a", shape = 17, size = 2.5, inherit.aes = FALSE) +
-  scale_colour_manual(values = nitrogen_cols) +
-  scale_x_date(date_breaks = "4 years", date_labels = "%Y") +
-  labs(title = "Cumulative diameter (organ_level_sugar = FALSE) vs observations",
-       x = NULL, y = "Diameter (m)", colour = "N level") +
-  theme_bw(base_size = 11) +
-  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
-```
-
----
-
-## 5  Publication figure: height and diameter side by side
-
-Single Control trajectory (the N-level comparison above isn't the point
-here), clean two-panel layout, consistent styling. Observed SMEAR data
+Clean two-panel layout, consistent styling. Observed SMEAR data
 (basal-area-weighted mean, confirmed - not median) are the triangles.
 
 ```{r pub-figure, fig.width = 12, fig.height = 5.5}
@@ -271,68 +202,4 @@ p_diameter <- ggplot() +
   ) &
   theme(legend.position = "bottom")
 ```
-
----
-
-## 6  Nitrogen and carbon limitation on growth
-
-Three *distinct* nitrogen levels this time (the earlier nitrogen-scenario
-plots in this notebook accidentally had Control and High identical, both
-defaulting to `nitrogen_balance = 25`). Same weather/GPP (carbon supply)
-drives all three - any difference in realized growth is down to nitrogen
-constraining how much of that carbon the tree can actually use, not a
-difference in how much carbon was available in the first place.
-
-```{r run-nitrogen-carbon}
-CASSIA_N_high2   <- run_nitrogen(25)        # unrestricted (default)
-CASSIA_N_medium2 <- run_nitrogen(25 * 0.5)
-CASSIA_N_low2    <- run_nitrogen(25 * 0.3)
-
-n_cols <- c(High = "#1b7837", Medium = "#e08214", Low = "#762a83")
-```
-
-### 6.1  Height under high/medium/low nitrogen
-
-```{r plot-n-height-clean, fig.height = 5}
-height_n_long <- rbind(
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_high2$Culm_Growth$culm_growth_height,   N = "High"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_medium2$Culm_Growth$culm_growth_height, N = "Medium"),
-  data.frame(dates = dates_1998_2022,
-             value = CASSIA_N_low2$Culm_Growth$culm_growth_height,    N = "Low")
-)
-height_n_long$N <- factor(height_n_long$N, levels = c("High", "Medium", "Low"))
-
-ggplot(height_n_long, aes(x = dates, y = value, colour = N)) +
-  geom_line(linewidth = 0.8) +
-  geom_point(data = obs_height, aes(x = dates, y = value), colour = "black",
-             shape = 17, size = 2.5, inherit.aes = FALSE) +
-  scale_colour_manual(values = n_cols) +
-  scale_x_date(date_breaks = "4 years", date_labels = "%Y") +
-  coord_cartesian(ylim = c(12, NA)) +
-  labs(title = "Height under high/medium/low nitrogen availability",
-       subtitle = paste("Only \"Low\" is visible because all three lines are identical",
-                         "- see note below. Black triangles = observed (SMEAR, BA-weighted mean)"),
-       x = NULL, y = "Height (m)", colour = "N level") +
-  theme_bw(base_size = 12) +
-  theme(plot.title = element_text(face = "bold"), legend.position = "bottom")
-```
-
-**This overlap is not a plotting artefact.** `nitrogen_balance` is only ever
-read inside `sugar_model()` (`src/CASSIA.cpp:495`), which this scenario never
-calls (`organ_level_sugar = FALSE`). None of the growth terms in
-`growth.cpp` that drive height/diameter/needle/root growth
-(`state.GH`, `state.GN`, `state.GD`, `GR`) take nitrogen as an input at
-all - they're driven purely by `state.g` (a temperature-threshold signal)
-and seasonal phenology counters. So in this configuration nitrogen literally
-cannot affect growth, by construction, regardless of the value passed in.
-A Section 6.2 "carbon budget by nitrogen level" chart was dropped from this
-notebook for the same reason, plus a second, independent problem: it summed
-`diameter_growth` (mm), `needle_growth`/`root_growth` (biomass, g) and
-`height_growth` (m) into one "total growth" number, which mixes
-incompatible units and isn't a meaningful quantity regardless of the N
-question. See `manuscript/paper_plan.Rmd` (Working notes, "Nitrogen
-limitation outside the sugar model") for a draft, not-yet-implemented
-proposal for how a nitrogen constraint could be added to this pathway.
 
