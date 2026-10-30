@@ -395,11 +395,15 @@ void sugar_model(int day,
     // The storage is in different compartments, however so there could be an expansion here!
     // When nitrogen tracking is off, capacity must not limit growth (matches the non-organ-level path below).
     if (nitrogen_change) {
-      nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance, "all");
-      nitrogen_capacity.bud     = nitrogen_storage(nitrogen_balance, "all");
-      nitrogen_capacity.wall    = nitrogen_storage(nitrogen_balance, "all");
-      nitrogen_capacity.height  = nitrogen_storage(nitrogen_balance, "all");
-      nitrogen_capacity.roots   = nitrogen_storage(nitrogen_balance, "all");
+      // Evenly split across the 5 pools (same convention as the whole-tree
+      // branch, sugar_model.cpp:883), compared against each organ's own
+      // tissue N-content threshold (Korhonen 2007, nitrogen_storage()
+      // above) instead of the shared "all" placeholder.
+      nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance/5.0, "needles");
+      nitrogen_capacity.bud     = nitrogen_storage(nitrogen_balance/5.0, "bud");
+      nitrogen_capacity.wall    = nitrogen_storage(nitrogen_balance/5.0, "wall");
+      nitrogen_capacity.height  = nitrogen_storage(nitrogen_balance/5.0, "height");
+      nitrogen_capacity.roots   = nitrogen_storage(nitrogen_balance/5.0, "roots");
     } else {
       nitrogen_capacity.needles = nitrogen_capacity.bud = nitrogen_capacity.wall =
         nitrogen_capacity.height = nitrogen_capacity.roots = 1.0;
@@ -601,8 +605,6 @@ void sugar_model(int day,
         4.5/0.5 * xylem_sh_share * (std::min(storage_term.xylem_sh, nitrogen_capacity.wall) * tree_state.wall +
         std::min(storage_term.xylem_sh, nitrogen_capacity.height) * tree_state.height) -
         3.0/0.5 * std::min(storage_term.roots, nitrogen_capacity.roots) * tree_state.roots;
-
-      nitrogen_capacity.height = nitrogen_balance;
     }
 
     /*
@@ -893,6 +895,19 @@ void sugar_model(int day,
         myco_allocation = PF * parameters.growth_myco;
       } else {
         myco_allocation = 0.0;
+      }
+
+      if (nitrogen_change) {
+        // Uses uptake.total_uptake from the previous day (computed below,
+        // after sugar_all is known) - same one-day lag the organ-level
+        // pathway uses, since this day's uptake needs sugar_all's surplus,
+        // which isn't known yet at this point in the day's processing.
+        nitrogen_balance = nitrogen_balance + uptake.total_uptake -
+          4.9/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.needles -
+          2.1/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.bud -
+          4.5/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.height -
+          4.5/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.diameter -
+          3.0/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.roots;
       }
 
       sugar_all = sugar.needles + PF - tree_state.use + tree_state.release - std::min(storage_term.respiration, nitrogen_capacity_all) * tree_state.Rm_a -
