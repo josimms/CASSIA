@@ -918,6 +918,13 @@ void sugar_model(int day,
         (1 + common.Rg_N) * std::min(storage, nitrogen_capacity_all) * tree_state.bud -
         myco_allocation;
 
+      // Whole-tree analogue of the organ-level branch's "excess above
+      // per-organ storage capacity" export: there's no per-organ storage
+      // cap here, so use sugar above the sugar_level target instead -
+      // computed before the to_sugar/to_starch redistribution below
+      // consumes it, same quantity that decides to_starch just below.
+      double surplus_sugar_all = std::max(sugar_all - parameters.sugar_level, 0.0);
+
       if (sugar_all < parameters.sugar_level) {
         to_sugar = std::min(starch.needles, (parameters.sugar_level - sugar_all) / parameters.tau_t);
         to_starch = 0;
@@ -936,6 +943,26 @@ void sugar_model(int day,
       storage_term.roots = storage;
       storage_term.xylem_sh = storage;
       storage_term.xylem_st = storage;
+
+      if (nitrogen_change) {
+        // Credits uptake back for the *next* day's balance update above
+        // (same one-day lag the organ-level branch uses). Mirrors that
+        // branch's own nitrogen_uptake() call exactly - same placeholder
+        // soil-N value and mycorrhizal-demand constant - using
+        // surplus_sugar_all (computed above) in place of the organ-level
+        // branch's per-organ export, since this pathway has nothing
+        // equivalent to export from.
+        double N = 0.5;
+        double mycorrhizal_nitrogen_demand = 0.2;
+
+        uptake = nitrogen_uptake(N,
+                                 myco_allocation,
+                                 surplus_sugar_all,
+                                 out.culm_growth.mycorrhiza[day + days_gone - 1],
+                                 out.culm_growth.roots[day + days_gone - 1],
+                                 mycorrhizal_nitrogen_demand,
+                                 mycorrhiza_passive);
+      }
     }
 
     // Write nitrogen capacity back to the struct so actual_growth() can use it.
