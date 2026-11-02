@@ -1,12 +1,18 @@
 #include "CASSIA.h"
 
-// Makela (1999) eqn 28: C_j = [X_bal/X_current]^tau. <1 damps, >1 accelerates.
+// Makela (1999) eqn 28: C_j = [X_bal/X_current]^tau, capped at 1. Every
+// other growth-rate factor in CASSIA (k(t), g_i(t), f_i(s_i(t)) in
+// Schiestl-Aalto et al. 2015 eqn 4; the sugar/nitrogen capacity gates
+// elsewhere in this codebase) only ever reduces growth below its
+// calibrated maximum rate (L_i), never boosts it above - capping here
+// keeps this correction damping-only, consistent with that architecture,
+// rather than letting an undergrown organ exceed its calibrated ceiling.
 double makela_control_factor(double X_bal, double X_current, double tau) {
   const double epsilon = 1e-6;
   if (X_current < epsilon || X_bal < epsilon) {
     return 1.0;
   }
-  return std::pow(X_bal / X_current, tau);
+  return std::min(1.0, std::pow(X_bal / X_current, tau));
 }
 
 /*
@@ -53,19 +59,24 @@ void growth(int day,
     state.g = 0;
   }
 
-  // Makela (1999) structural-balance targets, applied bidirectionally:
-  // height's potential growth corrects toward H_bal=alpha_H*D, diameter's
-  // corrects toward D_bal=H/alpha_H - the same empirical ratio read both
-  // ways (not needles/roots/bud - see paper_plan.Rmd; needles specifically
-  // ruled out because needle mass resets near-zero each season while
-  // diameter never does, which blows up the control ratio).
+  // Makela (1999) structural-balance target: height's potential growth
+  // corrects (damping only, see makela_control_factor above) toward
+  // H_bal=alpha_H*D. Diameter is the uncorrected reference, not the
+  // other way around: unlike height, diameter already has its own
+  // within-season carbon-feedback (LD_estim/Eqn 19 of Schiestl-Aalto
+  // et al. 2015, the daily current-year-GPP-vs-reference-year ratio
+  // below) and the full cell-enlargement/wall-formation xylogenesis
+  // cascade (ring_width.cpp) - a cruder external correction on top of
+  // that more detailed, already-calibrated mechanism made diameter's
+  // fit worse, not better (tested; see manuscript/paper_plan.Rmd
+  // Working Notes). Needles/roots/bud were never corrected either (same
+  // Working Notes: needle mass resets near-zero each season, blowing up
+  // the control ratio; roots genuinely vary with nitrogen availability,
+  // not a fixed ratio; bud has no analogous structural variable).
   // alpha_H = 89.45 (mean of two real SMEAR height/diameter series fits,
-  // 88.8/90.1 - matches this stand's actual starting h0/D0 ratio of ~84.7,
-  // unlike the Plant-FATE-gradient estimate of 107.3 which is fit from
-  // juvenile trees only and overshoots this mature starting condition).
-  // tau_H/tau_D come from Settings (R-level, calibratable). Uses
+  // 88.8/90.1). tau_H comes from Settings (R-level, calibratable). Uses
   // yesterday's tracked state (today's culm_growth isn't written yet).
-  double H_bal = 0.0, H_current = 0.0, D_bal = 0.0, D_current = 0.0;
+  double H_bal = 0.0, H_current = 0.0;
   if (boolsettings.height_diameter_correction) {
     const double alpha_H = 89.45;
 
@@ -73,10 +84,9 @@ void growth(int day,
     if (idx_ref < 0) {
       idx_ref = 0;
     }
-    D_current = out.culm_growth.diameter[idx_ref];
+    double D_current = out.culm_growth.diameter[idx_ref];
     H_current = out.culm_growth.height[idx_ref];
     H_bal = alpha_H * D_current;
-    D_bal = H_current / alpha_H;
   }
 
   /*
@@ -206,9 +216,6 @@ void growth(int day,
     }
   }
 
-  if (boolsettings.height_diameter_correction) {
-    LD = LD * makela_control_factor(D_bal, D_current, boolsettings.tau_D);
-  }
   double old_GD = state.GD;
   state.GD = state.g * state.fD * LD;
   double tot_cells_pot = old_GD + state.GD;
