@@ -32,7 +32,13 @@ void log_actual_growth(int day,
   growth_out.height[days_gone + day]   = tree_state.height;
   growth_out.needles[days_gone + day]  = tree_state.needles;
   growth_out.roots[days_gone + day]    = tree_state.roots;
-  growth_out.diameter[days_gone + day] = tree_state.diameter;
+  // tree_state.diameter is never gated by actual_growth() (only
+  // tree_state.wall is, computed from potential diameter times the
+  // carbon/nitrogen cap) - log the gated value here so "diameter_growth"
+  // reflects realized growth, not the unconstrained potential. Matches the
+  // convention already used in CASSIA_soil.cpp/ecoevolutionary.cpp
+  // (actual_growth_out.wall pushed into their own diameter output).
+  growth_out.diameter[days_gone + day] = tree_state.wall;
   growth_out.wall[days_gone + day]     = tree_state.wall;
   growth_out.bud[days_gone + day]      = tree_state.bud;
 }
