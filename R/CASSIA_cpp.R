@@ -103,14 +103,23 @@
 #' @param needle_mass_grows Logical. If \code{TRUE}, needle mass is updated
 #'   dynamically each year via the Repola model. If \code{FALSE} (default),
 #'   needle mass is fixed after the first iteration.
-#' @param height_diameter_correction Logical. If \code{TRUE}, height's
-#'   growth rate is damped/accelerated each day toward a diameter-referenced
-#'   structural balance (Mäkelä 1999, Functional Ecology 13:145-156),
-#'   correcting the potential growth rate before the carbon/nitrogen gate is
-#'   applied. Diameter itself is the uncorrected reference variable. Needles,
-#'   roots and bud are not corrected (no data-grounded reference relationship
-#'   exists for them - see \code{manuscript/paper_plan.Rmd} Working Notes).
-#'   Default \code{FALSE}.
+#' @param height_diameter_correction Logical. If \code{TRUE}, height's and
+#'   diameter's growth rates are each damped/accelerated toward the other,
+#'   referenced through the same empirical height:diameter ratio (Mäkelä
+#'   1999, Functional Ecology 13:145-156), correcting the potential growth
+#'   rate before the carbon/nitrogen gate is applied. Needles, roots and bud
+#'   are not corrected (no data-grounded reference relationship exists for
+#'   them - see \code{manuscript/paper_plan.Rmd} Working Notes). Default
+#'   \code{FALSE}.
+#' @param tau_H,tau_D Numeric. Control-function exponents (Mäkelä 1999 eqn
+#'   28) for height and diameter respectively, when
+#'   \code{height_diameter_correction = TRUE} - how fast each corrects
+#'   toward balance (\code{>= 1} required for stability). Ignored otherwise.
+#'   Default \code{20}, RSS-calibrated against real SMEAR height/diameter
+#'   (1998-2022 Hyde run); values above ~23-25 trigger carbon-storage
+#'   collapse in this pathway (confirmed empirically, not just Mäkelä's own
+#'   lower-bound stability requirement) - see
+#'   \code{manuscript/paper_plan.Rmd} Working Notes before raising it.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
 #'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
@@ -314,7 +323,9 @@ CASSIA_cpp <- function(
     trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
     growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
     needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
-    height_diameter_correction = FALSE,  # Makela (1999) structural-balance control on height's potential growth, referenced against diameter
+    height_diameter_correction = FALSE,  # Makela (1999) structural-balance control, height and diameter referenced against each other
+    tau_H = 20,                          # Makela (1999) eqn 28 exponent for height's correction, when height_diameter_correction = TRUE - RSS-calibrated against real SMEAR height/diameter (1998-2022 Hyde), capped below the ~23-25 instability onset found during calibration (see manuscript/paper_plan.Rmd Working Notes)
+    tau_D = 20,                          # Makela (1999) eqn 28 exponent for diameter's correction, when height_diameter_correction = TRUE - see tau_H
 
     phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
 
@@ -384,6 +395,8 @@ CASSIA_cpp <- function(
     "growth_decreases" = growth_decreases,
     "needle_mass_grows" = needle_mass_grows,
     "height_diameter_correction" = height_diameter_correction,
+    "tau_H" = tau_H,
+    "tau_D" = tau_D,
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,

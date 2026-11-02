@@ -20,6 +20,8 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.growth_decreases = Rcpp::as<bool>(settingsList["growth_decreases"]);
   settings.needle_mass_grows = Rcpp::as<bool>(settingsList["needle_mass_grows"]);
   settings.height_diameter_correction = Rcpp::as<bool>(settingsList["height_diameter_correction"]);
+  settings.tau_H = Rcpp::as<double>(settingsList["tau_H"]);
+  settings.tau_D = Rcpp::as<double>(settingsList["tau_D"]);
 
   settings.phloem_trigger = Rcpp::as<bool>(settingsList["phloem_trigger"]);
   settings.mycorrhiza = Rcpp::as<bool>(settingsList["mycorrhiza"]);

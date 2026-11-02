@@ -53,17 +53,19 @@ void growth(int day,
     state.g = 0;
   }
 
-  // Makela (1999) structural-balance target: diameter is the reference,
-  // height is checked against it (not needles/roots/bud - see paper_plan.Rmd;
-  // needles specifically ruled out because needle mass resets near-zero each
-  // season while diameter never does, which blows up the control ratio).
+  // Makela (1999) structural-balance targets, applied bidirectionally:
+  // height's potential growth corrects toward H_bal=alpha_H*D, diameter's
+  // corrects toward D_bal=H/alpha_H - the same empirical ratio read both
+  // ways (not needles/roots/bud - see paper_plan.Rmd; needles specifically
+  // ruled out because needle mass resets near-zero each season while
+  // diameter never does, which blows up the control ratio).
   // alpha_H = 89.45 (mean of two real SMEAR height/diameter series fits,
   // 88.8/90.1 - matches this stand's actual starting h0/D0 ratio of ~84.7,
   // unlike the Plant-FATE-gradient estimate of 107.3 which is fit from
   // juvenile trees only and overshoots this mature starting condition).
-  // tau is an uncalibrated placeholder. Uses yesterday's tracked state.
-  double H_bal = 0.0, H_current = 0.0;
-  const double tau_H = 5.0;
+  // tau_H/tau_D come from Settings (R-level, calibratable). Uses
+  // yesterday's tracked state (today's culm_growth isn't written yet).
+  double H_bal = 0.0, H_current = 0.0, D_bal = 0.0, D_current = 0.0;
   if (boolsettings.height_diameter_correction) {
     const double alpha_H = 89.45;
 
@@ -71,9 +73,10 @@ void growth(int day,
     if (idx_ref < 0) {
       idx_ref = 0;
     }
-    double D_current = out.culm_growth.diameter[idx_ref];
+    D_current = out.culm_growth.diameter[idx_ref];
     H_current = out.culm_growth.height[idx_ref];
     H_bal = alpha_H * D_current;
+    D_bal = H_current / alpha_H;
   }
 
   /*
@@ -103,7 +106,7 @@ void growth(int day,
     }
   }
   if (boolsettings.height_diameter_correction) {
-    LH = LH * makela_control_factor(H_bal, H_current, tau_H);
+    LH = LH * makela_control_factor(H_bal, H_current, boolsettings.tau_H);
   }
   state.GH = state.g * state.fH * LH;
   state.height = B0 * CH * state.GH / 1000.0 * ratio.form_factor;
@@ -203,6 +206,9 @@ void growth(int day,
     }
   }
 
+  if (boolsettings.height_diameter_correction) {
+    LD = LD * makela_control_factor(D_bal, D_current, boolsettings.tau_D);
+  }
   double old_GD = state.GD;
   state.GD = state.g * state.fD * LD;
   double tot_cells_pot = old_GD + state.GD;
