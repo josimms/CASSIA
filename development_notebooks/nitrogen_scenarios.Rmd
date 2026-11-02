@@ -28,6 +28,12 @@ produces. Moved out of `height_correction.Rmd` (which now only covers the
 non-nitrogen height/diameter-vs-observations baseline) so the two
 questions don't share one notebook.
 
+All runs below use `height_diameter_correction = TRUE` (Mäkelä 1999
+structural-balance damping on height, see
+`manuscript/paper_plan.Rmd` Supplementary Material), so the height
+trajectories here are the corrected ones, not the known-overgrown
+uncorrected baseline documented in earlier versions of this notebook.
+
 ```{r libraries}
 devtools::load_all(quiet = TRUE)
 library(ggplot2)
@@ -233,23 +239,24 @@ Control uses `nitrogen_change = FALSE` and the three levels use `TRUE`.
 run_nitrogen <- function(nitrogen_balance, nitrogen_change = FALSE,
                          nitrogen_contrast = FALSE) {
   CASSIA_cpp(
-    weather                 = weather_1998_2022,
-    site                    = "Hyde",
-    pPREL                   = c(parameters_2015$pPREL, parameters_2015$N_parameters),
-    parameters              = parameters_2015$parameters_test,
-    common                  = common_p,
-    ratios                  = ratios_p,
-    sperling                = parameters_2015$sperling_test,
-    needle_mass_in          = 0,
-    Throughfall             = parameters_2015$Throughfall,
-    photosynthesis_as_input = FALSE,
-    nitrogen_balance        = nitrogen_balance,
-    nitrogen_change         = nitrogen_change,
-    nitrogen_contrast       = nitrogen_contrast,
-    preles                  = TRUE,
-    fAPAR_Tian              = TRUE,
-    organ_level_sugar       = FALSE,
-    needle_mass_grows       = TRUE
+    weather                    = weather_1998_2022,
+    site                       = "Hyde",
+    pPREL                      = c(parameters_2015$pPREL, parameters_2015$N_parameters),
+    parameters                 = parameters_2015$parameters_test,
+    common                     = common_p,
+    ratios                     = ratios_p,
+    sperling                   = parameters_2015$sperling_test,
+    needle_mass_in             = 0,
+    Throughfall                = parameters_2015$Throughfall,
+    photosynthesis_as_input    = FALSE,
+    nitrogen_balance           = nitrogen_balance,
+    nitrogen_change            = nitrogen_change,
+    nitrogen_contrast          = nitrogen_contrast,
+    preles                     = TRUE,
+    fAPAR_Tian                 = TRUE,
+    organ_level_sugar          = FALSE,
+    needle_mass_grows          = TRUE,
+    height_diameter_correction = TRUE
   )
 }
 
@@ -386,23 +393,24 @@ actually look like.
 run_nitrogen_organ <- function(nitrogen_balance, nitrogen_change = FALSE,
                                nitrogen_contrast = FALSE) {
   CASSIA_cpp(
-    weather                 = weather_1998_2022,
-    site                    = "Hyde",
-    pPREL                   = c(parameters_2015$pPREL, parameters_2015$N_parameters),
-    parameters              = parameters_2015$parameters_test,
-    common                  = common_p,
-    ratios                  = ratios_p,
-    sperling                = parameters_2015$sperling_test,
-    needle_mass_in          = 0,
-    Throughfall             = parameters_2015$Throughfall,
-    photosynthesis_as_input = FALSE,
-    nitrogen_balance        = nitrogen_balance,
-    nitrogen_change         = nitrogen_change,
-    nitrogen_contrast       = nitrogen_contrast,
-    preles                  = TRUE,
-    fAPAR_Tian              = TRUE,
-    organ_level_sugar       = TRUE,
-    needle_mass_grows       = TRUE
+    weather                    = weather_1998_2022,
+    site                       = "Hyde",
+    pPREL                      = c(parameters_2015$pPREL, parameters_2015$N_parameters),
+    parameters                 = parameters_2015$parameters_test,
+    common                     = common_p,
+    ratios                     = ratios_p,
+    sperling                   = parameters_2015$sperling_test,
+    needle_mass_in             = 0,
+    Throughfall                = parameters_2015$Throughfall,
+    photosynthesis_as_input    = FALSE,
+    nitrogen_balance           = nitrogen_balance,
+    nitrogen_change            = nitrogen_change,
+    nitrogen_contrast          = nitrogen_contrast,
+    preles                     = TRUE,
+    fAPAR_Tian                 = TRUE,
+    organ_level_sugar          = TRUE,
+    needle_mass_grows          = TRUE,
+    height_diameter_correction = TRUE
   )
 }
 
@@ -502,7 +510,10 @@ and permanently, partway through year 1. The other 24 years run
 completely unconstrained regardless of starting level.
 
 Net effect on the headline growth variables: Low's final height comes out
-**0.0004 m** below Control's (12.994430 m vs 12.994822 m) after 25 years -
+**0.0001 m** *above* Control's (13.5663 m vs 13.5662 m, now with
+`height_diameter_correction = TRUE` - the sign flipped and the gap
+shrank from the pre-correction 0.0004 m, but it's still within noise of
+zero) after 25 years -
 a real, non-zero, nitrogen-driven difference for the first time in this
 notebook - and diameter is unchanged to 6 decimal places even for Low.
 Both fixes are working as intended; there just isn't much growing season
@@ -537,7 +548,7 @@ p_n_height_organ <- ggplot() +
   scale_colour_manual(name = NULL, values = c(n_cols, Observed = obs_col)) +
   scale_x_date(date_breaks = "4 years", date_labels = "%Y") +
   coord_cartesian(ylim = c(12, NA)) +
-  labs(title = "Height - Low ends ~0.4mm below the rest; Control/High/Medium overlap exactly",
+  labs(title = "Height - Medium/Low end ~0.1mm above Control/High (noise-level, not a real effect)",
        x = NULL, y = "Height (m)") +
   pub_theme
 
