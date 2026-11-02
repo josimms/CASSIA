@@ -1,5 +1,14 @@
 #include "CASSIA.h"
 
+// Makela (1999) eqn 28: C_j = [X_bal/X_current]^tau. <1 damps, >1 accelerates.
+double makela_control_factor(double X_bal, double X_current, double tau) {
+  const double epsilon = 1e-6;
+  if (X_current < epsilon || X_bal < epsilon) {
+    return 1.0;
+  }
+  return std::pow(X_bal / X_current, tau);
+}
+
 /*
  * Growth Function
  */
@@ -44,6 +53,29 @@ void growth(int day,
     state.g = 0;
   }
 
+  // Makela (1999) structural-balance target: diameter is the reference,
+  // height is checked against it (not needles/roots/bud - see paper_plan.Rmd;
+  // needles specifically ruled out because needle mass resets near-zero each
+  // season while diameter never does, which blows up the control ratio).
+  // alpha_H = 89.45 (mean of two real SMEAR height/diameter series fits,
+  // 88.8/90.1 - matches this stand's actual starting h0/D0 ratio of ~84.7,
+  // unlike the Plant-FATE-gradient estimate of 107.3 which is fit from
+  // juvenile trees only and overshoots this mature starting condition).
+  // tau is an uncalibrated placeholder. Uses yesterday's tracked state.
+  double H_bal = 0.0, H_current = 0.0;
+  const double tau_H = 5.0;
+  if (boolsettings.height_diameter_correction) {
+    const double alpha_H = 89.45;
+
+    int idx_ref = days_gone + day - 1;
+    if (idx_ref < 0) {
+      idx_ref = 0;
+    }
+    double D_current = out.culm_growth.diameter[idx_ref];
+    H_current = out.culm_growth.height[idx_ref];
+    H_bal = alpha_H * D_current;
+  }
+
   /*
    * Height
    */
@@ -69,6 +101,9 @@ void growth(int day,
     } else if (year == 2018) {
       LH = 36.93803;
     }
+  }
+  if (boolsettings.height_diameter_correction) {
+    LH = LH * makela_control_factor(H_bal, H_current, tau_H);
   }
   state.GH = state.g * state.fH * LH;
   state.height = B0 * CH * state.GH / 1000.0 * ratio.form_factor;

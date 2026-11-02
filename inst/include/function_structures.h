@@ -461,6 +461,7 @@ struct Settings {
   bool trees_grow = false;
   bool growth_decreases = false;
   bool needle_mass_grows = false;
+  bool height_diameter_correction = false;
 
   bool phloem_trigger = false;
   bool mycorrhiza = false;

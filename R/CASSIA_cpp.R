@@ -103,6 +103,14 @@
 #' @param needle_mass_grows Logical. If \code{TRUE}, needle mass is updated
 #'   dynamically each year via the Repola model. If \code{FALSE} (default),
 #'   needle mass is fixed after the first iteration.
+#' @param height_diameter_correction Logical. If \code{TRUE}, height's
+#'   growth rate is damped/accelerated each day toward a diameter-referenced
+#'   structural balance (Mäkelä 1999, Functional Ecology 13:145-156),
+#'   correcting the potential growth rate before the carbon/nitrogen gate is
+#'   applied. Diameter itself is the uncorrected reference variable. Needles,
+#'   roots and bud are not corrected (no data-grounded reference relationship
+#'   exists for them - see \code{manuscript/paper_plan.Rmd} Working Notes).
+#'   Default \code{FALSE}.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
 #'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
@@ -306,6 +314,7 @@ CASSIA_cpp <- function(
     trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
     growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
     needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
+    height_diameter_correction = FALSE,  # Makela (1999) structural-balance control on height's potential growth, referenced against diameter
 
     phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
 
@@ -374,6 +383,7 @@ CASSIA_cpp <- function(
     "trees_grow" = trees_grow,
     "growth_decreases" = growth_decreases,
     "needle_mass_grows" = needle_mass_grows,
+    "height_diameter_correction" = height_diameter_correction,
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,
