@@ -126,7 +126,7 @@ ERA5 reanalysis is used for long-term PRELES and p-hydro runs but can carry
 systematic biases. The four panels below show how ERA5 compares to the observed
 SMEAR meteorological record for 2015–2018.
 
-```{r weather-comparison, eval=DATA_AVAILABLE}
+```{r weather-comparison, echo=FALSE, eval=DATA_AVAILABLE}
 smear_meteo <- data.table::as.data.table(
   readxl::read_xlsx(
     "~/Documents/CASSIA_Calibration/Raw_Data/hyy_all_2008_2019.xlsx",
@@ -268,11 +268,27 @@ CASSIA_phydro <- CASSIA_cpp(
 
 ---
 
-## Placeholder output (runs not yet available)
-
-The comparison plots below use synthetic data that reflects the expected
-character of each model. Replace the synthetic chunk with real output once
-the ERA5 files are present and the model runs above have completed.
+```{r placeholder-header, echo=FALSE, results='asis'}
+if (DATA_AVAILABLE) {
+  cat(
+    "## Model comparison\n\n",
+    "The comparison plots below use real output from the three model runs ",
+    "above (ERA5 weather, `data/ERA5_CASSIA_preles.csv` found on this ",
+    "machine) - not synthetic data.\n",
+    sep = ""
+  )
+} else {
+  cat(
+    "## Placeholder output (runs not yet available)\n\n",
+    "The comparison plots below use synthetic data that reflects the ",
+    "expected character of each model, because the ERA5 files were not ",
+    "found on this machine (`data/ERA5_CASSIA_preles.csv`) when this was ",
+    "rendered. Re-render once they are present to replace this with real ",
+    "output.\n",
+    sep = ""
+  )
+}
+```
 
 ```{r synthetic-data, eval=!DATA_AVAILABLE}
 set.seed(42)
@@ -336,7 +352,7 @@ All three model GPP series overlaid with SMEAR eddy covariance observations
 ecosystem-level flux; they are used here as a shape and seasonal-timing
 reference, not a calibration target.
 
-```{r gpp-timeseries, fig.height=4}
+```{r gpp-timeseries, echo=FALSE, fig.height=4}
 year  <- CASSIA_original$Growth$year
 doy   <- CASSIA_original$Growth$day
 n     <- length(year)
@@ -385,7 +401,7 @@ Positive = model predicts more GPP than the SPP baseline; negative = less.
 Any sustained bias in one season or year would indicate a structural difference
 between models.
 
-```{r gpp-difference, fig.height=4}
+```{r gpp-difference, echo=FALSE, fig.height=4}
 diff_df <- data.frame(
   date   = dates,
   PRELES = CASSIA_preles$Preles$GPP - CASSIA_original$Preles$GPP,
@@ -413,7 +429,7 @@ ggplot(diff_long, aes(x = date, y = diff, fill = diff > 0)) +
 DOY-averaged GPP removes inter-annual variability and shows whether the models
 agree on the shape and timing of the growing season.
 
-```{r seasonal-gpp, fig.height=4}
+```{r seasonal-gpp, echo=FALSE, fig.height=4}
 doy_gpp <- data.frame(
   doy      = doy,
   SPP = CASSIA_original$Preles$GPP,
@@ -444,7 +460,7 @@ ggplot(doy_long, aes(x = doy, y = GPP, colour = model, linewidth = model)) +
 Each model plotted against real SMEAR eddy-covariance GPP - the actual
 data, not another model - day by day.
 
-```{r gpp-scatter, fig.height=4.5}
+```{r gpp-scatter, echo=FALSE, fig.height=4.5}
 gpp_vals <- list(
   SPP    = CASSIA_original$Preles$GPP,
   PRELES = CASSIA_preles$Preles$GPP,
@@ -508,7 +524,7 @@ knitr::kable(
 )
 ```
 
-```{r gpp-residual-density, fig.height=3.5}
+```{r gpp-residual-density, echo=FALSE, fig.height=3.5}
 resid_df <- data.frame(
   date   = obs_df$date,
   SPP    = obs_df$SPP    - obs_df$SMEAR,
@@ -539,7 +555,7 @@ ggplot(resid_long, aes(x = resid, fill = model)) +
 If carbon allocation is functioning correctly, differences in GPP between
 models should scale through to proportional differences in growth.
 
-```{r annual-budget, fig.height=5}
+```{r annual-budget, echo=FALSE, fig.height=5}
 budget_model <- function(model_out, model_name) {
   g <- model_out$Growth
   data.frame(
@@ -592,7 +608,7 @@ Organ-level breakdown of annual growth carbon. If allocation is working
 correctly across all three runs, the proportions (diameter : needle : root :
 height) should be similar even if total growth differs.
 
-```{r growth-components, fig.height=5}
+```{r growth-components, echo=FALSE, fig.height=5}
 growth_model <- function(model_out, model_name) {
   g <- model_out$Growth
   data.frame(model = model_name, year = g$year,
@@ -634,7 +650,7 @@ Ring width is the most directly observable output that can be compared against
 dendrometer or core data. Inter-model differences in final ring width indicate
 whether the GPP divergence translates into a detectable structural outcome.
 
-```{r ring-width, fig.height=5}
+```{r ring-width, echo=FALSE, fig.height=5}
 rw_df <- rbind(
   data.frame(model = "SPP", year = year, doy = doy,
              rw = CASSIA_original$Growth$ring_width),
@@ -666,7 +682,7 @@ ggplot(rw_df, aes(x = doy, y = rw,
 
 ## Summary
 
-```{r summary-table}
+```{r summary-table, echo=FALSE}
 summary_model <- function(model_out, model_name) {
   g   <- model_out$Growth
   gpp <- model_out$Preles$GPP
