@@ -59,7 +59,7 @@ new_parameters  <- rep(0.5, 27)
 parameters_2015 <- initialize_parameters(calibration = FALSE, new_parameters)
 
 parameters_2015$parameters_test[c("h0"),          "Hyde"] <- 12
-parameters_2015$parameters_test[c("D0"),          "Hyde"] <- 0.1416
+parameters_2015$parameters_test[c("D0"),          "Hyde"] <- 0.1646  # back-extrapolated from real "BA weighted mean DBH pine" 2001/2008 (0.1737/0.1950m), the closest real anchor - the old 0.1416 had no documented source and was ~0.023m too low, confirmed via real-vs-simulated slope comparison in manuscript/paper_plan.Rmd Working Notes
 parameters_2015$parameters_test[c("GPP_mean"),    "Hyde"] <- 463.8833
 parameters_2015$parameters_test[c("GPP_initial"), "Hyde"] <- 460.0
 ```

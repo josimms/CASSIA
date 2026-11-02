@@ -289,7 +289,7 @@ weather_preles_1998_2022$dates <- as.Date(weather_preles_1998_2022$date)
 parameters_long <- initialize_parameters(calibration = FALSE, new_parameters)
 
 parameters_long$parameters_test[c("h0"),          "Hyde"] <- 12
-parameters_long$parameters_test[c("D0"),          "Hyde"] <- 0.1416
+parameters_long$parameters_test[c("D0"),          "Hyde"] <- 0.1646  # back-extrapolated from real "BA weighted mean DBH pine" 2001/2008 (0.1737/0.1950m) - see manuscript/paper_plan.Rmd Working Notes
 parameters_long$parameters_test[c("GPP_mean"),    "Hyde"] <- 463.8833
 parameters_long$parameters_test[c("GPP_initial"), "Hyde"] <- 460.0
 
