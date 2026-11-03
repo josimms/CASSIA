@@ -103,8 +103,53 @@ void actual_growth(int day,
   // Culmulative
   all_out.culm_growth.height[days_gone + day]   = all_out.culm_growth.height[index_ref] + tree_state.height;
 
-  all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref]      + tree_state.roots;
-  all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref] + tree_state.ecto;
+  // Root/mycorrhiza turnover (litter): same senescence SIGNAL as leaf
+  // area's cohort turnover (fAPAR_and_LAI.cpp, Tian 2021) - photosynthesis.fS,
+  // sticky once it first reaches 1.0 after day 50 (fS_reached_one_roots),
+  // tracking fS's own decline from then on. Deliberately NOT a literal
+  // copy of the needle formula though: that formula's flat (n_age-1)/n_age
+  // daily decay only stays sensible because it is paired with an equally
+  // large, phenology-driven regrowth term (f_modifer) that has no root
+  // equivalent here - transplanting it as-is would drain the pool during
+  // every zero-growth winter day. Using today's actual realized growth
+  // (tree_state.roots/.ecto, already correct - see the previous commit)
+  // as the replacement term instead, and turning the senescence signal
+  // into a DEGREE of senescence (1 - fS) so loss is ~0 except during the
+  // real autumn decline, scaled by a per-day rate derived from a
+  // turnover-time placeholder (see root_turnover_years below).
+  //
+  // NOTE: parameters.root_lifetime looks like the natural rate to reuse
+  // here (same role as n_age plays for needles) but is NA for this site's
+  // parameter table - it is currently only read by growth.cpp's
+  // root_as_Ding == FALSE branch, which nothing in this session's runs
+  // exercises (root_as_Ding defaults TRUE). Using it as-is would silently
+  // NaN the whole run the moment root_turnover is enabled, so a separate,
+  // explicitly-flagged placeholder is used instead until root_lifetime
+  // itself is actually populated/validated.
+  if (day == 0) {
+    tree_state.fS_reached_one_roots = false;
+  }
+  if (photosynthesis.fS >= 1.0 && day > 50) {
+    tree_state.fS_reached_one_roots = true;
+  }
+  double root_senescence_degree = tree_state.fS_reached_one_roots ? (1.0 - photosynthesis.fS) : 0.0;
+
+  if (boolsettings.root_turnover) {
+    const double root_turnover_years = 3.0; // TODO: placeholder (matches n_age's default) - needs real calibration, and ideally parameters.root_lifetime once that's actually populated
+    double daily_turnover_fraction = root_senescence_degree / (root_turnover_years * 365.0);
+
+    double root_litter_today = all_out.culm_growth.roots[index_ref] * daily_turnover_fraction;
+    double myco_litter_today = all_out.culm_growth.mycorrhiza[index_ref] * daily_turnover_fraction;
+
+    all_out.culm_growth.roots[days_gone+day]      = std::max(0.0, all_out.culm_growth.roots[index_ref]      - root_litter_today + tree_state.roots);
+    all_out.culm_growth.mycorrhiza[days_gone+day] = std::max(0.0, all_out.culm_growth.mycorrhiza[index_ref] - myco_litter_today + tree_state.ecto);
+
+    all_out.culm_growth.root_litter[days_gone+day]       = all_out.culm_growth.root_litter[index_ref]       + root_litter_today;
+    all_out.culm_growth.mycorrhiza_litter[days_gone+day] = all_out.culm_growth.mycorrhiza_litter[index_ref] + myco_litter_today;
+  } else {
+    all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref]      + tree_state.roots;
+    all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref] + tree_state.ecto;
+  }
 
   // Needles accumulation (potentially include drop logic later)
 

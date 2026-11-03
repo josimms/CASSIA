@@ -143,6 +143,18 @@
 #'   roots' correction, when \code{root_leaf_correction = TRUE}. Ignored
 #'   otherwise. Default \code{5}, matching \code{tau_H}'s default - not
 #'   independently calibrated.
+#' @param root_turnover Logical. If \code{TRUE}, root and mycorrhiza
+#'   biomass (\code{culm_growth_roots}/\code{culm_growth_mycorrhiza}) lose
+#'   a daily fraction to litter, logged separately in
+#'   \code{culm_growth_root_litter}/\code{culm_growth_mycorrhiza_litter}.
+#'   Uses the same senescence signal as leaf area's own cohort turnover
+#'   (\code{photosynthesis$fS}, sticky once it first reaches 1 after day
+#'   50 of the year, same as \code{fAPAR_and_LAI.cpp}), but is not a
+#'   literal copy of that formula - see \code{actual_growth.cpp} for why.
+#'   A first-pass mechanism: the turnover-time constant is an uncalibrated
+#'   placeholder (3 years, matching needle longevity's default), not yet
+#'   \code{parameters$root_lifetime} (unpopulated for this site). Default
+#'   \code{FALSE}.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
 #'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
@@ -350,6 +362,7 @@ CASSIA_cpp <- function(
     tau_H = 5,                           # Makela (1999) eqn 28 exponent for height's correction, when height_diameter_correction = TRUE - RSS kept improving well past this, but higher tau produces an increasingly extreme early-year distortion; 5 balances fit against a moderate, not pathological, early-year correction (see manuscript/paper_plan.Rmd Working Notes)
     root_leaf_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, roots referenced against leaf area - recomputed yearly not daily (see roxygen doc); alpha_R is an uncalibrated placeholder
     tau_R = 5,                           # Makela (1999) eqn 28 exponent for roots' correction, when root_leaf_correction = TRUE - not independently calibrated, defaults to tau_H's value
+    root_turnover = FALSE,               # Root/mycorrhiza litter, driven by the same fS senescence signal as leaf area's own turnover (not a literal copy - see roxygen doc); turnover-time constant is an uncalibrated placeholder
 
     phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
 
@@ -422,6 +435,7 @@ CASSIA_cpp <- function(
     "tau_H" = tau_H,
     "root_leaf_correction" = root_leaf_correction,
     "tau_R" = tau_R,
+    "root_turnover" = root_turnover,
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,

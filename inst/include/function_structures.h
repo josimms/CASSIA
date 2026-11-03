@@ -97,6 +97,12 @@ struct growth_state {
   // height's, and held here across the rest of that year's days.
   double C_R_year = 1.0;
 
+  // Root/mycorrhiza turnover: same sticky-senescence mechanism as
+  // fAPAR_and_LAI.cpp's fS_reached_one for needles, kept separately here
+  // since that flag isn't itself passed through to actual_growth(). Reset
+  // to false at day == 0.
+  bool fS_reached_one_roots = false;
+
   // Respiration
   double RmN = 0.0;
   double RmS = 0.0;
@@ -143,6 +149,8 @@ struct growth_vector {
   std::vector<double> sapwood = {0.0};
   std::vector<double> leaf_mass = {0.0};
   std::vector<double> leaf_area = {0.0};
+  std::vector<double> root_litter = {0.0};
+  std::vector<double> mycorrhiza_litter = {0.0};
   std::vector<bool> tree_alive = {true};
 
   void resize(size_t new_size) {
@@ -164,6 +172,8 @@ struct growth_vector {
     sapwood.assign(new_size, 0.0);
     leaf_mass.assign(new_size, 0.0);
     leaf_area.assign(new_size, 0.0);
+    root_litter.assign(new_size, 0.0);
+    mycorrhiza_litter.assign(new_size, 0.0);
     tree_alive.assign(new_size, true);
   }
 
@@ -471,6 +481,8 @@ struct Settings {
 
   bool root_leaf_correction = false;
   double tau_R = 5.0;
+
+  bool root_turnover = false;
 
   bool phloem_trigger = false;
   bool mycorrhiza = false;
