@@ -92,6 +92,11 @@ struct growth_state {
   double release = 0.0;
   double ring_width = 0.0;
 
+  // Makela (1999) structural-balance correction, roots referenced against
+  // leaf area: recomputed once per year (day == 0), not daily like
+  // height's, and held here across the rest of that year's days.
+  double C_R_year = 1.0;
+
   // Respiration
   double RmN = 0.0;
   double RmS = 0.0;
@@ -463,6 +468,9 @@ struct Settings {
   bool needle_mass_grows = false;
   bool height_diameter_correction = false;
   double tau_H = 5.0;
+
+  bool root_leaf_correction = false;
+  double tau_R = 5.0;
 
   bool phloem_trigger = false;
   bool mycorrhiza = false;

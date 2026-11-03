@@ -312,6 +312,36 @@ void growth(int day,
   /*
    * Roots
    */
+
+  // Makela (1999) structural-balance target for roots, referenced against
+  // leaf area rather than diameter (see manuscript/paper_plan.Rmd):
+  // leaf area already has genuine bounded within-year and across-year
+  // turnover (Tian 2021 cohort aging/senescence in compute_fAPAR_used()),
+  // unlike diameter, so it gives roots something real to correct toward.
+  // Unlike height's correction, this is recomputed only once per year
+  // (day == 0) and held fixed for the rest of that year via
+  // state.C_R_year, rather than chasing leaf area's within-year seasonal
+  // swings daily - closer to how LH_estim/LD_estim's own annual terms
+  // behave than to height's own daily recorrection.
+  //
+  // alpha_R is an UNCALIBRATED PLACEHOLDER - unlike alpha_H (fit against
+  // two real independent SMEAR height/diameter series), no equivalent
+  // root-biomass-vs-leaf-area observational series has been sourced yet.
+  // Do not treat results with root_leaf_correction = TRUE as calibrated
+  // until a real alpha_R replaces this.
+  if (boolsettings.root_leaf_correction && day == 0) {
+    const double alpha_R = 0.15; // TODO: placeholder, needs real calibration data
+
+    int idx_ref = days_gone + day - 1;
+    if (idx_ref < 0) {
+      idx_ref = 0;
+    }
+    double leaf_area_current = out.culm_growth.leaf_area[idx_ref];
+    double R_current = out.culm_growth.roots[idx_ref];
+    double R_bal = alpha_R * leaf_area_current;
+    state.C_R_year = makela_control_factor(R_bal, R_current, boolsettings.tau_R);
+  }
+
   double gR_fib, gR_pio, gR, LR;
 
   if (boolsettings.root_as_Ding) {
@@ -347,12 +377,16 @@ void growth(int day,
   }
 
   double GR = state.fR * LR * gR;
+  if (boolsettings.root_leaf_correction) {
+    GR = GR * state.C_R_year;
+  }
   if (GR > 0) {
     state.roots = GR;
+    state.ecto = GR;
   } else {
     state.roots = 0;
+    state.ecto = 0;
   }
-  state.ecto = GR;
 
   /*
    * Save vector output

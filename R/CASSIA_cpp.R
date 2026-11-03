@@ -127,6 +127,22 @@
 #'   early-year distortion (at \code{tau=10}, year 1 height growth is
 #'   already ~2x its natural rate). \code{5} keeps it moderate - see
 #'   \code{manuscript/paper_plan.Rmd} Working Notes before raising it.
+#' @param root_leaf_correction Logical. If \code{TRUE}, root growth is
+#'   damped (same Mäkelä 1999 eqn 28 mechanism as
+#'   \code{height_diameter_correction}, damping-only) toward a target
+#'   root:leaf-area ratio, leaf area being the uncorrected reference.
+#'   Unlike the height correction, the target ratio and damping factor are
+#'   recomputed only once per year (at the first day of each year) and
+#'   held fixed for the rest of that year, rather than daily - leaf area
+#'   has real within-year seasonal swings (Tian 2021 cohort turnover) that
+#'   would make a daily-recomputed target noisy. The target ratio
+#'   (\code{alpha_R} in \code{growth.cpp}) is currently an uncalibrated
+#'   placeholder - no real root-biomass-vs-leaf-area series has been
+#'   sourced yet, unlike \code{alpha_H}. Default \code{FALSE}.
+#' @param tau_R Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
+#'   roots' correction, when \code{root_leaf_correction = TRUE}. Ignored
+#'   otherwise. Default \code{5}, matching \code{tau_H}'s default - not
+#'   independently calibrated.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
 #'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
@@ -332,6 +348,8 @@ CASSIA_cpp <- function(
     needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
     height_diameter_correction = FALSE,  # Makela (1999) structural-balance control, damping-only, height referenced against diameter (not the reverse - see roxygen doc)
     tau_H = 5,                           # Makela (1999) eqn 28 exponent for height's correction, when height_diameter_correction = TRUE - RSS kept improving well past this, but higher tau produces an increasingly extreme early-year distortion; 5 balances fit against a moderate, not pathological, early-year correction (see manuscript/paper_plan.Rmd Working Notes)
+    root_leaf_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, roots referenced against leaf area - recomputed yearly not daily (see roxygen doc); alpha_R is an uncalibrated placeholder
+    tau_R = 5,                           # Makela (1999) eqn 28 exponent for roots' correction, when root_leaf_correction = TRUE - not independently calibrated, defaults to tau_H's value
 
     phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
 
@@ -402,6 +420,8 @@ CASSIA_cpp <- function(
     "needle_mass_grows" = needle_mass_grows,
     "height_diameter_correction" = height_diameter_correction,
     "tau_H" = tau_H,
+    "root_leaf_correction" = root_leaf_correction,
+    "tau_R" = tau_R,
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,

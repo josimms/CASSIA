@@ -64,14 +64,17 @@ void actual_growth(int day,
   /*
    * Mycorrhiza
    *
-   * double storage_mycorrhiza;
-   if (sperling_sugar_model) {
-   storage_mycorrhiza = storage.roots;
-   } else {
-   storage_mycorrhiza = storage.needles;
-   }
-   actual_growth_out. = tree_state.roots * std::min(storage_mycorrhiza, nitrogen_capacity.roots);
+   * No dedicated nitrogen-capacity threshold exists for mycorrhiza (see
+   * nitrogen_storage() in sugar_model.cpp); it is gated the same way as
+   * roots, immediately above.
    */
+  double storage_mycorrhiza;
+  if (boolsettings.organ_level_sugar) {
+    storage_mycorrhiza = storage.roots;
+  } else {
+    storage_mycorrhiza = storage.needles;
+  }
+  tree_state.ecto = tree_state.ecto * std::min(storage_mycorrhiza, nitrogen_capacity.roots);
 
   /*
    * GD
@@ -100,8 +103,8 @@ void actual_growth(int day,
   // Culmulative
   all_out.culm_growth.height[days_gone + day]   = all_out.culm_growth.height[index_ref] + tree_state.height;
 
-  all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref];
-  all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref];
+  all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref]      + tree_state.roots;
+  all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref] + tree_state.ecto;
 
   // Needles accumulation (potentially include drop logic later)
 

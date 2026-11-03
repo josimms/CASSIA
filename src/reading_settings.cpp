@@ -21,6 +21,8 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.needle_mass_grows = Rcpp::as<bool>(settingsList["needle_mass_grows"]);
   settings.height_diameter_correction = Rcpp::as<bool>(settingsList["height_diameter_correction"]);
   settings.tau_H = Rcpp::as<double>(settingsList["tau_H"]);
+  settings.root_leaf_correction = Rcpp::as<bool>(settingsList["root_leaf_correction"]);
+  settings.tau_R = Rcpp::as<double>(settingsList["tau_R"]);
 
   settings.phloem_trigger = Rcpp::as<bool>(settingsList["phloem_trigger"]);
   settings.mycorrhiza = Rcpp::as<bool>(settingsList["mycorrhiza"]);

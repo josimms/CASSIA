@@ -89,6 +89,7 @@ Rcpp::DataFrame createCulmGrowthDataFrame(const output_vector& out) {
     Rcpp::_["culm_growth_diameter"] = out.culm_growth.diameter,
     Rcpp::_["culm_growth_diameter_potential"] = out.culm_growth.diameter_potential,
     Rcpp::_["culm_growth_roots"] = out.culm_growth.roots,
+    Rcpp::_["culm_growth_mycorrhiza"] = out.culm_growth.mycorrhiza,
     Rcpp::_["culm_growth_xylem_sh"] = out.culm_growth.xylem_sh,
     Rcpp::_["culm_growth_xylem_st"] = out.culm_growth.xylem_st,
     Rcpp::_["culm_growth_phloem"] = out.culm_growth.phloem,
