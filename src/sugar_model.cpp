@@ -99,7 +99,7 @@ double nitrogen_storage(
   double out;
 
   /*
-   Korhonen 2007, N mg g−1
+   Korhonen et al. 2013, N mg g−1
    *
    Needles          4.9 ± 0.3
    Large branches   4.7 ± 0.1
@@ -397,7 +397,7 @@ void sugar_model(int day,
     if (nitrogen_change) {
       // Evenly split across the 5 pools (same convention as the whole-tree
       // branch, sugar_model.cpp:883), compared against each organ's own
-      // tissue N-content threshold (Korhonen 2007, nitrogen_storage()
+      // tissue N-content threshold (Korhonen et al. 2013, nitrogen_storage()
       // above) instead of the shared "all" placeholder.
       nitrogen_capacity.needles = nitrogen_storage(nitrogen_balance/5.0, "needles");
       nitrogen_capacity.bud     = nitrogen_storage(nitrogen_balance/5.0, "bud");
@@ -595,7 +595,13 @@ void sugar_model(int day,
       // C:N ratios are from the Korhonen 2013 paper
       // TODO: real value for the roots
       // The parameters here are the nitrogen content of each organ per biomass divided by 0.5 to get N:C
-      nitrogen_balance = nitrogen_balance + uptake.total_uptake -
+      // Retranslocation (2026-11-05): tree_state.N_retranslocated_today
+      // credits back the resorbed fraction of today's needle/root/
+      // mycorrhiza litter N (actual_growth.cpp), always on - same
+      // one-day lag as uptake.total_uptake just above: actual_growth()
+      // runs after this function each day, so it's today's value that
+      // gets read on tomorrow's call.
+      nitrogen_balance = nitrogen_balance + uptake.total_uptake + tree_state.N_retranslocated_today -
         4.9/0.5 * std::min(storage_term.needles, nitrogen_capacity.needles) * tree_state.needles -
         2.1/0.5 * std::min(storage_term.needles, nitrogen_capacity.bud) * tree_state.bud -
         4.5/0.5 * phloem_share * (std::min(storage_term.phloem, nitrogen_capacity.wall) * tree_state.wall +
@@ -902,7 +908,11 @@ void sugar_model(int day,
         // after sugar_all is known) - same one-day lag the organ-level
         // pathway uses, since this day's uptake needs sugar_all's surplus,
         // which isn't known yet at this point in the day's processing.
-        nitrogen_balance = nitrogen_balance + uptake.total_uptake -
+        // Retranslocation (2026-11-05): tree_state.N_retranslocated_today
+        // credits back the resorbed fraction of today's needle/root/
+        // mycorrhiza litter N (actual_growth.cpp), always on - same
+        // one-day lag as uptake.total_uptake above.
+        nitrogen_balance = nitrogen_balance + uptake.total_uptake + tree_state.N_retranslocated_today -
           4.9/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.needles -
           2.1/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.bud -
           4.5/0.5 * std::min(storage, nitrogen_capacity_all) * tree_state.height -

@@ -37,6 +37,14 @@ struct resp_vector {
  */
 
 struct growth_state {
+  // Nitrogen retranslocated from today's needle/root/mycorrhiza litter
+  // (actual_growth.cpp), read by sugar_model.cpp's nitrogen_balance
+  // update on the NEXT day's call - the same one-day lag
+  // uptake.total_uptake already relies on (sugar_model.cpp reads it at
+  // the top of a call, before this same day's actual_growth() has run
+  // yet to set tomorrow's value).
+  double N_retranslocated_today = 0.0;
+
   // Ring width
   double n_E_tot = 0.0;
   double n_W_tot = 0.0;
@@ -97,11 +105,69 @@ struct growth_state {
   // height's, and held here across the rest of that year's days.
   double C_R_year = 1.0;
 
+  // Running max of leaf_area/roots across the CURRENT year, updated daily
+  // in actual_growth.cpp; read and reset at day == 0 in growth.cpp, at
+  // which point it holds the just-finished year's max (not yet reset for
+  // the new year). C_R_year is computed from these maxima, not the
+  // previous year's last-day value - a within-year peak, not wherever the
+  // pool happens to sit at the literal year-end snapshot (which can
+  // undershoot the peak once senescence/litter are active).
+  double max_leaf_area_running = 0.0;
+  double max_roots_running = 0.0;
+
   // Root/mycorrhiza turnover: same sticky-senescence mechanism as
   // fAPAR_and_LAI.cpp's fS_reached_one for needles, kept separately here
   // since that flag isn't itself passed through to actual_growth(). Reset
   // to false at day == 0.
   bool fS_reached_one_roots = false;
+
+  // leaf_mass_correction (Makela correction on needle leaf_mass,
+  // 2026-11-05 redesign): C_N_year damps state.needles DIRECTLY
+  // (growth.cpp) - the real needle-growth demand signal sugar_model.cpp
+  // already uses - rather than driving a separate parallel growth term.
+  // Computed fresh each day against max_leaf_mass_running (THIS year's
+  // own running PEAK so far, reset to 0 at day == 0, updated daily in
+  // actual_growth.cpp): the peak's real-time rise-with-growth gives this
+  // correction within-season negative feedback; a last-year-frozen or
+  // winter-stock (running minimum) reference were both tried and found
+  // worse (unstable / overshooting respectively - see growth.cpp).
+  double C_N_year = 1.0;
+  double max_leaf_mass_running = 0.0;
+
+  // One-way latch (growth.cpp, reset false at day==0): true once this
+  // year's needle growth (fN) has definitively ended (sN has crossed
+  // sNc^2), not just temporarily 0 before the season starts. Used in
+  // actual_growth.cpp to freeze max_leaf_mass_running once growth is
+  // genuinely over, so litter's correction reacts to a settled peak
+  // rather than one that could still be rising from residual overlap
+  // between the growth season and litter's own day>=212 gate (confirmed
+  // real in ~1/4 of simulated years, see growth.cpp's comment).
+  bool needle_growth_season_ended = false;
+
+  // fS^2-based litter pulse (replaces the old (1-fS)/n_age*124 linear
+  // rate - see needle_litter_fS2_implementation_plan.md for why). sL_litter
+  // is the bell-curve accumulator (s_L in f_L(s_L,sLc)), reset at day==0.
+  // sum_degree_fL_running/last_year are a one-year-lagged self-normalizer
+  // (freeze-at-day-0, "only overwrite if running>epsilon" bootstrap-year
+  // guard), since the R version's same-year retrospective normalization
+  // (divide by that year's own eventual max) can't be computed
+  // day-by-day in a forward simulation.
+  double sL_litter = 0.0;
+  double sum_degree_fL_running = 0.0;
+  double sum_degree_fL_last_year = 0.0;
+
+  // This year's N_repo (growth.cpp), threaded through to actual_growth.cpp
+  // for the litter calculation - litter is scaled against this fixed,
+  // externally-anchored target (N_repo/n_age), not the moving leaf_mass
+  // pool itself, so a pool that's already drifted above target doesn't
+  // shed proportionally more just because it's bigger.
+  double N_repo_current = 0.0;
+
+  // Litter's own correction factor (makela_loss_boost_factor, growth.cpp)
+  // is NOT stored here - unlike C_N_year, it's computed fresh each day in
+  // actual_growth.cpp from max_leaf_mass_running directly, to avoid a
+  // one-year-lagged feedback signal that was confirmed unstable (see
+  // growth.cpp's comment).
 
   // Respiration
   double RmN = 0.0;
@@ -151,6 +217,7 @@ struct growth_vector {
   std::vector<double> leaf_area = {0.0};
   std::vector<double> root_litter = {0.0};
   std::vector<double> mycorrhiza_litter = {0.0};
+  std::vector<double> needle_litter = {0.0};
   std::vector<bool> tree_alive = {true};
 
   void resize(size_t new_size) {
@@ -174,6 +241,7 @@ struct growth_vector {
     leaf_area.assign(new_size, 0.0);
     root_litter.assign(new_size, 0.0);
     mycorrhiza_litter.assign(new_size, 0.0);
+    needle_litter.assign(new_size, 0.0);
     tree_alive.assign(new_size, true);
   }
 
@@ -484,6 +552,60 @@ struct Settings {
 
   bool root_turnover = false;
 
+  // Makela (1999) structural-balance correction for needle leaf_mass,
+  // referenced against Repola's own needle-mass prediction (growth.cpp,
+  // actual_growth.cpp) - replaces fAPAR_and_LAI.cpp's memoryless,
+  // annually-reset leaf_mass formula with a genuinely accumulating pool
+  // for THIS quantity only; leaf_area/sapwood/fAPAR stay on the old
+  // pathway unchanged. See manuscript/paper_plan.Rmd Working Notes.
+  bool leaf_mass_correction = false;
+  double tau_N = 5.0;
+
+  // Width of the fS^2-based needle litter bell curve (f_L, growth.cpp's
+  // makela_bell_shape), when leaf_mass_correction = TRUE. Fitted (not
+  // independently calibrated) against 2006-2016 Hyytiala litter-trap
+  // data - see needle_litter_fS2_implementation_plan.md, same caveat
+  // style as alpha_R. Default 2.163312.
+  double sLc_litter = 2.163312;
+
+  // Nitrogen content of needle/root/mycorrhiza litter, net of
+  // retranslocation (actual_growth.cpp, sugar_model.cpp's two
+  // nitrogen_balance update sites). theta_N_* are N:C-style thresholds
+  // (mg N / g dry mass). theta_N_needles = 4.9 is a real measured value -
+  // Korhonen et al. (2013, Biogeosciences 10:1083-1095), Table 2: N
+  // concentration of needle litter at Hyytiala SMEAR II, 2006-2008
+  // (4.9 +/- 0.3 mg N/g) - the exact site CASSIA is parameterized for.
+  // theta_N_roots = 7.7 is likewise real - Helmisaari et al. (2007) fine
+  // root N concentration for a Scots pine stand near SMEAR II, quoted in
+  // Korhonen et al. (2013) Sect. 4.2. mycorrhiza has no sourced value, so
+  // its default reuses roots' as an explicitly unvalidated placeholder
+  // (both belowground, closest available category). retrans_* are the
+  // fraction of that litter N resorbed before shedding rather than lost.
+  // retrans_needles = 0.73 is a real measured value - Korhonen et al.
+  // (2013) Sect. 3.6.2/3.6.3: needle+leaf retranslocation was 73% of the
+  // initial foliage N at this same Hyytiala site. retrans_roots = 0.2 is
+  // a real measured value - Wojciechowska et al. (2020, Tree Physiology
+  // 40:987-1000), fine-root N concentration decline from control to fully
+  // senescent roots in Populus trichocarpa, ~20% consistently across all
+  // three root orders measured (Fig. 1A) - though note this is a
+  // concentration decline, not a mass-loss-corrected resorption
+  // efficiency, and from a deciduous broadleaf, not Pinus sylvestris, so
+  // treat as a real but imperfect analogue, not a site/species-specific
+  // fit. Korhonen et al. (2013) explicitly assumed retranslocation
+  // negligible for all non-foliage classes they measured (branches, bark,
+  // cones, wood), but fine roots were out of that study's scope (litter
+  // traps don't catch root turnover), so it gives no root number directly.
+  // mycorrhiza defaults to 0 - resorption has no clean biological analogue
+  // for a fungal symbiont's own shed tissue, so none is assumed rather
+  // than guessing one. theta_N_myco/retrans_myco remain unvalidated
+  // placeholders, same caveat style as alpha_R.
+  double theta_N_needles = 4.9;
+  double theta_N_roots = 7.7;
+  double theta_N_myco = 3.0;
+  double retrans_needles = 0.73;
+  double retrans_roots = 0.2;
+  double retrans_myco = 0.0;
+
   bool phloem_trigger = false;
   bool mycorrhiza = false;
   bool root_as_Ding = false;
@@ -579,6 +701,32 @@ struct output_vector {
   std::vector<double> bud = {0.0};
   std::vector<double> use = {0.0};
   std::vector<double> release = {0.0};
+
+  // Daily (not cumulative) litter flux - contrast with culm_growth's own
+  // root_litter/mycorrhiza_litter, which are running totals. root_litter/
+  // mycorrhiza_litter are 0 whenever root_turnover = FALSE; needle_litter
+  // is unconditional (read directly off leaf_mass's already-existing
+  // senescence decline, not behind a toggle - see fAPAR_and_LAI.cpp).
+  std::vector<double> root_litter = {0.0};
+  std::vector<double> mycorrhiza_litter = {0.0};
+  std::vector<double> needle_litter = {0.0};
+
+  // Nitrogen content of the ABOVE litter fluxes, net of retranslocation -
+  // i.e. the N actually leaving the tree in shed tissue, not the gross N
+  // it contained before resorption (actual_growth.cpp). Zero whenever the
+  // corresponding biomass litter above is zero (root_turnover = FALSE,
+  // etc.).
+  std::vector<double> needle_litter_N = {0.0};
+  std::vector<double> root_litter_N = {0.0};
+  std::vector<double> mycorrhiza_litter_N = {0.0};
+
+  // Always 0 - CASSIA has no standalone branch biomass pool yet (branches
+  // are folded into xylem/sapwood form-factor accounting only, see
+  // fAPAR_and_LAI.cpp). Placeholder output (mass and N) so a future
+  // branch pool has somewhere to log litter without changing the
+  // Turnover data frame's shape again.
+  std::vector<double> branch_litter = {0.0};
+  std::vector<double> branch_litter_N = {0.0};
 
   std::vector<double> ring_width = {0.0};
   std::vector<double> en_pot_growth = {0.0};

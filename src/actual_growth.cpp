@@ -11,6 +11,18 @@ void actual_growth(int day,
                    Settings boolsettings,
                    growth_out nitrogen_capacity) {
 
+  // Nitrogen content of litter, net of retranslocation (2026-11-05).
+  // N:C thresholds and retranslocation fractions are now real R-exposed
+  // parameters (boolsettings.theta_N_*/retrans_*, see roxygen doc for
+  // defaults and sourcing) rather than hardcoded here.
+  double needle_litter_N_retrans = 0.0, root_litter_N_retrans = 0.0, myco_litter_N_retrans = 0.0;
+
+  // CASSIA has no standalone branch biomass pool yet (see fAPAR_and_LAI.cpp's
+  // form-factor-only branch split) - mass and N populated with 0 so the
+  // Turnover data frame already has a slot for both once a pool exists.
+  all_out.branch_litter[days_gone + day]   = 0.0;
+  all_out.branch_litter_N[days_gone + day] = 0.0;
+
   double denom = all_out.culm_growth.phloem[day + days_gone] + all_out.culm_growth.xylem_sh[day + days_gone] + all_out.culm_growth.xylem_st[day + days_gone];
 
   double phloem_share   = denom > 0 ? all_out.culm_growth.phloem[day + days_gone] / denom : 0.0;
@@ -146,10 +158,117 @@ void actual_growth(int day,
 
     all_out.culm_growth.root_litter[days_gone+day]       = all_out.culm_growth.root_litter[index_ref]       + root_litter_today;
     all_out.culm_growth.mycorrhiza_litter[days_gone+day] = all_out.culm_growth.mycorrhiza_litter[index_ref] + myco_litter_today;
+
+    // Daily (non-cumulative) flux - see "Turnover" output dataframe.
+    all_out.root_litter[days_gone+day]       = root_litter_today;
+    all_out.mycorrhiza_litter[days_gone+day] = myco_litter_today;
+
+    double root_litter_N_gross = boolsettings.theta_N_roots / parameters.carbon_share * root_litter_today;
+    double myco_litter_N_gross = boolsettings.theta_N_myco  / parameters.carbon_share * myco_litter_today;
+    root_litter_N_retrans = root_litter_N_gross * boolsettings.retrans_roots;
+    myco_litter_N_retrans = myco_litter_N_gross * boolsettings.retrans_myco;
+    all_out.root_litter_N[days_gone+day]       = root_litter_N_gross - root_litter_N_retrans;
+    all_out.mycorrhiza_litter_N[days_gone+day] = myco_litter_N_gross - myco_litter_N_retrans;
   } else {
     all_out.culm_growth.roots[days_gone+day]      = all_out.culm_growth.roots[index_ref]      + tree_state.roots;
     all_out.culm_growth.mycorrhiza[days_gone+day] = all_out.culm_growth.mycorrhiza[index_ref] + tree_state.ecto;
+
+    all_out.root_litter[days_gone+day]       = 0.0;
+    all_out.mycorrhiza_litter[days_gone+day] = 0.0;
+    all_out.root_litter_N[days_gone+day]       = 0.0;
+    all_out.mycorrhiza_litter_N[days_gone+day] = 0.0;
   }
+
+  // leaf_mass_correction: leaf_mass becomes a genuinely accumulating pool
+  // (growth.cpp's tree_state.needles in - the real, Makela-reduced and
+  // sugar/nitrogen-gated needle growth demand, see that file's comment -
+  // senescence-driven litter out) instead of fAPAR_and_LAI.cpp's
+  // memoryless, annually-reset formula. Litter timing uses fS^2 (not fS)
+  // with a bell-curve accumulator, no sticky flag needed - see
+  // needle_litter_fS2_implementation_plan.md for the validation behind
+  // this (fixes both the old formula's 124-day dormant-season litter
+  // smear and its mid-summer wobble false triggers).
+  if (boolsettings.leaf_mass_correction) {
+    // day is 0-indexed here (day==0 is Jan 1) - the R exploration used
+    // 1-indexed day_vec>212, i.e. day>=212 in 0-indexed terms. No sticky
+    // flag needed: fS^2's steeper decline already discriminates real
+    // autumn from a mid-summer wobble on its own (confirmed: the wobble's
+    // fS~0.83-0.87 gives fS^2~0.69-0.76, nowhere near triggering).
+    double fS_sq = photosynthesis.fS * photosynthesis.fS;
+    double degree = (day >= 212) ? std::max(0.0, 1.0 - fS_sq) : 0.0;
+
+    tree_state.sL_litter += degree;
+    double rate_unnormalized = degree * makela_bell_shape(tree_state.sL_litter, boolsettings.sLc_litter);
+    tree_state.sum_degree_fL_running += rate_unnormalized;
+
+    // One-year-lagged self-normalization. First simulated year: no
+    // prior-year total yet, hold at 0.
+    double needle_litter_today = 0.0;
+    if (tree_state.sum_degree_fL_last_year > 1e-6) {
+      // Scaled against N_repo (this year's fixed Repola target), not the
+      // moving leaf_mass pool itself - leaf_mass[index_ref] would make a
+      // pool that has already drifted above target shed proportionally
+      // MORE just because it's bigger, reinforcing the drift rather than
+      // correcting it. N_repo/n_age is the actual target annual turnover.
+      //
+      // litter_boost_today (growth.cpp's makela_loss_boost_factor) links
+      // litter to the same over/undershoot signal that scales growth
+      // (growth.cpp's C_N_year): > 1 when this year's peak has overgrown
+      // past N_repo (shed faster), < 1 when it's undershooting (shed
+      // slower). Computed fresh here each day from THIS year's own
+      // max_leaf_mass_running (not frozen at day == 0 from last year's) -
+      // see growth.cpp's comment on why a once-per-year, last-year value
+      // is an unstable one-year-lagged feedback signal. Also tried
+      // (2026-11-05, on request): holding this flat at 1.0 with growth's
+      // correction left as the only one - that correction never actually
+      // triggers without this, since the peak then never overshoots
+      // N_repo, reducing to the original N_repo/n_age-amplitude limit
+      // cycle (gap widens to +1.1 over 25 years, same as before any of
+      // this session's fixes). This correction is load-bearing, not
+      // redundant with growth's own. Referencing the winter stock
+      // (running minimum) instead of the peak was also tried and made
+      // things worse, not better - see function_structures.h's comment.
+      double litter_boost_today = makela_loss_boost_factor(
+        tree_state.N_repo_current, tree_state.max_leaf_mass_running, boolsettings.tau_N);
+      needle_litter_today = (tree_state.N_repo_current / parameters.n_age)
+                             * rate_unnormalized / tree_state.sum_degree_fL_last_year
+                             * litter_boost_today;
+    }
+
+    all_out.culm_growth.leaf_mass[days_gone+day] = std::max(0.0, all_out.culm_growth.leaf_mass[index_ref] - needle_litter_today + tree_state.needles);
+
+    all_out.culm_growth.needle_litter[days_gone+day] = all_out.culm_growth.needle_litter[index_ref] + needle_litter_today;
+    all_out.needle_litter[days_gone+day] = needle_litter_today;
+
+    double needle_litter_N_gross = boolsettings.theta_N_needles / parameters.carbon_share * needle_litter_today;
+    needle_litter_N_retrans = needle_litter_N_gross * boolsettings.retrans_needles;
+    all_out.needle_litter_N[days_gone+day] = needle_litter_N_gross - needle_litter_N_retrans;
+
+    // Frozen once this year's needle growth has definitively ended
+    // (growth.cpp's needle_growth_season_ended latch) - litter's own
+    // correction (above) should react to a settled peak, not one that
+    // could still be rising from growth/litter overlap near litter's
+    // day>=212 gate (confirmed real in ~1/4 of simulated years).
+    if (!tree_state.needle_growth_season_ended) {
+      tree_state.max_leaf_mass_running = std::max(tree_state.max_leaf_mass_running, all_out.culm_growth.leaf_mass[days_gone+day]);
+    }
+  }
+
+  // Credit for sugar_model.cpp's nitrogen_balance update, read on the
+  // NEXT day's call (same one-day lag uptake.total_uptake already uses -
+  // this function runs after sugar_model() each day, so today's litter
+  // can't be credited into today's own balance). Always on, like
+  // needle_litter itself - retranslocation isn't an alternate/
+  // experimental mechanism to toggle, it's just how real litter N
+  // accounting works.
+  tree_state.N_retranslocated_today =
+    needle_litter_N_retrans + root_litter_N_retrans + myco_litter_N_retrans;
+
+  // Running within-year max of leaf_area/roots, for root_leaf_correction's
+  // yearly C_R (see growth.cpp) - tracked unconditionally since it's
+  // negligible cost and keeps it ready if the setting is toggled on.
+  tree_state.max_leaf_area_running = std::max(tree_state.max_leaf_area_running, all_out.culm_growth.leaf_area[days_gone+day]);
+  tree_state.max_roots_running     = std::max(tree_state.max_roots_running,     all_out.culm_growth.roots[days_gone+day]);
 
   // Needles accumulation (potentially include drop logic later)
 

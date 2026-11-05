@@ -15,6 +15,60 @@ double makela_control_factor(double X_bal, double X_current, double tau) {
   return std::min(1.0, std::pow(X_bal / X_current, tau));
 }
 
+// Mirror image of makela_control_factor, for LOSS rather than growth -
+// but deliberately NOT capped the same damping-only way. Growth
+// (makela_control_factor) stays damping-only: it never exceeds the
+// calibrated baseline rate (1/n_age of N_repo/year), by design, same as
+// every other growth-rate factor in this codebase (see that function's
+// comment). Litter instead needs to move BOTH ways, by the reciprocal
+// ratio: BOOSTS (> 1) when X_current (the pool) has overgrown past
+// X_bal (N_repo) - shed faster, not just grow slower - and REDUCES
+// (< 1) when the pool is undershooting N_repo, so an already-undergrown
+// pool doesn't keep shedding at the full baseline rate while growth
+// (capped, unable to compensate by growing faster) can never catch up.
+// Without this, growth and litter both saturate at exactly the
+// baseline rate once the pool sits below N_repo, locking the whole
+// system into a stable cycle around N_repo/n_age that can never track a
+// N_repo target that keeps rising as the tree grows (confirmed via
+// debug trace, 1998-2022: peak tracks N_repo/n_age's trend (+0.025/yr),
+// not N_repo's own (+0.076/yr) - a gap that widens from -0.12 to +1.18
+// over 25 years). No floor/ceiling here at all - X_current/X_bal raised
+// to tau is used directly, so the correction is genuinely symmetric.
+double makela_loss_boost_factor(double X_bal, double X_current, double tau) {
+  const double epsilon = 1e-6;
+  if (X_current < epsilon || X_bal < epsilon) {
+    return 1.0;
+  }
+  return std::pow(X_current / X_bal, tau);
+}
+
+// Same functional form as fN (growth.cpp's needle phenology curve) -
+// zero at s=0, peaks at 1 when s=sLc^2/4, returns to zero past s=sLc^2.
+// Self-terminating by construction, no external day-count cutoff needed.
+double makela_bell_shape(double s, double sLc) {
+  if (s <= 0 || s >= sLc * sLc) return 0.0;
+  return (sLc * std::sqrt(s) - s) / (sLc * sLc / 4.0);
+}
+
+// Tested uncapped (2026-11-04) and reverted: without makela_control_factor's
+// own cap, C_N_year/litter_boost_year together swing the pool between
+// exactly 0 and ~1e15 within a few years. That cap on GROWTH stays
+// (damping-only, as above). litter_boost_year's own cap was reinstated
+// then too - but removing just that cap was retried on 2026-11-05 (see
+// that function's comment) and is unstable for a DIFFERENT, more subtle
+// reason than the blowup above: computed once per year (day == 0) from
+// LAST year's peak, it's a one-year-LAGGED signal - a mild overshoot one
+// year triggers a large litter cut the next, which undershoots, which
+// triggers almost no litter the year after, which overshoots again -
+// confirmed oscillating (pool swinging ~0 to ~7, N_repo ~6) rather than
+// converging. The fix actually adopted: keep litter_boost_year's ratio
+// uncapped/symmetric (growth.cpp's makela_loss_boost_factor), but stop
+// computing it here from last year's frozen peak - actual_growth.cpp
+// computes it fresh each day from THIS year's own max_leaf_mass_running
+// (updated daily, reset at day == 0 below), so litter reacts to the
+// season actually in progress, not a year-old snapshot. No lag, no
+// oscillation.
+
 /*
  * Growth Function
  */
@@ -44,7 +98,8 @@ void growth(int day,
             double GPP_previous_sum,
 
             double last_year_HH,
-            int no_day)
+            int no_day,
+            double N_repo)
 {
 
   if (TAir > 0) {
@@ -133,6 +188,7 @@ void growth(int day,
   double old_GN = 0.0;
   if (day == 0) {
     state.sN = parameters.sN0 + state.g;
+    state.needle_growth_season_ended = false;
   } else {
     state.sN = state.sN + state.g;
   }
@@ -140,6 +196,20 @@ void growth(int day,
     state.fN = (parameters.sNc * pow(state.sN, 0.5) - state.sN) / (pow(parameters.sNc, 2.0)/4.0);
   } else {
     state.fN = 0.0;
+  }
+  // One-way latch, true for the rest of the year once sN has crossed
+  // sNc^2 - i.e. once this year's needle growth (fN) has definitively
+  // finished, not just "hasn't started yet" (fN is also 0 before sN
+  // turns positive in early spring - state.sN > 0's check above excludes
+  // that case here). sN is monotonically non-decreasing within a year
+  // (state.g >= 0 always), so this can only flip once per year. Used in
+  // actual_growth.cpp to freeze max_leaf_mass_running once growth has
+  // genuinely ended, rather than letting litter's correction react to a
+  // reference that could still be rising from residual growth-season
+  // overlap - confirmed real (2026-11-05 debug trace): fN is still
+  // nonzero at day 212 (litter's own gate) in 6 of 25 simulated years.
+  if (!state.needle_growth_season_ended && state.sN >= pow(parameters.sNc, 2)) {
+    state.needle_growth_season_ended = true;
   }
   double LN = parameters.LN0;
   if (boolsettings.LN_estim) {
@@ -160,6 +230,72 @@ void growth(int day,
   double HN = parameters.HN0 + cumsum_GN; // TODO: where does this go?
 
   state.needles = common.m_N * state.GN * last_year_HH / parameters.h_increment;
+
+  // Makela (1999) structural-balance correction (2026-11-05 redesign),
+  // applied DIRECTLY to state.needles - the real needle-growth demand
+  // signal that sugar_model.cpp already uses in its carbon/nitrogen
+  // accounting (growth_resp.needles, sugar_to_invest, nitrogen_target
+  // all reference tree_state.needles). An earlier design computed a
+  // SEPARATE, parallel growth term (state.leaf_mass_growth, scaled off
+  // N_repo/fN_normalized instead of this real signal) - confirmed NOT
+  // self-consistent with the carbon economy: sugar_model.cpp never
+  // referenced leaf_mass_growth at all, so that pathway's needle growth
+  // never competed for carbon with height/diameter/root growth, nor was
+  // it ever actually charged against the sugar pool - exactly why
+  // letting it boost (tried the same day) had no real cost anywhere in
+  // the model. Reducing state.needles HERE instead, before sugar_model()
+  // runs, makes the correction flow through the existing accounting
+  // properly, and makes it damping-only by construction - needle growth
+  // can only ever be reduced below what GN/fN/sugar availability would
+  // otherwise produce, never inflated past it (makela_control_factor is
+  // capped at 1, same as height's own correction and every other
+  // growth-rate factor in this codebase).
+  //
+  // Accepted consequence (2026-11-05, on request): state.needles's own
+  // sugar-gated annual total already runs well below N_repo/n_age in
+  // this configuration (~0.3-0.8 vs ~1.4-2.0 kg/yr) - a damping-only
+  // correction can't close that gap, only widen it further if the pool
+  // ever overshoots. leaf_mass will likely persistently undershoot
+  // N_repo under this design. That's an honest reflection of the real
+  // carbon constraint already present in the model, not something to
+  // paper over with an uncosted parallel growth term.
+  //
+  // C_N_year is computed ONCE per year, at day == 0, from LAST year's
+  // settled peak - NOT recomputed daily from this year's own rising
+  // peak (which is what this notebook tried first, same-day as litter's
+  // own fix). Litter's correction has to be same-year/daily because it's
+  // symmetric/uncapped (a lagged symmetric correction was confirmed
+  // unstable, see actual_growth.cpp) - but growth's is capped at 1, so a
+  // lagged value can't run away the same way, and a single yearly
+  // constant avoids a real risk a daily one has: if the pool ever
+  // overshot N_repo WHILE growth is still active (fN > 0, i.e. before
+  // ~day 200), a same-year-reactive C_N_year would start damping growth
+  // mid-season, continuously changing as the peak rises - distorting
+  // fN's intended within-season shape (bounded, since capped, but real).
+  // A yearly value multiplies that shape by one constant instead -
+  // shape stays correct, only the year's overall magnitude changes. In
+  // this particular run it makes no numerical difference either way
+  // (C_N_year sits at exactly 1 all year regardless, confirmed via
+  // isolation test - the pool never overshoots), but removes that latent
+  // risk for conditions where it might.
+  if (boolsettings.leaf_mass_correction && day == 0) {
+    double leaf_mass_max_last_year = state.max_leaf_mass_running;
+    state.C_N_year = makela_control_factor(N_repo, leaf_mass_max_last_year, boolsettings.tau_N);
+    state.max_leaf_mass_running = 0.0;
+
+    // Freeze/reset for needle litter's own one-year-lagged normalizer
+    // (sum_degree_fL_running/last_year, function_structures.h).
+    if (state.sum_degree_fL_running > 1e-6) {
+      state.sum_degree_fL_last_year = state.sum_degree_fL_running;
+    }
+    state.sum_degree_fL_running = 0.0;
+    state.sL_litter = 0.0;  // fresh accumulator for the new year
+  }
+
+  if (boolsettings.leaf_mass_correction) {
+    state.needles *= state.C_N_year;
+    state.N_repo_current = N_repo;
+  }
 
   state.max_N = std::max(state.needles, state.max_N);
 
@@ -324,6 +460,14 @@ void growth(int day,
   // swings daily - closer to how LH_estim/LD_estim's own annual terms
   // behave than to height's own daily recorrection.
   //
+  // Uses the PREVIOUS YEAR'S MAXIMUM leaf_area/roots, not its last-day
+  // value: state.max_leaf_area_running/max_roots_running are updated
+  // daily in actual_growth.cpp and only reset below, so at this point
+  // (day == 0, before today's actual_growth() call) they still hold the
+  // just-finished year's running max - its peak, not wherever the pool
+  // happened to sit at the literal year-end snapshot (which can
+  // undershoot the peak once senescence/litter are active).
+  //
   // alpha_R is an UNCALIBRATED PLACEHOLDER - unlike alpha_H (fit against
   // two real independent SMEAR height/diameter series), no equivalent
   // root-biomass-vs-leaf-area observational series has been sourced yet.
@@ -332,14 +476,14 @@ void growth(int day,
   if (boolsettings.root_leaf_correction && day == 0) {
     const double alpha_R = 0.15; // TODO: placeholder, needs real calibration data
 
-    int idx_ref = days_gone + day - 1;
-    if (idx_ref < 0) {
-      idx_ref = 0;
-    }
-    double leaf_area_current = out.culm_growth.leaf_area[idx_ref];
-    double R_current = out.culm_growth.roots[idx_ref];
-    double R_bal = alpha_R * leaf_area_current;
-    state.C_R_year = makela_control_factor(R_bal, R_current, boolsettings.tau_R);
+    double leaf_area_max_last_year = state.max_leaf_area_running;
+    double roots_max_last_year = state.max_roots_running;
+    double R_bal = alpha_R * leaf_area_max_last_year;
+    state.C_R_year = makela_control_factor(R_bal, roots_max_last_year, boolsettings.tau_R);
+
+    // Start tracking the new year's max fresh.
+    state.max_leaf_area_running = 0.0;
+    state.max_roots_running = 0.0;
   }
 
   double gR_fib, gR_pio, gR, LR;

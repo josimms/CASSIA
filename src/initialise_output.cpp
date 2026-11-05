@@ -23,6 +23,14 @@ void initialize_output_vector(output_vector& out, int simulation_time) {
   out.wall.resize(simulation_time);
   out.roots.resize(simulation_time);
   out.ecto.resize(simulation_time);
+  out.root_litter.resize(simulation_time);
+  out.mycorrhiza_litter.resize(simulation_time);
+  out.needle_litter.resize(simulation_time);
+  out.needle_litter_N.resize(simulation_time);
+  out.root_litter_N.resize(simulation_time);
+  out.mycorrhiza_litter_N.resize(simulation_time);
+  out.branch_litter.resize(simulation_time);
+  out.branch_litter_N.resize(simulation_time);
   out.bud.resize(simulation_time);
   out.use.resize(simulation_time);
   out.release.resize(simulation_time);

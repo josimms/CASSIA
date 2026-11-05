@@ -1,0 +1,321 @@
+---
+title: "Needle leaf_mass: fS^2 litter pulse against its own target and real trap data"
+author: "Joanna"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.width = 12, fig.height = 5,
+                      fig.path = "../manuscript/figures/leaf_mass_correction-")
+```
+
+## What this document does
+
+Runs the testing checklist from `needle_litter_fS2_implementation_plan.md`
+against the compiled C++ (`leaf_mass_correction = TRUE`, which now includes
+the validated `fS^2`/`f_L`/`sLc` litter-pulse mechanism in
+`actual_growth.cpp`/`growth.cpp`), not a parallel R reimplementation:
+
+1. **trajectory** - the 15-year `leaf_mass` pool against its own yearly
+   `N_repo(D,H)` target (Repola), bounded/no-NaN check.
+2. **litter-timing** - daily `needle_litter` rate by day-of-year,
+   2006-2016, confirming a single clean pulse per year (no double peaks),
+   landing in the literature day 250-290 window.
+3. **vs-observed** - that same model litter, converted to kg tree^-1 per
+   real collection interval, against real SMEAR karike funnel trap data
+   (`karike_df_all`, `neulanen` column), 2006-2016, with pine stand density
+   interpolated from inventory years (same conversion as documented in
+   `manuscript/paper_plan.Rmd`'s "Needle litter checked against real
+   litterfall trap data" section, for the *old* pre-fS^2 mechanism - this
+   reruns the same check for the new one).
+
+```{r libraries}
+devtools::load_all(quiet = TRUE)
+library(ggplot2)
+library(data.table)
+library(patchwork)
+
+pub_theme <- theme_bw(base_size = 13) +
+  theme(plot.title      = element_text(face = "bold", size = 13),
+        plot.subtitle   = element_text(size = 10, colour = "grey30"),
+        panel.grid.minor = element_blank(),
+        legend.position  = "bottom")
+```
+
+---
+
+## 1  Setup
+
+### 1.1  Parameters
+
+Same `h0`/`D0` overrides as `height_correction.Rmd`/`nitrogen_scenarios.Rmd`,
+so this run starts at the same point (12m height) as the other Hyde-run
+notebooks.
+
+```{r setup-data}
+data_directory  <- "~/Documents/CASSIA_Calibration/Processed_Data/"
+loaded_data     <- load_data(data_directory)
+
+new_parameters  <- rep(0.5, 27)
+parameters_2015 <- initialize_parameters(calibration = FALSE, new_parameters)
+
+parameters_2015$parameters_test[c("h0"),          "Hyde"] <- 12
+parameters_2015$parameters_test[c("D0"),          "Hyde"] <- 0.1646
+parameters_2015$parameters_test[c("GPP_mean"),    "Hyde"] <- 463.8833
+parameters_2015$parameters_test[c("GPP_initial"), "Hyde"] <- 460.0
+```
+
+### 1.2  Weather data (1998-2022)
+
+```{r setup-weather}
+weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
+
+weather_1998_2022 <- weather_preles[
+  weather_preles$date >= as.Date("1998-01-01") &
+  weather_preles$date <= as.Date("2022-12-31"), ]
+weather_1998_2022$dates <- as.Date(weather_1998_2022$date)
+
+dates_1998_2022 <- weather_1998_2022$dates
+```
+
+---
+
+## 2  Run (leaf_mass_correction = TRUE)
+
+`preles = TRUE` (not `photosynthesis_as_input`), same as
+`height_correction.Rmd`/`nitrogen_scenarios.Rmd` - this matters here
+specifically because `photosynthesis.fS` (which the new litter mechanism
+reads) is only ever actually computed inside `preles_cpp()`'s daily call;
+the `photosynthesis_as_input`/`phydro` pathways never touch `.fS` at all.
+
+```{r run-model}
+CASSIA_leaf_mass <- CASSIA_cpp(
+  weather                    = weather_1998_2022,
+  site                       = "Hyde",
+  pPREL                      = c(parameters_2015$pPREL, parameters_2015$N_parameters),
+  parameters                 = parameters_2015$parameters_test,
+  common                     = common_p,
+  ratios                     = ratios_p,
+  sperling                   = parameters_2015$sperling_test,
+  needle_mass_in             = 0,
+  Throughfall                = parameters_2015$Throughfall,
+  photosynthesis_as_input    = FALSE,
+  nitrogen_balance           = 25,
+  preles                     = TRUE,
+  fAPAR_Tian                 = TRUE,
+  organ_level_sugar          = FALSE,
+  needle_mass_grows          = TRUE,
+  height_diameter_correction = TRUE,
+  leaf_mass_correction       = TRUE
+)
+
+leaf_mass_df <- data.frame(
+  dates       = dates_1998_2022,
+  year        = as.integer(format(dates_1998_2022, "%Y")),
+  day_of_year = as.integer(format(dates_1998_2022, "%j")),
+  leaf_mass   = CASSIA_leaf_mass$Growth$leaf_mass,
+  litter      = CASSIA_leaf_mass$Turnover$needle_litter,
+  fS          = CASSIA_leaf_mass$Preles$fS,
+  diameter    = CASSIA_leaf_mass$Culm_Growth$culm_growth_diameter,
+  height      = CASSIA_leaf_mass$Culm_Growth$culm_growth_height
+)
+
+cat("leaf_mass range:", range(leaf_mass_df$leaf_mass), "\n")
+cat("any NaN/Inf in leaf_mass:", any(!is.finite(leaf_mass_df$leaf_mass)), "\n")
+cat("any NaN/Inf in litter:", any(!is.finite(leaf_mass_df$litter)), "\n")
+```
+
+### 2.1  N_repo per year
+
+`N_repo` is recomputed once per year (`CASSIA.cpp`) from **last year's**
+Dec-31 diameter/height via Repola's `needle_mass` formula - the first
+simulated year uses the initial `D0`/`h0` instead, since there is no prior
+year. Mirrored here with the package's own `repola()` (R/repola.R), not a
+re-derivation.
+
+```{r n-repo-per-year}
+years <- sort(unique(leaf_mass_df$year))
+
+n_repo_of_year <- function(y) {
+  if (y == min(years)) {
+    d_prev <- parameters_2015$parameters_test[c("D0"), "Hyde"]
+    h_prev <- parameters_2015$parameters_test[c("h0"), "Hyde"]
+  } else {
+    prev_rows <- leaf_mass_df[leaf_mass_df$year == y - 1, ]
+    d_prev <- prev_rows$diameter[nrow(prev_rows)]
+    h_prev <- prev_rows$height[nrow(prev_rows)]
+  }
+  repola(D0 = d_prev, h0 = h_prev, n.year = 1,
+         needle_mas = list(0), ste = "Hyde",
+         params = parameters_2015$parameters_test,
+         reps = repo_p)$needle_mass[[1]]
+}
+
+n_repo_df <- data.frame(year = years, N_repo = sapply(years, n_repo_of_year))
+n_repo_df$start <- as.Date(paste0(n_repo_df$year, "-01-01"))
+n_repo_df$end   <- as.Date(paste0(n_repo_df$year, "-12-31"))
+
+print(n_repo_df)
+```
+
+### 2.2  Year-by-year mass balance diagnostic
+
+Not exported by `CASSIA_cpp()` directly (`C_N_year`/`litter_boost_year` are
+internal `growth_state` fields), but fully recoverable from the daily
+`leaf_mass`/`needle_litter` series plus `N_repo`: annual litter is a direct
+sum, annual growth is recovered from the mass balance
+(`M_t = max(0, M_{t-1} - L_t + G_t)`), and the two correction factors are
+then back-solved from `growth.cpp`'s own formulas
+(`C_N_year = growth_total / (N_repo/n_age)`,
+`litter_boost_year = litter_total / (N_repo/n_age)`, *given*
+`rate_unnormalized` sums to `sum_degree_fL_last_year` as designed - i.e.
+these are *implied* values, assuming no other confound).
+
+```{r year-balance-diagnostic}
+n_age <- parameters_2015$parameters_test[c("n_age"), "Hyde"]
+
+year_balance <- do.call(rbind, lapply(years, function(y) {
+  rows <- leaf_mass_df[leaf_mass_df$year == y, ]
+  litter_total <- sum(rows$litter)
+  peak <- max(rows$leaf_mass)
+  trough <- min(rows$leaf_mass)
+  net_change <- rows$leaf_mass[nrow(rows)] - rows$leaf_mass[1]
+  growth_implied <- net_change + litter_total
+  N_repo_y <- n_repo_df$N_repo[n_repo_df$year == y]
+  data.frame(year = y, N_repo = N_repo_y, peak = peak, trough = trough,
+             growth_total = growth_implied, litter_total = litter_total,
+             growth_over_target = growth_implied / (N_repo_y / n_age),
+             litter_over_target  = litter_total  / (N_repo_y / n_age))
+}))
+
+print(year_balance, digits = 3)
+```
+
+---
+
+## 3  trajectory - leaf_mass pool against its own target
+
+```{r trajectory, fig.width = 12, fig.height = 5}
+ggplot() +
+  geom_line(data = leaf_mass_df, aes(x = dates, y = leaf_mass),
+            colour = "#1b7837", linewidth = 0.7) +
+  geom_segment(data = n_repo_df, aes(x = start, xend = end, y = N_repo, yend = N_repo),
+               colour = "#e08214", linewidth = 0.9) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = "leaf_mass pool vs. N_repo (yearly target)",
+       subtitle = "1998-2022, Hyde-initialised, leaf_mass_correction = TRUE",
+       x = NULL, y = "Needle leaf_mass (kg C / tree)") +
+  pub_theme
+```
+
+---
+
+## 4  litter-timing - daily rate shape, 2006-2016
+
+```{r litter-timing, fig.width = 12, fig.height = 8}
+litter_recent <- leaf_mass_df[leaf_mass_df$year %in% 2006:2016, ]
+
+ggplot(litter_recent, aes(x = day_of_year, y = litter)) +
+  geom_line(colour = "#1b7837", linewidth = 0.7) +
+  geom_vline(xintercept = c(250, 290), linetype = "dashed", colour = "grey50") +
+  facet_wrap(~year, ncol = 4) +
+  labs(title = "Daily needle_litter rate by day-of-year",
+       subtitle = "2006-2016; dashed lines mark the literature day 250-290 window",
+       x = "Day of year", y = "needle_litter (kg C / tree / day)") +
+  pub_theme +
+  theme(legend.position = "none")
+```
+
+---
+
+## 5  vs-observed - against real SMEAR karike funnel trap data
+
+### 5.1  Real data: karike_df_all, `neulanen`, 2006-2016
+
+```{r real-litter-data}
+karike <- karike_df_all  # lazy-loaded package data, not part of load_data()'s return list
+karike$pvm <- as.Date(karike$pvm)
+karike_recent <- karike[!is.na(karike$neulanen) &
+                        format(karike$pvm, "%Y") %in% as.character(2006:2016), ]
+
+real_litter <- aggregate(neulanen ~ pvm, data = karike_recent, FUN = mean)
+real_litter <- real_litter[order(real_litter$pvm), ]
+```
+
+### 5.2  Pine stand density, interpolated across inventory years
+
+```{r stand-density}
+density_df <- loaded_data$smearII_data[
+  loaded_data$smearII_data$variable == "tree density pine", ]
+density_df <- aggregate(amount ~ date, data = density_df, FUN = mean)
+density_df <- density_df[order(density_df$date), ]
+
+density_interp <- approx(x = density_df$date, y = density_df$amount,
+                          xout = 2006:2016, rule = 2)
+density_by_year <- setNames(density_interp$y, 2006:2016)
+```
+
+### 5.3  Convert real g/collector to kg/tree, and sum model litter over the same intervals
+
+Collector geometry (47.5cm-diameter circular funnel, area pi*0.2375^2 ~=
+0.177 m^2) and the conversion formula are documented in
+`manuscript/paper_plan.Rmd`'s "Needle litter checked against real
+litterfall trap data" section.
+
+```{r convert-and-compare}
+collector_area_m2 <- pi * 0.2375^2
+
+real_litter$year <- as.integer(format(real_litter$pvm, "%Y"))
+real_litter$trees_per_ha <- density_by_year[as.character(real_litter$year)]
+real_litter$kg_per_tree <- (real_litter$neulanen / collector_area_m2) /
+  (real_litter$trees_per_ha / 10000) / 1000
+
+real_litter$interval_start <- c(as.Date(NA), head(real_litter$pvm, -1))
+
+model_interval_sum <- function(start, end) {
+  if (is.na(start)) return(NA_real_)
+  sum(leaf_mass_df$litter[leaf_mass_df$dates > start & leaf_mass_df$dates <= end])
+}
+real_litter$model_kg_per_tree <- mapply(model_interval_sum,
+                                         real_litter$interval_start, real_litter$pvm)
+
+comparison <- real_litter[!is.na(real_litter$model_kg_per_tree), ]
+cat("Totals, 2006-2016: observed =", round(sum(comparison$kg_per_tree), 2),
+    "kg/tree, model =", round(sum(comparison$model_kg_per_tree), 2), "kg/tree\n")
+```
+
+```{r vs-observed, fig.width = 11, fig.height = 9}
+cum_long <- rbind(
+  data.frame(pvm = comparison$pvm, value = cumsum(comparison$kg_per_tree), Source = "Observed (karike funnel traps)"),
+  data.frame(pvm = comparison$pvm, value = cumsum(comparison$model_kg_per_tree), Source = "CASSIA (leaf_mass_correction)")
+)
+
+p_cum <- ggplot(cum_long, aes(x = pvm, y = value, colour = Source)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(size = 1.5) +
+  scale_colour_manual(values = c("Observed (karike funnel traps)" = "#762a83",
+                                  "CASSIA (leaf_mass_correction)" = "#1b7837")) +
+  labs(title = "Cumulative needle litterfall, 2006-2016",
+       x = NULL, y = "Cumulative litter (kg / tree)") +
+  pub_theme
+
+p_scatter <- ggplot(comparison, aes(x = kg_per_tree, y = model_kg_per_tree)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_point(colour = "#1b7837", size = 2) +
+  labs(title = "Per-interval totals: model vs. observed",
+       x = "Observed (kg / tree)", y = "CASSIA (kg / tree)") +
+  pub_theme
+
+(p_cum / p_scatter) +
+  plot_annotation(
+    title = "New pathway (fS^2) against real litterfall data",
+    subtitle = "SMEAR karike funnel data, 2006-2016; pine density interpolated from stand inventories",
+    theme = theme(plot.title = element_text(face = "bold", size = 14))
+  )
+```

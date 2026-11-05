@@ -165,6 +165,47 @@ Rcpp::List CASSIA_yearly(int start_year,
     repola_values.needle_mass = needle_mass_in;
   }
 
+  // Seed leaf_mass_correction's accumulating pool (actual_growth.cpp) at
+  // the tree's initial Repola prediction, scaled by (n_age-1)/n_age - NOT
+  // the full N_repo. Day 0 represents the state BEFORE this year's growth
+  // has happened, same as any other day == 0: the fAPAR_and_LAI.cpp
+  // formula itself reduces to exactly N_repo*(n_age-1)/n_age when
+  // f_needle = 0 (no growth yet) - just the carryover of older retained
+  // cohorts, before the newest one has grown in. Seeding at the full
+  // N_repo overstated the tree's starting foliage. Mirrors height/
+  // diameter's own explicit day-0 seeding (h0/D0 above) rather than
+  // starting from an unseeded 0.0. Harmless when leaf_mass_correction =
+  // FALSE: the old fAPAR_and_LAI.cpp pathway never reads index 0 (it is
+  // memoryless).
+  all_out.culm_growth.leaf_mass[0] = repola_values.needle_mass * (parameters.n_age - 1.0) / parameters.n_age;
+
+  // Bootstraps C_N_year's and litter's first (day == 0, year 1)
+  // computation in growth.cpp/actual_growth.cpp from this same seed,
+  // rather than the struct default 0.0.
+  tree_state.max_leaf_mass_running = all_out.culm_growth.leaf_mass[0];
+
+  // Matching bootstrap for needle litter's own one-year-lagged normalizer
+  // (growth.cpp's sum_degree_fL_last_year, function_structures.h), which
+  // also defaults to 0.0 - without this, year 1 gets real growth (from
+  // the fN bootstrap above) but zero litter at all (nothing to normalize
+  // against), so the pool overshoots N_repo unopposed through years 1-2.
+  // That overshoot then feeds makela_loss_boost_factor's tau_N=5 exponent
+  // in year 3 - even a mild ~24% overshoot raised to the 5th power
+  // produces a litter total ~2.9x a normal year's, crashing the pool to
+  // near-zero and permanently locking it into a much-lower-than-N_repo
+  // limit cycle it can never climb back out of (confirmed via debug
+  // trace, 1998-2021: annual litter/target ratio is 0.00 (1998), 1.08
+  // (1999), 2.86 (2000), then ~1.0 every year after). Unlike fN (a
+  // pre-existing, independently-motivated phenology curve with its own
+  // analytic-vs-empirical discussion above), sum_degree_fL_running's
+  // annual total is remarkably stable and purely a property of the
+  // fS^2/f_L/sLc mechanism itself (not weather-dependent the way fN's
+  // g(T) sigmoid is) - traced directly across 24 simulated years
+  // (1998-2021, debug trace): settles at 2.89-3.07, mean 2.99, every
+  // single year. 3.0 used here as the same kind of bare empirical
+  // constant as fN's 48.0, not independently calibrated.
+  tree_state.sum_degree_fL_last_year = 3.0;
+
   // Organ-level sugar model uses per-organ initial values.
   // Non-organ-level-sugar model uses a single needle pool seeded from the aggregate sugar0/starch0.
   if (boolsettings.organ_level_sugar) {
@@ -449,7 +490,8 @@ Rcpp::List CASSIA_yearly(int start_year,
              GPP_previous_sum[year-start_year],
              // Last iteration value
              last_year_HH,
-             days_per_year);
+             days_per_year,
+             repola_values.needle_mass);
 
       // Saved for the next iteration
       release[days_gone + day] = tree_state.use;
@@ -573,6 +615,7 @@ Rcpp::List CASSIA_yearly(int start_year,
       Rcpp::_["Sugar"] = createSugarDataFrame(all_out),
       Rcpp::_["Preles"] = createPrelesDataFrame(all_out),
       Rcpp::_["Culm_Growth"] = createCulmGrowthDataFrame(all_out),
+      Rcpp::_["Turnover"] = createTurnoverDataFrame(all_out),
       Rcpp::_["Uptake"] = df5
     );
 
@@ -581,7 +624,8 @@ Rcpp::List CASSIA_yearly(int start_year,
       Rcpp::_["Growth"] = createGrowthDataFrame(all_out),
       Rcpp::_["Sugar"] = createSugarDataFrame(all_out),
       Rcpp::_["Preles"] = createPrelesDataFrame(all_out),
-      Rcpp::_["Culm_Growth"] = createCulmGrowthDataFrame(all_out)
+      Rcpp::_["Culm_Growth"] = createCulmGrowthDataFrame(all_out),
+      Rcpp::_["Turnover"] = createTurnoverDataFrame(all_out)
     );
 
   }

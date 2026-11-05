@@ -155,6 +155,74 @@
 #'   placeholder (3 years, matching needle longevity's default), not yet
 #'   \code{parameters$root_lifetime} (unpopulated for this site). Default
 #'   \code{FALSE}.
+#' @param leaf_mass_correction Logical. If \code{TRUE}, needle
+#'   \code{leaf_mass} becomes a genuinely accumulating pool (growth via
+#'   the existing needle phenology signal, loss via a fS^2-based autumn
+#'   litter pulse - see below) instead of being recomputed fresh each day
+#'   from Repola's prediction - replacing \code{fAPAR_and_LAI.cpp}'s
+#'   memoryless, annually-reset formula for this quantity only.
+#'   \code{leaf_area}/sapwood/fAPAR are not part of this and keep using
+#'   the old pathway either way. The growth side (Mäkelä 1999 eqn 28,
+#'   damping-only) checks the previous year's PEAK \code{leaf_mass}
+#'   against Repola's own needle-mass prediction, scaled by
+#'   \code{1/n_age} on the growth increment (not the correction factor)
+#'   so the comparison stays scope-matched to a single cohort's share -
+#'   see \code{growth.cpp}. The litter side uses \code{fS^2} (not
+#'   \code{fS}) past day 212, accumulated through a bell-shaped curve
+#'   (\code{sLc_litter}) and normalized against the previous year's own
+#'   running total - no sticky flag, since \code{fS^2}'s steeper decline
+#'   already discriminates a genuine autumn decline from a mid-summer
+#'   wobble on its own; see
+#'   \code{needle_litter_fS2_implementation_plan.md} for the validation
+#'   behind this. Default \code{FALSE}.
+#' @param tau_N Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
+#'   needle leaf_mass's growth correction, when \code{leaf_mass_correction =
+#'   TRUE}. Ignored otherwise. Default \code{5}, matching \code{tau_H}/
+#'   \code{tau_R}'s default - not independently calibrated.
+#' @param sLc_litter Numeric. Width of the \code{fS^2}-based needle litter
+#'   bell curve, when \code{leaf_mass_correction = TRUE}. Ignored
+#'   otherwise. Default \code{2.163312}, fitted against 2006-2016
+#'   Hyytiala litter-trap data (pooled training years, validated on
+#'   held-out years) - not independently calibrated, same caveat as
+#'   \code{tau_R}.
+#' @param theta_N_needles,theta_N_roots,theta_N_myco Numeric. N:C-style
+#'   thresholds (mg N / g dry mass) for needle/root/mycorrhiza litter's
+#'   nitrogen content (\code{needle_litter_N}/\code{root_litter_N}/
+#'   \code{mycorrhiza_litter_N}, net of retranslocation below). Default
+#'   \code{4.9} for needles: a real measured value, Korhonen et al. (2013,
+#'   \emph{Biogeosciences} 10:1083-1095), Table 2 - needle litter N
+#'   concentration at Hyytiala SMEAR II, 2006-2008, the exact site CASSIA
+#'   is parameterized for (also the value growth's own N cost in
+#'   \code{sugar_model.cpp} already uses). Default \code{7.7} for roots:
+#'   likewise real, Helmisaari et al. (2007) fine root N concentration for
+#'   a Scots pine stand near SMEAR II, quoted in Korhonen et al. (2013)
+#'   Sect. 4.2. Mycorrhiza has no sourced value, so its default \code{3.0}
+#'   reuses the pre-Korhonen root placeholder as an explicitly unvalidated
+#'   stand-in.
+#' @param retrans_needles,retrans_roots,retrans_myco Numeric, in
+#'   \code{[0, 1]}. Fraction of needle/root/mycorrhiza litter nitrogen
+#'   resorbed (retranslocated) before shedding rather than lost, credited
+#'   back to \code{nitrogen_balance} with a one-day lag (same lag
+#'   \code{uptake$total_uptake} already uses). Default \code{0.73} for
+#'   needles: a real measured value, Korhonen et al. (2013) Sect.
+#'   3.6.2/3.6.3 - needle+leaf retranslocation was 73\% of the initial
+#'   foliage nitrogen at this same Hyytiala site. Default \code{0.2} for
+#'   roots: a real measured value (Wojciechowska et al. 2020,
+#'   \emph{Tree Physiology} 40:987-1000) - fine-root N concentration
+#'   decline from control to fully senescent roots in \emph{Populus
+#'   trichocarpa}, ~20\% consistently across all three root orders
+#'   measured; a concentration decline rather than a mass-loss-corrected
+#'   resorption efficiency, and from a deciduous broadleaf rather than
+#'   \emph{Pinus sylvestris}, so a real but imperfect analogue. Korhonen
+#'   et al. (2013) assumed retranslocation negligible for all non-foliage
+#'   classes they measured (branches, bark, cones, wood), but fine roots
+#'   were outside that study's scope entirely (litter traps don't catch
+#'   root turnover), so it gives no root number directly. Mycorrhiza's
+#'   default is \code{0} because resorption has no clean biological
+#'   analogue for a fungal symbiont's own shed tissue, so none is assumed
+#'   rather than guessing one. Always applied (not behind a toggle) - the
+#'   nitrogen content of litter itself is real regardless of parameter
+#'   values, the same way \code{needle_litter} itself is unconditional.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
 #'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
@@ -363,6 +431,15 @@ CASSIA_cpp <- function(
     root_leaf_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, roots referenced against leaf area - recomputed yearly not daily (see roxygen doc); alpha_R is an uncalibrated placeholder
     tau_R = 5,                           # Makela (1999) eqn 28 exponent for roots' correction, when root_leaf_correction = TRUE - not independently calibrated, defaults to tau_H's value
     root_turnover = FALSE,               # Root/mycorrhiza litter, driven by the same fS senescence signal as leaf area's own turnover (not a literal copy - see roxygen doc); turnover-time constant is an uncalibrated placeholder
+    leaf_mass_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, needle leaf_mass referenced against Repola's own prediction - replaces the memoryless annual-reset formula with a genuine accumulating pool, litter via fS^2 bell curve (see roxygen doc)
+    tau_N = 5,                           # Makela (1999) eqn 28 exponent for leaf_mass's growth correction, when leaf_mass_correction = TRUE - not independently calibrated, defaults to tau_H/tau_R's value
+    sLc_litter = 2.163312,               # Width of the fS^2-based needle litter bell curve, when leaf_mass_correction = TRUE - fitted against 2006-2016 Hyytiala trap data, not independently calibrated
+    theta_N_needles = 4.9,               # N:C threshold (mg N/g dry mass) for needle litter N - Korhonen et al. (2013), Table 2, Hyytiala SMEAR II
+    theta_N_roots = 7.7,                 # Fine root N concentration - Helmisaari et al. (2007), Scots pine near SMEAR II, via Korhonen et al. (2013)
+    theta_N_myco = 3.0,                  # Same, for mycorrhiza - no literature source found, reuses the pre-Korhonen root placeholder
+    retrans_needles = 0.73,              # Fraction of needle litter N resorbed before shedding rather than lost - Korhonen et al. (2013), 73% of initial foliage N, Hyytiala
+    retrans_roots = 0.2,                 # Fine-root N concentration decline, control to fully senescent, Populus trichocarpa (Wojciechowska et al. 2020) - real measured value, not this site/species
+    retrans_myco = 0.0,                  # Same, for mycorrhiza - 0 by default: resorption has no clean biological analogue for a fungal symbiont's own shed tissue
 
     phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
 
@@ -436,6 +513,15 @@ CASSIA_cpp <- function(
     "root_leaf_correction" = root_leaf_correction,
     "tau_R" = tau_R,
     "root_turnover" = root_turnover,
+    "leaf_mass_correction" = leaf_mass_correction,
+    "tau_N" = tau_N,
+    "sLc_litter" = sLc_litter,
+    "theta_N_needles" = theta_N_needles,
+    "theta_N_roots" = theta_N_roots,
+    "theta_N_myco" = theta_N_myco,
+    "retrans_needles" = retrans_needles,
+    "retrans_roots" = retrans_roots,
+    "retrans_myco" = retrans_myco,
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,

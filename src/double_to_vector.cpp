@@ -32,6 +32,7 @@ void log_actual_growth(int day,
   growth_out.height[days_gone + day]   = tree_state.height;
   growth_out.needles[days_gone + day]  = tree_state.needles;
   growth_out.roots[days_gone + day]    = tree_state.roots;
+  growth_out.ecto[days_gone + day]     = tree_state.ecto;
   // tree_state.diameter is never gated by actual_growth() (only
   // tree_state.wall is, computed from potential diameter times the
   // carbon/nitrogen cap) - log the gated value here so "diameter_growth"
@@ -124,6 +125,7 @@ void log_photosynthesis(int day,
   out.photosynthesis.GPP[days_gone + day]       = input.GPP;
   out.photosynthesis.ET[days_gone + day]        = input.ET;
   out.photosynthesis.SoilWater[days_gone + day] = input.SoilWater;
+  out.photosynthesis.fS[days_gone + day]        = input.fS;
 }
 
 

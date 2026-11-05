@@ -76,6 +76,7 @@ Rcpp::DataFrame createPrelesDataFrame(const output_vector& out) {
     Rcpp::_["GPP"] = out.photosynthesis.GPP,
     Rcpp::_["ET"] = out.photosynthesis.ET,
     Rcpp::_["SoilWater"] = out.photosynthesis.SoilWater,
+    Rcpp::_["fS"] = out.photosynthesis.fS,
     Rcpp::_["fAPAR"] = out.photosynthesis.fAPAR
   );
 }
@@ -83,27 +84,54 @@ Rcpp::DataFrame createPrelesDataFrame(const output_vector& out) {
 // df4
 
 Rcpp::DataFrame createCulmGrowthDataFrame(const output_vector& out) {
+  // Rcpp::DataFrame::create()/List::create() only generate overloads up to
+  // 20 arguments on some Rcpp versions (see createSugarDataFrame) - this
+  // was already at the limit, so built with push_back() instead.
+  Rcpp::List lst;
+  lst.push_back(out.culm_growth.height, "culm_growth_height");
+  lst.push_back(out.culm_growth.needles, "culm_growth_needles");
+  lst.push_back(out.culm_growth.diameter, "culm_growth_diameter");
+  lst.push_back(out.culm_growth.diameter_potential, "culm_growth_diameter_potential");
+  lst.push_back(out.culm_growth.roots, "culm_growth_roots");
+  lst.push_back(out.culm_growth.mycorrhiza, "culm_growth_mycorrhiza");
+  lst.push_back(out.culm_growth.root_litter, "culm_growth_root_litter");
+  lst.push_back(out.culm_growth.mycorrhiza_litter, "culm_growth_mycorrhiza_litter");
+  lst.push_back(out.culm_growth.needle_litter, "culm_growth_needle_litter");
+  lst.push_back(out.culm_growth.xylem_sh, "culm_growth_xylem_sh");
+  lst.push_back(out.culm_growth.xylem_st, "culm_growth_xylem_st");
+  lst.push_back(out.culm_growth.phloem, "culm_growth_phloem");
+  lst.push_back(out.culm_growth.sapwood, "culm_growth_sapwood");
+  lst.push_back(out.tree_alive, "tree_alive");
+  lst.push_back(out.LAI, "LAI");
+  lst.push_back(out.nitrogen_balance, "nitrogen_balance");
+  lst.push_back(out.nitrogen_capacity_vector.needles, "nitrogen_capacity_needles");
+  lst.push_back(out.nitrogen_capacity_vector.diameter, "nitrogen_capacity_wall");
+  lst.push_back(out.nitrogen_capacity_vector.height, "nitrogen_capacity_height");
+  lst.push_back(out.nitrogen_capacity_vector.bud, "nitrogen_capacity_bud");
+  lst.push_back(out.nitrogen_capacity_vector.roots, "nitrogen_capacity_roots");
+  return Rcpp::DataFrame(lst);
+}
+
+// Daily (non-cumulative) root/mycorrhiza/needle growth and litter -
+// contrast with Culm_Growth's culm_growth_roots/mycorrhiza/needle
+// (_litter), which are running totals. root_litter/mycorrhiza_litter are
+// 0 throughout whenever root_turnover = FALSE; needle_litter is
+// unconditional (see fAPAR_and_LAI.cpp). The _N columns are each
+// litter's nitrogen content net of retranslocation (actual_growth.cpp).
+// branch_litter/branch_litter_N are always 0 - no branch biomass pool
+// exists yet.
+Rcpp::DataFrame createTurnoverDataFrame(const output_vector& out) {
   return Rcpp::DataFrame::create(
-    Rcpp::_["culm_growth_height"] = out.culm_growth.height,
-    Rcpp::_["culm_growth_needles"] = out.culm_growth.needles,
-    Rcpp::_["culm_growth_diameter"] = out.culm_growth.diameter,
-    Rcpp::_["culm_growth_diameter_potential"] = out.culm_growth.diameter_potential,
-    Rcpp::_["culm_growth_roots"] = out.culm_growth.roots,
-    Rcpp::_["culm_growth_mycorrhiza"] = out.culm_growth.mycorrhiza,
-    Rcpp::_["culm_growth_root_litter"] = out.culm_growth.root_litter,
-    Rcpp::_["culm_growth_mycorrhiza_litter"] = out.culm_growth.mycorrhiza_litter,
-    Rcpp::_["culm_growth_xylem_sh"] = out.culm_growth.xylem_sh,
-    Rcpp::_["culm_growth_xylem_st"] = out.culm_growth.xylem_st,
-    Rcpp::_["culm_growth_phloem"] = out.culm_growth.phloem,
-    Rcpp::_["culm_growth_sapwood"] = out.culm_growth.sapwood,
-    Rcpp::_["tree_alive"] = out.tree_alive,
-    Rcpp::_["LAI"] = out.LAI,
-    Rcpp::_["nitrogen_balance"] = out.nitrogen_balance,
-    Rcpp::_["nitrogen_capacity_needles"] = out.nitrogen_capacity_vector.needles,
-    Rcpp::_["nitrogen_capacity_wall"] = out.nitrogen_capacity_vector.diameter,
-    Rcpp::_["nitrogen_capacity_height"] = out.nitrogen_capacity_vector.height,
-    Rcpp::_["nitrogen_capacity_bud"] = out.nitrogen_capacity_vector.bud,
-    Rcpp::_["nitrogen_capacity_roots"] = out.nitrogen_capacity_vector.roots
+    Rcpp::_["root_growth"] = out.roots,
+    Rcpp::_["mycorrhiza_growth"] = out.ecto,
+    Rcpp::_["root_litter"] = out.root_litter,
+    Rcpp::_["mycorrhiza_litter"] = out.mycorrhiza_litter,
+    Rcpp::_["needle_litter"] = out.needle_litter,
+    Rcpp::_["root_litter_N"] = out.root_litter_N,
+    Rcpp::_["mycorrhiza_litter_N"] = out.mycorrhiza_litter_N,
+    Rcpp::_["needle_litter_N"] = out.needle_litter_N,
+    Rcpp::_["branch_litter"] = out.branch_litter,
+    Rcpp::_["branch_litter_N"] = out.branch_litter_N
   );
 }
 

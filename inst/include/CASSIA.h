@@ -36,6 +36,16 @@ double emergancy(double sugar, double starch, double tau_emergancy, double lower
 
 double storage_update(double alfa, double sugar, double starch, double Wala);
 
+// growth.cpp: fS^2-based needle litter bell curve (same functional form
+// as fN), used from actual_growth.cpp.
+double makela_bell_shape(double s, double sLc);
+
+// growth.cpp: symmetric Makela (1999)-style over/undershoot ratio,
+// uncapped (unlike makela_control_factor) - used from actual_growth.cpp
+// to compute litter's correction fresh each day from this year's own
+// running peak, not a once-per-year lagged value.
+double makela_loss_boost_factor(double X_bal, double X_current, double tau);
+
 /*
  * PRELES
  */
@@ -172,7 +182,8 @@ void growth(int day,
             double GPP_previous_sum,
 
             double last_year_HH,
-            int no_day);
+            int no_day,
+            double N_repo);
 
 /*
  *  Cell enlargement
@@ -461,6 +472,9 @@ Rcpp::DataFrame createPrelesDataFrame(const output_vector& out);
 
 // Generate DataFrame for cumulative (culm) growth and related outputs
 Rcpp::DataFrame createCulmGrowthDataFrame(const output_vector& out);
+
+// Generate DataFrame for daily (non-cumulative) root/mycorrhiza growth and litter
+Rcpp::DataFrame createTurnoverDataFrame(const output_vector& out);
 
 /*
  * Initalise

@@ -24,6 +24,15 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.root_leaf_correction = Rcpp::as<bool>(settingsList["root_leaf_correction"]);
   settings.tau_R = Rcpp::as<double>(settingsList["tau_R"]);
   settings.root_turnover = Rcpp::as<bool>(settingsList["root_turnover"]);
+  settings.leaf_mass_correction = Rcpp::as<bool>(settingsList["leaf_mass_correction"]);
+  settings.tau_N = Rcpp::as<double>(settingsList["tau_N"]);
+  settings.sLc_litter = Rcpp::as<double>(settingsList["sLc_litter"]);
+  settings.theta_N_needles = Rcpp::as<double>(settingsList["theta_N_needles"]);
+  settings.theta_N_roots = Rcpp::as<double>(settingsList["theta_N_roots"]);
+  settings.theta_N_myco = Rcpp::as<double>(settingsList["theta_N_myco"]);
+  settings.retrans_needles = Rcpp::as<double>(settingsList["retrans_needles"]);
+  settings.retrans_roots = Rcpp::as<double>(settingsList["retrans_roots"]);
+  settings.retrans_myco = Rcpp::as<double>(settingsList["retrans_myco"]);
 
   settings.phloem_trigger = Rcpp::as<bool>(settingsList["phloem_trigger"]);
   settings.mycorrhiza = Rcpp::as<bool>(settingsList["mycorrhiza"]);

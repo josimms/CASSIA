@@ -88,7 +88,29 @@ void compute_fAPAR_used(int day,
   all_out.LAI[days_gone + day] = LAI_within_year;
   all_out.fAPAR[days_gone + day] = fAPAR_used;
 
-  all_out.culm_growth.leaf_mass[day + days_gone] = needle_mass;
+  // leaf_mass/needle_litter: when leaf_mass_correction = TRUE,
+  // actual_growth.cpp owns this pool instead (a genuinely accumulating
+  // one, referenced against Repola directly - see growth.cpp) - this
+  // memoryless, annually-reset formula stays as the default (FALSE)
+  // pathway only, unchanged. leaf_area (sapwood/fAPAR driver, below) is
+  // NOT part of that redesign and keeps using needle_mass_sapwood either
+  // way.
+  if (!boolsettings.leaf_mass_correction) {
+    all_out.culm_growth.leaf_mass[day + days_gone] = needle_mass;
+
+    // Needle litter: read directly off leaf_mass's already-existing
+    // senescence decline (the "(1/n_age)*senescence" term above already
+    // makes needle_mass fall once fS starts dropping in autumn) rather than
+    // introducing a separate rate constant, unlike root/mycorrhiza turnover
+    // (actual_growth.cpp) which had no comparable existing signal to read
+    // from. NOTE: leaf_area (unlike leaf_mass) has no senescence term at
+    // all - it is driven by f_modifer only - so it is not a usable litter
+    // signal on its own.
+    double needle_litter_today = std::max(0.0, all_out.culm_growth.leaf_mass[index_ref] - all_out.culm_growth.leaf_mass[day + days_gone]);
+    all_out.culm_growth.needle_litter[day + days_gone] = all_out.culm_growth.needle_litter[index_ref] + needle_litter_today;
+    all_out.needle_litter[day + days_gone] = needle_litter_today;
+  }
+
   all_out.culm_growth.leaf_area[day + days_gone] = needle_mass_sapwood / LMA;
 
   double sapwood_area = leaf_to_sapwood * all_out.culm_growth.leaf_area[day + days_gone];

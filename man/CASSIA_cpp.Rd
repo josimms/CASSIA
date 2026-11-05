@@ -24,8 +24,8 @@ CASSIA_cpp(
   pPREL = c(413, 0.45, 0.118, 3, 0.7457, 10.93, -3.063, 17.72, -0.1027, 0.03673, 0.7779,
     0.5, -0.364, 0.2715, 0.8351, 0.07348, 0.9996, 0.4428, 1.2, 0.33, 4.970496, 0, 0, 160,
     0, 0, 20, -999.9, -999.9, -999.9, 1/0.012, 0),
-  phydro_param = c(0.1008, 0.180496537959982, 5, 0.026263945805926, 0.011, 50, 0.5,
-    -0.857817410110663, 413118749129489984, 1, 0.0245, 2, 1.1, 0.1, 15, 10, 5, 0, 1,
+  phydro_param = c(0.1008, 0.180496537959982, 5, 0.08, 0.011, 7400, 0.5,
+    -0.857817410110663, 4.1311874912949e-17, 1, 0.0245, 2, 1.5, 0.15, 15, 10, 5, 0, 1,
     exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)),
   storage_reset = TRUE,
   storage_grows = FALSE,
@@ -43,6 +43,14 @@ CASSIA_cpp(
   trees_grow = FALSE,
   growth_decreases = FALSE,
   needle_mass_grows = FALSE,
+  height_diameter_correction = FALSE,
+  tau_H = 5,
+  root_leaf_correction = FALSE,
+  tau_R = 5,
+  root_turnover = FALSE,
+  leaf_mass_correction = FALSE,
+  tau_N = 5,
+  sLc_litter = 2.163312,
   phloem_trigger = FALSE,
   mycorrhiza = TRUE,
   root_as_Ding = TRUE,
@@ -208,6 +216,96 @@ coefficients decline linearly from 1997 to 2020. Default \code{FALSE}.}
 \item{needle_mass_grows}{Logical. If \code{TRUE}, needle mass is updated
 dynamically each year via the Repola model. If \code{FALSE} (default),
 needle mass is fixed after the first iteration.}
+
+\item{height_diameter_correction}{Logical. If \code{TRUE}, height's
+growth rate is damped (never boosted - capped at no correction, not
+accelerated, so it never exceeds its own calibrated maximum rate)
+toward an empirical height:diameter ratio (Mäkelä 1999, Functional
+Ecology 13:145-156, eqn 28), correcting the potential growth rate
+before the carbon/nitrogen gate is applied. Diameter is the
+uncorrected reference, not corrected itself: unlike height, diameter
+already has its own within-season carbon feedback
+(\code{LD_estim}/Schiestl-Aalto et al. 2015 eqn 19) and the full
+cell-enlargement/wall-formation xylogenesis cascade - layering this
+correction on top of diameter too was tested and made its fit worse,
+not better. Needles, roots and bud are not corrected either (no
+data-grounded reference relationship exists for them - see
+\code{manuscript/paper_plan.Rmd} Working Notes). Default \code{FALSE}.}
+
+\item{tau_H}{Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
+height's correction, when \code{height_diameter_correction = TRUE} -
+how fast it damps toward balance (\code{>= 1} required for stability).
+Ignored otherwise. Default \code{5} - RSS against the real SMEAR
+height/diameter (1998-2022 Hyde run) keeps improving well past this,
+but since the real h0/D0 starting pair doesn't sit exactly on
+\code{alpha_H}'s ratio, higher values produce an increasingly extreme
+early-year distortion (at \code{tau=10}, year 1 height growth is
+already ~2x its natural rate). \code{5} keeps it moderate - see
+\code{manuscript/paper_plan.Rmd} Working Notes before raising it.}
+
+\item{root_leaf_correction}{Logical. If \code{TRUE}, root growth is
+damped (same Mäkelä 1999 eqn 28 mechanism as
+\code{height_diameter_correction}, damping-only) toward a target
+root:leaf-area ratio, leaf area being the uncorrected reference.
+Unlike the height correction, the target ratio and damping factor are
+recomputed only once per year (at the first day of each year) and
+held fixed for the rest of that year, rather than daily - leaf area
+has real within-year seasonal swings (Tian 2021 cohort turnover) that
+would make a daily-recomputed target noisy. The target ratio
+(\code{alpha_R} in \code{growth.cpp}) is currently an uncalibrated
+placeholder - no real root-biomass-vs-leaf-area series has been
+sourced yet, unlike \code{alpha_H}. Default \code{FALSE}.}
+
+\item{tau_R}{Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
+roots' correction, when \code{root_leaf_correction = TRUE}. Ignored
+otherwise. Default \code{5}, matching \code{tau_H}'s default - not
+independently calibrated.}
+
+\item{root_turnover}{Logical. If \code{TRUE}, root and mycorrhiza
+biomass (\code{culm_growth_roots}/\code{culm_growth_mycorrhiza}) lose
+a daily fraction to litter, logged separately in
+\code{culm_growth_root_litter}/\code{culm_growth_mycorrhiza_litter}.
+Uses the same senescence signal as leaf area's own cohort turnover
+(\code{photosynthesis$fS}, sticky once it first reaches 1 after day
+50 of the year, same as \code{fAPAR_and_LAI.cpp}), but is not a
+literal copy of that formula - see \code{actual_growth.cpp} for why.
+A first-pass mechanism: the turnover-time constant is an uncalibrated
+placeholder (3 years, matching needle longevity's default), not yet
+\code{parameters$root_lifetime} (unpopulated for this site). Default
+\code{FALSE}.}
+
+\item{leaf_mass_correction}{Logical. If \code{TRUE}, needle
+\code{leaf_mass} becomes a genuinely accumulating pool (growth via
+the existing needle phenology signal, loss via a fS^2-based autumn
+litter pulse - see below) instead of being recomputed fresh each day
+from Repola's prediction - replacing \code{fAPAR_and_LAI.cpp}'s
+memoryless, annually-reset formula for this quantity only.
+\code{leaf_area}/sapwood/fAPAR are not part of this and keep using
+the old pathway either way. The growth side (Mäkelä 1999 eqn 28,
+damping-only) checks the previous year's PEAK \code{leaf_mass}
+against Repola's own needle-mass prediction, scaled by
+\code{1/n_age} on the growth increment (not the correction factor)
+so the comparison stays scope-matched to a single cohort's share -
+see \code{growth.cpp}. The litter side uses \code{fS^2} (not
+\code{fS}) past day 212, accumulated through a bell-shaped curve
+(\code{sLc_litter}) and normalized against the previous year's own
+running total - no sticky flag, since \code{fS^2}'s steeper decline
+already discriminates a genuine autumn decline from a mid-summer
+wobble on its own; see
+\code{needle_litter_fS2_implementation_plan.md} for the validation
+behind this. Default \code{FALSE}.}
+
+\item{tau_N}{Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
+needle leaf_mass's growth correction, when \code{leaf_mass_correction =
+TRUE}. Ignored otherwise. Default \code{5}, matching \code{tau_H}/
+\code{tau_R}'s default - not independently calibrated.}
+
+\item{sLc_litter}{Numeric. Width of the \code{fS^2}-based needle litter
+bell curve, when \code{leaf_mass_correction = TRUE}. Ignored
+otherwise. Default \code{2.163312}, fitted against 2006-2016
+Hyytiala litter-trap data (pooled training years, validated on
+held-out years) - not independently calibrated, same caveat as
+\code{tau_R}.}
 
 \item{phloem_trigger}{Logical. If \code{TRUE}, bud burst is triggered when
 phloem sugar first drops below a threshold (requires
