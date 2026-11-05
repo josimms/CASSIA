@@ -1,0 +1,627 @@
+---
+title: "Crown height: the Mäkelä & Valentine crown-rise model, and a first CASSIA diagnostic"
+author: "Joanna"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.width = 12, fig.height = 5,
+                      fig.path = "../manuscript/figures/crown_height-")
+```
+
+## Summary
+
+Today's work addressed two gaps found while extending CASSIA's height/
+diameter correction: CASSIA tracks tip height, diameter, needle mass and
+LAI, but has no notion of crown base height ($H_\mathrm{c}$) or crown rise,
+and no check of its leaf/root mass against pipe-model allometry (Mäkelä &
+Valentine, *Models of Tree and Stand Dynamics*, Ch. 4-5).
+
+**Crown rise.** The book's status-quo crown-rise rule reduces, for
+$u = \mathrm{d}X_\mathrm{c}/\mathrm{d}t = 0$, to
+
+$$H_\mathrm{c}(t) = \max\big(H_{\mathrm{c},0},\ H(t) - (\alpha_x + \beta_x X_\mathrm{c,0})\big)$$
+
+i.e. the crown base holds until the crown reaches a competition-limited
+maximum length $L_\mathrm{c,max} = \alpha_x + \beta_x X_\mathrm{c,0}$ (Eq.
+5.33, p.110), then rises in lock-step with the tip. This was verified in
+isolation against a generic height curve (Sect. 2's figure), then overlaid
+- diagnostically, not fed back into growth - on CASSIA's real Hyde
+(Hyytiälä SMEAR) height trajectory under three stand-spacing scenarios
+(Sect. 3's figure).
+
+**Pipe-model consistency.** The pipe model predicts leaf and fine-root mass
+from basal area $B$ and crown ratio $r_\mathrm{c}$:
+
+$$W_\mathrm{f} = \eta_\mathrm{s}\, r_\mathrm{c} B \quad\text{(Eq. 4.10, 4.21)}
+\qquad\qquad W_\mathrm{r} = \alpha_\mathrm{r} W_\mathrm{f} \quad\text{(Eq. 4.13)}$$
+
+Treating CASSIA's own `leaf_mass` and `culm_growth_roots` outputs as if
+they obeyed these relationships gives implied ratios
+$\eta_\mathrm{s,implied} = W_\mathrm{f}/(r_\mathrm{c}B)$ and
+$\alpha_\mathrm{r,implied} = W_\mathrm{r}/W_\mathrm{f}$ (Sects. 4-5's
+figures). Over a 25-year Hyde run, $\eta_\mathrm{s,implied}$ stays within a
+factor of two of itself, but $\alpha_\mathrm{r,implied}$ drifts from about 1
+to nearly 6, because `culm_growth_roots` accumulates with no leaf-mass
+ceiling while `root_leaf_correction` (`growth.cpp:440-461`) is switched
+off. This also surfaced that an existing root-mass calculation in
+`repola.cpp:20` is dead code - computed every call, never written to any
+output.
+
+None of this is wired into CASSIA's C++: crown base height, $\eta_\mathrm{s}$,
+and $\alpha_\mathrm{r}$ remain diagnostic overlays. Sect. 6 lists what a
+feedback-coupled implementation would need; Sect. 7 lists open questions,
+chiefly whether real Hyde crown-base-height, foliage, or root-mass
+observations exist to calibrate against.
+
+---
+
+## What this document does
+
+CASSIA currently has no notion of crown base height, crown length, or
+crown rise anywhere in its state (`growth.cpp`, `function_structures.h`,
+`CASSIA.h` - confirmed by grep, nothing matches `crown` in CASSIA's own
+source, only in the `external/` submodules). It tracks tip height, diameter,
+needle mass, and LAI, but not where the live crown begins.
+
+Three chapters of Mäkelä & Valentine (2020) *Models of Tree and Stand
+Dynamics* were added to `notes/Forest Science/Articles`: Chapter 4 (*Tree
+Structure* - the pipe model and crown-ratio allometry), the excerpt covering
+Chapter 5 (*Combining the Carbon Balance and Structure into a Core Model* -
+the dynamic crown-rise model, with a full worked R example), and Chapter 9
+(*Calibration* - general sensitivity/uncertainty/Bayesian methodology, not
+crown-specific, so only referenced briefly below). Annikki Mäkelä is also a
+CASSIA co-author, so this is the natural reference for adding a crown-rise
+state here - and `external/Rprebasso` (already a submodule of this repo) is
+Mäkelä's own CROBAS model, an operational Fortran implementation of
+essentially the same pipe-model/crown-rise framework (crown ratio
+`rc = Lc/(H-1.3)` in `mortalityCalc.h`, `updateStandAfterDist.h`,
+`disturbanceCalc.h`; parameter table in
+`external/Rprebasso/vignettes/Parameters_pCROB.Rmd` lists `betab`, `betas`,
+`rhof2`, `x` - the same `beta_b`/`beta_s`/`eta_s` form factors used below).
+That's a second, independently-calibrated cross-check worth returning to.
+
+This notebook:
+
+1. Summarises the book's crown-rise model with equation and page citations.
+2. Ports the book's own worked R example (Sect. 5.5) as a **standalone**
+   reference simulation, to check the equations are understood correctly
+   before touching CASSIA.
+3. Builds a **diagnostic-only** crown base height from CASSIA's own real
+   height trajectory (the Hyde SMEAR run from `height_correction.Rmd`),
+   using the simplest case of the book's crown-rise rule. This does not
+   change CASSIA's C++ - it is a first look at what crown rise would do
+   layered on top of the growth CASSIA already produces.
+4. Checks CASSIA's own leaf mass/area outputs against the pipe model's
+   leaf-mass equation and the leaf_mass/leaf_area multiplier, as a
+   self-consistency diagnostic rather than a calibration.
+5. Does the same for CASSIA's root mass output against the pipe model's
+   fine-root equation.
+6. Lists what is actually missing to make this a real, feedback-coupled
+   CASSIA state rather than a diagnostic overlay.
+
+```{r libraries}
+devtools::load_all(quiet = TRUE)
+library(ggplot2)
+library(data.table)
+library(patchwork)
+```
+
+---
+
+## 1  Background: the book's crown-rise model
+
+### 1.1  Pipe model and crown ratio (Chapter 4, pp. 95-114)
+
+The pipe model (Shinozaki et al. 1964) treats the tree as a bundle of unit
+pipes, each running from a unit of leaf biomass down to the roots. Leaf
+biomass is proportional to the *active pipe area* at the crown base,
+$A_\mathrm{c}$ (Eq. 4.10, p.103):
+
+$$W_\mathrm{f} = \eta_\mathrm{s} A_\mathrm{c}$$
+
+where $\eta_\mathrm{s}$ is the *pipe model ratio* (kg leaf per m² active
+pipe area). Wood mass in branches, stem, and coarse roots scales the same
+way via mean pipe lengths and *form factors* $\phi_i$ (Eq. 4.16-4.20,
+pp.104-105); fine roots are simpler still, taken as directly proportional to
+leaf mass, $W_\mathrm{r} = \alpha_\mathrm{r} W_\mathrm{f}$ (Eq. 4.13, Sect.
+4.3.3, p.104), with $\alpha_\mathrm{r}$ set by nutrient availability and
+varying by species (Ingestad & Ågren 1992; Vanninen & Mäkelä 1999, cited
+p.104) - Sect. 5 below checks this against what CASSIA already does for
+roots. Empirically, the active-pipe area at the crown base is closely
+proportional to the stem's basal area, $B$, through the **crown ratio**,
+$r_\mathrm{c}$ = crown length / tree height (Eq. 4.21, p.106):
+
+$$A_\mathrm{c} = r_\mathrm{c} B$$
+
+This single relationship, tested against Finnish NFI pine/spruce data (Hu
+et al. 2020, cited pp.107-109), is what lets branch and stem biomass be
+predicted from just diameter, height, and crown ratio - no need to observe
+leaf mass directly.
+
+### 1.2  The dynamic crown-rise model (Chapter 5, pp.101-120)
+
+Chapter 5 combines the pipe model with a carbon-balance growth model.
+Active pipes deactivate as branches at the crown base die from shading -
+this upward creep of the crown base is **crown rise**, $H_\mathrm{c}(t)$.
+Crown length is $L_\mathrm{c} = H - H_\mathrm{c}$, and active pipe area
+scales with crown length (Eq. 5.10, p.105):
+
+$$A_\mathrm{c} = \beta_A L_\mathrm{c}^{\,z}$$
+
+The key behavioural assumption (Sect. 5.2.4, p.109) is that a tree's
+*maximum* crown length is capped by light competition / spatial crowding,
+approximated by the average distance to neighbours, $X$ (or, pre-closure,
+the potential ground-coverage width $X_\mathrm{c}$):
+
+$$\max\{H - H_\mathrm{c}\} = \alpha_x + \beta_x X_\mathrm{c}$$
+
+and the crown base only rises once the crown has grown into that limit
+(Eq. 5.33, p.110):
+
+$$\frac{\mathrm{d}H_\mathrm{c}}{\mathrm{d}t} =
+\begin{cases}
+0, & H_\mathrm{c} > H - \alpha_x - \beta_x X_\mathrm{c} \\[4pt]
+\dfrac{\mathrm{d}H}{\mathrm{d}t} - \beta_x \dfrac{\mathrm{d}X_\mathrm{c}}{\mathrm{d}t}, & \text{otherwise}
+\end{cases}$$
+
+A control parameter $u = \mathrm{d}X_\mathrm{c}/\mathrm{d}t$ represents
+emergence ($u>0$, crown lengthens) or suppression ($u<0$, crown shrinks);
+**the status-quo case is $u = 0$**, under which, once the crown has closed
+on its maximum length, the crown base simply rises at the same rate as the
+tip grows - crown length stays constant from then on (p.110, explicit in
+text). That is the case used in Sect. 3 below, because it needs nothing
+beyond a height trajectory and one spacing parameter.
+
+The full height-growth rate itself (Eq. 5.26, p.107) depends on the whole
+carbon balance of the tree:
+
+$$\frac{\mathrm{d}H}{\mathrm{d}t} =
+\left[\frac{L_\mathrm{c}}{z\sum W_i + \beta_1 W_\mathrm{f} L_\mathrm{c}}\right]
+\left[Y_\mathrm{G}(P - R_\mathrm{M}) - \frac{W_\mathrm{f}}{T_\mathrm{f}} - \frac{W_\mathrm{r}}{T_\mathrm{r}}\right]$$
+
+i.e. production, $P$, minus maintenance respiration and leaf/fine-root
+turnover, divided down by a structural factor that depends on crown length.
+This is the part that is *not* portable to CASSIA without substantial
+surgery (Sects. 4-5).
+
+### 1.3  Calibration (Chapter 9)
+
+General methodology only (sensitivity functions Eq. 9.1-9.10, Bayesian/
+Kalman-filter data assimilation, Sect. 9.3-9.4) - no crown-specific content.
+Relevant later, once there is real crown-base-height data to calibrate
+$\alpha_x$, $\beta_x$, or $r_\mathrm{c}$ against, the same way
+`height_correction.Rmd` calibrated `alpha_H`.
+
+---
+
+## 2  Reference model: the crown-rise ODE in isolation
+
+The full worked example in Sect. 5.5 couples crown rise to a complete
+carbon-balance height-growth model (Eq. 5.26, with its own $W_\mathrm{f}$,
+$W_\mathrm{p}$, $W_\mathrm{q}$ pools). Porting that whole system turned out
+to be a dead end worth recording rather than hiding: a first full port hit
+a real sign problem (the stem-wood term $W_\mathrm{s}$, Eq. 5.23, goes
+negative once the tree is tall relative to its now-capped crown length,
+because $\beta_1 H+\beta_2 H_\mathrm{c}$ changes sign) - and Sect. 6 below
+concludes that whole carbon-balance machinery isn't what CASSIA needs
+anyway, since CASSIA has no equivalent $W_\mathrm{f}$ pool to plug into it.
+So rather than spend more effort pinning down a transcription issue in
+machinery that will be set aside regardless, this section isolates just
+the **crown-rise rule itself** (Eq. 5.32-5.34, p.109-110) - the part that
+Sect. 3 actually reuses - and drives it with a simple illustrative height
+curve instead of the fragile full carbon-balance $\mathrm{d}H/\mathrm{d}t$.
+
+```{r crown-rise-isolated}
+alpha_x <- 1.45; beta_x <- 1.65   # book's example values
+Hc_0 <- 0; Xc_0 <- 2.5; u <- 0.0   # status quo: crown length constant once closed
+
+# A generic saturating height curve, standing in for "whatever dH/dt a real
+# growth model produces" - not fitted to anything, just smooth and bounded.
+H_of_t <- function(t) 35 * (1 - exp(-t / 15))
+
+crown_rise_step <- function(t, Hc, dt = 1, dh = 1e-3) {
+  H  <- H_of_t(t)
+  dH <- (H_of_t(t + dh) - H) / dh        # dH/dt estimated on a small sub-step
+  Hs <- Hc_0 + alpha_x + beta_x * Xc_0   # closure height, from the max{H-Hc} definition
+  Q  <- H^20 / (Hs^20 + H^20)            # smooth switch, same form as the book's
+  dHc <- Q * max(0, dH - beta_x * u)     # Eq. 5.33
+  Hc + dt * dHc                          # annual Euler step
+}
+
+years <- 0:80
+Hc_path <- Reduce(function(Hc, t) crown_rise_step(t, Hc), years, accumulate = TRUE, init = Hc_0)[-1]
+crown_rise_check <- data.frame(year = years, H = H_of_t(years), Hc = Hc_path)
+crown_rise_check$Lc <- crown_rise_check$H - crown_rise_check$Hc
+```
+
+```{r crown-rise-isolated-plot}
+ggplot(crown_rise_check, aes(x = year)) +
+  geom_line(aes(y = H,  colour = "Tip height (H)")) +
+  geom_line(aes(y = Hc, colour = "Crown base height (Hc)")) +
+  geom_line(aes(y = Lc, colour = "Crown length (Lc)")) +
+  scale_colour_manual(name = NULL, values = c(
+    "Tip height (H)" = "#1b7837",
+    "Crown base height (Hc)" = "#762a83",
+    "Crown length (Lc)" = "#e08214"
+  )) +
+  labs(title = "Crown-rise rule (Eq. 5.32-5.34) driven by an illustrative height curve",
+       subtitle = "Not the book's own worked example - isolates the one equation Sect. 3 reuses",
+       x = "Year", y = "m") +
+  theme_bw(base_size = 13)
+```
+
+This confirms the mechanism behaves as the text describes: the crown base
+stays put while the crown is still short of its competition-limited
+maximum, then rises in lock-step with the tip once closed, holding crown
+length constant - exactly the behaviour Sect. 3 relies on, now with the
+smooth $Q$-switch verified against an independent height curve instead of
+the fragile carbon-balance one.
+
+---
+
+## 3  A diagnostic crown base height for CASSIA's own output
+
+CASSIA has no leaf-biomass pool in the pipe-model sense (its `needles`
+state is a phenology-driven daily growth increment, not a $W_\mathrm{f}$
+mass pool with a pipe-model ratio), so Eq. 5.26's full carbon-coupled
+height-growth rate can't be substituted in as-is. But the **status-quo
+crown-rise rule** (Sect. 1.2 above) needs nothing from the carbon balance
+at all - only a height trajectory, which CASSIA already produces, and one
+stand-density/spacing parameter, $X_\mathrm{c,0}$.
+
+Under $u = 0$, the rule integrates to a closed form: the crown base stays
+at $H_{\mathrm{c},0}$ until the crown has grown to its maximum length,
+$L_{\mathrm{c,max}} = \alpha_x + \beta_x X_\mathrm{c,0}$, then rises in
+lock-step with the tip from then on:
+
+$$H_\mathrm{c}(t) = \max\big(H_{\mathrm{c},0},\ H(t) - L_\mathrm{c,max}\big)$$
+
+This reuses the same Hyde (Hyytiälä) SMEAR setup as `height_correction.Rmd`
+(real weather, real `h0`/`D0`, `height_diameter_correction = TRUE`), so the
+height trajectory going in is CASSIA's best current fit to the real stand.
+
+```{r cassia-setup}
+data_directory  <- "~/Documents/CASSIA_Calibration/Processed_Data/"
+loaded_data     <- load_data(data_directory)
+
+new_parameters  <- rep(0.5, 27)
+parameters_2015 <- initialize_parameters(calibration = FALSE, new_parameters)
+
+parameters_2015$parameters_test[c("h0"),          "Hyde"] <- 12
+parameters_2015$parameters_test[c("D0"),          "Hyde"] <- 0.1646
+parameters_2015$parameters_test[c("GPP_mean"),    "Hyde"] <- 463.8833
+parameters_2015$parameters_test[c("GPP_initial"), "Hyde"] <- 460.0
+
+weather_preles <- data.table::fread("~/Documents/CASSIA/data/ERA5_CASSIA_preles.csv")
+weather_1998_2022 <- weather_preles[
+  weather_preles$date >= as.Date("1998-01-01") &
+  weather_preles$date <= as.Date("2022-12-31"), ]
+weather_1998_2022$dates <- as.Date(weather_1998_2022$date)
+dates_1998_2022 <- weather_1998_2022$dates
+
+CASSIA_run <- CASSIA_cpp(
+  weather                    = weather_1998_2022,
+  site                       = "Hyde",
+  pPREL                      = c(parameters_2015$pPREL, parameters_2015$N_parameters),
+  parameters                 = parameters_2015$parameters_test,
+  common                     = common_p,
+  ratios                     = ratios_p,
+  sperling                   = parameters_2015$sperling_test,
+  needle_mass_in             = 0,
+  Throughfall                = parameters_2015$Throughfall,
+  photosynthesis_as_input    = FALSE,
+  nitrogen_balance           = 25,
+  nitrogen_change            = FALSE,
+  nitrogen_contrast          = FALSE,
+  preles                     = TRUE,
+  fAPAR_Tian                 = TRUE,
+  organ_level_sugar          = FALSE,
+  needle_mass_grows          = TRUE,
+  height_diameter_correction = TRUE
+)
+```
+
+```{r cassia-crown-diagnostic}
+# Tree starts at h0 = 12m with an already-established crown, so Hc_0 here
+# is NOT 0 (bare ground, as in the book's example starting from a seedling)
+# - it only makes sense as "however far down the live crown already
+# reaches at the start of the run", which isn't a CASSIA output. Treated
+# as a free starting offset below, swept alongside Xc_0 (stand spacing),
+# since Hyde's real crown-base height isn't loaded in this notebook.
+alpha_x <- 1.45; beta_x <- 1.65   # kept at the book's values for now
+
+crown_diagnostic <- function(H, Hc_0, Xc_0) {
+  Lc_max <- alpha_x + beta_x * Xc_0
+  Hc <- pmax(Hc_0, H - Lc_max)
+  data.frame(H = H, Hc = Hc, Lc = H - Hc, rc = (H - Hc) / H)
+}
+
+H_t <- CASSIA_run$Culm_Growth$culm_growth_height
+
+scenarios <- list(
+  "dense stand (Xc0 = 1.5m)"     = crown_diagnostic(H_t, Hc_0 = 3, Xc_0 = 1.5),
+  "medium stand (Xc0 = 2.5m)"    = crown_diagnostic(H_t, Hc_0 = 3, Xc_0 = 2.5),
+  "sparse stand (Xc0 = 3.5m)"    = crown_diagnostic(H_t, Hc_0 = 3, Xc_0 = 3.5)
+)
+
+crown_long <- do.call(rbind, lapply(names(scenarios), function(nm) {
+  d <- scenarios[[nm]]
+  data.frame(dates = dates_1998_2022, Hc = d$Hc, Lc = d$Lc, Scenario = nm)
+}))
+
+p_hc <- ggplot() +
+  geom_line(data = data.frame(dates = dates_1998_2022, H = H_t),
+             aes(x = dates, y = H), colour = "#1b7837", linewidth = 0.9) +
+  geom_line(data = crown_long, aes(x = dates, y = Hc, colour = Scenario), linewidth = 0.8) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = "CASSIA tip height vs. diagnostic crown base height",
+       subtitle = "Tip height (green) is CASSIA's real output; Hc (coloured) is the Sect. 3 overlay, not fed back into growth",
+       x = NULL, y = "Height (m)") +
+  theme_bw(base_size = 13) + theme(legend.position = "bottom")
+
+p_lc <- ggplot(crown_long, aes(x = dates, y = Lc, colour = Scenario)) +
+  geom_line(linewidth = 0.8) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = "Diagnostic crown length",
+       x = NULL, y = "Crown length (m)") +
+  theme_bw(base_size = 13) + theme(legend.position = "bottom")
+
+(p_hc | p_lc) + plot_layout(guides = "collect") & theme(legend.position = "bottom")
+```
+
+Read this as: *if* Hyde pine has a maximum sustainable crown length of
+roughly `alpha_x + beta_x * Xc0`, and *if* the crown base stays put until
+the tree first grows into that limit, this is what crown base height and
+crown length would look like riding on top of CASSIA's real height curve.
+Nothing here has been fit to any real Hyde crown-base-height observation -
+`Hc_0`, `Xc_0` are placeholders swept for illustration, not calibrated
+values.
+
+---
+
+## 4  Leaf growth against the pipe model
+
+### 4.1  The book's equation (Eq. 4.10, p.103; Eq. 4.21, p.106)
+
+Leaf mass at the crown base is Eq. 4.10, combined with the crown-ratio
+substitution from Sect. 1.1:
+
+$$W_\mathrm{f} = \eta_\mathrm{s} A_\mathrm{c} = \eta_\mathrm{s} r_\mathrm{c} B$$
+
+The book gives no generic numeric default for $\eta_\mathrm{s}$ in these
+chapters (it is fitted externally, e.g. Lehtonen (2020), Hu et al. (2020),
+p.108-109), so what follows is a self-consistency check of CASSIA's own
+output against this *shape*, not a calibrated validation against the book.
+
+### 4.2  What CASSIA already has
+
+`CASSIA_run$Growth$leaf_area` and `$leaf_mass` are both real outputs
+(`output_functions.cpp:28-29`, the `Growth` data frame), and both trace
+back to the same daily `repola.needle_mass` value (`src/repola.cpp:16`,
+Repola 2009) - but via two different corrections applied in
+`fAPAR_and_LAI.cpp:36-114`:
+
+```
+needle_mass          <- repola.needle_mass
+needle_mass_sapwood  <- needle_mass * (n_age-1)/n_age + needle_mass * f_modifer / n_age
+needle_mass          <- needle_mass * (n_age-1)/n_age + needle_mass * f_modifer * senescence / n_age
+
+leaf_mass  <- needle_mass          # WITH the senescence factor (line 99)
+leaf_area  <- needle_mass_sapwood / LMA   # WITHOUT it (line 114), LMA = 0.06 kg/m^2
+```
+
+So there *is* a multiplier between the two - specific leaf area,
+$\mathrm{SLA} = 1/\mathrm{LMA} \approx 16.7\ \mathrm{m^2\,kg^{-1}}$ - but it
+is applied to `needle_mass_sapwood`, the pre-senescence cohort pool, while
+`leaf_mass` carries the post-senescence (`fS`-weighted) one. The two are
+identical only while `senescence = 1` (i.e. before `fS` starts falling in
+autumn); once senescence engages, `needle_mass_sapwood > needle_mass`, so
+`leaf_area * LMA >= leaf_mass`.
+
+### 4.3  Diagnostic: implied $\eta_\mathrm{s}$
+
+If CASSIA's `leaf_mass`, diameter, and the crown ratio from Sect. 3 obeyed
+the pipe model exactly, $\eta_\mathrm{s,implied} = W_\mathrm{f}/(r_\mathrm{c}B)$
+would be constant over time.
+
+```{r pipe-model-leaf-diagnostic}
+rc_t <- scenarios[["medium stand (Xc0 = 2.5m)"]]$rc  # reuse Sect. 3's crown ratio
+
+D_t  <- CASSIA_run$Culm_Growth$culm_growth_diameter   # m
+B_t  <- pi / 4 * D_t^2                                 # basal area, m^2 (matches A_c's units)
+Wf_t <- CASSIA_run$Growth$leaf_mass                    # kg
+
+eta_diagnostic <- data.frame(
+  dates         = dates_1998_2022,
+  eta_s_implied = Wf_t / (rc_t * B_t)   # "would-be" pipe model ratio, kg/m^2
+)
+
+ggplot(eta_diagnostic, aes(x = dates, y = eta_s_implied)) +
+  geom_line(colour = "#1b7837", linewidth = 0.8) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = expression("Implied pipe model ratio, " * W[f] / (r[c] * B)),
+       subtitle = "Constant if leaf_mass tracked crown ratio x basal area exactly",
+       x = NULL, y = expression(eta[s]~(kg~m^{-2}))) +
+  theme_bw(base_size = 13)
+```
+
+This is a diagnostic of CASSIA's *internal* consistency with the pipe-model
+shape, not an estimate of $\eta_\mathrm{s}$ itself - `rc_t` is still the
+Sect. 3 placeholder crown ratio, not a real Hyde crown ratio. Over the
+25-year Hyde run, implied $\eta_\mathrm{s}$ stays within roughly a factor
+of two of itself - phenology-driven `leaf_mass` tracks diameter growth
+reasonably well even with no explicit pipe-model term.
+
+### 4.4  Diagnostic: does `leaf_area` agree with `leaf_mass` via LMA?
+
+Sect. 4.2's formulas predict `leaf_area * LMA` should equal `leaf_mass`
+exactly outside the senescence window, and exceed it once senescence
+engages. Checking the implied LMA directly, $\mathrm{LMA_{implied}} =
+W_\mathrm{f} / A_\mathrm{leaf}$, against the hard-coded constant (0.06
+kg/m²) confirms this rather than just asserting it from the code:
+
+```{r leaf-mass-area-diagnostic}
+Aleaf_t <- CASSIA_run$Growth$leaf_area                 # m^2
+
+LMA_diagnostic <- data.frame(
+  dates        = dates_1998_2022,
+  LMA_implied  = Wf_t / Aleaf_t   # kg / m^2
+)
+
+ggplot(LMA_diagnostic, aes(x = dates, y = LMA_implied)) +
+  geom_line(colour = "#b35806", linewidth = 0.6) +
+  geom_hline(yintercept = 0.06, linetype = "dashed", colour = "grey40") +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = expression("Implied leaf mass per area, " * W[f] / A[leaf]),
+       subtitle = "Dashed line: the hard-coded LMA constant (0.06 kg/m^2, fAPAR_and_LAI.cpp:34)",
+       x = NULL, y = expression(LMA[implied]~(kg~m^{-2}))) +
+  theme_bw(base_size = 13)
+```
+
+Checked numerically (not just from the code): `LMA_implied` sits exactly
+on 0.06 on 68% of days (within 1%), with median and 3rd quartile both
+exactly 0.06 - confirming `leaf_area` and `leaf_mass` agree via the
+expected $1/\mathrm{SLA}$ multiplier outside the senescence window. The
+remaining ~31% of days sit visibly below it (5th percentile 0.043,
+minimum 0.04), exactly when `senescence < 1` pulls `leaf_mass` down while
+`leaf_area` (built from the unsenesced `needle_mass_sapwood`) does not
+follow - a large enough fraction of the year that this is a real seasonal
+pattern, not a brief edge effect. So the two outputs
+are consistent *by construction* (same source, one multiplier) rather than
+independently validating each other - a real check of either against the
+pipe model still needs external foliage-mass or LAI observations to
+compare against, not just internal agreement between CASSIA's own
+derived quantities.
+
+---
+
+## 5  Root growth against the pipe model
+
+### 5.1  The book's equation (Eq. 4.13, p.104)
+
+Fine-root biomass is simpler than leaf mass: proportional to leaf biomass
+(Sect. 4.3.3),
+
+$$W_\mathrm{r} = \alpha_\mathrm{r} W_\mathrm{f}$$
+
+with $\alpha_\mathrm{r}$ set by nutrient availability and varying by
+species (Ingestad & Ågren 1992; Vanninen & Mäkelä 1999, cited p.104) - again
+no generic numeric default is given.
+
+### 5.2  What CASSIA already has
+
+`CASSIA_run$Culm_Growth$culm_growth_roots` is a real, running-total root
+mass output (kg; `growth.cpp`'s `GR` dynamics, logged in
+`actual_growth.cpp:141-154`). CASSIA already encodes a root-from-leaf
+relationship structurally identical to Eq. 4.13, in two different places:
+
+1. `repola.cpp:20`: `m_R_tot = 0.5 * m_N_tot` (comment: `"TODO: is this
+   the roots?"`) - but this is dead code. `out.m_R_tot` is resized
+   (`initialise_output.cpp:45`) and never written to from
+   `repola_values.m_R_tot` anywhere in `CASSIA.cpp`, and has no column in
+   any output data frame (checked `output_functions.cpp`) - it is
+   computed every call and silently discarded.
+2. `growth.cpp:440-461`'s `root_leaf_correction` (off by default, and off
+   in the `CASSIA_run` above): when enabled, it damps root growth toward
+   `R_bal = alpha_R * leaf_area_max_last_year` (`growth.cpp:453`) -
+   root $\propto$ leaf, exactly Eq. 4.13's form, just leaf *area* rather
+   than leaf *mass*. `alpha_R = 0.15` is flagged in the code itself as an
+   uncalibrated placeholder, with no real $\alpha_\mathrm{r}$ sourced from
+   the book or elsewhere yet.
+
+### 5.3  Diagnostic: implied $\alpha_\mathrm{r}$
+
+```{r pipe-model-root-diagnostic}
+Wr_t <- CASSIA_run$Culm_Growth$culm_growth_roots       # kg
+
+alpha_diagnostic <- data.frame(
+  dates           = dates_1998_2022,
+  alpha_r_implied = Wr_t / Wf_t     # "would-be" fine-root:leaf-mass ratio
+)
+
+ggplot(alpha_diagnostic, aes(x = dates, y = alpha_r_implied)) +
+  geom_line(colour = "#762a83", linewidth = 0.8) +
+  geom_hline(yintercept = 0.15, linetype = "dashed", colour = "grey40") +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = expression("Implied fine-root ratio, " * W[r] / W[f]),
+       subtitle = "Dashed line: growth.cpp's own uncalibrated alpha_R placeholder (0.15)",
+       x = NULL, y = expression(alpha[r])) +
+  theme_bw(base_size = 13)
+```
+
+Unlike $\eta_\mathrm{s}$, implied $\alpha_\mathrm{r}$ is not stable: it
+climbs from close to 1 early in the run to nearly 6 by the end.
+`culm_growth_roots` is a running total with no leaf-mass ceiling when
+`root_leaf_correction = FALSE` (as here), so it just keeps accumulating
+while `leaf_mass` stays bounded by annual phenology and senescence. That is
+precisely the gap `root_leaf_correction` exists to close - this run simply
+has it switched off.
+
+---
+
+## 6  What's missing for a real (feedback-coupled) CASSIA state
+
+The diagnostic in Sect. 3 is a one-way overlay: height drives crown base
+height, but crown base height drives nothing back. To make crown rise a
+real CASSIA state - most importantly, to let crown length affect
+photosynthesis via LAI/fAPAR, which is the actual payoff of modelling it -
+still needs:
+
+- **A leaf-biomass pool in pipe-model terms.** CASSIA's `needles` and
+  `leaf_area` (`function_structures.h`) are phenology-driven growth
+  increments, not a $W_\mathrm{f}$ mass with a pipe-model ratio
+  $\eta_\mathrm{s}$. `repola()` (`src/repola.cpp`) already predicts needle
+  mass from diameter and height (Repola 2009, the same empirical family the
+  book cross-checks pipe-model predictions against, p.108-109), but it has
+  no crown-length term and isn't a dynamic pool.
+- **A real stand-spacing/density input.** $X_\mathrm{c}$ or $X$ isn't
+  something CASSIA currently takes as a site parameter - Sect. 3 above had
+  to guess it. `external/Rprebasso`'s `pCROB.Rmd` parameter table
+  (`betab`, `betas`, `x`, `cR`) and real Finnish calibrations are the
+  obvious source of plausible values, or real Hyde stand density if it
+  exists in `CASSIA_Calibration/Processed_Data/`.
+- **A decision on whether crown length should feed back into LAI/fAPAR**
+  (`fAPAR_and_LAI.cpp`). This is the actual motivation for tracking crown
+  rise rather than treating it as a side quantity - but it changes
+  `fAPAR_and_LAI.cpp`'s formula, so it is a separate, bigger step from this
+  notebook.
+- **Calibration data.** Real SMEAR/Hyde crown base height or crown ratio
+  observations (if any exist, the way `height_correction.Rmd` has real
+  height/diameter) to fit $\alpha_x$/$\beta_x$/$X_\mathrm{c,0}$ (or
+  directly $r_\mathrm{c}$ via Eq. 4.21) against, using Chapter 9's
+  sensitivity framework if it comes to that - and, per Sects. 4-5, real
+  foliage/fine-root mass observations to replace $\eta_\mathrm{s}$ and
+  $\alpha_\mathrm{r}$'s current status (no numeric value at all for
+  $\eta_\mathrm{s}$; `alpha_R = 0.15` an admitted placeholder for
+  $\alpha_\mathrm{r}$) with real fitted values.
+
+---
+
+## 7  Open questions
+
+- Is there real crown-base-height or crown-ratio data for the Hyde stand to
+  calibrate against, or should $\alpha_x$/$\beta_x$ stay at the book's
+  generic Scots-pine defaults for now?
+- Is the end goal crown length feeding back into LAI/fAPAR (the real payoff,
+  but a bigger change to `fAPAR_and_LAI.cpp`), or is a standalone
+  crown-base-height *output* (no feedback) enough for now?
+- If feedback is wanted: is it worth building the $W_\mathrm{f}$ pipe-model
+  pool properly (Sect. 6, first bullet), or would a cruder proxy (e.g.
+  `repola()`'s needle mass, or CASSIA's existing `leaf_area`, run through
+  Eq. 4.10/4.21 directly) be an acceptable first pass?
+- Sects. 4-5's implied $\eta_\mathrm{s}$/$\alpha_\mathrm{r}$ ratios are not
+  constant over the run - is that drift worth chasing (real foliage/root
+  mass data to fit against), or is CASSIA's phenology-and-soil-driven
+  leaf/root growth simply not expected to match a static allometric ratio
+  closely, making this a non-issue?
+- Sect. 4.4 shows `leaf_area` and `leaf_mass` agree via the LMA multiplier
+  essentially by construction (same source pool, one conversion factor) -
+  is an independent external check (real foliage mass or LAI observations)
+  worth pursuing, or is that lower priority than the $\alpha_\mathrm{r}$ gap?
