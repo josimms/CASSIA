@@ -150,7 +150,24 @@ void actual_growth(int day,
     const double root_turnover_years = 3.0; // TODO: placeholder (matches n_age's default) - needs real calibration, and ideally parameters.root_lifetime once that's actually populated
     double daily_turnover_fraction = root_senescence_degree / (root_turnover_years * 365.0);
 
-    double root_litter_today = all_out.culm_growth.roots[index_ref] * daily_turnover_fraction;
+    // Pipe-model litter boost (mirrors needle litter's litter_boost_today,
+    // growth.cpp's makela_loss_boost_factor): symmetric, uncapped ratio of
+    // this year's running root peak (tree_state.max_roots_running) to this
+    // year's fixed alpha_r*leaf_mass target (tree_state.R_bal_current, set
+    // in growth.cpp's root_leaf_correction block) - > 1 sheds roots faster
+    // once the pool has overgrown past the pipe-model target, < 1 sheds
+    // slower while undergrown, same reasoning as needles' own correction.
+    // Naturally stays 1.0 whenever root_leaf_correction has never run
+    // (R_bal_current still 0 - makela_loss_boost_factor's own epsilon
+    // guard), so this is safe to leave unconditional here. Scoped to roots
+    // only, not mycorrhiza - Eq. 4.13 is a fine-root relationship (Makela
+    // & Valentine 2020, Ch.4); mycorrhiza has no pipe-model analogue, so
+    // myco_litter_today stays on the base senescence-driven fraction
+    // alone, same as before this change.
+    double root_bal_boost_today = makela_loss_boost_factor(
+      tree_state.R_bal_current, tree_state.max_roots_running, boolsettings.tau_R);
+
+    double root_litter_today = all_out.culm_growth.roots[index_ref] * daily_turnover_fraction * root_bal_boost_today;
     double myco_litter_today = all_out.culm_growth.mycorrhiza[index_ref] * daily_turnover_fraction;
 
     all_out.culm_growth.roots[days_gone+day]      = std::max(0.0, all_out.culm_growth.roots[index_ref]      - root_litter_today + tree_state.roots);
@@ -264,11 +281,15 @@ void actual_growth(int day,
   tree_state.N_retranslocated_today =
     needle_litter_N_retrans + root_litter_N_retrans + myco_litter_N_retrans;
 
-  // Running within-year max of leaf_area/roots, for root_leaf_correction's
-  // yearly C_R (see growth.cpp) - tracked unconditionally since it's
-  // negligible cost and keeps it ready if the setting is toggled on.
-  tree_state.max_leaf_area_running = std::max(tree_state.max_leaf_area_running, all_out.culm_growth.leaf_area[days_gone+day]);
-  tree_state.max_roots_running     = std::max(tree_state.max_roots_running,     all_out.culm_growth.roots[days_gone+day]);
+  // Running within-year max of leaf_mass/roots, for root_leaf_correction's
+  // yearly C_R and root_turnover's daily litter boost (see growth.cpp) -
+  // tracked unconditionally since it's negligible cost and keeps it ready
+  // if either setting is toggled on. max_leaf_mass_running_for_roots is a
+  // dedicated second tracker, not a reuse of needles' own
+  // max_leaf_mass_running - see that field's comment
+  // (function_structures.h) for why reuse would read as already-reset 0.
+  tree_state.max_leaf_mass_running_for_roots = std::max(tree_state.max_leaf_mass_running_for_roots, all_out.culm_growth.leaf_mass[days_gone+day]);
+  tree_state.max_roots_running               = std::max(tree_state.max_roots_running,               all_out.culm_growth.roots[days_gone+day]);
 
   // Needles accumulation (potentially include drop logic later)
 

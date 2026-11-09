@@ -449,40 +449,63 @@ void growth(int day,
    * Roots
    */
 
-  // Makela (1999) structural-balance target for roots, referenced against
-  // leaf area rather than diameter (see manuscript/paper_plan.Rmd):
-  // leaf area already has genuine bounded within-year and across-year
-  // turnover (Tian 2021 cohort aging/senescence in compute_fAPAR_used()),
-  // unlike diameter, so it gives roots something real to correct toward.
-  // Unlike height's correction, this is recomputed only once per year
-  // (day == 0) and held fixed for the rest of that year via
-  // state.C_R_year, rather than chasing leaf area's within-year seasonal
-  // swings daily - closer to how LH_estim/LD_estim's own annual terms
-  // behave than to height's own daily recorrection.
+  // Makela & Valentine (2020) pipe-model target for roots, Eq. 4.13:
+  // W_r = alpha_r * W_f - fine-root mass proportional to LEAF MASS, not
+  // leaf area (the pre-pipe-model design this replaces; see
+  // development_notebooks/crown_height.Rmd Sect. 5/6 and
+  // manuscript/paper_plan.Rmd's "Root growth" section for the leaf-area
+  // version and why it's superseded: Repola's own below-ground equations
+  // - Eq. 10/11 - predict root mass from diameter alone, with no link to
+  // leaf mass at all, so this is the only formula in CASSIA that actually
+  // ties root mass to leaf mass). Unlike height's correction, this is
+  // recomputed only once per year (day == 0) and held fixed for the rest
+  // of that year via state.C_R_year, rather than chasing leaf_mass's
+  // within-year seasonal swings (spring flush, autumn senescence) daily -
+  // closer to how LH_estim/LD_estim's own annual terms behave than to
+  // height's own daily recorrection.
   //
-  // Uses the PREVIOUS YEAR'S MAXIMUM leaf_area/roots, not its last-day
-  // value: state.max_leaf_area_running/max_roots_running are updated
-  // daily in actual_growth.cpp and only reset below, so at this point
-  // (day == 0, before today's actual_growth() call) they still hold the
-  // just-finished year's running max - its peak, not wherever the pool
-  // happened to sit at the literal year-end snapshot (which can
+  // Uses the PREVIOUS YEAR'S MAXIMUM leaf_mass/roots, not its last-day
+  // value: state.max_leaf_mass_running_for_roots/max_roots_running are
+  // updated daily in actual_growth.cpp and only reset below, so at this
+  // point (day == 0, before today's actual_growth() call) they still
+  // hold the just-finished year's running max - its peak, not wherever
+  // the pool happened to sit at the literal year-end snapshot (which can
   // undershoot the peak once senescence/litter are active).
   //
-  // alpha_R is an UNCALIBRATED PLACEHOLDER - unlike alpha_H (fit against
-  // two real independent SMEAR height/diameter series), no equivalent
-  // root-biomass-vs-leaf-area observational series has been sourced yet.
-  // Do not treat results with root_leaf_correction = TRUE as calibrated
-  // until a real alpha_R replaces this.
+  // A SEPARATE leaf_mass tracker from needles' own max_leaf_mass_running
+  // (function_structures.h) is required, not a simplification choice:
+  // this file's needle section above (leaf_mass_correction's day == 0
+  // block) already resets max_leaf_mass_running to 0 for the new year
+  // BEFORE this root section runs, within the same growth() call - so
+  // reading that field here would always see 0, not last year's peak.
+  //
+  // alpha_r = 0.47: PREBAS/CROBAS's own "alfar3" (Scots pine, site
+  // fertility type 3 - external/Rprebasso, already a submodule of this
+  // repo; R/parameters.r's pCROB[,1] row 23, documented in
+  // vignettes/Parameters_pCROB.Rmd as "Ratio of fine roots to foliage
+  // mass"). CROBAS is Mäkelä's own Finnish-calibrated implementation of
+  // essentially this same pipe-model framework, and PREBAS/CROBAS gives
+  // alfar a site-fertility gradient (type 1, most fertile, to 5, least
+  // fertile: 0.40/0.44/0.47/0.64/0.84 for Scots pine - see
+  // manuscript/paper_plan.Rmd's "Root growth" section for the full
+  // table). Type 3 was chosen as Hyde's best available match (no
+  // explicit site-fertility classification exists anywhere in CASSIA's
+  // own data for Hyytiälä to confirm this against). Not a substitute for
+  // real alpha_H-style calibration against an independent Hyde
+  // root-biomass-vs-leaf-mass series (none sourced yet) - treat as a
+  // real, sourced value from a cognate model/site, not yet a validated
+  // one for this specific stand.
   if (boolsettings.root_leaf_correction && day == 0) {
-    const double alpha_R = 0.15; // TODO: placeholder, needs real calibration data
+    const double alpha_r = 0.47; // PREBAS/CROBAS alfar3, Scots pine, site fertility type 3
 
-    double leaf_area_max_last_year = state.max_leaf_area_running;
+    double leaf_mass_max_last_year = state.max_leaf_mass_running_for_roots;
     double roots_max_last_year = state.max_roots_running;
-    double R_bal = alpha_R * leaf_area_max_last_year;
+    double R_bal = alpha_r * leaf_mass_max_last_year;
     state.C_R_year = makela_control_factor(R_bal, roots_max_last_year, boolsettings.tau_R);
+    state.R_bal_current = R_bal; // threaded through to actual_growth.cpp's litter boost
 
     // Start tracking the new year's max fresh.
-    state.max_leaf_area_running = 0.0;
+    state.max_leaf_mass_running_for_roots = 0.0;
     state.max_roots_running = 0.0;
   }
 

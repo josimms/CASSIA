@@ -100,20 +100,49 @@ struct growth_state {
   double release = 0.0;
   double ring_width = 0.0;
 
-  // Makela (1999) structural-balance correction, roots referenced against
-  // leaf area: recomputed once per year (day == 0), not daily like
-  // height's, and held here across the rest of that year's days.
+  // Makela & Valentine (2020) pipe-model correction, roots referenced
+  // against LEAF MASS via Eq. 4.13 (W_r = alpha_r * W_f) - supersedes an
+  // earlier leaf-area version (see development_notebooks/crown_height.Rmd
+  // Sect. 5/6 and manuscript/paper_plan.Rmd's "Root growth" section for
+  // why: Repola's own root equations, Eq. 10/11, predict root mass from
+  // diameter alone, with no leaf link at all, so this pipe-model ratio is
+  // the only formula in CASSIA that actually ties root mass to leaf mass).
+  // Recomputed once per year (day == 0), not daily like height's, and
+  // held here across the rest of that year's days.
   double C_R_year = 1.0;
 
-  // Running max of leaf_area/roots across the CURRENT year, updated daily
-  // in actual_growth.cpp; read and reset at day == 0 in growth.cpp, at
+  // Running max of roots across the CURRENT year, updated daily in
+  // actual_growth.cpp; read and reset at day == 0 in growth.cpp, at
   // which point it holds the just-finished year's max (not yet reset for
-  // the new year). C_R_year is computed from these maxima, not the
-  // previous year's last-day value - a within-year peak, not wherever the
-  // pool happens to sit at the literal year-end snapshot (which can
-  // undershoot the peak once senescence/litter are active).
-  double max_leaf_area_running = 0.0;
+  // the new year). C_R_year is computed from this and
+  // max_leaf_mass_running_for_roots below, not the previous year's
+  // last-day value - a within-year peak, not wherever the pool happens
+  // to sit at the literal year-end snapshot (which can undershoot the
+  // peak once senescence/litter are active).
   double max_roots_running = 0.0;
+
+  // A SECOND running-max tracker for leaf_mass, dedicated to the root
+  // correction above - not a simplification choice, a necessity: this
+  // file's needle section (leaf_mass_correction's own day == 0 block,
+  // growth.cpp) already resets max_leaf_mass_running (below) to 0 for the
+  // new year BEFORE this file's root section runs, within the same
+  // growth() call - reading that field from the root section would
+  // always see 0, never last year's peak. Tracked unconditionally in
+  // actual_growth.cpp (like max_roots_running), independent of
+  // leaf_mass_correction, so it stays ready if root_leaf_correction is
+  // toggled on alone - though in that case leaf_mass itself is the old
+  // memoryless, annually-reset quantity (fAPAR_and_LAI.cpp), not a
+  // genuinely accumulating pool, so this correction is only really
+  // meaningful paired with leaf_mass_correction = TRUE.
+  double max_leaf_mass_running_for_roots = 0.0;
+
+  // This year's root balance target, alpha_r * (last year's leaf_mass
+  // peak) - the same quantity growth.cpp's local R_bal variable computes,
+  // threaded through to actual_growth.cpp so root litter's own boost
+  // factor (makela_loss_boost_factor) can react to the same fixed,
+  // externally-anchored target as growth's C_R_year, not the moving
+  // roots pool itself. Mirrors N_repo_current's role for needles.
+  double R_bal_current = 0.0;
 
   // Root/mycorrhiza turnover: same sticky-senescence mechanism as
   // fAPAR_and_LAI.cpp's fS_reached_one for needles, kept separately here
@@ -547,9 +576,18 @@ struct Settings {
   bool height_diameter_correction = false;
   double tau_H = 5.0;
 
+  // Makela & Valentine (2020) pipe-model correction for root growth,
+  // referenced against leaf mass via the pipe model's own ratio
+  // (Ch.4, Eq. 4.13: W_r = alpha_r * W_f) - see growth.cpp's root
+  // section and manuscript/paper_plan.Rmd's "Root growth" section.
+  // Supersedes an earlier leaf-area-referenced version, 2026-11-06.
   bool root_leaf_correction = false;
   double tau_R = 5.0;
 
+  // Root/mycorrhiza litter (turnover). When root_leaf_correction is also
+  // TRUE, root_litter is additionally boosted/damped toward the same
+  // Eq. 4.13 target (actual_growth.cpp); mycorrhiza_litter is not - no
+  // pipe-model analogue exists for mycorrhiza.
   bool root_turnover = false;
 
   // Makela (1999) structural-balance correction for needle leaf_mass,

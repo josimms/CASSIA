@@ -103,6 +103,20 @@
 #' @param needle_mass_grows Logical. If \code{TRUE}, needle mass is updated
 #'   dynamically each year via the Repola model. If \code{FALSE} (default),
 #'   needle mass is fixed after the first iteration.
+#' @param pipe_model_correction Logical. Convenience shortcut: if
+#'   \code{TRUE}, ORs \code{height_diameter_correction},
+#'   \code{root_leaf_correction}, and \code{leaf_mass_correction} all on
+#'   together - the three Mäkelä (1999)/Mäkelä & Valentine (2020)
+#'   pipe-model-family structural-balance corrections. Only ever turns
+#'   these ON, never off - setting \code{pipe_model_correction = TRUE}
+#'   alongside e.g. \code{leaf_mass_correction = FALSE} still leaves
+#'   \code{leaf_mass_correction} active. Each of the three remains fully
+#'   independently settable, so existing calls that enable only one of
+#'   them in isolation (e.g. \code{height_diameter_correction} alone, as
+#'   in \code{height_correction.Rmd}/\code{nitrogen_scenarios.Rmd}) are
+#'   unaffected by this argument's default of \code{FALSE}. Does not
+#'   affect \code{root_turnover}, which is a separate litter mechanism -
+#'   see that argument's own doc. Default \code{FALSE}.
 #' @param height_diameter_correction Logical. If \code{TRUE}, height's
 #'   growth rate is damped (never boosted - capped at no correction, not
 #'   accelerated, so it never exceeds its own calibrated maximum rate)
@@ -130,19 +144,42 @@
 #' @param root_leaf_correction Logical. If \code{TRUE}, root growth is
 #'   damped (same Mäkelä 1999 eqn 28 mechanism as
 #'   \code{height_diameter_correction}, damping-only) toward a target
-#'   root:leaf-area ratio, leaf area being the uncorrected reference.
-#'   Unlike the height correction, the target ratio and damping factor are
+#'   root:leaf-MASS ratio - Mäkelä & Valentine (2020, \emph{Models of Tree
+#'   and Stand Dynamics}, Ch.4, Eq. 4.13: \eqn{W_r = \alpha_r W_f}, the
+#'   pipe model's own fine-root-from-leaf-mass relationship. (An earlier
+#'   version of this argument referenced leaf AREA instead; superseded
+#'   2026-11-06 - see \code{manuscript/paper_plan.Rmd}'s "Root growth"
+#'   section for why: Repola's own root equations predict root mass from
+#'   diameter alone, with no leaf link at all, so this pipe-model ratio is
+#'   the only formula in CASSIA that ties root mass to leaf mass.) Unlike
+#'   the height correction, the target ratio and damping factor are
 #'   recomputed only once per year (at the first day of each year) and
-#'   held fixed for the rest of that year, rather than daily - leaf area
-#'   has real within-year seasonal swings (Tian 2021 cohort turnover) that
-#'   would make a daily-recomputed target noisy. The target ratio
-#'   (\code{alpha_R} in \code{growth.cpp}) is currently an uncalibrated
-#'   placeholder - no real root-biomass-vs-leaf-area series has been
-#'   sourced yet, unlike \code{alpha_H}. Default \code{FALSE}.
+#'   held fixed for the rest of that year, rather than daily - leaf mass
+#'   has real within-year seasonal swings (growth flush, autumn
+#'   senescence) that would make a daily-recomputed target noisy. The
+#'   target ratio (\code{alpha_r} in \code{growth.cpp}) is \code{0.47} -
+#'   PREBAS/CROBAS's own "alfar3" (Scots pine, site fertility type 3;
+#'   \code{external/Rprebasso}, already a submodule of this repo - see
+#'   \code{vignettes/Parameters_pCROB.Rmd} and \code{R/parameters.r}'s
+#'   \code{pCROB} matrix). CROBAS is Mäkelä's own Finnish-calibrated
+#'   implementation of essentially this same pipe-model framework, and
+#'   gives \code{alfar} a site-fertility gradient (type 1-5:
+#'   0.40/0.44/0.47/0.64/0.84 for Scots pine - full table in
+#'   \code{manuscript/paper_plan.Rmd}'s "Root growth" section). Type 3 is
+#'   Hyde's best available match - no explicit site-fertility
+#'   classification exists anywhere in CASSIA's own data for Hyytiälä to
+#'   confirm this against, so treat as a real, sourced value from a
+#'   cognate model/site rather than a validated one for this specific
+#'   stand, unlike \code{alpha_H} (fit against two independent real
+#'   SMEAR height/diameter series). Most useful paired with
+#'   \code{leaf_mass_correction = TRUE}, so the leaf_mass it corrects
+#'   against is itself a genuinely accumulating pool rather than the
+#'   memoryless annually-reset default. Default \code{FALSE}.
 #' @param tau_R Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
-#'   roots' correction, when \code{root_leaf_correction = TRUE}. Ignored
-#'   otherwise. Default \code{5}, matching \code{tau_H}'s default - not
-#'   independently calibrated.
+#'   roots' correction, when \code{root_leaf_correction = TRUE}. Also used
+#'   by \code{root_turnover}'s litter boost below, when both are
+#'   \code{TRUE}. Ignored when neither is \code{TRUE}. Default \code{5},
+#'   matching \code{tau_H}'s default - not independently calibrated.
 #' @param root_turnover Logical. If \code{TRUE}, root and mycorrhiza
 #'   biomass (\code{culm_growth_roots}/\code{culm_growth_mycorrhiza}) lose
 #'   a daily fraction to litter, logged separately in
@@ -151,10 +188,15 @@
 #'   (\code{photosynthesis$fS}, sticky once it first reaches 1 after day
 #'   50 of the year, same as \code{fAPAR_and_LAI.cpp}), but is not a
 #'   literal copy of that formula - see \code{actual_growth.cpp} for why.
-#'   A first-pass mechanism: the turnover-time constant is an uncalibrated
-#'   placeholder (3 years, matching needle longevity's default), not yet
-#'   \code{parameters$root_lifetime} (unpopulated for this site). Default
-#'   \code{FALSE}.
+#'   When \code{root_leaf_correction} is also \code{TRUE}, root litter (not
+#'   mycorrhiza litter - no pipe-model analogue exists for mycorrhiza) gets
+#'   an additional symmetric, uncapped boost/damping toward the same
+#'   Eq. 4.13 target, mirroring \code{leaf_mass_correction}'s own needle
+#'   litter boost - sheds faster once roots have overgrown the target,
+#'   slower while undergrown. A first-pass mechanism: the turnover-time
+#'   constant is an uncalibrated placeholder (3 years, matching needle
+#'   longevity's default), not yet \code{parameters$root_lifetime}
+#'   (unpopulated for this site). Default \code{FALSE}.
 #' @param leaf_mass_correction Logical. If \code{TRUE}, needle
 #'   \code{leaf_mass} becomes a genuinely accumulating pool (growth via
 #'   the existing needle phenology signal, loss via a fS^2-based autumn
@@ -426,11 +468,12 @@ CASSIA_cpp <- function(
     trees_grow = FALSE,				# can be false if mature trees are modelled and not for a very long period
     growth_decreases = FALSE,			# the height and diameter growth (alfa_S and alfaD) decrease during the simulation
     needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
+    pipe_model_correction = FALSE,       # Convenience shortcut: TRUE ORs height_diameter_correction, root_leaf_correction, and leaf_mass_correction all on together - the three Makela & Valentine pipe-model-family corrections. Does not turn any of them OFF if already TRUE individually, and leaves them fully independently settable - see roxygen doc
     height_diameter_correction = FALSE,  # Makela (1999) structural-balance control, damping-only, height referenced against diameter (not the reverse - see roxygen doc)
     tau_H = 5,                           # Makela (1999) eqn 28 exponent for height's correction, when height_diameter_correction = TRUE - RSS kept improving well past this, but higher tau produces an increasingly extreme early-year distortion; 5 balances fit against a moderate, not pathological, early-year correction (see manuscript/paper_plan.Rmd Working Notes)
-    root_leaf_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, roots referenced against leaf area - recomputed yearly not daily (see roxygen doc); alpha_R is an uncalibrated placeholder
+    root_leaf_correction = FALSE,        # Makela & Valentine (2020) pipe-model control (Eq. 4.13, Wr=alpha_r*Wf), damping-only, roots referenced against leaf MASS - recomputed yearly not daily (see roxygen doc); alpha_r=0.47 is PREBAS/CROBAS's alfar3 (Scots pine, site type 3), not yet Hyde-validated
     tau_R = 5,                           # Makela (1999) eqn 28 exponent for roots' correction, when root_leaf_correction = TRUE - not independently calibrated, defaults to tau_H's value
-    root_turnover = FALSE,               # Root/mycorrhiza litter, driven by the same fS senescence signal as leaf area's own turnover (not a literal copy - see roxygen doc); turnover-time constant is an uncalibrated placeholder
+    root_turnover = FALSE,               # Root/mycorrhiza litter, driven by the same fS senescence signal as leaf area's own turnover (not a literal copy - see roxygen doc); turnover-time constant is an uncalibrated placeholder; root litter gets an extra pipe-model boost/damp when root_leaf_correction is also TRUE
     leaf_mass_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, needle leaf_mass referenced against Repola's own prediction - replaces the memoryless annual-reset formula with a genuine accumulating pool, litter via fS^2 bell curve (see roxygen doc)
     tau_N = 5,                           # Makela (1999) eqn 28 exponent for leaf_mass's growth correction, when leaf_mass_correction = TRUE - not independently calibrated, defaults to tau_H/tau_R's value
     sLc_litter = 2.163312,               # Width of the fS^2-based needle litter bell curve, when leaf_mass_correction = TRUE - fitted against 2006-2016 Hyytiala trap data, not independently calibrated
@@ -495,6 +538,16 @@ CASSIA_cpp <- function(
 
   no_trees = 1010
   if (site == "HF_China") {no_trees = 1044}
+
+  # pipe_model_correction is a convenience OR, not a replacement: it can
+  # only turn height_diameter_correction/root_leaf_correction/
+  # leaf_mass_correction ON, never off, and is FALSE by default so every
+  # existing caller that sets these three individually (e.g.
+  # height_correction.Rmd, nitrogen_scenarios.Rmd testing
+  # height_diameter_correction alone) is completely unaffected.
+  height_diameter_correction = height_diameter_correction || pipe_model_correction
+  root_leaf_correction       = root_leaf_correction       || pipe_model_correction
+  leaf_mass_correction       = leaf_mass_correction       || pipe_model_correction
 
   # make the model settings into a list
   settings = list(

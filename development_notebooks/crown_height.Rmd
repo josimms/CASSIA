@@ -55,8 +55,9 @@ off. This also surfaced that an existing root-mass calculation in
 output.
 
 None of this is wired into CASSIA's C++: crown base height, $\eta_\mathrm{s}$,
-and $\alpha_\mathrm{r}$ remain diagnostic overlays. Sect. 6 lists what a
-feedback-coupled implementation would need; Sect. 7 lists open questions,
+and $\alpha_\mathrm{r}$ remain diagnostic overlays. Sect. 6 compares this to
+Joshi et al. (2023)'s Plant-FATE pipe-model framework; Sect. 7 lists what a
+feedback-coupled implementation would need; Sect. 8 lists open questions,
 chiefly whether real Hyde crown-base-height, foliage, or root-mass
 observations exist to calibrate against.
 
@@ -209,7 +210,7 @@ $W_\mathrm{p}$, $W_\mathrm{q}$ pools). Porting that whole system turned out
 to be a dead end worth recording rather than hiding: a first full port hit
 a real sign problem (the stem-wood term $W_\mathrm{s}$, Eq. 5.23, goes
 negative once the tree is tall relative to its now-capped crown length,
-because $\beta_1 H+\beta_2 H_\mathrm{c}$ changes sign) - and Sect. 6 below
+because $\beta_1 H+\beta_2 H_\mathrm{c}$ changes sign) - and Sect. 7 below
 concludes that whole carbon-balance machinery isn't what CASSIA needs
 anyway, since CASSIA has no equivalent $W_\mathrm{f}$ pool to plug into it.
 So rather than spend more effort pinning down a transcription issue in
@@ -566,7 +567,117 @@ has it switched off.
 
 ---
 
-## 6  What's missing for a real (feedback-coupled) CASSIA state
+## 6  Comparison: Joshi et al. (2023) Plant-FATE's pipe-model framework
+
+Joshi et al. (2023), *Competition for light can drive adverse
+species-composition shifts in the Amazon Forest under elevated CO2* (bioRxiv,
+`notes/Forest Science/Articles/Joshi_2023_Competition_Light_Amazon_Forest.pdf`),
+builds a full eco-evolutionary vegetation model, Plant-FATE, on the same
+Mäkelä-lineage pipe model as Sects 1-5 above - it cites Li et al. (2014)'s
+"T-model", which is itself a dimensional-scaling extension of the pipe model
+- and wires it into an actual demographic model with real competition for
+light. Two of its choices are directly relevant to Sects 3 and 5.
+
+### 6.1  No crown-rise state - competition for light via population-level layering instead
+
+Plant-FATE has no analogue of $H_\mathrm{c}(t)$ at all. Each tree's crown
+shape is a fixed function of diameter, $r(z)$ (their Eq. 1, built from
+species-level traits $H_\mathrm{m}$, $m$, $n$, $A_\mathrm{c}$) - there is no
+branch-death-driven crown base rising over time. Competition for light is
+instead handled entirely at the population level by the **Perfect Plasticity
+Approximation (PPA)**: trees pack their (static) crowns into discrete canopy
+layers $z_l^*$, solved from
+
+$$\sum_k \int_0^\infty u_k(s,x,t)\, A_{\mathrm{p},k}(z_l^*,s)\, \mathrm{d}s = l(1-f_\mathrm{G})$$
+
+(their Eq. 4), and light transmission is computed layer-by-layer from the
+fraction of light each layer absorbs (Eq. 5). So "competition for light" in
+Plant-FATE changes how much light an individual *receives* at its position
+in the canopy, not the geometry of its own crown. This is a genuinely
+different route to a competition-for-light effect than porting M&V's
+crown-rise ODE - worth weighing against Sect. 7's "wire crown length into
+fAPAR" plan if the actual goal is a stand-density effect on light rather
+than crown-base tracking for its own sake. It would need a
+proper multi-tree/stand representation, though, which CASSIA (a single-tree
+model) doesn't have - so it's a direction, not a drop-in replacement.
+
+### 6.2  Root mass as a function of current leaf area, not an accumulating pool
+
+Plant-FATE's fine-root mass is
+
+$$m_\mathrm{r} = \zeta L A_\mathrm{c}$$
+
+(root mass per unit leaf area, $\zeta$, times crown LAI, $L$, times crown
+area, $A_\mathrm{c}$) - and $L A_\mathrm{c}$ is just total crown leaf area,
+the same quantity as CASSIA's own `leaf_area` output. Critically, $m_\mathrm{r}$
+is **recomputed from current leaf area every step**, not an accumulating
+pool damped toward a target the way `culm_growth_roots` is. That is
+structurally why it cannot drift the way Sect. 5.3's $\alpha_\mathrm{r,implied}$
+does (climbing to nearly 6): there is no running total to accumulate in the
+first place. It is the same idea as this notebook's own $\eta_\mathrm{s}$
+diagnostic (Sect. 4) and Plant-FATE's sapwood mass ("generalized pipe model,
+constant sapwood-area-to-crown-area ratio throughout the crown") - mass
+recomputed from a current geometric quantity, not carried forward as state.
+$\zeta$ is calibrated to $0.2\ \mathrm{kg\,m^{-2}}$ in Plant-FATE (their
+Table 1) - for Amazon terra-firme trees, not Scots pine, so that number
+carries no more weight for Hyde than this notebook's own un-calibrated
+$\eta_\mathrm{s}$/$\alpha_\mathrm{r}$ (Sects 4-5).
+
+### 6.3  Proof of concept: recomputing CASSIA's root mass from `leaf_area`
+
+```{r joshi-root-mass-proxy}
+zeta <- 0.2   # kg/m^2; Joshi et al. 2023 Table 1 - Amazon-calibrated, used
+              # here only to get the formula's units and shape, not a Hyde value
+
+Wr_joshi_t <- zeta * Aleaf_t   # kg - recomputed every day from leaf_area directly
+
+joshi_root_long <- rbind(
+  data.frame(dates = dates_1998_2022,
+             index = Wr_t / Wr_t[1],
+             quantity = "CASSIA culm_growth_roots (accumulating)"),
+  data.frame(dates = dates_1998_2022,
+             index = Wr_joshi_t / Wr_joshi_t[1],
+             quantity = "zeta * leaf_area (recomputed daily)")
+)
+
+ggplot(joshi_root_long, aes(x = dates, y = index, colour = quantity)) +
+  geom_line(linewidth = 0.8) +
+  scale_colour_manual(name = NULL, values = c(
+    "CASSIA culm_growth_roots (accumulating)" = "#762a83",
+    "zeta * leaf_area (recomputed daily)"      = "#1f78b4"
+  )) +
+  scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
+  labs(title = "Root mass: CASSIA's accumulating output vs. a leaf-area-recomputed proxy",
+       subtitle = "Both indexed to their own 1998 value - the two are not on the same absolute scale",
+       x = NULL, y = "Index (1998 = 1)") +
+  theme_bw(base_size = 13)
+```
+
+```{r joshi-root-mass-ratio}
+end_over_start <- c(
+  culm_growth_roots = as.numeric(tail(Wr_t, 1) / Wr_t[1]),
+  joshi_proxy        = as.numeric(tail(Wr_joshi_t, 1) / Wr_joshi_t[1])
+)
+end_over_start
+```
+
+Run against the same 25-year Hyde `CASSIA_run` as Sects 3-5: `culm_growth_roots`
+grows 8.49-fold from 1998 to 2022 (2.8 kg to 23.8 kg), while the
+leaf-area-recomputed proxy grows only 2.07-fold - and that 2.07-fold is
+exactly `leaf_area`'s own end/start ratio (47.8 m² to 98.9 m²), since
+`zeta * leaf_area` is a linear rescaling of it. So this is not an
+independent validation of CASSIA's root mass - it is the same diagnostic
+move as Sects 4-5, applied to a candidate *replacement* formula rather than
+to the existing `culm_growth_roots` - but it does show directly that the
+"recompute from a current pool" structure, on its own, keeps root-mass
+growth tied to actual canopy expansion (roughly doubling over 25 years,
+plausible for a growing stand) instead of `culm_growth_roots`'s unbounded
+8.49-fold climb, without yet claiming the right numerical target ($\zeta$
+here is still Joshi et al.'s Amazon-calibrated value, Sect. 6.2).
+
+---
+
+## 7  What's missing for a real (feedback-coupled) CASSIA state
 
 The diagnostic in Sect. 3 is a one-way overlay: height drives crown base
 height, but crown base height drives nothing back. To make crown rise a
@@ -604,7 +715,7 @@ still needs:
 
 ---
 
-## 7  Open questions
+## 8  Open questions
 
 - Is there real crown-base-height or crown-ratio data for the Hyde stand to
   calibrate against, or should $\alpha_x$/$\beta_x$ stay at the book's
@@ -613,9 +724,14 @@ still needs:
   but a bigger change to `fAPAR_and_LAI.cpp`), or is a standalone
   crown-base-height *output* (no feedback) enough for now?
 - If feedback is wanted: is it worth building the $W_\mathrm{f}$ pipe-model
-  pool properly (Sect. 6, first bullet), or would a cruder proxy (e.g.
+  pool properly (Sect. 7, first bullet), or would a cruder proxy (e.g.
   `repola()`'s needle mass, or CASSIA's existing `leaf_area`, run through
   Eq. 4.10/4.21 directly) be an acceptable first pass?
+- Sect. 6.3's "recompute root mass from leaf_area" proof of concept avoids
+  $\alpha_\mathrm{r,implied}$'s drift by construction - is that structural
+  fix (replacing `culm_growth_roots`'s accumulation with a per-step
+  recomputation) worth porting to `growth.cpp`/`repola.cpp` ahead of, or
+  instead of, calibrating `root_leaf_correction`'s `alpha_R`?
 - Sects. 4-5's implied $\eta_\mathrm{s}$/$\alpha_\mathrm{r}$ ratios are not
   constant over the run - is that drift worth chasing (real foliage/root
   mass data to fit against), or is CASSIA's phenology-and-soil-driven
