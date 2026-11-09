@@ -5,11 +5,18 @@
 \alias{parameters_p}
 \title{Main CASSIA model parameters}
 \format{
-A numeric matrix with 75 rows (parameters) and 3 columns (sites:
+A numeric matrix with 85 rows (parameters) and 3 columns (sites:
   \code{Hyde}, \code{Lettosuo}, \code{Väriö}). Row names are parameter
-  names. All parameter meanings are described in the CASSIA instruction
+  names. Most parameter meanings are described in the CASSIA instruction
   booklet (\file{CASSIA_Instruction_Booklet.pdf}) and in
-  Schiestl-Aalto et al. (2015).
+  Schiestl-Aalto et al. (2015); the 10 pipe-model-family correction
+  exponents and litter-nitrogen rows added 2026-11-09
+  (\code{tau_H}/\code{tau_R}/\code{tau_N}, \code{sLc_litter},
+  \code{theta_N_needles}/\code{theta_N_roots}/\code{theta_N_myco},
+  \code{retrans_needles}/\code{retrans_roots}/\code{retrans_myco}) are
+  not yet in the booklet - see \code{data-raw/building_data.R} and
+  \code{\link{CASSIA_cpp}}'s \code{parameters} argument doc for their
+  sourcing instead.
 }
 \source{
 Built by \code{data-raw/building_data.R}.

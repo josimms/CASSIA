@@ -146,6 +146,22 @@ struct CASSIA_parameters {
   double diameter_start_day;
   double GPP_mean;
   double GPP_initial;
+
+  // Pipe-model-family structural-balance correction exponents (Makela 1999
+  // eqn 28) and litter-nitrogen parameters, moved here from Settings
+  // 2026-11-09 so CASSIA_cpp()'s only non-toggle arguments are the big
+  // parameter/common/etc. tables - see data-raw/building_data.R for
+  // sources/references and R/data.R's parameters_p doc.
+  double tau_H;
+  double tau_R;
+  double tau_N;
+  double sLc_litter;
+  double theta_N_needles;
+  double theta_N_roots;
+  double theta_N_myco;
+  double retrans_needles;
+  double retrans_roots;
+  double retrans_myco;
 };
 
 struct CASSIA_common {

@@ -52,7 +52,30 @@
 #'   stem (days). Default \code{3}.
 #' @param ratios Dataframe of growth ratio parameters. Defaults to \code{ratios_p}.
 #' @param parameters Dataframe of site-specific parameters. Defaults to
-#'   \code{parameters_p}.
+#'   \code{parameters_p}. Includes, among others, the pipe-model-family
+#'   structural-balance correction exponents and litter-nitrogen
+#'   parameters (moved here from being separate \code{CASSIA_cpp()}
+#'   arguments, 2026-11-09, so this function's only non-toggle arguments
+#'   are the big parameter/common/etc. tables): \code{tau_H}/\code{tau_R}/
+#'   \code{tau_N} (Mäkelä 1999 eqn 28 damping exponents for
+#'   \code{height_diameter_correction}/\code{root_leaf_correction}/
+#'   \code{leaf_mass_correction} respectively, all default \code{5});
+#'   \code{sLc_litter} (width of the \code{fS^2}-based needle litter bell
+#'   curve, default \code{2.163312}, fitted against 2006-2016 Hyytiala
+#'   litter-trap data); \code{theta_N_needles}/\code{theta_N_roots}/
+#'   \code{theta_N_myco} (N:C-style thresholds, mg N / g dry mass, for
+#'   needle/root/mycorrhiza litter nitrogen content, defaults
+#'   \code{4.9}/\code{7.7}/\code{3.0} - needles and roots from Korhonen
+#'   et al. 2013 and Helmisaari et al. 2007 respectively, both Hyytiala
+#'   SMEAR II; mycorrhiza an unvalidated placeholder reusing roots');
+#'   and \code{retrans_needles}/\code{retrans_roots}/\code{retrans_myco}
+#'   (fraction of that litter nitrogen resorbed before shedding, defaults
+#'   \code{0.73}/\code{0.2}/\code{0.0} - needles from Korhonen et al.
+#'   2013, roots from Wojciechowska et al. 2020, \emph{Populus
+#'   trichocarpa}; mycorrhiza 0 by default - no clean biological analogue
+#'   for a fungal symbiont's own shed tissue). See
+#'   \code{data-raw/building_data.R} for full sourcing and
+#'   \code{?parameters_p} for the complete row list.
 #' @param parameters_R_in Dataframe of R-side parameters. Defaults to
 #'   \code{parameters_R}.
 #' @param common Dataframe of parameters shared across sites. Defaults to
@@ -140,16 +163,6 @@
 #'   not better. Needles, roots and bud are not corrected either (no
 #'   data-grounded reference relationship exists for them - see
 #'   \code{manuscript/paper_plan.Rmd} Working Notes). Default \code{FALSE}.
-#' @param tau_H Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
-#'   height's correction, when \code{height_diameter_correction = TRUE} -
-#'   how fast it damps toward balance (\code{>= 1} required for stability).
-#'   Ignored otherwise. Default \code{5} - RSS against the real SMEAR
-#'   height/diameter (1998-2022 Hyde run) keeps improving well past this,
-#'   but since the real h0/D0 starting pair doesn't sit exactly on
-#'   \code{alpha_H}'s ratio, higher values produce an increasingly extreme
-#'   early-year distortion (at \code{tau=10}, year 1 height growth is
-#'   already ~2x its natural rate). \code{5} keeps it moderate - see
-#'   \code{manuscript/paper_plan.Rmd} Working Notes before raising it.
 #' @param root_leaf_correction Logical. If \code{TRUE}, root growth is
 #'   damped (same Mäkelä 1999 eqn 28 mechanism as
 #'   \code{height_diameter_correction}, damping-only) toward a target
@@ -184,11 +197,6 @@
 #'   \code{leaf_mass_correction = TRUE}, so the leaf_mass it corrects
 #'   against is itself a genuinely accumulating pool rather than the
 #'   memoryless annually-reset default. Default \code{FALSE}.
-#' @param tau_R Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
-#'   roots' correction, when \code{root_leaf_correction = TRUE}. Also used
-#'   by \code{root_turnover}'s litter boost below, when both are
-#'   \code{TRUE}. Ignored when neither is \code{TRUE}. Default \code{5},
-#'   matching \code{tau_H}'s default - not independently calibrated.
 #' @param root_turnover Logical. If \code{TRUE}, root and mycorrhiza
 #'   biomass (\code{culm_growth_roots}/\code{culm_growth_mycorrhiza}) lose
 #'   a daily fraction to litter, logged separately in
@@ -226,54 +234,6 @@
 #'   wobble on its own; see
 #'   \code{needle_litter_fS2_implementation_plan.md} for the validation
 #'   behind this. Default \code{FALSE}.
-#' @param tau_N Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
-#'   needle leaf_mass's growth correction, when \code{leaf_mass_correction =
-#'   TRUE}. Ignored otherwise. Default \code{5}, matching \code{tau_H}/
-#'   \code{tau_R}'s default - not independently calibrated.
-#' @param sLc_litter Numeric. Width of the \code{fS^2}-based needle litter
-#'   bell curve, when \code{leaf_mass_correction = TRUE}. Ignored
-#'   otherwise. Default \code{2.163312}, fitted against 2006-2016
-#'   Hyytiala litter-trap data (pooled training years, validated on
-#'   held-out years) - not independently calibrated, same caveat as
-#'   \code{tau_R}.
-#' @param theta_N_needles,theta_N_roots,theta_N_myco Numeric. N:C-style
-#'   thresholds (mg N / g dry mass) for needle/root/mycorrhiza litter's
-#'   nitrogen content (\code{needle_litter_N}/\code{root_litter_N}/
-#'   \code{mycorrhiza_litter_N}, net of retranslocation below). Default
-#'   \code{4.9} for needles: a real measured value, Korhonen et al. (2013,
-#'   \emph{Biogeosciences} 10:1083-1095), Table 2 - needle litter N
-#'   concentration at Hyytiala SMEAR II, 2006-2008, the exact site CASSIA
-#'   is parameterized for (also the value growth's own N cost in
-#'   \code{sugar_model.cpp} already uses). Default \code{7.7} for roots:
-#'   likewise real, Helmisaari et al. (2007) fine root N concentration for
-#'   a Scots pine stand near SMEAR II, quoted in Korhonen et al. (2013)
-#'   Sect. 4.2. Mycorrhiza has no sourced value, so its default \code{3.0}
-#'   reuses the pre-Korhonen root placeholder as an explicitly unvalidated
-#'   stand-in.
-#' @param retrans_needles,retrans_roots,retrans_myco Numeric, in
-#'   \code{[0, 1]}. Fraction of needle/root/mycorrhiza litter nitrogen
-#'   resorbed (retranslocated) before shedding rather than lost, credited
-#'   back to \code{nitrogen_balance} with a one-day lag (same lag
-#'   \code{uptake$total_uptake} already uses). Default \code{0.73} for
-#'   needles: a real measured value, Korhonen et al. (2013) Sect.
-#'   3.6.2/3.6.3 - needle+leaf retranslocation was 73\% of the initial
-#'   foliage nitrogen at this same Hyytiala site. Default \code{0.2} for
-#'   roots: a real measured value (Wojciechowska et al. 2020,
-#'   \emph{Tree Physiology} 40:987-1000) - fine-root N concentration
-#'   decline from control to fully senescent roots in \emph{Populus
-#'   trichocarpa}, ~20\% consistently across all three root orders
-#'   measured; a concentration decline rather than a mass-loss-corrected
-#'   resorption efficiency, and from a deciduous broadleaf rather than
-#'   \emph{Pinus sylvestris}, so a real but imperfect analogue. Korhonen
-#'   et al. (2013) assumed retranslocation negligible for all non-foliage
-#'   classes they measured (branches, bark, cones, wood), but fine roots
-#'   were outside that study's scope entirely (litter traps don't catch
-#'   root turnover), so it gives no root number directly. Mycorrhiza's
-#'   default is \code{0} because resorption has no clean biological
-#'   analogue for a fungal symbiont's own shed tissue, so none is assumed
-#'   rather than guessing one. Always applied (not behind a toggle) - the
-#'   nitrogen content of litter itself is real regardless of parameter
-#'   values, the same way \code{needle_litter} itself is unconditional.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
 #'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
@@ -480,19 +440,12 @@ CASSIA_cpp <- function(
     needle_mass_grows = FALSE,		# Is needle mass dynamic i.e. the modelled growth is also respiring etc and following for some years? If true, note that root mass is related to needle mass
     pipe_model_correction = FALSE,       # Convenience shortcut: TRUE ORs height_diameter_correction, root_leaf_correction, and leaf_mass_correction all on together - the three Makela & Valentine pipe-model-family corrections. Does not turn any of them OFF if already TRUE individually, and leaves them fully independently settable - see roxygen doc
     height_diameter_correction = FALSE,  # Makela (1999) structural-balance control, damping-only, height referenced against diameter (not the reverse - see roxygen doc)
-    tau_H = 5,                           # Makela (1999) eqn 28 exponent for height's correction, when height_diameter_correction = TRUE - RSS kept improving well past this, but higher tau produces an increasingly extreme early-year distortion; 5 balances fit against a moderate, not pathological, early-year correction (see manuscript/paper_plan.Rmd Working Notes)
     root_leaf_correction = FALSE,        # Makela & Valentine (2020) pipe-model control (Eq. 4.13, Wr=alpha_r*Wf), damping-only, roots referenced against leaf MASS - recomputed yearly not daily (see roxygen doc); alpha_r=0.47 is PREBAS/CROBAS's alfar3 (Scots pine, site type 3), not yet Hyde-validated
-    tau_R = 5,                           # Makela (1999) eqn 28 exponent for roots' correction, when root_leaf_correction = TRUE - not independently calibrated, defaults to tau_H's value
     root_turnover = FALSE,               # Root/mycorrhiza litter, driven by the same fS senescence signal as leaf area's own turnover (not a literal copy - see roxygen doc); turnover-time constant is an uncalibrated placeholder; root litter gets an extra pipe-model boost/damp when root_leaf_correction is also TRUE
     leaf_mass_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, needle leaf_mass referenced against Repola's own prediction - replaces the memoryless annual-reset formula with a genuine accumulating pool, litter via fS^2 bell curve (see roxygen doc)
-    tau_N = 5,                           # Makela (1999) eqn 28 exponent for leaf_mass's growth correction, when leaf_mass_correction = TRUE - not independently calibrated, defaults to tau_H/tau_R's value
-    sLc_litter = 2.163312,               # Width of the fS^2-based needle litter bell curve, when leaf_mass_correction = TRUE - fitted against 2006-2016 Hyytiala trap data, not independently calibrated
-    theta_N_needles = 4.9,               # N:C threshold (mg N/g dry mass) for needle litter N - Korhonen et al. (2013), Table 2, Hyytiala SMEAR II
-    theta_N_roots = 7.7,                 # Fine root N concentration - Helmisaari et al. (2007), Scots pine near SMEAR II, via Korhonen et al. (2013)
-    theta_N_myco = 3.0,                  # Same, for mycorrhiza - no literature source found, reuses the pre-Korhonen root placeholder
-    retrans_needles = 0.73,              # Fraction of needle litter N resorbed before shedding rather than lost - Korhonen et al. (2013), 73% of initial foliage N, Hyytiala
-    retrans_roots = 0.2,                 # Fine-root N concentration decline, control to fully senescent, Populus trichocarpa (Wojciechowska et al. 2020) - real measured value, not this site/species
-    retrans_myco = 0.0,                  # Same, for mycorrhiza - 0 by default: resorption has no clean biological analogue for a fungal symbiont's own shed tissue
+    # tau_H/tau_R/tau_N, sLc_litter, and theta_N_*/retrans_* all moved into
+    # `parameters` (parameters_p), 2026-11-09 - see @param parameters above
+    # and data-raw/building_data.R for sourcing.
 
     phloem_trigger = FALSE,    # Phloem controls bud burst rather than whole tree sugar
 
@@ -573,19 +526,9 @@ CASSIA_cpp <- function(
     "growth_decreases" = growth_decreases,
     "needle_mass_grows" = needle_mass_grows,
     "height_diameter_correction" = height_diameter_correction,
-    "tau_H" = tau_H,
     "root_leaf_correction" = root_leaf_correction,
-    "tau_R" = tau_R,
     "root_turnover" = root_turnover,
     "leaf_mass_correction" = leaf_mass_correction,
-    "tau_N" = tau_N,
-    "sLc_litter" = sLc_litter,
-    "theta_N_needles" = theta_N_needles,
-    "theta_N_roots" = theta_N_roots,
-    "theta_N_myco" = theta_N_myco,
-    "retrans_needles" = retrans_needles,
-    "retrans_roots" = retrans_roots,
-    "retrans_myco" = retrans_myco,
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,

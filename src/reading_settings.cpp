@@ -21,19 +21,12 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.growth_decreases = Rcpp::as<bool>(settingsList["growth_decreases"]);
   settings.needle_mass_grows = Rcpp::as<bool>(settingsList["needle_mass_grows"]);
   settings.height_diameter_correction = Rcpp::as<bool>(settingsList["height_diameter_correction"]);
-  settings.tau_H = Rcpp::as<double>(settingsList["tau_H"]);
   settings.root_leaf_correction = Rcpp::as<bool>(settingsList["root_leaf_correction"]);
-  settings.tau_R = Rcpp::as<double>(settingsList["tau_R"]);
   settings.root_turnover = Rcpp::as<bool>(settingsList["root_turnover"]);
   settings.leaf_mass_correction = Rcpp::as<bool>(settingsList["leaf_mass_correction"]);
-  settings.tau_N = Rcpp::as<double>(settingsList["tau_N"]);
-  settings.sLc_litter = Rcpp::as<double>(settingsList["sLc_litter"]);
-  settings.theta_N_needles = Rcpp::as<double>(settingsList["theta_N_needles"]);
-  settings.theta_N_roots = Rcpp::as<double>(settingsList["theta_N_roots"]);
-  settings.theta_N_myco = Rcpp::as<double>(settingsList["theta_N_myco"]);
-  settings.retrans_needles = Rcpp::as<double>(settingsList["retrans_needles"]);
-  settings.retrans_roots = Rcpp::as<double>(settingsList["retrans_roots"]);
-  settings.retrans_myco = Rcpp::as<double>(settingsList["retrans_myco"]);
+  // tau_H/tau_R/tau_N/sLc_litter/theta_N_*/retrans_* moved to
+  // CASSIA_parameters (2026-11-09) - read in structures_read.cpp's
+  // make_CASSIA_parameters() instead.
 
   settings.phloem_trigger = Rcpp::as<bool>(settingsList["phloem_trigger"]);
   settings.mycorrhiza = Rcpp::as<bool>(settingsList["mycorrhiza"]);

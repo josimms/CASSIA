@@ -171,7 +171,7 @@ void growth(int day,
     }
   }
   if (boolsettings.height_diameter_correction) {
-    LH = LH * makela_control_factor(H_bal, H_current, boolsettings.tau_H);
+    LH = LH * makela_control_factor(H_bal, H_current, parameters.tau_H);
   }
   state.GH = state.g * state.fH * LH;
   state.height = B0 * CH * state.GH / 1000.0 * ratio.form_factor;
@@ -280,7 +280,7 @@ void growth(int day,
   // risk for conditions where it might.
   if (boolsettings.leaf_mass_correction && day == 0) {
     double leaf_mass_max_last_year = state.max_leaf_mass_running;
-    state.C_N_year = makela_control_factor(N_repo, leaf_mass_max_last_year, boolsettings.tau_N);
+    state.C_N_year = makela_control_factor(N_repo, leaf_mass_max_last_year, parameters.tau_N);
     state.max_leaf_mass_running = 0.0;
 
     // Freeze/reset for needle litter's own one-year-lagged normalizer
@@ -501,7 +501,7 @@ void growth(int day,
     double leaf_mass_max_last_year = state.max_leaf_mass_running_for_roots;
     double roots_max_last_year = state.max_roots_running;
     double R_bal = alpha_r * leaf_mass_max_last_year;
-    state.C_R_year = makela_control_factor(R_bal, roots_max_last_year, boolsettings.tau_R);
+    state.C_R_year = makela_control_factor(R_bal, roots_max_last_year, parameters.tau_R);
     state.R_bal_current = R_bal; // threaded through to actual_growth.cpp's litter boost
 
     // Start tracking the new year's max fresh.

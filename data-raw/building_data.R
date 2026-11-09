@@ -192,6 +192,34 @@ parameters_p[72,] <- c(79, NA, NA) # diameter_start_day
 
 parameters_p[73,] <- c(4.5, NA, NA) # If we assume that the growth is around linear before 2001 and the value 15 years before 1998 is taken
 
+# Rows 74-75 (GPP_mean, GPP_initial) were already present in the shipped
+# data/parameters_p.RData but missing from this build script - backfilled
+# here 2026-11-09 so re-running this script reproduces the real shipped
+# data exactly. Values taken from the installed parameters_p as of that
+# date; no further provenance recovered beyond that.
+parameters_p[74,] <- c(463.8833, NA, NA) # GPP_mean
+parameters_p[75,] <- c(481.3, NA, NA) # GPP_initial
+
+# Rows 76-85: pipe-model-family structural-balance correction exponents
+# (Makela 1999 eqn 28) and litter-nitrogen parameters, moved here from
+# being separate CASSIA_cpp() arguments 2026-11-09 so CASSIA_cpp()'s only
+# non-toggle arguments are the big parameter/common/etc. tables (see
+# R/CASSIA_cpp.R's @param parameters doc and inst/include/final_parameters.h).
+# None of these are independently site-calibrated for Lettosuo/Väriö - see
+# each row's own comment for whether the single sourced value is treated
+# as Hyde-specific (NA elsewhere, matching this script's existing
+# convention for e.g. b0_repo) or as a generic default applied uniformly.
+parameters_p[76,] <- c(5, NA, NA) # tau_H - Makela (1999) eqn 28 damping exponent for height_diameter_correction; RSS-fit against real SMEAR height/diameter (1998-2022 Hyde run), see manuscript/paper_plan.Rmd Working Notes
+parameters_p[77,] <- c(5, 5, 5) # tau_R - same mechanism for root_leaf_correction; not independently calibrated, defaults to tau_H's value
+parameters_p[78,] <- c(5, 5, 5) # tau_N - same mechanism for leaf_mass_correction; not independently calibrated, defaults to tau_H/tau_R's value
+parameters_p[79,] <- c(2.163312, NA, NA) # sLc_litter - width of the fS^2-based needle litter bell curve (leaf_mass_correction), fitted against 2006-2016 Hyytiala litter-trap data
+parameters_p[80,] <- c(4.9, NA, NA) # theta_N_needles - needle litter N concentration (mg N/g dry mass), Korhonen et al. (2013, Biogeosciences 10:1083-1095) Table 2, Hyytiala SMEAR II 2006-2008
+parameters_p[81,] <- c(7.7, NA, NA) # theta_N_roots - fine root N concentration, Helmisaari et al. (2007), Scots pine stand near SMEAR II, quoted in Korhonen et al. (2013) Sect. 4.2
+parameters_p[82,] <- c(3.0, 3.0, 3.0) # theta_N_myco - no literature source found; generic placeholder reusing the pre-Korhonen root value
+parameters_p[83,] <- c(0.73, NA, NA) # retrans_needles - fraction of needle litter N resorbed before shedding, Korhonen et al. (2013) Sect. 3.6.2/3.6.3, Hyytiala
+parameters_p[84,] <- c(0.2, 0.2, 0.2) # retrans_roots - fine-root N concentration decline, control to fully senescent, Wojciechowska et al. (2020, Tree Physiology 40:987-1000), Populus trichocarpa - real measured value, not this site/species, applied generically
+parameters_p[85,] <- c(0.0, 0.0, 0.0) # retrans_myco - 0 by default: resorption has no clean biological analogue for a fungal symbiont's own shed tissue
+
 row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R", "sR0", "sRc", "growth.myco", "root.lifetime",
 "HH0", "sH0", "LH", "LH0", "sHc", "sN0", "LN", "LN0", "sNc", "HN0", "sD0.Trad", "LD", "LD0", "sDc", "sDc.T.count",
 "tau.Ee", "tau.El", "tau.We", "tau.Wl", "tau.GPP", "Uggla", "sB0", "sBc", "LB",
@@ -200,7 +228,10 @@ row.names(parameters_p) <- c("Q10.N", "Rm.NR", "Q10.S", "Rm.S", "Q10.R", "Rm.R",
 "density_tree", "carbon_share", "D0", "h0", "n_age", "n_lenght", "h_increment", "SLA", "LR0", "b0_repo", "b1_repo", "b2_repo",
 "lower_bound_needles", "lower_bound_phloem", "lower_bound_roots", "lower_bound_xylem_sh", "lower_bound_xylem_st",
 "tau_emergancy_needles", "tau_emergancy_phloem", "tau_emergancy_roots", "tau_emergancy_xylem_sh", "tau_emergancy_xylem_st",
-"lower_bound_W", "tau_emergancy", "uk_repo", "eki_repo", "stem_no", "diameter_start_day", "xylem_start_estimate")
+"lower_bound_W", "tau_emergancy", "uk_repo", "eki_repo", "stem_no", "diameter_start_day", "xylem_start_estimate",
+"GPP_mean", "GPP_initial",
+"tau_H", "tau_R", "tau_N", "sLc_litter", "theta_N_needles", "theta_N_roots", "theta_N_myco",
+"retrans_needles", "retrans_roots", "retrans_myco")
 save(parameters_p, file = paste0(data.direct, "/parameters_p.RData"))
 
 ######

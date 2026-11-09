@@ -12,9 +12,9 @@ void actual_growth(int day,
                    growth_out nitrogen_capacity) {
 
   // Nitrogen content of litter, net of retranslocation (2026-11-05).
-  // N:C thresholds and retranslocation fractions are now real R-exposed
-  // parameters (boolsettings.theta_N_*/retrans_*, see roxygen doc for
-  // defaults and sourcing) rather than hardcoded here.
+  // N:C thresholds and retranslocation fractions are real, sourced
+  // CASSIA_parameters fields (parameters.theta_N_*/retrans_*, see
+  // data-raw/building_data.R for sourcing) rather than hardcoded here.
   double needle_litter_N_retrans = 0.0, root_litter_N_retrans = 0.0, myco_litter_N_retrans = 0.0;
 
   // CASSIA has no standalone branch biomass pool yet (see fAPAR_and_LAI.cpp's
@@ -165,7 +165,7 @@ void actual_growth(int day,
     // myco_litter_today stays on the base senescence-driven fraction
     // alone, same as before this change.
     double root_bal_boost_today = makela_loss_boost_factor(
-      tree_state.R_bal_current, tree_state.max_roots_running, boolsettings.tau_R);
+      tree_state.R_bal_current, tree_state.max_roots_running, parameters.tau_R);
 
     double root_litter_today = all_out.culm_growth.roots[index_ref] * daily_turnover_fraction * root_bal_boost_today;
     double myco_litter_today = all_out.culm_growth.mycorrhiza[index_ref] * daily_turnover_fraction;
@@ -180,10 +180,10 @@ void actual_growth(int day,
     all_out.root_litter[days_gone+day]       = root_litter_today;
     all_out.mycorrhiza_litter[days_gone+day] = myco_litter_today;
 
-    double root_litter_N_gross = boolsettings.theta_N_roots / parameters.carbon_share * root_litter_today;
-    double myco_litter_N_gross = boolsettings.theta_N_myco  / parameters.carbon_share * myco_litter_today;
-    root_litter_N_retrans = root_litter_N_gross * boolsettings.retrans_roots;
-    myco_litter_N_retrans = myco_litter_N_gross * boolsettings.retrans_myco;
+    double root_litter_N_gross = parameters.theta_N_roots / parameters.carbon_share * root_litter_today;
+    double myco_litter_N_gross = parameters.theta_N_myco  / parameters.carbon_share * myco_litter_today;
+    root_litter_N_retrans = root_litter_N_gross * parameters.retrans_roots;
+    myco_litter_N_retrans = myco_litter_N_gross * parameters.retrans_myco;
     all_out.root_litter_N[days_gone+day]       = root_litter_N_gross - root_litter_N_retrans;
     all_out.mycorrhiza_litter_N[days_gone+day] = myco_litter_N_gross - myco_litter_N_retrans;
   } else {
@@ -215,7 +215,7 @@ void actual_growth(int day,
     double degree = (day >= 212) ? std::max(0.0, 1.0 - fS_sq) : 0.0;
 
     tree_state.sL_litter += degree;
-    double rate_unnormalized = degree * makela_bell_shape(tree_state.sL_litter, boolsettings.sLc_litter);
+    double rate_unnormalized = degree * makela_bell_shape(tree_state.sL_litter, parameters.sLc_litter);
     tree_state.sum_degree_fL_running += rate_unnormalized;
 
     // One-year-lagged self-normalization. First simulated year: no
@@ -246,7 +246,7 @@ void actual_growth(int day,
       // (running minimum) instead of the peak was also tried and made
       // things worse, not better - see function_structures.h's comment.
       double litter_boost_today = makela_loss_boost_factor(
-        tree_state.N_repo_current, tree_state.max_leaf_mass_running, boolsettings.tau_N);
+        tree_state.N_repo_current, tree_state.max_leaf_mass_running, parameters.tau_N);
       needle_litter_today = (tree_state.N_repo_current / parameters.n_age)
                              * rate_unnormalized / tree_state.sum_degree_fL_last_year
                              * litter_boost_today;
@@ -257,8 +257,8 @@ void actual_growth(int day,
     all_out.culm_growth.needle_litter[days_gone+day] = all_out.culm_growth.needle_litter[index_ref] + needle_litter_today;
     all_out.needle_litter[days_gone+day] = needle_litter_today;
 
-    double needle_litter_N_gross = boolsettings.theta_N_needles / parameters.carbon_share * needle_litter_today;
-    needle_litter_N_retrans = needle_litter_N_gross * boolsettings.retrans_needles;
+    double needle_litter_N_gross = parameters.theta_N_needles / parameters.carbon_share * needle_litter_today;
+    needle_litter_N_retrans = needle_litter_N_gross * parameters.retrans_needles;
     all_out.needle_litter_N[days_gone+day] = needle_litter_N_gross - needle_litter_N_retrans;
 
     // Frozen once this year's needle growth has definitively ended

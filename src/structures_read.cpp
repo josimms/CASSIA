@@ -276,6 +276,30 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
   out.GPP_mean = temp126[0];
   std::vector<double> temp127 = input_parameters["GPP_initial"];
   out.GPP_initial = temp127[0];
+
+  // Pipe-model-family correction exponents and litter-nitrogen parameters,
+  // moved here from Settings (2026-11-09) - see final_parameters.h.
+  std::vector<double> temp128 = input_parameters["tau_H"];
+  out.tau_H = temp128[0];
+  std::vector<double> temp129 = input_parameters["tau_R"];
+  out.tau_R = temp129[0];
+  std::vector<double> temp130 = input_parameters["tau_N"];
+  out.tau_N = temp130[0];
+  std::vector<double> temp131 = input_parameters["sLc_litter"];
+  out.sLc_litter = temp131[0];
+  std::vector<double> temp132 = input_parameters["theta_N_needles"];
+  out.theta_N_needles = temp132[0];
+  std::vector<double> temp133 = input_parameters["theta_N_roots"];
+  out.theta_N_roots = temp133[0];
+  std::vector<double> temp134 = input_parameters["theta_N_myco"];
+  out.theta_N_myco = temp134[0];
+  std::vector<double> temp135 = input_parameters["retrans_needles"];
+  out.retrans_needles = temp135[0];
+  std::vector<double> temp136 = input_parameters["retrans_roots"];
+  out.retrans_roots = temp136[0];
+  std::vector<double> temp137 = input_parameters["retrans_myco"];
+  out.retrans_myco = temp137[0];
+
   return out;
 }
 

@@ -581,7 +581,7 @@ struct Settings {
   bool growth_decreases = false;
   bool needle_mass_grows = false;
   bool height_diameter_correction = false;
-  double tau_H = 5.0;
+  // tau_H moved to CASSIA_parameters (2026-11-09) - see final_parameters.h.
 
   // Makela & Valentine (2020) pipe-model correction for root growth,
   // referenced against leaf mass via the pipe model's own ratio
@@ -589,7 +589,7 @@ struct Settings {
   // section and manuscript/paper_plan.Rmd's "Root growth" section.
   // Supersedes an earlier leaf-area-referenced version, 2026-11-06.
   bool root_leaf_correction = false;
-  double tau_R = 5.0;
+  // tau_R moved to CASSIA_parameters (2026-11-09) - see final_parameters.h.
 
   // Root/mycorrhiza litter (turnover). When root_leaf_correction is also
   // TRUE, root_litter is additionally boosted/damped toward the same
@@ -604,52 +604,12 @@ struct Settings {
   // for THIS quantity only; leaf_area/sapwood/fAPAR stay on the old
   // pathway unchanged. See manuscript/paper_plan.Rmd Working Notes.
   bool leaf_mass_correction = false;
-  double tau_N = 5.0;
-
-  // Width of the fS^2-based needle litter bell curve (f_L, growth.cpp's
-  // makela_bell_shape), when leaf_mass_correction = TRUE. Fitted (not
-  // independently calibrated) against 2006-2016 Hyytiala litter-trap
-  // data - see needle_litter_fS2_implementation_plan.md, same caveat
-  // style as alpha_R. Default 2.163312.
-  double sLc_litter = 2.163312;
-
-  // Nitrogen content of needle/root/mycorrhiza litter, net of
-  // retranslocation (actual_growth.cpp, sugar_model.cpp's two
-  // nitrogen_balance update sites). theta_N_* are N:C-style thresholds
-  // (mg N / g dry mass). theta_N_needles = 4.9 is a real measured value -
-  // Korhonen et al. (2013, Biogeosciences 10:1083-1095), Table 2: N
-  // concentration of needle litter at Hyytiala SMEAR II, 2006-2008
-  // (4.9 +/- 0.3 mg N/g) - the exact site CASSIA is parameterized for.
-  // theta_N_roots = 7.7 is likewise real - Helmisaari et al. (2007) fine
-  // root N concentration for a Scots pine stand near SMEAR II, quoted in
-  // Korhonen et al. (2013) Sect. 4.2. mycorrhiza has no sourced value, so
-  // its default reuses roots' as an explicitly unvalidated placeholder
-  // (both belowground, closest available category). retrans_* are the
-  // fraction of that litter N resorbed before shedding rather than lost.
-  // retrans_needles = 0.73 is a real measured value - Korhonen et al.
-  // (2013) Sect. 3.6.2/3.6.3: needle+leaf retranslocation was 73% of the
-  // initial foliage N at this same Hyytiala site. retrans_roots = 0.2 is
-  // a real measured value - Wojciechowska et al. (2020, Tree Physiology
-  // 40:987-1000), fine-root N concentration decline from control to fully
-  // senescent roots in Populus trichocarpa, ~20% consistently across all
-  // three root orders measured (Fig. 1A) - though note this is a
-  // concentration decline, not a mass-loss-corrected resorption
-  // efficiency, and from a deciduous broadleaf, not Pinus sylvestris, so
-  // treat as a real but imperfect analogue, not a site/species-specific
-  // fit. Korhonen et al. (2013) explicitly assumed retranslocation
-  // negligible for all non-foliage classes they measured (branches, bark,
-  // cones, wood), but fine roots were out of that study's scope (litter
-  // traps don't catch root turnover), so it gives no root number directly.
-  // mycorrhiza defaults to 0 - resorption has no clean biological analogue
-  // for a fungal symbiont's own shed tissue, so none is assumed rather
-  // than guessing one. theta_N_myco/retrans_myco remain unvalidated
-  // placeholders, same caveat style as alpha_R.
-  double theta_N_needles = 4.9;
-  double theta_N_roots = 7.7;
-  double theta_N_myco = 3.0;
-  double retrans_needles = 0.73;
-  double retrans_roots = 0.2;
-  double retrans_myco = 0.0;
+  // tau_N, sLc_litter, and theta_N_*/retrans_* (nitrogen content of
+  // needle/root/mycorrhiza litter net of retranslocation) all moved to
+  // CASSIA_parameters (2026-11-09), along with tau_H/tau_R above - see
+  // final_parameters.h for the fields and data-raw/building_data.R for
+  // sources/references. CASSIA_cpp()'s only non-toggle arguments are now
+  // the big parameter/common/etc. tables.
 
   bool phloem_trigger = false;
   bool mycorrhiza = false;
