@@ -561,6 +561,13 @@ struct PlantAssimilationResult{
 // Define a struct to hold the settings
 struct Settings {
   bool storage_reset = false;
+  // PRELES soil-water/snow/canopy/temperature-sum state (preles_test.cpp's
+  // preles_cpp()) resets to Initials_snow's fixed values every year by
+  // default (TRUE), matching storage_reset's own annual-reset semantics.
+  // FALSE carries that state over continuously across years instead -
+  // needed for ORCHIMIC's continuous multi-year runs (see
+  // manscript_orchemic/PROJECT_INSTRUCTIONS.md). Added 2026-11-09.
+  bool soil_water_reset = true;
   bool storage_grows = false;
 
   bool LN_estim = false;

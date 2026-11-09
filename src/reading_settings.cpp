@@ -7,6 +7,7 @@ Settings parseSettings(Rcpp::List settingsList) {
 
   // Access elements by name and assign to struct
   settings.storage_reset = Rcpp::as<bool>(settingsList["storage_reset"]);
+  settings.soil_water_reset = Rcpp::as<bool>(settingsList["soil_water_reset"]);
   settings.storage_grows = Rcpp::as<bool>(settingsList["storage_grows"]);
 
   settings.LN_estim = Rcpp::as<bool>(settingsList["LN_estim"]);

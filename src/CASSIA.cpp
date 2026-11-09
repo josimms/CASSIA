@@ -373,7 +373,16 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.SoilWater = 0.0;
         photosynthesis_per_stem = climate.Photosynthesis_IN[day + days_gone] / no_trees * 10000/1000;
       } else if (boolsettings.preles) {
-        photosynthesis = preles_cpp(day, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
+        // reset_state: soil_water_reset=TRUE (default) fires this every
+        // year, identical to the previous unconditional day==0 behavior;
+        // FALSE fires it only on the true first day of the whole run
+        // (year==start_year), letting preles_cpp's soil-water/snow/canopy
+        // state carry over continuously across years instead - see
+        // preles_cpp's own comment (preles_test.cpp) for which fields
+        // that actually affects. Needed for ORCHIMIC's continuous
+        // multi-year runs (manscript_orchemic/PROJECT_INSTRUCTIONS.md).
+        bool preles_reset_state = (day == 0) && (boolsettings.soil_water_reset || year == start_year);
+        photosynthesis = preles_cpp(day, preles_reset_state, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
                                     climate.VPD[days_gone + day], climate.CO2[days_gone + day], all_out.fAPAR[days_gone + day],
                                     parSite, parGPP, parET, parSnowRain, parWater, 0.0, 1);
         photosynthesis_per_stem = photosynthesis.GPP / no_trees * 10000/1000;
@@ -533,6 +542,7 @@ Rcpp::List CASSIA_yearly(int start_year,
                     surplus_c,
                     tree_alive,
                     boolsettings.organ_level_sugar,
+                    boolsettings.storage_reset,
                     tree_state,
                     nitrogen_balance,
                     winter_state,

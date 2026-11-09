@@ -344,6 +344,7 @@ void sugar_model(int day,
                  bool surplus_c,
                  bool tree_alive,
                  bool new_sugar_model,
+                 bool storage_reset,
 
                  const growth_state& tree_state,
                  double& nitrogen_balance,
@@ -875,8 +876,19 @@ void sugar_model(int day,
     double storage{}, storage_term_Rm{}, sugar_all{}, starch_all{}, to_sugar{}, to_starch{};
     double nitrogen_capacity_all{};
     double myco_allocation{};
-    if (day == 0) {
-      // TODO: put this in initalisation as no longer going through on day 0
+    // sugar_model() is only ever reached with day==0 on a year AFTER the
+    // first (CASSIA.cpp skips calling it on day==0 of start_year - that
+    // day is pre-populated directly from parameters.sugar0/starch0 instead,
+    // see CASSIA.cpp's year-loop setup). So this branch is purely the
+    // ANNUAL reset, gated by storage_reset (2026-11-09; previously
+    // unconditional - storage_reset was read from R but never actually
+    // used anywhere in the C++, a dead no-op despite its roxygen doc
+    // already describing this exact carry-over behavior for FALSE). When
+    // storage_reset is FALSE, falling through to the day>0 formula below
+    // is correct as-is: sugar.needles/starch.needles already hold the
+    // previous year's last day's real value at this point, nothing else
+    // in that formula assumes day>0 specifically.
+    if (day == 0 && storage_reset) {
       sugar_all = parameters.sugar0;
       starch_all = parameters.starch0;
       to_sugar = 0;

@@ -1,6 +1,7 @@
 #include "CASSIA.h"
 
 photosynthesis_out preles_cpp(int day,
+                              bool reset_state,
                               double I,
                               double T,
                               double P,
@@ -21,7 +22,22 @@ photosynthesis_out preles_cpp(int day,
   static double GPP, fE, fWE, fPheno;
 
   photosynthesis_out out;
-  if (day==0) {
+  // reset_state replaces a plain day==0 check (2026-11-09) so the caller
+  // (CASSIA.cpp) controls whether this fires every year (soil_water_reset
+  // = TRUE, reset_state = day==0, identical to the old unconditional
+  // behavior) or only on the true first day of the whole run
+  // (soil_water_reset = FALSE, reset_state = day==0 && year==start_year) -
+  // continuous multi-year soil water/snow/canopy/temperature-sum state,
+  // needed for ORCHIMIC. theta/theta_canopy/theta_snow/S_state are the
+  // only fields here with genuine cross-day memory (confirmed against
+  // external/Rprebasso/src/gpp.c: fS_model's S has no internal annual
+  // logic at all - it's meant to run continuously forever - and
+  // fPheno_model already resets PhenoS itself via its own day-of-year
+  // check, so it doesn't depend on this reset either way); the rest
+  // (Interception/Drainage/Snowmelt/transp/evap/GPP/gpp380/fD/fW/fEgpp)
+  // are fully recomputed from each day's own inputs before being read, so
+  // whether they're zeroed here first makes no behavioral difference.
+  if (reset_state) {
     theta=Initials_snow.SW;
     theta_canopy=Initials_snow.CW;
     theta_snow=Initials_snow.SOG;
@@ -168,7 +184,7 @@ Rcpp::DataFrame preles_test(Rcpp::DataFrame weather) {
     double co2 = CO2[day];
     double fapar = fAPAR[day];
 
-    out = preles_cpp(day, I, T, P, D, co2, fapar,
+    out = preles_cpp(day, day==0, I, T, P, D, co2, fapar,
                      Site_par, GPP_par, ET_par, SnowRain_par,
                      Initials_snow, LOGFLAG, CO2Model);
 

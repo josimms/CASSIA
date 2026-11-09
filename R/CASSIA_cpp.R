@@ -69,6 +69,15 @@
 #' @param storage_reset Logical. If \code{TRUE} (default), sugar and starch
 #'   stores reset to initial values at the start of each year. If \code{FALSE},
 #'   carry over from the previous simulated year.
+#' @param soil_water_reset Logical. If \code{TRUE} (default), PRELES's
+#'   internal soil-water/canopy-water/snowpack/temperature-sum state (only
+#'   relevant when \code{preles = TRUE}) resets to its fixed initial values
+#'   (\code{pPREL}'s snow-model initials) at the start of each year, mirroring
+#'   \code{storage_reset}'s own annual-reset semantics. If \code{FALSE},
+#'   this state instead carries over continuously across years - only the
+#'   very first day of the whole run resets it. Needed for continuous
+#'   multi-year runs (e.g. feeding ORCHIMIC); irrelevant to single-year runs.
+#'   Default \code{TRUE} reproduces every existing caller's current output.
 #' @param storage_grows Logical. If \code{TRUE}, potential storage space grows
 #'   with tree height and diameter. Default \code{FALSE}.
 #' @param LN_estim Logical. If \code{TRUE} (default), needle elongation (LN) is
@@ -448,6 +457,7 @@ CASSIA_cpp <- function(
     #####
 
     storage_reset = TRUE,			# storage.reset<-TRUE=Same initial storage each year, storage.reset<-False, The storage on the last day of year X is  postponded to the first day of the year X+1
+    soil_water_reset = TRUE,		# Same annual-reset semantics as storage_reset, for PRELES's internal soil-water/canopy/snow/temperature-sum state (preles = TRUE only) - FALSE carries it over continuously, needed for ORCHIMIC-style continuous multi-year runs
     storage_grows = FALSE,			# TRUE if the critical storage level increases with tree size.
 
     LN_estim = TRUE,				# LN depends on the GPP during previous july-august
@@ -552,6 +562,7 @@ CASSIA_cpp <- function(
   # make the model settings into a list
   settings = list(
     "storage_reset" = storage_reset,
+    "soil_water_reset" = soil_water_reset,
     "storage_grows" = storage_grows,
     "LN_estim" = LN_estim,
     "mN_varies" = mN_varies,

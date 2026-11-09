@@ -142,6 +142,7 @@ void sugar_model(int day,
                  bool surplus_c,
                  bool tree_alive,
                  bool new_sugar_model,
+                 bool storage_reset,
 
                  const growth_state& tree_state,
                  double& nitrogen_balance,
@@ -225,6 +226,7 @@ xylogenesis_out xylogenesis(int no_day,
  */
 
 photosynthesis_out preles_cpp(int day,
+                              bool reset_state,
                               double I,
                               double T,
                               double P,
