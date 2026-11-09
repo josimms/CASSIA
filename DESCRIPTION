@@ -15,7 +15,6 @@ SystemRequirements: C++17, GCC >= 8 (or equivalent); the bundled phydro
     on openSUSE Leap.
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.2
 Imports: Rcpp (>= 1.0.9), RcppEigen, data.table, dplyr, ncdf4, bigleaf, lubridate
 LinkingTo: Rcpp, RcppEigen
 Suggests:
@@ -25,3 +24,4 @@ Suggests:
     ggplot2
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.1

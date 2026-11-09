@@ -28,6 +28,7 @@ CASSIA_cpp(
     -0.857817410110663, 4.1311874912949e-17, 1, 0.0245, 2, 1.5, 0.15, 15, 10, 5, 0, 1,
     exp(-0.5 * 1.8), exp(-0.5 * 3.5), exp(-0.5 * 5.5)),
   storage_reset = TRUE,
+  soil_water_reset = TRUE,
   storage_grows = FALSE,
   LN_estim = TRUE,
   mN_varies = TRUE,
@@ -43,6 +44,7 @@ CASSIA_cpp(
   trees_grow = FALSE,
   growth_decreases = FALSE,
   needle_mass_grows = FALSE,
+  pipe_model_correction = FALSE,
   height_diameter_correction = FALSE,
   tau_H = 5,
   root_leaf_correction = FALSE,
@@ -51,6 +53,12 @@ CASSIA_cpp(
   leaf_mass_correction = FALSE,
   tau_N = 5,
   sLc_litter = 2.163312,
+  theta_N_needles = 4.9,
+  theta_N_roots = 7.7,
+  theta_N_myco = 3,
+  retrans_needles = 0.73,
+  retrans_roots = 0.2,
+  retrans_myco = 0,
   phloem_trigger = FALSE,
   mycorrhiza = TRUE,
   root_as_Ding = TRUE,
@@ -168,6 +176,16 @@ model. Only used when \code{phydro = TRUE}.}
 stores reset to initial values at the start of each year. If \code{FALSE},
 carry over from the previous simulated year.}
 
+\item{soil_water_reset}{Logical. If \code{TRUE} (default), PRELES's
+internal soil-water/canopy-water/snowpack/temperature-sum state (only
+relevant when \code{preles = TRUE}) resets to its fixed initial values
+(\code{pPREL}'s snow-model initials) at the start of each year, mirroring
+\code{storage_reset}'s own annual-reset semantics. If \code{FALSE},
+this state instead carries over continuously across years - only the
+very first day of the whole run resets it. Needed for continuous
+multi-year runs (e.g. feeding ORCHIMIC); irrelevant to single-year runs.
+Default \code{TRUE} reproduces every existing caller's current output.}
+
 \item{storage_grows}{Logical. If \code{TRUE}, potential storage space grows
 with tree height and diameter. Default \code{FALSE}.}
 
@@ -217,6 +235,21 @@ coefficients decline linearly from 1997 to 2020. Default \code{FALSE}.}
 dynamically each year via the Repola model. If \code{FALSE} (default),
 needle mass is fixed after the first iteration.}
 
+\item{pipe_model_correction}{Logical. Convenience shortcut: if
+\code{TRUE}, ORs \code{height_diameter_correction},
+\code{root_leaf_correction}, and \code{leaf_mass_correction} all on
+together - the three Mäkelä (1999)/Mäkelä & Valentine (2020)
+pipe-model-family structural-balance corrections. Only ever turns
+these ON, never off - setting \code{pipe_model_correction = TRUE}
+alongside e.g. \code{leaf_mass_correction = FALSE} still leaves
+\code{leaf_mass_correction} active. Each of the three remains fully
+independently settable, so existing calls that enable only one of
+them in isolation (e.g. \code{height_diameter_correction} alone, as
+in \code{height_correction.Rmd}/\code{nitrogen_scenarios.Rmd}) are
+unaffected by this argument's default of \code{FALSE}. Does not
+affect \code{root_turnover}, which is a separate litter mechanism -
+see that argument's own doc. Default \code{FALSE}.}
+
 \item{height_diameter_correction}{Logical. If \code{TRUE}, height's
 growth rate is damped (never boosted - capped at no correction, not
 accelerated, so it never exceeds its own calibrated maximum rate)
@@ -246,20 +279,43 @@ already ~2x its natural rate). \code{5} keeps it moderate - see
 \item{root_leaf_correction}{Logical. If \code{TRUE}, root growth is
 damped (same Mäkelä 1999 eqn 28 mechanism as
 \code{height_diameter_correction}, damping-only) toward a target
-root:leaf-area ratio, leaf area being the uncorrected reference.
-Unlike the height correction, the target ratio and damping factor are
+root:leaf-MASS ratio - Mäkelä & Valentine (2020, \emph{Models of Tree
+and Stand Dynamics}, Ch.4, Eq. 4.13: \eqn{W_r = \alpha_r W_f}, the
+pipe model's own fine-root-from-leaf-mass relationship. (An earlier
+version of this argument referenced leaf AREA instead; superseded
+2026-11-06 - see \code{manuscript/paper_plan.Rmd}'s "Root growth"
+section for why: Repola's own root equations predict root mass from
+diameter alone, with no leaf link at all, so this pipe-model ratio is
+the only formula in CASSIA that ties root mass to leaf mass.) Unlike
+the height correction, the target ratio and damping factor are
 recomputed only once per year (at the first day of each year) and
-held fixed for the rest of that year, rather than daily - leaf area
-has real within-year seasonal swings (Tian 2021 cohort turnover) that
-would make a daily-recomputed target noisy. The target ratio
-(\code{alpha_R} in \code{growth.cpp}) is currently an uncalibrated
-placeholder - no real root-biomass-vs-leaf-area series has been
-sourced yet, unlike \code{alpha_H}. Default \code{FALSE}.}
+held fixed for the rest of that year, rather than daily - leaf mass
+has real within-year seasonal swings (growth flush, autumn
+senescence) that would make a daily-recomputed target noisy. The
+target ratio (\code{alpha_r} in \code{growth.cpp}) is \code{0.47} -
+PREBAS/CROBAS's own "alfar3" (Scots pine, site fertility type 3;
+\code{external/Rprebasso}, already a submodule of this repo - see
+\code{vignettes/Parameters_pCROB.Rmd} and \code{R/parameters.r}'s
+\code{pCROB} matrix). CROBAS is Mäkelä's own Finnish-calibrated
+implementation of essentially this same pipe-model framework, and
+gives \code{alfar} a site-fertility gradient (type 1-5:
+0.40/0.44/0.47/0.64/0.84 for Scots pine - full table in
+\code{manuscript/paper_plan.Rmd}'s "Root growth" section). Type 3 is
+Hyde's best available match - no explicit site-fertility
+classification exists anywhere in CASSIA's own data for Hyytiälä to
+confirm this against, so treat as a real, sourced value from a
+cognate model/site rather than a validated one for this specific
+stand, unlike \code{alpha_H} (fit against two independent real
+SMEAR height/diameter series). Most useful paired with
+\code{leaf_mass_correction = TRUE}, so the leaf_mass it corrects
+against is itself a genuinely accumulating pool rather than the
+memoryless annually-reset default. Default \code{FALSE}.}
 
 \item{tau_R}{Numeric. Control-function exponent (Mäkelä 1999 eqn 28) for
-roots' correction, when \code{root_leaf_correction = TRUE}. Ignored
-otherwise. Default \code{5}, matching \code{tau_H}'s default - not
-independently calibrated.}
+roots' correction, when \code{root_leaf_correction = TRUE}. Also used
+by \code{root_turnover}'s litter boost below, when both are
+\code{TRUE}. Ignored when neither is \code{TRUE}. Default \code{5},
+matching \code{tau_H}'s default - not independently calibrated.}
 
 \item{root_turnover}{Logical. If \code{TRUE}, root and mycorrhiza
 biomass (\code{culm_growth_roots}/\code{culm_growth_mycorrhiza}) lose
@@ -269,10 +325,15 @@ Uses the same senescence signal as leaf area's own cohort turnover
 (\code{photosynthesis$fS}, sticky once it first reaches 1 after day
 50 of the year, same as \code{fAPAR_and_LAI.cpp}), but is not a
 literal copy of that formula - see \code{actual_growth.cpp} for why.
-A first-pass mechanism: the turnover-time constant is an uncalibrated
-placeholder (3 years, matching needle longevity's default), not yet
-\code{parameters$root_lifetime} (unpopulated for this site). Default
-\code{FALSE}.}
+When \code{root_leaf_correction} is also \code{TRUE}, root litter (not
+mycorrhiza litter - no pipe-model analogue exists for mycorrhiza) gets
+an additional symmetric, uncapped boost/damping toward the same
+Eq. 4.13 target, mirroring \code{leaf_mass_correction}'s own needle
+litter boost - sheds faster once roots have overgrown the target,
+slower while undergrown. A first-pass mechanism: the turnover-time
+constant is an uncalibrated placeholder (3 years, matching needle
+longevity's default), not yet \code{parameters$root_lifetime}
+(unpopulated for this site). Default \code{FALSE}.}
 
 \item{leaf_mass_correction}{Logical. If \code{TRUE}, needle
 \code{leaf_mass} becomes a genuinely accumulating pool (growth via
@@ -306,6 +367,46 @@ otherwise. Default \code{2.163312}, fitted against 2006-2016
 Hyytiala litter-trap data (pooled training years, validated on
 held-out years) - not independently calibrated, same caveat as
 \code{tau_R}.}
+
+\item{theta_N_needles, theta_N_roots, theta_N_myco}{Numeric. N:C-style
+thresholds (mg N / g dry mass) for needle/root/mycorrhiza litter's
+nitrogen content (\code{needle_litter_N}/\code{root_litter_N}/
+\code{mycorrhiza_litter_N}, net of retranslocation below). Default
+\code{4.9} for needles: a real measured value, Korhonen et al. (2013,
+\emph{Biogeosciences} 10:1083-1095), Table 2 - needle litter N
+concentration at Hyytiala SMEAR II, 2006-2008, the exact site CASSIA
+is parameterized for (also the value growth's own N cost in
+\code{sugar_model.cpp} already uses). Default \code{7.7} for roots:
+likewise real, Helmisaari et al. (2007) fine root N concentration for
+a Scots pine stand near SMEAR II, quoted in Korhonen et al. (2013)
+Sect. 4.2. Mycorrhiza has no sourced value, so its default \code{3.0}
+reuses the pre-Korhonen root placeholder as an explicitly unvalidated
+stand-in.}
+
+\item{retrans_needles, retrans_roots, retrans_myco}{Numeric, in
+\code{[0, 1]}. Fraction of needle/root/mycorrhiza litter nitrogen
+resorbed (retranslocated) before shedding rather than lost, credited
+back to \code{nitrogen_balance} with a one-day lag (same lag
+\code{uptake$total_uptake} already uses). Default \code{0.73} for
+needles: a real measured value, Korhonen et al. (2013) Sect.
+3.6.2/3.6.3 - needle+leaf retranslocation was 73\% of the initial
+foliage nitrogen at this same Hyytiala site. Default \code{0.2} for
+roots: a real measured value (Wojciechowska et al. 2020,
+\emph{Tree Physiology} 40:987-1000) - fine-root N concentration
+decline from control to fully senescent roots in \emph{Populus
+trichocarpa}, ~20\% consistently across all three root orders
+measured; a concentration decline rather than a mass-loss-corrected
+resorption efficiency, and from a deciduous broadleaf rather than
+\emph{Pinus sylvestris}, so a real but imperfect analogue. Korhonen
+et al. (2013) assumed retranslocation negligible for all non-foliage
+classes they measured (branches, bark, cones, wood), but fine roots
+were outside that study's scope entirely (litter traps don't catch
+root turnover), so it gives no root number directly. Mycorrhiza's
+default is \code{0} because resorption has no clean biological
+analogue for a fungal symbiont's own shed tissue, so none is assumed
+rather than guessing one. Always applied (not behind a toggle) - the
+nitrogen content of litter itself is real regardless of parameter
+values, the same way \code{needle_litter} itself is unconditional.}
 
 \item{phloem_trigger}{Logical. If \code{TRUE}, bud burst is triggered when
 phloem sugar first drops below a threshold (requires

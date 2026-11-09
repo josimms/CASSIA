@@ -529,13 +529,13 @@ relationship structurally identical to Eq. 4.13, in two different places:
    `repola_values.m_R_tot` anywhere in `CASSIA.cpp`, and has no column in
    any output data frame (checked `output_functions.cpp`) - it is
    computed every call and silently discarded.
-2. `growth.cpp:440-461`'s `root_leaf_correction` (off by default, and off
+2. `growth.cpp:498-504`'s `root_leaf_correction` (off by default, and off
    in the `CASSIA_run` above): when enabled, it damps root growth toward
-   `R_bal = alpha_R * leaf_area_max_last_year` (`growth.cpp:453`) -
-   root $\propto$ leaf, exactly Eq. 4.13's form, just leaf *area* rather
-   than leaf *mass*. `alpha_R = 0.15` is flagged in the code itself as an
-   uncalibrated placeholder, with no real $\alpha_\mathrm{r}$ sourced from
-   the book or elsewhere yet.
+   `R_bal = alpha_r * leaf_mass_max_last_year` (`growth.cpp:503`) - root
+   $\propto$ leaf, exactly Eq. 4.13's form, leaf *mass* rather than leaf
+   area. `alpha_r = 0.47` is PREBAS/CROBAS's own `alfar3` (Scots pine,
+   site fertility type 3) - a real, sourced value, though not yet
+   Hyde-validated against an independent root-biomass series.
 
 ### 5.3  Diagnostic: implied $\alpha_\mathrm{r}$
 
@@ -549,10 +549,10 @@ alpha_diagnostic <- data.frame(
 
 ggplot(alpha_diagnostic, aes(x = dates, y = alpha_r_implied)) +
   geom_line(colour = "#762a83", linewidth = 0.8) +
-  geom_hline(yintercept = 0.15, linetype = "dashed", colour = "grey40") +
+  geom_hline(yintercept = 0.47, linetype = "dashed", colour = "grey40") +
   scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
   labs(title = expression("Implied fine-root ratio, " * W[r] / W[f]),
-       subtitle = "Dashed line: growth.cpp's own uncalibrated alpha_R placeholder (0.15)",
+       subtitle = "Dashed line: growth.cpp's own alpha_r (0.47, PREBAS/CROBAS alfar3)",
        x = NULL, y = expression(alpha[r])) +
   theme_bw(base_size = 13)
 ```
@@ -709,9 +709,9 @@ still needs:
   directly $r_\mathrm{c}$ via Eq. 4.21) against, using Chapter 9's
   sensitivity framework if it comes to that - and, per Sects. 4-5, real
   foliage/fine-root mass observations to replace $\eta_\mathrm{s}$ and
-  $\alpha_\mathrm{r}$'s current status (no numeric value at all for
-  $\eta_\mathrm{s}$; `alpha_R = 0.15` an admitted placeholder for
-  $\alpha_\mathrm{r}$) with real fitted values.
+  $\alpha_\mathrm{r}$'s current status ($\eta_\mathrm{s}$ has no numeric
+  value at all; $\alpha_\mathrm{r} = 0.47$ is PREBAS/CROBAS's `alfar3`, a
+  real sourced value but not yet Hyde-validated) with real fitted values.
 
 ---
 
@@ -731,7 +731,7 @@ still needs:
   $\alpha_\mathrm{r,implied}$'s drift by construction - is that structural
   fix (replacing `culm_growth_roots`'s accumulation with a per-step
   recomputation) worth porting to `growth.cpp`/`repola.cpp` ahead of, or
-  instead of, calibrating `root_leaf_correction`'s `alpha_R`?
+  instead of, Hyde-validating `root_leaf_correction`'s `alpha_r`?
 - Sects. 4-5's implied $\eta_\mathrm{s}$/$\alpha_\mathrm{r}$ ratios are not
   constant over the run - is that drift worth chasing (real foliage/root
   mass data to fit against), or is CASSIA's phenology-and-soil-driven
