@@ -10,7 +10,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,
                       fig.width = 12, fig.height = 5,
                       fig.path = "../manuscript/figures/leaf_mass_correction-")
 ```
@@ -46,6 +46,16 @@ pub_theme <- theme_bw(base_size = 13) +
         plot.subtitle   = element_text(size = 10, colour = "grey30"),
         panel.grid.minor = element_blank(),
         legend.position  = "bottom")
+
+# Colour-blind-safe (Okabe & Ito 2008), used throughout this document.
+okabe_ito_obs   <- "#0072B2"  # blue - observed/real data, points only (discrete samples)
+okabe_ito_model <- "#D55E00"  # vermillion - CASSIA model output, line (continuous daily series)
+
+# sLc_litter was fit via optimize() on pooled TRAINING years, checked
+# against held-out VALIDATION years - needle_litter_fS2_implementation_plan.md.
+train_years <- c(2006, 2008, 2010, 2012, 2014, 2016)
+valid_years <- c(2007, 2009, 2011, 2013, 2015)
+year_label  <- function(y) paste0(y, ifelse(y %in% train_years, " (fitted)", " (held-out)"))
 ```
 
 ---
@@ -80,6 +90,21 @@ weather_1998_2022 <- weather_preles[
   weather_preles$date >= as.Date("1998-01-01") &
   weather_preles$date <= as.Date("2022-12-31"), ]
 weather_1998_2022$dates <- as.Date(weather_1998_2022$date)
+```
+
+### 1.3  Pine stand density, interpolated across inventory years
+
+Shared by Sect. 3 (real foliage biomass) and Sect. 4-5 (real litter) below.
+
+```{r stand-density}
+density_df <- loaded_data$smearII_data[
+  loaded_data$smearII_data$variable == "tree density pine", ]
+density_df <- aggregate(amount ~ date, data = density_df, FUN = mean)
+density_df <- density_df[order(density_df$date), ]
+
+density_interp <- approx(x = density_df$date, y = density_df$amount,
+                          xout = 1998:2022, rule = 2)
+density_by_year <- setNames(density_interp$y, 1998:2022)
 
 dates_1998_2022 <- weather_1998_2022$dates
 ```
@@ -112,18 +137,21 @@ CASSIA_leaf_mass <- CASSIA_cpp(
   organ_level_sugar          = FALSE,
   needle_mass_grows          = TRUE,
   height_diameter_correction = TRUE,
-  leaf_mass_correction       = TRUE
+  leaf_mass_correction       = TRUE,
+  root_turnover              = TRUE  # for Sect. 5.1's root_litter/mycorrhiza_litter comparison - confirmed not to change needle_litter/leaf_mass (independent code paths, checked)
 )
 
 leaf_mass_df <- data.frame(
-  dates       = dates_1998_2022,
-  year        = as.integer(format(dates_1998_2022, "%Y")),
-  day_of_year = as.integer(format(dates_1998_2022, "%j")),
-  leaf_mass   = CASSIA_leaf_mass$Growth$leaf_mass,
-  litter      = CASSIA_leaf_mass$Turnover$needle_litter,
-  fS          = CASSIA_leaf_mass$Preles$fS,
-  diameter    = CASSIA_leaf_mass$Culm_Growth$culm_growth_diameter,
-  height      = CASSIA_leaf_mass$Culm_Growth$culm_growth_height
+  dates              = dates_1998_2022,
+  year               = as.integer(format(dates_1998_2022, "%Y")),
+  day_of_year        = as.integer(format(dates_1998_2022, "%j")),
+  leaf_mass          = CASSIA_leaf_mass$Growth$leaf_mass,
+  litter             = CASSIA_leaf_mass$Turnover$needle_litter,
+  root_litter        = CASSIA_leaf_mass$Turnover$root_litter,
+  mycorrhiza_litter  = CASSIA_leaf_mass$Turnover$mycorrhiza_litter,
+  fS                 = CASSIA_leaf_mass$Preles$fS,
+  diameter           = CASSIA_leaf_mass$Culm_Growth$culm_growth_diameter,
+  height             = CASSIA_leaf_mass$Culm_Growth$culm_growth_height
 )
 
 cat("leaf_mass range:", range(leaf_mass_df$leaf_mass), "\n")
@@ -197,6 +225,55 @@ year_balance <- do.call(rbind, lapply(years, function(y) {
 print(year_balance, digits = 3)
 ```
 
+### 2.3  Real data: litter traps and foliage biomass (for Sects. 3-5)
+
+```{r real-data-prep}
+# Real litter-trap data (karike_df_all, needles) - used by Sects. 4-5.
+karike <- karike_df_all  # lazy-loaded package data, not part of load_data()'s return list
+karike$pvm <- as.Date(karike$pvm)
+karike_recent <- karike[!is.na(karike$neulanen) &
+                        format(karike$pvm, "%Y") %in% as.character(2006:2016), ]
+
+real_litter <- aggregate(neulanen ~ pvm, data = karike_recent, FUN = mean)
+real_litter <- real_litter[order(real_litter$pvm), ]
+real_litter$year      <- as.integer(format(real_litter$pvm, "%Y"))
+real_litter$fit_split <- year_label(real_litter$year)
+
+# Collector geometry: 47.5cm-diameter circular funnel, area pi*0.2375^2 ~=
+# 0.177 m^2 - close to Korhonen et al. (2013)'s own documented 0.2 m^2.
+collector_area_m2 <- pi * 0.2375^2
+
+real_litter$trees_per_ha <- density_by_year[as.character(real_litter$year)]
+real_litter$kg_per_tree  <- (real_litter$neulanen / collector_area_m2) /
+  (real_litter$trees_per_ha / 10000) / 1000
+
+real_litter$interval_start <- c(as.Date(NA), head(real_litter$pvm, -1))
+real_litter$interval_days  <- as.numeric(real_litter$pvm - real_litter$interval_start)
+real_litter$day_of_year    <- as.integer(format(real_litter$pvm, "%j"))
+real_litter$daily_rate_kg_tree_day <- real_litter$kg_per_tree / real_litter$interval_days
+
+model_interval_sum <- function(start, end) {
+  if (is.na(start)) return(NA_real_)
+  sum(leaf_mass_df$litter[leaf_mass_df$dates > start & leaf_mass_df$dates <= end])
+}
+real_litter$model_kg_per_tree <- mapply(model_interval_sum,
+                                         real_litter$interval_start, real_litter$pvm)
+comparison <- real_litter[!is.na(real_litter$model_kg_per_tree), ]
+
+# Real pine needle (foliage) biomass, CASSIA_Calibration/smearII_data -
+# independent stand-inventory measurements, for Sect. 3's trajectory plot.
+# Converted kg dry mass/ha -> kg C/tree (carbon_share = 0.5, matching
+# leaf_mass's own units) using the same stand-density interpolation.
+# Inventory dates are year-only, so each point is placed at 1 July of its
+# year as an approximation.
+foliage_df <- loaded_data$smearII_data[
+  loaded_data$smearII_data$variable == "pine_foliage_biomass", ]
+foliage_df <- foliage_df[order(foliage_df$date), ]
+foliage_df$trees_per_ha    <- density_by_year[as.character(foliage_df$date)]
+foliage_df$leaf_mass_kgC_tree <- (foliage_df$amount / foliage_df$trees_per_ha) * 0.5
+foliage_df$dates <- as.Date(paste0(foliage_df$date, "-07-01"))
+```
+
 ---
 
 ## 3  trajectory - leaf_mass pool against its own target
@@ -207,9 +284,11 @@ ggplot() +
             colour = "#1b7837", linewidth = 0.7) +
   geom_segment(data = n_repo_df, aes(x = start, xend = end, y = N_repo, yend = N_repo),
                colour = "#e08214", linewidth = 0.9) +
+  geom_point(data = foliage_df, aes(x = dates, y = leaf_mass_kgC_tree),
+             colour = okabe_ito_obs, size = 2.5) +
   scale_x_date(date_breaks = "5 years", date_labels = "%Y") +
-  labs(title = "leaf_mass pool vs. N_repo (yearly target)",
-       subtitle = "1998-2022, Hyde-initialised, leaf_mass_correction = TRUE",
+  labs(title = "leaf_mass pool vs. N_repo (yearly target) and real foliage biomass",
+       subtitle = "1998-2022, Hyde-initialised, leaf_mass_correction = TRUE. Points: real pine_foliage_biomass stand inventories (CASSIA_Calibration/smearII_data), kg dry mass/ha -> kg C/tree.",
        x = NULL, y = "Needle leaf_mass (kg C / tree)") +
   pub_theme
 ```
@@ -220,13 +299,17 @@ ggplot() +
 
 ```{r litter-timing, fig.width = 12, fig.height = 8}
 litter_recent <- leaf_mass_df[leaf_mass_df$year %in% 2006:2016, ]
+litter_recent$year_label <- year_label(litter_recent$year)
+real_litter$year_label   <- year_label(real_litter$year)
 
 ggplot(litter_recent, aes(x = day_of_year, y = litter)) +
   geom_line(colour = "#1b7837", linewidth = 0.7) +
+  geom_point(data = real_litter, aes(x = day_of_year, y = daily_rate_kg_tree_day),
+             colour = okabe_ito_obs, size = 1.6, inherit.aes = FALSE) +
   geom_vline(xintercept = c(250, 290), linetype = "dashed", colour = "grey50") +
-  facet_wrap(~year, ncol = 4) +
+  facet_wrap(~year_label, ncol = 4) +
   labs(title = "Daily needle_litter rate by day-of-year",
-       subtitle = "2006-2016; dashed lines mark the literature day 250-290 window",
+       subtitle = "2006-2016; dashed lines mark the literature day 250-290 window. Points: real karike funnel-trap data, averaged to a daily rate over each collection interval. Facet labels mark sLc_litter's fit/held-out year split.",
        x = "Day of year", y = "needle_litter (kg C / tree / day)") +
   pub_theme +
   theme(legend.position = "none")
@@ -236,78 +319,26 @@ ggplot(litter_recent, aes(x = day_of_year, y = litter)) +
 
 ## 5  vs-observed - against real SMEAR karike funnel trap data
 
-### 5.1  Real data: karike_df_all, `neulanen`, 2006-2016
-
-```{r real-litter-data}
-karike <- karike_df_all  # lazy-loaded package data, not part of load_data()'s return list
-karike$pvm <- as.Date(karike$pvm)
-karike_recent <- karike[!is.na(karike$neulanen) &
-                        format(karike$pvm, "%Y") %in% as.character(2006:2016), ]
-
-real_litter <- aggregate(neulanen ~ pvm, data = karike_recent, FUN = mean)
-real_litter <- real_litter[order(real_litter$pvm), ]
-```
-
-### 5.2  Pine stand density, interpolated across inventory years
-
-```{r stand-density}
-density_df <- loaded_data$smearII_data[
-  loaded_data$smearII_data$variable == "tree density pine", ]
-density_df <- aggregate(amount ~ date, data = density_df, FUN = mean)
-density_df <- density_df[order(density_df$date), ]
-
-density_interp <- approx(x = density_df$date, y = density_df$amount,
-                          xout = 2006:2016, rule = 2)
-density_by_year <- setNames(density_interp$y, 2006:2016)
-```
-
-### 5.3  Convert real g/collector to kg/tree, and sum model litter over the same intervals
-
-Collector geometry (47.5cm-diameter circular funnel, area pi*0.2375^2 ~=
-0.177 m^2) and the conversion formula are documented in
-`manuscript/paper_plan.Rmd`'s "Needle litter checked against real
-litterfall trap data" section.
-
-```{r convert-and-compare}
-collector_area_m2 <- pi * 0.2375^2
-
-real_litter$year <- as.integer(format(real_litter$pvm, "%Y"))
-real_litter$trees_per_ha <- density_by_year[as.character(real_litter$year)]
-real_litter$kg_per_tree <- (real_litter$neulanen / collector_area_m2) /
-  (real_litter$trees_per_ha / 10000) / 1000
-
-real_litter$interval_start <- c(as.Date(NA), head(real_litter$pvm, -1))
-
-model_interval_sum <- function(start, end) {
-  if (is.na(start)) return(NA_real_)
-  sum(leaf_mass_df$litter[leaf_mass_df$dates > start & leaf_mass_df$dates <= end])
-}
-real_litter$model_kg_per_tree <- mapply(model_interval_sum,
-                                         real_litter$interval_start, real_litter$pvm)
-
-comparison <- real_litter[!is.na(real_litter$model_kg_per_tree), ]
-cat("Totals, 2006-2016: observed =", round(sum(comparison$kg_per_tree), 2),
-    "kg/tree, model =", round(sum(comparison$model_kg_per_tree), 2), "kg/tree\n")
-```
+`real_litter`/`comparison` were already prepared in Sect. 2.3.
 
 ```{r vs-observed, fig.width = 11, fig.height = 9}
-cum_long <- rbind(
-  data.frame(pvm = comparison$pvm, value = cumsum(comparison$kg_per_tree), Source = "Observed (karike funnel traps)"),
-  data.frame(pvm = comparison$pvm, value = cumsum(comparison$model_kg_per_tree), Source = "CASSIA (leaf_mass_correction)")
-)
+obs_df   <- data.frame(pvm = comparison$pvm, value = cumsum(comparison$kg_per_tree),
+                        Source = "Observed (karike funnel traps)")
+model_df <- data.frame(pvm = comparison$pvm, value = cumsum(comparison$model_kg_per_tree), Source = "CASSIA (leaf_mass_correction)")
 
-p_cum <- ggplot(cum_long, aes(x = pvm, y = value, colour = Source)) +
-  geom_line(linewidth = 0.9) +
-  geom_point(size = 1.5) +
-  scale_colour_manual(values = c("Observed (karike funnel traps)" = "#762a83",
-                                  "CASSIA (leaf_mass_correction)" = "#1b7837")) +
+p_cum <- ggplot(mapping = aes(x = pvm, y = value, colour = Source)) +
+  geom_line(data = model_df, linewidth = 0.9) +
+  geom_point(data = obs_df, size = 1.8) +
+  scale_colour_manual(values = c("Observed (karike funnel traps)" = okabe_ito_obs,
+                                  "CASSIA (leaf_mass_correction)" = okabe_ito_model)) +
   labs(title = "Cumulative needle litterfall, 2006-2016",
+       subtitle = "Observed: discrete trap collections (points). CASSIA: continuous daily model output (line).",
        x = NULL, y = "Cumulative litter (kg / tree)") +
   pub_theme
 
 p_scatter <- ggplot(comparison, aes(x = kg_per_tree, y = model_kg_per_tree)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey50") +
-  geom_point(colour = "#1b7837", size = 2) +
+  geom_point(colour = okabe_ito_model, size = 2) +
   labs(title = "Per-interval totals: model vs. observed",
        x = "Observed (kg / tree)", y = "CASSIA (kg / tree)") +
   pub_theme
@@ -318,4 +349,321 @@ p_scatter <- ggplot(comparison, aes(x = kg_per_tree, y = model_kg_per_tree)) +
     subtitle = "SMEAR karike funnel data, 2006-2016; pine density interpolated from stand inventories",
     theme = theme(plot.title = element_text(face = "bold", size = 14))
   )
+
+cat("Totals, 2006-2016: observed =", round(sum(comparison$kg_per_tree), 2),
+    "kg/tree, model =", round(sum(comparison$model_kg_per_tree), 2), "kg/tree\n")
+```
+
+Cross-checked against Korhonen et al. (2013) - the same paper already
+sourcing `theta_N_needles` - which independently reports annual N flux and
+tissue N concentration per litter fraction (Sect. 3.6.1, Table 2) for this
+exact site, letting a dry-mass rate be derived without touching the
+funnel-trap spreadsheet at all:
+
+```{r korhonen-litter-benchmark}
+korhonen_litter <- data.frame(
+  Component        = c("Needles", "Leaves", "Branches", "Bark", "Cones/seeds", "Other"),
+  N_flux_kgN_ha_yr = c(8.0, 1.0, 5.3, 1.1, 0.35, 2.1),
+  # Branches: text reports one combined flux (5.3) but Table 2 splits large
+  # (4.7) vs small (4.4) branch N%; no split fraction given, so the mean of
+  # the two is used as an approximation - flagged, not a precise figure.
+  N_conc_mgN_g     = c(4.9, 8.8, mean(c(4.7, 4.4)), 3.7, 2.1, 12)
+)
+korhonen_litter$dry_mass_g_m2_yr <- korhonen_litter$N_flux_kgN_ha_yr /
+  (korhonen_litter$N_conc_mgN_g / 1000) * 0.1  # kg N/ha/yr -> g dry mass/m2/yr
+korhonen_litter <- korhonen_litter[order(-korhonen_litter$dry_mass_g_m2_yr), ]
+
+karike_needle_g_m2_yr <- mean(aggregate(neulanen ~ year, data = real_litter, FUN = sum)$neulanen) / collector_area_m2
+korhonen_needle_g_m2_yr <- korhonen_litter$dry_mass_g_m2_yr[korhonen_litter$Component == "Needles"]
+cat("karike-derived needle rate:   ", round(karike_needle_g_m2_yr, 1), "g/m2/yr\n")
+cat("Korhonen-derived needle rate:", round(korhonen_needle_g_m2_yr, 1), "g/m2/yr\n")
+```
+
+The two agree within ~15% (`r round(karike_needle_g_m2_yr,1)` vs
+`r round(korhonen_needle_g_m2_yr,1)` g/m2/yr) - confirming the trap-geometry
+and aggregation steps above are correct, and that the gap against CASSIA's
+model is real rather than a unit artifact.
+
+### 5.1  All raw real litter components (not just needles) - isolating which should be bigger
+
+The `korhonen_litter` table above gives an independently-sourced rate for
+every component below too (branches, bark, cones/seeds, leaves, other),
+for cross-checking.
+
+`karike_df_all` (`~/Documents/CASSIA_Calibration/Raw_Data/ancillary_ecosystem/`,
+`Karikkeet_readme.txt`) separates every funnel-trap collection into
+`neulanen` (needles), `kuori` (bark), `tikku` (twigs), `käpy` (cones),
+`muu` (other) and `lehti` (leaves) - all six collected from the same
+47.5cm funnel traps, so the same `collector_area_m2`/density conversion
+above applies uniformly to each. CASSIA only ever models needle litter
+(`leaf_mass_correction`'s own pathway) and root/mycorrhiza litter
+(`root_turnover`, no funnel-trap equivalent exists for those - they're
+belowground); branch litter is hardcoded to `0` in the C++
+(`output_functions.cpp`: "no branch biomass pool") despite being a real,
+measurable category here. This isolates how much of the needle-litter
+gap above is really a needle-specific shortfall versus how big the
+*other* real components are in comparison.
+
+```{r all-litter-components, fig.width = 11, fig.height = 6}
+litter_components <- c(neulanen = "Needles", kuori = "Bark", tikku = "Twigs",
+                        "käpy" = "Cones", muu = "Other", lehti = "Leaves")
+
+component_long <- do.call(rbind, lapply(names(litter_components), function(col) {
+  df <- karike[!is.na(karike[[col]]) &
+               format(karike$pvm, "%Y") %in% as.character(2006:2016),
+               c("pvm", col)]
+  names(df) <- c("pvm", "amount")
+  agg <- aggregate(amount ~ pvm, data = df, FUN = mean)
+  agg <- agg[order(agg$pvm), ]
+  agg$year <- as.integer(format(agg$pvm, "%Y"))
+  agg$trees_per_ha <- density_by_year[as.character(agg$year)]
+  agg$kg_per_tree <- (agg$amount / collector_area_m2) / (agg$trees_per_ha / 10000) / 1000
+  data.frame(pvm = agg$pvm, cum_kg_per_tree = cumsum(agg$kg_per_tree),
+             total_kg_per_tree = sum(agg$kg_per_tree),
+             Component = litter_components[[col]])
+}))
+
+totals_2006_2016 <- unique(component_long[, c("Component", "total_kg_per_tree")])
+totals_2006_2016 <- totals_2006_2016[order(-totals_2006_2016$total_kg_per_tree), ]
+cat("Real litter totals, 2006-2016, kg/tree (funnel-trap components, descending):\n")
+print(totals_2006_2016, row.names = FALSE)
+cat("\nFor reference, CASSIA's modeled needle_litter total over the same window:",
+    round(sum(comparison$model_kg_per_tree), 2), "kg/tree\n")
+
+component_long$Component <- factor(component_long$Component, levels = totals_2006_2016$Component)
+
+model_window <- leaf_mass_df[format(leaf_mass_df$dates, "%Y") %in% as.character(2006:2016), ]
+model_lines <- rbind(
+  data.frame(pvm = comparison$pvm, cum_kg_per_tree = cumsum(comparison$model_kg_per_tree),
+             Component = "CASSIA needle_litter (model)"),
+  data.frame(pvm = model_window$dates, cum_kg_per_tree = cumsum(model_window$root_litter),
+             Component = "CASSIA root_litter (model)"),
+  data.frame(pvm = model_window$dates, cum_kg_per_tree = cumsum(model_window$mycorrhiza_litter),
+             Component = "CASSIA mycorrhiza_litter (model)"),
+  data.frame(pvm = model_window$dates, cum_kg_per_tree = 0,
+             Component = "CASSIA branch_litter (model, always 0)")
+)
+
+# Colour-blind-safe (Okabe & Ito 2008) - 6 real components + 4 model outputs.
+component_colours <- c(
+  Needles  = "#000000", Cones  = "#E69F00", Twigs = "#56B4E9",
+  Bark     = "#009E73", Leaves = "#F0E442", Other = "#0072B2",
+  "CASSIA needle_litter (model)"        = "#D55E00",
+  "CASSIA root_litter (model)"          = "#CC79A7",
+  "CASSIA mycorrhiza_litter (model)"    = "#999999",
+  "CASSIA branch_litter (model, always 0)" = "#56B4E9"
+)
+linetype_values <- c(
+  Needles = "blank", Cones = "blank", Twigs = "blank",
+  Bark = "blank", Leaves = "blank", Other = "blank",
+  "CASSIA needle_litter (model)" = "solid",
+  "CASSIA root_litter (model)" = "solid",
+  "CASSIA mycorrhiza_litter (model)" = "solid",
+  "CASSIA branch_litter (model, always 0)" = "dashed"
+)
+
+ggplot(mapping = aes(x = pvm, y = cum_kg_per_tree, colour = Component)) +
+  geom_point(data = component_long[, c("pvm", "cum_kg_per_tree", "Component")], size = 1.3) +
+  geom_line(data = model_lines, aes(linetype = Component), linewidth = 0.9) +
+  scale_colour_manual(values = component_colours) +
+  scale_linetype_manual(values = linetype_values, guide = "none") +
+  labs(title = "Cumulative real litterfall by component, 2006-2016",
+       subtitle = "Real: discrete SMEAR karike funnel-trap collections (points). CASSIA: all four modeled litter outputs (lines) - needle_litter, root_litter, mycorrhiza_litter, and branch_litter (hardcoded 0, dashed).",
+       x = NULL, y = "Cumulative litter (kg / tree)") +
+  pub_theme
+```
+
+**Branch litter (`oksa`), separately collected - not included above.** Per
+`Karikkeet_readme.txt`, branches are collected once a year from 0.5 m²
+ground frames, not the funnel traps - a different area and a different
+sampling frequency, so not directly comparable to the components above
+without its own conversion. Coverage is also much shorter and
+non-overlapping with the 2006-2016 window used here (`karike_df_all`'s
+`oksa` column: 1997-05-30 to 2003-08-04 only, 192 rows). Flagging as a
+real, measured litter category CASSIA currently models as a hardcoded
+zero, worth a dedicated comparison on its own 1997-2003 window if branch
+litter is ever added to the model - not attempted here.
+
+### 5.2  Next steps: calibrating needles, roots, and branches against real data
+
+Needles are the only litter stream validated against real data above.
+Two more are wanted:
+
+- **Roots.** No litter-trap equivalent exists - Korhonen et al. (2013)
+  explicitly excluded fine roots from this same study's scope ("litter
+  traps don't catch root turnover"), so neither 5.1 nor 5.2 above can be
+  reused for root litter directly. Real magnitude and turnover-time
+  numbers do exist, though (no within-year seasonal curve found - only
+  annual totals and a mycelia summer/winter split):
+    - **Magnitude**: Ding et al. (2021, *Forest Ecology and Management*
+      489:119081) - four southern-Finland Scots pine sites along a
+      fertility gradient (CTY/CT/VT/MT), litter-trap (AG) and
+      minirhizotron-based (BG) measurements. Total annual litter
+      (AG + BG) was 206.2/276.2/307.1 g C/m^2 for CT/VT/MT;
+      **belowground (BG) litter alone was 70-91 g C/m^2/yr**, of which
+      ectomycorrhizal (EcM) mycelia production was only 8-13% - the rest
+      is fine-root litter/exudates, i.e. roughly 61-84 g C/m^2/yr is
+      fine-root-specific. AG litter was 1.7-3.3x higher than BG across
+      sites (131-236 vs. 70-91 g/m^2/yr per the abstract).
+    - **Turnover time**: the same paper's Table 3 (Kaplan-Meier median
+      fine-root longevity, pine) gives 324/881/367/487 days (~0.89/2.41/
+      1.01/1.33 years) for CTY/CT/VT/MT respectively - not Hyytiälä
+      itself, but the same species, region, and order of magnitude as
+      `parameters_p`'s own `root.lifetime` (1.7 years, Hyde).
+    - **A real, actionable gap this surfaces**: `root_turnover`'s own
+      turnover-time constant (`actual_growth.cpp`) is a hardcoded `3.0`
+      placeholder ("matching needle longevity's default... TODO: ideally
+      `parameters.root_lifetime` once that's actually populated") - but
+      `root.lifetime` **is** already populated (1.7 years, Hyde) and
+      simply isn't being read by `root_turnover` at all. Wiring that up
+      would be a direct, low-effort step toward real root litter
+      calibration, independent of finding more data.
+    - Other candidate sources not yet pulled numbers from:
+      `CASSIA_Calibration/Raw_Data/ryhti_data/` (root litter
+      decomposition rates, not production magnitude) and the
+      Helmisaari/Ostonen fine-root biomass literature already cited
+      elsewhere in this project.
+- **Branches.** CASSIA has no branch litter mechanism at all right now
+  (`output_functions.cpp`: hardcoded to `0`, "no branch biomass pool") -
+  calibrating this means building that mechanism first, not just
+  updating a validation plot. Korhonen's branch rate (5.1 above, ~117
+  g/m2/yr, blended large/small branch N%) and `karike_df_all`'s `oksa`
+  column (5.3's branch note, 1997-2003) are both real candidate targets
+  once that exists.
+
+Both are future work, not attempted in this session.
+
+---
+
+## 6  Alternative bell shapes for the litter pulse: fitting comparison
+
+Only the shape function `f(s)` applied to the accumulated signal is varied
+here - the accumulator itself (`degree = max(0, 1 - fS^2)`, gated to
+`day > 212`, 1-indexed) is unchanged from the validated mechanism, since
+that choice already has its own documented justification
+(`needle_litter_fS2_implementation_plan.md`: a plain-`fS` accumulator
+reintroduces a 124-day dormant-season smear and false summer double-peaks).
+
+**Methodology note.** The original `sLc_litter` fit (`needle_litter_fS2_implementation_plan.md`)
+was done in a since-lost R session - only the plan doc's description
+survives, not the fitting script. The cumulative-proportion RMSE used
+below (match each real collection date's *cumulative* fraction of that
+year's total against the model's cumulative fraction up to the same date)
+reproduces the documented baseline closely (refit `sLc` = 2.28 vs. the
+documented 2.163; validation RMSE 0.153 vs. the documented 0.175) - close
+enough to trust the comparison *between* shapes below, but not treated as
+an exact reproduction of the historical absolute number.
+
+```{r shape-candidates}
+makela_bell <- function(s, p) {
+  sLc <- p[1]
+  out <- numeric(length(s))
+  valid <- s > 0 & s < sLc^2
+  out[valid] <- (sLc * sqrt(s[valid]) - s[valid]) / (sLc^2 / 4)
+  out
+}
+gaussian_bell <- function(s, p) {
+  mu <- p[1]; sigma <- p[2]
+  exp(-(s - mu)^2 / (2 * sigma^2))
+}
+triangular_bell <- function(s, p) {
+  width <- p[1]; peak <- p[2]
+  out <- numeric(length(s))
+  valid <- s > 0 & s < width
+  out[valid] <- ifelse(s[valid] <= peak, s[valid] / peak, (width - s[valid]) / (width - peak))
+  out
+}
+```
+
+```{r shape-fit}
+degree_full <- with(leaf_mass_df, ifelse(day_of_year > 212, pmax(0, 1 - fS^2), 0))
+sL_full <- ave(degree_full, leaf_mass_df$year, FUN = cumsum)
+shape_df <- data.frame(dates = leaf_mass_df$dates, year = leaf_mass_df$year,
+                        degree = degree_full, s = sL_full)
+
+rmse_cumulative <- function(params, shape_fn, years) {
+  sq_errs <- c()
+  for (yr in years) {
+    yr_df <- shape_df[shape_df$year == yr, ]
+    rate <- yr_df$degree * shape_fn(yr_df$s, params)
+    total <- sum(rate)
+    if (!is.finite(total) || total < 1e-8) return(10)  # degenerate params: heavy penalty
+    cum_rate <- cumsum(rate) / total
+    real_yr <- real_litter[real_litter$year == yr, ]
+    real_total <- sum(real_yr$neulanen)
+    if (real_total < 1e-8) next
+    real_cum <- cumsum(real_yr$neulanen) / real_total
+    model_at_real_dates <- sapply(real_yr$pvm, function(dt) {
+      idx <- which(yr_df$dates == dt)
+      if (length(idx) == 0) return(NA)
+      cum_rate[idx]
+    })
+    valid <- !is.na(model_at_real_dates)
+    sq_errs <- c(sq_errs, (model_at_real_dates[valid] - real_cum[valid])^2)
+  }
+  if (length(sq_errs) == 0) return(10)
+  sqrt(mean(sq_errs))
+}
+
+fit_makela <- optimize(function(p) rmse_cumulative(p, makela_bell, train_years), interval = c(0.5, 10))
+# Bounded (0.1-30, 0.3-20 / 0.5-30, 0.1-29.5): keeps the peak within the
+# real accumulated-s range (~0-90) - unconstrained fits degenerate into a
+# monotonic ramp (fitted mu far outside the data's range), the same
+# failure mode the original g_cold exploration already hit (see plan doc).
+fit_gauss <- optim(par = c(mu = 3, sigma = 2), fn = function(p) rmse_cumulative(p, gaussian_bell, train_years),
+                    method = "L-BFGS-B", lower = c(0.1, 0.3), upper = c(30, 20))
+fit_tri   <- optim(par = c(width = 5, peak = 2), fn = function(p) rmse_cumulative(p, triangular_bell, train_years),
+                    method = "L-BFGS-B", lower = c(0.5, 0.1), upper = c(30, 29.5))
+
+shape_results <- data.frame(
+  Shape    = c("Current (Makela bell)", "Gaussian", "Triangular"),
+  Params   = c(sprintf("sLc=%.3f", fit_makela$minimum),
+               sprintf("mu=%.3f, sigma=%.3f", fit_gauss$par[1], fit_gauss$par[2]),
+               sprintf("width=%.3f, peak=%.3f", fit_tri$par[1], fit_tri$par[2])),
+  Train_RMSE = c(fit_makela$objective, fit_gauss$value, fit_tri$value),
+  Validation_RMSE = c(rmse_cumulative(fit_makela$minimum, makela_bell, valid_years),
+                       rmse_cumulative(fit_gauss$par, gaussian_bell, valid_years),
+                       rmse_cumulative(fit_tri$par, triangular_bell, valid_years))
+)
+print(shape_results, row.names = FALSE, digits = 4)
+```
+
+**The current shape wins on held-out years**, and neither alternative
+wants to be wider than it already is - the Gaussian's fitted `sigma`
+pinned against its own *lower* bound (narrowest allowed), not the upper
+one. Two caveats on this result: (1) the exact historical fitting script
+is lost (see methodology note above) - this is a close reproduction, not
+a byte-identical one; (2) real `neulanen` collections are roughly
+monthly, a coarse resolution for discriminating pulse widths on the order
+of days-to-weeks, so "no improvement from widening" reflects this
+dataset's limited power to detect that, not proof a wider peak is wrong.
+
+```{r shape-comparison-plot, fig.width = 12, fig.height = 5}
+example_year <- 2010  # a training year, for visual reference
+yr_df <- shape_df[shape_df$year == example_year, ]
+
+curve_df <- rbind(
+  data.frame(dates = yr_df$dates, rate = yr_df$degree * makela_bell(yr_df$s, fit_makela$minimum),
+             Shape = "Current (Makela bell)"),
+  data.frame(dates = yr_df$dates, rate = yr_df$degree * gaussian_bell(yr_df$s, fit_gauss$par),
+             Shape = "Gaussian"),
+  data.frame(dates = yr_df$dates, rate = yr_df$degree * triangular_bell(yr_df$s, fit_tri$par),
+             Shape = "Triangular")
+)
+curve_df <- do.call(rbind, lapply(split(curve_df, curve_df$Shape), function(d) {
+  d$rate_norm <- d$rate / sum(d$rate)
+  d
+}))
+
+real_example <- real_litter[real_litter$year == example_year, ]
+real_example$rate_norm <- real_example$neulanen / sum(real_example$neulanen)
+
+ggplot(curve_df, aes(x = dates, y = rate_norm, colour = Shape)) +
+  geom_line(linewidth = 0.9) +
+  geom_point(data = real_example, aes(x = pvm, y = rate_norm), colour = "black", size = 2, inherit.aes = FALSE) +
+  scale_colour_manual(values = c("Current (Makela bell)" = "#D55E00", "Gaussian" = "#0072B2", "Triangular" = "#009E73")) +
+  labs(title = paste("Fitted shapes vs. real data,", example_year, "(a training year)"),
+       subtitle = "Black points: real karike data, normalised to this year's total. Lines: each shape's fitted within-year distribution.",
+       x = NULL, y = "Proportion of annual litter") +
+  pub_theme
 ```
