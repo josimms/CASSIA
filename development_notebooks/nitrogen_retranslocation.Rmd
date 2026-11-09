@@ -58,20 +58,26 @@ dates_1998_2022 <- weather_1998_2022$dates
 ```
 
 ```{r run-model}
+# retrans_needles/retrans_roots/retrans_myco moved into parameters_p
+# 2026-11-09 (no longer standalone CASSIA_cpp() arguments) - set them on a
+# copy of parameters_2015$parameters_test's Hyde column instead.
 run_with_retrans <- function(retrans_needles_val, retrans_roots_val, retrans_myco_val) {
+  parameters_run <- parameters_2015$parameters_test
+  parameters_run["retrans_needles", "Hyde"] <- retrans_needles_val
+  parameters_run["retrans_roots",   "Hyde"] <- retrans_roots_val
+  parameters_run["retrans_myco",    "Hyde"] <- retrans_myco_val
+
   CASSIA_cpp(
     weather                    = weather_1998_2022, site = "Hyde",
     pPREL                      = c(parameters_2015$pPREL, parameters_2015$N_parameters),
-    parameters                 = parameters_2015$parameters_test,
+    parameters                 = parameters_run,
     common                     = common_p, ratios = ratios_p,
     sperling                   = parameters_2015$sperling_test,
     needle_mass_in             = 0, Throughfall = parameters_2015$Throughfall,
     photosynthesis_as_input    = FALSE, nitrogen_balance = 25, nitrogen_change = TRUE,
     preles                     = TRUE, fAPAR_Tian = TRUE, organ_level_sugar = FALSE,
     needle_mass_grows          = TRUE, height_diameter_correction = TRUE,
-    leaf_mass_correction       = TRUE, root_turnover = TRUE,
-    retrans_needles = retrans_needles_val, retrans_roots = retrans_roots_val,
-    retrans_myco = retrans_myco_val
+    leaf_mass_correction       = TRUE, root_turnover = TRUE
   )
 }
 
