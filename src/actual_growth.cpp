@@ -221,7 +221,12 @@ void actual_growth(int day,
     // reliably lands on it, confirmed in the Sect. 5.1 comparison).
     // Frozen at day==0 (growth.cpp) into fS_cross_day_last_year/
     // xi_litter for NEXT year's use - this year's own crossing can't be
-    // known yet this early in a forward, day-by-day simulation.
+    // known yet this early in a forward, day-by-day simulation. The very
+    // first simulated year is pre-seeded (CASSIA.cpp, before the year
+    // loop starts) with its own real crossing day from a pre-pass over
+    // its own weather, so it needs no special-casing here at all - every
+    // year, including the first, already has a valid xi_litter from
+    // day 1 onward by the time this runs.
     if (!tree_state.fS_crossed_this_year && day_of_year > 150 && photosynthesis.fS < 0.5) {
       tree_state.fS_crossed_this_year = true;
       tree_state.fS_cross_day_this_year = day_of_year;

@@ -285,8 +285,12 @@ void growth(int day,
     // Freeze last year's fS<0.5 crossing day (only if one was actually
     // found - otherwise keep whatever the previous value was, same
     // bootstrap-guard pattern as sum_degree_fL_last_year above), then
-    // set this year's skew-normal location from it. xi_litter stays -1
-    // (needle_litter_today gated to 0 below) until a prior year exists.
+    // set this year's skew-normal location from it. fS_cross_day_last_year
+    // is pre-seeded for the very first simulated year too (CASSIA.cpp,
+    // before the year loop starts, from a pre-pass over that year's own
+    // weather) - so in practice this is always > 0 by the time this
+    // first runs, and xi_litter is valid from day 1 of every year,
+    // without needing any special-casing here.
     if (state.fS_crossed_this_year) {
       state.fS_cross_day_last_year = state.fS_cross_day_this_year;
     }
@@ -310,7 +314,13 @@ void growth(int day,
     int n_age_int = static_cast<int>(std::round(parameters.n_age));
     if (state.needle_cohort_mass.empty()) {
       state.needle_cohort_mass.assign(n_age_int, N_repo / parameters.n_age);
-      state.needle_litter_magnitude_this_year = 0.0;
+      // Read back from the cohort itself (same N_repo/n_age every slot,
+      // including the oldest, was just seeded with), not a separate
+      // hardcoded 0 - otherwise the bootstrap year's needle_litter stays
+      // 0 regardless of xi_litter (confirmed real: this was the actual
+      // reason 1998 = 0.0 kg/tree persisted even after fixing xi_litter's
+      // own bootstrap gap below).
+      state.needle_litter_magnitude_this_year = state.needle_cohort_mass.back();
     } else {
       state.needle_litter_magnitude_this_year = state.needle_cohort_mass.back();
       int index_ref_year = days_gone + day - 1;

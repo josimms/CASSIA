@@ -370,13 +370,18 @@ n_nonfinite_phydro <- sum(grepl("non-finite result", phydro_log))
 # karike data's native (oven-dried) units instead of leaving these in
 # CASSIA's internal kg-carbon units.
 spp_litter_df    <- data.frame(dates = weather_spp$dates,
-                                litter = CASSIA_spp$Turnover$needle_litter / carbon_share_hyde)
+                                litter        = CASSIA_spp$Turnover$needle_litter / carbon_share_hyde,
+                                branch_litter = CASSIA_spp$Turnover$branch_litter / carbon_share_hyde,
+                                cone_litter   = CASSIA_spp$Turnover$cone_litter   / carbon_share_hyde,
+                                root_litter   = CASSIA_spp$Turnover$root_litter   / carbon_share_hyde)
 spp_litter_df$year        <- as.integer(format(spp_litter_df$dates, "%Y"))
 spp_litter_df$day_of_year <- as.integer(format(spp_litter_df$dates, "%j"))
 
 phydro_litter_df <- data.frame(dates = weather_phydro_full$dates,
-                                litter = CASSIA_phydro_full$Turnover$needle_litter / carbon_share_hyde,
-                                branch_litter = CASSIA_phydro_full$Turnover$branch_litter / carbon_share_hyde)
+                                litter        = CASSIA_phydro_full$Turnover$needle_litter / carbon_share_hyde,
+                                branch_litter = CASSIA_phydro_full$Turnover$branch_litter / carbon_share_hyde,
+                                cone_litter   = CASSIA_phydro_full$Turnover$cone_litter   / carbon_share_hyde,
+                                root_litter   = CASSIA_phydro_full$Turnover$root_litter   / carbon_share_hyde)
 phydro_litter_df$year        <- as.integer(format(phydro_litter_df$dates, "%Y"))
 phydro_litter_df$day_of_year <- as.integer(format(phydro_litter_df$dates, "%j"))
 
@@ -585,26 +590,41 @@ branch_model_long <- rbind(
              Component = "Branch litter", Model = "p-hydro")
 )
 
-# Root litter (root_turnover mechanism, Sect. 2's own PRELES run) - no
-# funnel-trap root litter exists (belowground, uncollectable by the
-# above-ground traps used for all other components here), so this is
-# model output only, over the same 2006-2016 window as Needles/Cones/etc.
-root_model_window <- leaf_mass_df[format(leaf_mass_df$dates, "%Y") %in% as.character(2006:2016), ]
-root_model_df <- data.frame(pvm = root_model_window$dates,
-                             cum_kg_per_tree = cumsum(root_model_window$root_litter),
-                             Component = "Roots")
-root_model_total <- sum(root_model_window$root_litter)
+# Root litter (root_turnover mechanism) - no funnel-trap root litter exists
+# (belowground, uncollectable by the above-ground traps used for all other
+# components here), so this is model output only, over the same 2006-2016
+# window as Needles/Cones/etc. Same PRELES/p-hydro pair as needle_litter/
+# branch_litter above (SPP excluded from this cumulative total - 2015-2016-
+# only window vs. an 11-year cumulative, see Sect. 4.2).
+root_model_window   <- leaf_mass_df[format(leaf_mass_df$dates, "%Y") %in% as.character(2006:2016), ]
+root_phydro_window  <- phydro_litter_df[format(phydro_litter_df$dates, "%Y") %in% as.character(2006:2016), ]
+root_model_long <- rbind(
+  data.frame(pvm = root_model_window$dates,
+             cum_kg_per_tree = cumsum(root_model_window$root_litter),
+             Component = "Roots", Model = "PRELES"),
+  data.frame(pvm = root_phydro_window$dates,
+             cum_kg_per_tree = cumsum(root_phydro_window$root_litter),
+             Component = "Roots", Model = "p-hydro")
+)
+root_model_total        <- sum(root_model_window$root_litter)
+root_model_phydro_total <- sum(root_phydro_window$root_litter)
 
-# Cone litter (masting-cycle mechanism, Sect. 2's own PRELES run) - ALL of
-# the standing cone biomass (accumulated from real bud growth) sheds every
-# n_age-th year (simulation year n_age, 2*n_age, 3*n_age, ... - 3/6/9 at
-# Hyde, reusing the same n_age parameter needle_cohort_mass does, not a
-# separate hardcoded cycle length), spread over a fixed day 121-273
-# window. Same 2006-2016 window as the other components above.
-cone_model_df <- data.frame(pvm = root_model_window$dates,
-                             cum_kg_per_tree = cumsum(root_model_window$cone_litter),
-                             Component = "Cones")
-cone_model_total <- sum(root_model_window$cone_litter)
+# Cone litter (masting-cycle mechanism) - ALL of the standing cone biomass
+# (accumulated from real bud growth) sheds every n_age-th year (simulation
+# year n_age, 2*n_age, 3*n_age, ... - 3/6/9 at Hyde, reusing the same n_age
+# parameter needle_cohort_mass does, not a separate hardcoded cycle length),
+# spread over a fixed day 121-273 window. Same 2006-2016 window and
+# PRELES/p-hydro pair as Roots above.
+cone_model_long <- rbind(
+  data.frame(pvm = root_model_window$dates,
+             cum_kg_per_tree = cumsum(root_model_window$cone_litter),
+             Component = "Cones", Model = "PRELES"),
+  data.frame(pvm = root_phydro_window$dates,
+             cum_kg_per_tree = cumsum(root_phydro_window$cone_litter),
+             Component = "Cones", Model = "p-hydro")
+)
+cone_model_total        <- sum(root_model_window$cone_litter)
+cone_model_phydro_total <- sum(root_phydro_window$cone_litter)
 
 needle_data_total   <- totals_2006_2016$total_kg_per_tree[totals_2006_2016$Component == "Needles"]
 needle_preles_total <- sum(comparison$model_kg_per_tree)
@@ -623,11 +643,13 @@ cat(sprintf("  Needles (2006-2016):       data = %.2f, model (needle_litter) = P
 cat(sprintf("  (SPP excluded from this cumulative total - 2-year-only run vs. an 11-year total; see Sect. 4.2, SPP = %.2f kg/tree over 2015-2016)\n",
             needle_spp_total))
 cat(sprintf("  Leaves  (2006-2016):       data = %.2f, model = not implemented\n", leaves_data_total))
-cat(sprintf("  Cones   (2006-2016):       data = %.2f, model (cone_litter) = %.2f\n", cones_data_total, cone_model_total))
+cat(sprintf("  Cones   (2006-2016):       data = %.2f, model (cone_litter) = PRELES %.2f, p-hydro %.2f\n",
+            cones_data_total, cone_model_total, cone_model_phydro_total))
 cat(sprintf("  Twigs   (2006-2016):       data = %.2f, model = not implemented\n", twigs_data_total))
 cat(sprintf("  Bark    (2006-2016):       data = %.2f, model = not implemented\n", bark_data_total))
 cat(sprintf("  Branch litter (1997-2003): data = %.2f, model = %.2f (hardcoded 0)\n", branch_data_total, branch_model_total))
-cat(sprintf("  Roots   (2006-2016):       data = not collected (belowground), model (root_litter) = %.2f\n", root_model_total))
+cat(sprintf("  Roots   (2006-2016):       data = not collected (belowground), model (root_litter) = PRELES %.2f, p-hydro %.2f\n",
+            root_model_total, root_model_phydro_total))
 
 # Colour-blind-safe (Okabe & Ito 2008). A modelled component reuses its data
 # compartment's colour (Needles/needle_litter -> black; Branch litter ->
@@ -659,14 +681,16 @@ p_needles_leaves <- ggplot(mapping = aes(x = pvm, y = cum_kg_per_tree, colour = 
 p_cones <- ggplot(mapping = aes(x = pvm, y = cum_kg_per_tree, colour = Component)) +
   geom_point(data = component_long[component_long$Component == "Cones",
                                     c("pvm", "cum_kg_per_tree", "Component")], size = 1.3) +
-  geom_line(data = cone_model_df, linewidth = 0.9) +
+  geom_line(data = cone_model_long, aes(linetype = Model), linewidth = 0.9) +
   scale_colour_manual(values = component_colours) +
+  scale_linetype_manual(values = model_linetypes_cumulative, name = "CASSIA model") +
   guides(colour = guide_legend(override.aes = list(linetype = 0, shape = 16))) +
   labs(title = "Cones",
-       subtitle = wrap_sub("Data: %.2f kg/tree. Model (cone_litter, masting cycle - all standing cone biomass sheds every 3rd year): %.2f kg/tree.",
-                           cones_data_total, cone_model_total),
+       subtitle = wrap_sub("Data: %.2f kg/tree. Model (cone_litter, masting cycle - all standing cone biomass sheds every 3rd year): PRELES %.2f, p-hydro %.2f. SPP excluded (2015-2016 only - see Sect. 4.2).",
+                           cones_data_total, cone_model_total, cone_model_phydro_total),
        x = NULL, y = "Cumulative litter (kg / tree)") +
-  panel_theme
+  panel_theme +
+  theme(legend.box = "vertical")
 
 p_twigs_bark <- ggplot(component_long[component_long$Component %in% c("Twigs", "Bark"),
                                        c("pvm", "cum_kg_per_tree", "Component")],
@@ -693,20 +717,23 @@ p_branch <- ggplot(mapping = aes(x = pvm, y = cum_kg_per_tree, colour = Componen
   panel_theme +
   theme(legend.box = "vertical")
 
-p_roots <- ggplot(root_model_df, aes(x = pvm, y = cum_kg_per_tree, colour = Component)) +
-  geom_line(linewidth = 0.9) +
+p_roots <- ggplot(mapping = aes(x = pvm, y = cum_kg_per_tree, colour = Component)) +
+  geom_line(data = root_model_long, aes(linetype = Model), linewidth = 0.9) +
   scale_colour_manual(values = component_colours) +
+  scale_linetype_manual(values = model_linetypes_cumulative, name = "CASSIA model") +
+  guides(colour = guide_legend(override.aes = list(linetype = 0, shape = 16))) +
   labs(title = "Roots",
-       subtitle = wrap_sub("No funnel-trap root litter data exists (belowground). Model (root_litter, root_turnover mechanism): %.2f kg/tree.",
-                           root_model_total),
+       subtitle = wrap_sub("No funnel-trap root litter data exists (belowground). Model (root_litter, root_turnover mechanism): PRELES %.2f, p-hydro %.2f. SPP excluded (2015-2016 only - see Sect. 4.2).",
+                           root_model_total, root_model_phydro_total),
        x = NULL, y = "Cumulative litter (kg / tree)") +
-  panel_theme
+  panel_theme +
+  theme(legend.box = "vertical")
 
 (p_needles_leaves | p_cones) / (p_twigs_bark | p_branch) / (p_roots | plot_spacer()) +
   plot_annotation(
     title = "Cumulative real litterfall by component, 2006-2016",
     subtitle = paste(strwrap(
-      "Real: discrete SMEAR karike funnel-trap collections (points). CASSIA: modeled litter outputs (lines), coloured to match their data compartment; needle_litter's PRELES/p-hydro separated by linetype (SPP excluded - unfair over a partial 2015-2016 window, see Sect. 4.2). Roots: model only, no comparable data (belowground, not captured by the above-ground traps).",
+      "Real: discrete SMEAR karike funnel-trap collections (points). CASSIA: modeled litter outputs (lines), coloured to match their data compartment; needle_litter/cone_litter/branch_litter/root_litter's PRELES/p-hydro all separated by linetype under the same \"CASSIA model\" legend (SPP excluded from every cumulative panel - unfair over a partial 2015-2016 window, see Sect. 4.2). Roots: model only, no comparable data (belowground, not captured by the above-ground traps).",
       width = 110), collapse = "\n"),
     theme = theme(plot.title = element_text(face = "bold", size = 14))
   )
@@ -743,21 +770,23 @@ shows as of this session:
   `xi_litter`) normalised against last year's running total, scaled by
   this year's needle-cohort magnitude (`needle_cohort_mass` - Repola-
   initialised, rolled over by `n_age` each year).
-- **Cones**: real data plus `cone_litter` (C++, masting cycle - standing
-  cone biomass accumulates from real bud growth; ALL of it sheds every
-  `n_age`-th simulation year (year 3, 6, 9, ... at Hyde, same per-site
-  cycle length needle cohorts use), spread over the same fixed day
-  121-273 window Sect. 5.2's RMSE-fitting exercise originally
-  identified). An independent magnitude now, not scaled to each year's
-  observed total.
+- **Cones**: real data plus `cone_litter`, all three photosynthesis models
+  (C++, masting cycle - standing cone biomass accumulates from real bud
+  growth; ALL of it sheds every `n_age`-th simulation year (year 3, 6,
+  9, ... at Hyde, same per-site cycle length needle cohorts use), spread
+  over the same fixed day 121-273 window Sect. 5.2's RMSE-fitting
+  exercise originally identified). An independent magnitude now, not
+  scaled to each year's observed total. SPP only appears in the
+  2015/2016 facets it actually has driving data for, same as Needles.
 - **Twigs & bark**: real data only, no CASSIA model - informational,
   not a current modelling priority.
 - **Branch litter**: real data (1997-2003 window) against the model's
-  hardcoded-0 output. TODO: crown height - branch litter should be
-  added alongside crown height work, not on its own.
+  hardcoded-0 output, PRELES/p-hydro (SPP has no overlap with this
+  window). TODO: crown height - branch litter should be added alongside
+  crown height work, not on its own.
 - **Roots**: model output only (`root_litter`, `root_turnover`
-  mechanism) - no comparable data exists (belowground, not captured by
-  the above-ground funnel traps).
+  mechanism), all three photosynthesis models - no comparable data
+  exists (belowground, not captured by the above-ground funnel traps).
 
 Shaded bands mark the peak litterfall month(s) reported for each
 fraction at this exact site by Portillo-Estrada, Korhonen, Pihlatie,
@@ -844,13 +873,21 @@ branch_daily_agg$cum_kg_per_tree <- ave(branch_daily_agg$kg_per_tree, branch_dai
 branch_daily_df <- branch_daily_agg
 branch_daily_df$Component <- "Branch litter"
 
-# Root litter, faceted by year - same root_model_window as Sect. 4.1,
-# cumulative *within* each year instead of across the full 2006-2016 range.
-root_day_long <- root_model_window[, c("dates", "year", "day_of_year", "root_litter")]
-names(root_day_long)[names(root_day_long) == "root_litter"] <- "litter"
-root_day_long$year_label  <- year_label(root_day_long$year)
-root_day_long$Component   <- "Roots"
-root_day_long$cum_litter  <- ave(root_day_long$litter, root_day_long$year, FUN = cumsum)
+# Root litter, faceted by year - same three-model pattern as Needles above
+# (SPP only has driving data for 2015-2016; restricting to 2006:2016
+# naturally keeps those two years and drops the rest, with no special-casing).
+root_day_long <- rbind(
+  data.frame(year = leaf_mass_df$year, day_of_year = leaf_mass_df$day_of_year,
+             litter = leaf_mass_df$root_litter, Model = "PRELES")[leaf_mass_df$year %in% 2006:2016, ],
+  data.frame(year = phydro_litter_df$year, day_of_year = phydro_litter_df$day_of_year,
+             litter = phydro_litter_df$root_litter, Model = "p-hydro")[phydro_litter_df$year %in% 2006:2016, ],
+  data.frame(year = spp_litter_df$year, day_of_year = spp_litter_df$day_of_year,
+             litter = spp_litter_df$root_litter, Model = "SPP")[spp_litter_df$year %in% 2006:2016, ]
+)
+root_day_long$year_label <- year_label(root_day_long$year)
+root_day_long$Component  <- "Roots"
+root_day_long$cum_litter <- ave(root_day_long$litter, interaction(root_day_long$year, root_day_long$Model),
+                                 FUN = cumsum)
 
 day_panel_theme <- panel_theme + theme(strip.text = element_text(size = 8))
 
@@ -900,26 +937,36 @@ constant_shape <- function(day, p) {  # kept for Sect. 5.2's shape comparison, r
   as.numeric(day >= start & day <= end)
 }
 
-cone_model_day_df <- root_model_window[, c("dates", "year", "day_of_year", "cone_litter")]
-names(cone_model_day_df)[names(cone_model_day_df) == "cone_litter"] <- "litter"
-cone_model_day_df$year_label  <- year_label(cone_model_day_df$year)
-cone_model_day_df$Component   <- "Cones"
-cone_model_day_df$cum_kg_per_tree <- ave(cone_model_day_df$litter, cone_model_day_df$year, FUN = cumsum)
+# Same three-model pattern as Roots/Needles above.
+cone_day_long <- rbind(
+  data.frame(year = leaf_mass_df$year, day_of_year = leaf_mass_df$day_of_year,
+             litter = leaf_mass_df$cone_litter, Model = "PRELES")[leaf_mass_df$year %in% 2006:2016, ],
+  data.frame(year = phydro_litter_df$year, day_of_year = phydro_litter_df$day_of_year,
+             litter = phydro_litter_df$cone_litter, Model = "p-hydro")[phydro_litter_df$year %in% 2006:2016, ],
+  data.frame(year = spp_litter_df$year, day_of_year = spp_litter_df$day_of_year,
+             litter = spp_litter_df$cone_litter, Model = "SPP")[spp_litter_df$year %in% 2006:2016, ]
+)
+cone_day_long$year_label      <- year_label(cone_day_long$year)
+cone_day_long$Component       <- "Cones"
+cone_day_long$cum_kg_per_tree <- ave(cone_day_long$litter, interaction(cone_day_long$year, cone_day_long$Model),
+                                      FUN = cumsum)
 
 p_cones_day <- ggplot(component_daily[component_daily$Component == "Cones", ],
                        aes(x = day_of_year, y = cum_kg_per_tree, colour = Component)) +
   lit_band(152, 212) +  # Jun 1 - Jul 31
   geom_vline(xintercept = c(cone_par[["start"]], cone_par[["start"]] + cone_par[["duration"]] - 1),
              linetype = "dashed", colour = "black", linewidth = 0.4) +  # model's own start/end window
-  geom_line(data = cone_model_day_df, linewidth = 0.9) +
+  geom_line(data = cone_day_long, aes(linetype = Model), linewidth = 0.9) +
   geom_point(size = 1.1) +
   scale_colour_manual(values = component_colours) +
+  scale_linetype_manual(values = model_linetypes, name = "CASSIA model") +
   guides(colour = guide_legend(override.aes = list(linetype = 0, shape = 16))) +
   facet_wrap(~year_label, ncol = 4) +
   labs(title = "Cones - cumulative by day-of-year",
-       subtitle = "Points: real data. Line: cone_litter model output (0 except masting years). Black dashed: day 121/273 shedding window. Shaded: Portillo-Estrada et al. (2013) Jun-Jul peak (multi-year average; masting scatters individual years).",
+       subtitle = "Points: real data. Lines: cone_litter model output (0 except masting years), PRELES/p-hydro/SPP. Black dashed: day 121/273 shedding window. Shaded: Portillo-Estrada et al. (2013) Jun-Jul peak (multi-year average; masting scatters individual years).",
        x = "Day of year", y = "Cumulative litter (kg / tree)") +
-  day_panel_theme
+  day_panel_theme +
+  theme(legend.box = "vertical")
 
 p_twigs_bark_day <- ggplot(component_daily[component_daily$Component %in% c("Twigs", "Bark"), ],
                             aes(x = day_of_year, y = cum_kg_per_tree, colour = Component)) +
@@ -966,18 +1013,21 @@ p_branch_day <- ggplot(branch_daily_df, aes(x = day_of_year, y = cum_kg_per_tree
   theme(legend.box = "vertical")
 
 p_roots_day <- ggplot(root_day_long, aes(x = day_of_year, y = cum_litter, colour = Component)) +
-  geom_line(linewidth = 0.9) +
+  geom_line(aes(linetype = Model), linewidth = 0.9) +
   scale_colour_manual(values = component_colours) +
+  scale_linetype_manual(values = model_linetypes, name = "CASSIA model") +
+  guides(colour = guide_legend(override.aes = list(linetype = 0, shape = 16))) +
   facet_wrap(~year_label, ncol = 4) +
   labs(title = "Roots - cumulative by day-of-year",
-       subtitle = "No funnel-trap root litter data exists (belowground) - model output (root_litter, root_turnover mechanism) only, for reference.",
+       subtitle = "No funnel-trap root litter data exists (belowground) - model output only (root_litter, root_turnover mechanism), PRELES/p-hydro/SPP, for reference.",
        x = "Day of year", y = "Cumulative litter (kg / tree)") +
-  day_panel_theme
+  day_panel_theme +
+  theme(legend.box = "vertical")
 
 p_needles_leaves_day / p_cones_day / p_twigs_bark_day / p_branch_day / p_roots_day +
   plot_annotation(
     title = "Cumulative litter by day-of-year, by component (faceted by year)",
-    subtitle = "Real: karike funnel-trap cumulative totals (points), faceted by year - each facet restarts at 0 on Jan 1. Shaded bands: Portillo-Estrada et al. (2013) literature peak months, per panel. Roots: model only, no comparable data.",
+    subtitle = "Real: karike funnel-trap cumulative totals (points), faceted by year - each facet restarts at 0 on Jan 1. Shaded bands: Portillo-Estrada et al. (2013) literature peak months, per panel. Needles/Cones/Branch litter/Roots all show PRELES/p-hydro/SPP under the same \"CASSIA model\" legend (SPP only where it has driving data, 2015-2016). Roots: model only, no comparable data.",
     theme = theme(plot.title = element_text(face = "bold", size = 14))
   )
 ```

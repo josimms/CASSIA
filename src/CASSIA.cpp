@@ -246,6 +246,38 @@ Rcpp::List CASSIA_yearly(int start_year,
   all_out.nitrogen_capacity_vector.bud[0] = 1;
   all_out.nitrogen_capacity_vector.roots[0] = 1;
 
+  // Needle litter's skew-normal xi (growth.cpp/actual_growth.cpp) needs
+  // LAST year's fS<0.5 crossing day, which doesn't exist for the very
+  // first simulated year. The weather driving fS is already fully known
+  // in advance (not real look-ahead - this is the same complete,
+  // historical input series the main loop below reads from, just read
+  // once more here first), so start_year's own crossing day can be
+  // found with a cheap, self-contained pre-pass (fS only ever depends on
+  // TAir and its own running state - fS_model(), gpp.c - never on
+  // growth/sugar/nitrogen state) and used to seed
+  // tree_state.fS_cross_day_last_year before the main loop begins. That
+  // makes the first simulated year behave exactly like every later one
+  // from day 1 onward, with no bootstrap special-casing needed in
+  // growth.cpp/actual_growth.cpp at all. Same -900 missing-data fixup
+  // and fS_temp_sum=20.0 baseline the main loop itself uses (CASSIA.cpp
+  // below), so this is deterministically identical to what the main
+  // loop would compute for these same days anyway.
+  if (boolsettings.leaf_mass_correction) {
+    double fS_temp_sum_prepass = 20.0;
+    int days_in_start_year = leap_year(start_year);
+    for (int d = 0; d < days_in_start_year; d++) {
+      if (boolsettings.preles && d > 0 && climate.TAir[d] < -900) {
+        climate.TAir[d] = climate.TAir[d - 1];
+      }
+      double fS_prepass = fS_model(&fS_temp_sum_prepass, climate.TAir[d], parGPP);
+      double doy_prepass = static_cast<double>(d) + 1.0;
+      if (doy_prepass > 150 && fS_prepass < 0.5) {
+        tree_state.fS_cross_day_last_year = doy_prepass;
+        break;
+      }
+    }
+  }
+
   /*
    * YEAR LOOP
    */
