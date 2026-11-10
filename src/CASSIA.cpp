@@ -120,8 +120,6 @@ Rcpp::List CASSIA_yearly(int start_year,
   // days_per_year not defined as is later
 
   // Old
-  needle_cohorts last_cohorts{};
-  needle_cohorts needles_cohorts{};
   double last_year_HH{275.4137};
   double last_year_maxN = 0.0;
   double GPP_mean = 0.0;
@@ -260,8 +258,13 @@ Rcpp::List CASSIA_yearly(int start_year,
      * Daily output
      */
 
-    // TODO: think about this bit!
-    photosynthesis.fS = 0.0;
+    // photosynthesis.fS itself is no longer reset here (2026-11-10) - it's
+    // now computed fresh every day inside the day loop below, before the
+    // photosynthesis dispatch, regardless of which model is active (see
+    // fS_decoupled_from_preles_implementation_plan.md). The persistent
+    // state behind it (tree_state.fS_temp_sum) carries its own reset
+    // logic there, tied to soil_water_reset - so nothing here needs to
+    // zero it first.
     bool fS_reached_one = false;
     bool fN_reached_one = false;
 
@@ -303,13 +306,6 @@ Rcpp::List CASSIA_yearly(int start_year,
                              all_out.culm_growth.height[index], parameters); // Needle mass is then calculated on the net D and h values
     } else {
       repola_values.needle_mass = needle_mass_in;
-    }
-
-    // NOTE: not used anywhere!
-    if (year > start_year) {
-      needles_cohorts.year_1 = 31.24535 / parameters.n_length * repola_values.needle_mass / 3.0;
-      needles_cohorts.year_2 = last_cohorts.year_1;
-      needles_cohorts.year_3 = last_cohorts.year_2;
     }
 
     /*
@@ -366,6 +362,22 @@ Rcpp::List CASSIA_yearly(int start_year,
        * Photosynthesis
        */
 
+      // fS (Mäkelä et al. 2004 seasonality model): computed here,
+      // unconditionally, once per day, for every photosynthesis pathway -
+      // not just preles. reset_state: soil_water_reset=TRUE (default)
+      // fires this every year, identical to the old unconditional day==0
+      // behavior preles_cpp() used to apply only to itself; FALSE fires it
+      // only on the true first day of the whole run (year==start_year),
+      // letting it carry over continuously across years instead - needed
+      // for ORCHIMIC's continuous multi-year runs
+      // (manscript_orchemic/PROJECT_INSTRUCTIONS.md). 20.0 baseline
+      // matches PRELES's own Initials_snow.S (preles_test.cpp).
+      bool preles_reset_state = (day == 0) && (boolsettings.soil_water_reset || year == start_year);
+      if (preles_reset_state) {
+        tree_state.fS_temp_sum = 20.0;
+      }
+      photosynthesis.fS = fS_model(&tree_state.fS_temp_sum, climate.TAir[days_gone + day], parGPP);
+
       double photosynthesis_per_stem = 0.0;
       if (boolsettings.photosynthesis_as_input) {
         photosynthesis.GPP = climate.Photosynthesis_IN[day + days_gone];
@@ -373,17 +385,8 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.SoilWater = 0.0;
         photosynthesis_per_stem = climate.Photosynthesis_IN[day + days_gone] / no_trees * 10000/1000;
       } else if (boolsettings.preles) {
-        // reset_state: soil_water_reset=TRUE (default) fires this every
-        // year, identical to the previous unconditional day==0 behavior;
-        // FALSE fires it only on the true first day of the whole run
-        // (year==start_year), letting preles_cpp's soil-water/snow/canopy
-        // state carry over continuously across years instead - see
-        // preles_cpp's own comment (preles_test.cpp) for which fields
-        // that actually affects. Needed for ORCHIMIC's continuous
-        // multi-year runs (manscript_orchemic/PROJECT_INSTRUCTIONS.md).
-        bool preles_reset_state = (day == 0) && (boolsettings.soil_water_reset || year == start_year);
         photosynthesis = preles_cpp(day, preles_reset_state, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
-                                    climate.VPD[days_gone + day], climate.CO2[days_gone + day], all_out.fAPAR[days_gone + day],
+                                    climate.VPD[days_gone + day], climate.CO2[days_gone + day], all_out.fAPAR[days_gone + day], photosynthesis.fS,
                                     parSite, parGPP, parET, parSnowRain, parWater, 0.0, 1);
         photosynthesis_per_stem = photosynthesis.GPP / no_trees * 10000/1000;
       } else if (boolsettings.phydro) {
@@ -596,11 +599,6 @@ Rcpp::List CASSIA_yearly(int start_year,
     max_needles          = end_needles - start_needles;
 
     days_gone = days_gone + days_per_year;
-
-    last_cohorts.year_1 = needles_cohorts.year_1; // TODO: currently the growth doesn't really have an effect on this - should it?
-    last_cohorts.year_2 = needles_cohorts.year_2;
-    last_cohorts.year_3 = needles_cohorts.year_3;
-    // TODO: make it possible to make this for 5 years?
   } // End of the years loop
 
 

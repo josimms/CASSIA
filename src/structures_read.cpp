@@ -299,6 +299,12 @@ CASSIA_parameters make_CASSIA_parameters(Rcpp::DataFrame input_parameters,
   out.retrans_roots = temp136[0];
   std::vector<double> temp137 = input_parameters["retrans_myco"];
   out.retrans_myco = temp137[0];
+  std::vector<double> temp138 = input_parameters["omega_litter"];
+  out.omega_litter = temp138[0];
+  std::vector<double> temp139 = input_parameters["alpha_litter"];
+  out.alpha_litter = temp139[0];
+  std::vector<double> temp140 = input_parameters["xi_offset_litter"];
+  out.xi_offset_litter = temp140[0];
 
   return out;
 }

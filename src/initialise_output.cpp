@@ -26,6 +26,8 @@ void initialize_output_vector(output_vector& out, int simulation_time) {
   out.root_litter.resize(simulation_time);
   out.mycorrhiza_litter.resize(simulation_time);
   out.needle_litter.resize(simulation_time);
+  out.cone_litter.resize(simulation_time);
+  out.cone_litter_N.resize(simulation_time);
   out.needle_litter_N.resize(simulation_time);
   out.root_litter_N.resize(simulation_time);
   out.mycorrhiza_litter_N.resize(simulation_time);

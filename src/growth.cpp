@@ -42,14 +42,6 @@ double makela_loss_boost_factor(double X_bal, double X_current, double tau) {
   return std::pow(X_current / X_bal, tau);
 }
 
-// Same functional form as fN (growth.cpp's needle phenology curve) -
-// zero at s=0, peaks at 1 when s=sLc^2/4, returns to zero past s=sLc^2.
-// Self-terminating by construction, no external day-count cutoff needed.
-double makela_bell_shape(double s, double sLc) {
-  if (s <= 0 || s >= sLc * sLc) return 0.0;
-  return (sLc * std::sqrt(s) - s) / (sLc * sLc / 4.0);
-}
-
 // Tested uncapped (2026-11-04) and reverted: without makela_control_factor's
 // own cap, C_N_year/litter_boost_year together swing the pool between
 // exactly 0 and ~1e15 within a few years. That cap on GROWTH stays
@@ -289,7 +281,80 @@ void growth(int day,
       state.sum_degree_fL_last_year = state.sum_degree_fL_running;
     }
     state.sum_degree_fL_running = 0.0;
-    state.sL_litter = 0.0;  // fresh accumulator for the new year
+
+    // Freeze last year's fS<0.5 crossing day (only if one was actually
+    // found - otherwise keep whatever the previous value was, same
+    // bootstrap-guard pattern as sum_degree_fL_last_year above), then
+    // set this year's skew-normal location from it. xi_litter stays -1
+    // (needle_litter_today gated to 0 below) until a prior year exists.
+    if (state.fS_crossed_this_year) {
+      state.fS_cross_day_last_year = state.fS_cross_day_this_year;
+    }
+    state.fS_crossed_this_year  = false;
+    state.fS_cross_day_this_year = -1.0;
+    state.xi_litter = (state.fS_cross_day_last_year > 0)
+                         ? state.fS_cross_day_last_year + parameters.xi_offset_litter
+                         : -1.0;
+
+    // Needle age cohorts: n_age age-classes (3 Hyde, 5 Vario). First ever
+    // call seeds all of them evenly from this year's Repola target
+    // (N_repo/n_age) - no real growth history exists yet to do otherwise,
+    // same spirit as the other bootstrap guards above. Every later year:
+    // the oldest cohort (last element) is this year's shedding magnitude,
+    // read BEFORE shifting everyone else up one slot and inserting LAST
+    // year's actual real growth (out.culm_growth.needles, the same
+    // cumulative-within-year tracker needles_accumulation below already
+    // resets to 0 each day==0 - still holding LAST year's final total
+    // here, since actual_growth.cpp's reset for THIS year hasn't run yet
+    // today) as the new youngest cohort.
+    int n_age_int = static_cast<int>(std::round(parameters.n_age));
+    if (state.needle_cohort_mass.empty()) {
+      state.needle_cohort_mass.assign(n_age_int, N_repo / parameters.n_age);
+      state.needle_litter_magnitude_this_year = 0.0;
+    } else {
+      state.needle_litter_magnitude_this_year = state.needle_cohort_mass.back();
+      int index_ref_year = days_gone + day - 1;
+      if (index_ref_year < 0) index_ref_year = 0;
+      double last_year_real_needle_growth = out.culm_growth.needles[index_ref_year];
+      for (int i = n_age_int - 1; i > 0; --i) {
+        state.needle_cohort_mass[i] = state.needle_cohort_mass[i - 1];
+      }
+      state.needle_cohort_mass[0] = last_year_real_needle_growth;
+    }
+
+    // Cone litter (masting cycle, independent of the needle cohorts
+    // above): standing cone biomass accumulates every year from last
+    // year's actual bud growth (out.culm_growth.bud - same per-year
+    // running total out.culm_growth.needles is, read the same way just
+    // above). Every n_age-th year (years_since_masting resets to 0), the
+    // WHOLE accumulated stock sheds as litter (read by actual_growth.cpp's
+    // fixed day 121-273 window) and standing drops back to 0 - mature
+    // cones are a discrete unit that eventually all fall, unlike needles'
+    // continuous age-class turnover, so there's no "retained fraction" to
+    // carry forward. Masting period reuses n_age_int (above) rather than
+    // its own hardcoded constant - no dedicated masting-period parameter
+    // exists, and n_age is already the site-specific multi-year cycle
+    // length CASSIA has (3 Hyde, 5 Vario), so this makes the period
+    // dynamic per-site instead of a second magic number to keep in sync.
+    // years_since_masting starts at 0 and increments here every year from
+    // the very first simulated year, so masting lands on simulation year
+    // n_age, 2*n_age, 3*n_age, ... unconditionally - no special
+    // first-call bootstrap is needed, since the index_ref_year_bud clamp
+    // below already yields a correctly-zero (not garbage) contribution
+    // for the very first year, when no prior year's bud growth exists
+    // yet.
+    int index_ref_year_bud = days_gone + day - 1;
+    if (index_ref_year_bud < 0) index_ref_year_bud = 0;
+    double last_year_bud_growth = out.culm_growth.bud[index_ref_year_bud];
+    state.cone_biomass_standing += last_year_bud_growth;
+    state.years_since_masting += 1;
+    if (state.years_since_masting >= n_age_int) {
+      state.cone_litter_magnitude_this_year = state.cone_biomass_standing;
+      state.cone_biomass_standing = 0.0;
+      state.years_since_masting = 0;
+    } else {
+      state.cone_litter_magnitude_this_year = 0.0;
+    }
   }
 
   if (boolsettings.leaf_mass_correction) {

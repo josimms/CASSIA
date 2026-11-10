@@ -162,6 +162,15 @@ struct CASSIA_parameters {
   double retrans_needles;
   double retrans_roots;
   double retrans_myco;
+
+  // Needle litter timing (2026-11-10): skew-normal over day-of-year,
+  // replacing the earlier sLc_litter/fS^2-accumulator design - see
+  // development_notebooks/leaf_mass_correction.Rmd Sect. 5.1. omega/alpha
+  // fitted once against 2006-2016 Hyytiala litter-trap data; xi_offset is
+  // added to the prior year's fS<0.5 crossing day each year (actual_growth.cpp).
+  double omega_litter;
+  double alpha_litter;
+  double xi_offset_litter;
 };
 
 struct CASSIA_common {

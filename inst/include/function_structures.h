@@ -173,17 +173,54 @@ struct growth_state {
   // real in ~1/4 of simulated years, see growth.cpp's comment).
   bool needle_growth_season_ended = false;
 
-  // fS^2-based litter pulse (replaces the old (1-fS)/n_age*124 linear
-  // rate - see needle_litter_fS2_implementation_plan.md for why). sL_litter
-  // is the bell-curve accumulator (s_L in f_L(s_L,sLc)), reset at day==0.
-  // sum_degree_fL_running/last_year are a one-year-lagged self-normalizer
-  // (freeze-at-day-0, "only overwrite if running>epsilon" bootstrap-year
-  // guard), since the R version's same-year retrospective normalization
-  // (divide by that year's own eventual max) can't be computed
-  // day-by-day in a forward simulation.
-  double sL_litter = 0.0;
+  // Needle litter timing: a skew-normal density over day-of-year
+  // (parameters.omega_litter/alpha_litter), replacing the earlier
+  // fS^2-accumulator-plus-Makela-bell design (2026-11-10 notebook
+  // comparison: validation RMSE 0.068 vs 0.153 for the old gated
+  // mechanism - development_notebooks/leaf_mass_correction.Rmd Sect. 5.1).
+  // sum_degree_fL_running/last_year are the same one-year-lagged
+  // self-normalizer the old mechanism already used (freeze-at-day-0,
+  // "only overwrite if running>epsilon" bootstrap-year guard) - this
+  // part of the design is unchanged, only what gets accumulated differs.
+  //
+  // xi (the skew-normal's location) is itself one-year-lagged for the
+  // same reason: the day fS first drops below 0.5 each year can only be
+  // known once that year is already most of the way over, so THIS
+  // year's xi is set from LAST year's crossing day (+ a fixed
+  // parameters.xi_offset_litter), not this year's own.
   double sum_degree_fL_running = 0.0;
   double sum_degree_fL_last_year = 0.0;
+  double fS_cross_day_this_year = -1.0;  // 1-indexed day-of-year, -1 = not yet found this year
+  bool   fS_crossed_this_year = false;
+  double fS_cross_day_last_year = -1.0;  // frozen at day==0; -1 = no prior year yet (bootstrap)
+  double xi_litter = -1.0;               // this year's skew-normal location; -1 = invalid/bootstrap year
+
+  // Needle age cohorts (2026-11-10), replacing the old CASSIA.cpp-local,
+  // never-actually-used needle_cohorts struct ("NOTE: not used anywhere!").
+  // One entry per age-class, sized to parameters.n_age at first use (3 for
+  // Hyde, 5 for Vario) - [0] is the newest (this year's real growth,
+  // frozen at the NEXT year's day==0), [n_age-1] is the oldest, about to
+  // be shed. Empty until the first day==0 call seeds it (growth.cpp).
+  std::vector<double> needle_cohort_mass;
+  double needle_litter_magnitude_this_year = 0.0;  // oldest cohort's mass, read at day==0 before rollover - this year's needle_litter total
+
+  // Cone litter (2026-11-10): a masting cycle, independent of the needle
+  // timing above - cones take multiple years to mature in Scots pine, and
+  // masting is highly irregular/resource-driven rather than a fitted
+  // continuous shape (confirmed in leaf_mass_correction.Rmd Sect. 5.2:
+  // RMSE-fitting a cone window just inflates duration chasing masting
+  // noise). cone_biomass_standing accumulates every year from real bud
+  // growth (out.culm_growth.bud, the same per-year running total pattern
+  // needle_cohort_mass reads from out.culm_growth.needles); every
+  // n_age-th year (years_since_masting resets to 0 - growth.cpp reuses
+  // n_age rather than a second hardcoded cycle length, so the period is
+  // site-dynamic: 3 Hyde, 5 Vario), the WHOLE accumulated stock sheds as
+  // litter (cone_litter_magnitude_this_year) and standing drops back to
+  // 0 - a mature cone is a discrete unit, unlike needles' continuous
+  // age-class turnover, so nothing is retained fractionally.
+  double cone_biomass_standing = 0.0;
+  int    years_since_masting = 0;
+  double cone_litter_magnitude_this_year = 0.0;  // 0 except masting years
 
   // This year's N_repo (growth.cpp), threaded through to actual_growth.cpp
   // for the litter calculation - litter is scaled against this fixed,
@@ -203,6 +240,22 @@ struct growth_state {
   double RmS = 0.0;
   double RmR = 0.0;
   double Rm_a = 0.0;
+
+  // Shared seasonality-model state (Mäkelä et al. 2004's fS, Rprebasso's
+  // fS_model()/gpp.c) - 2026-11-10. Previously only ever computed inside
+  // preles_cpp()'s own static local, so leaf_mass_correction's fS^2
+  // needle-litter timing and the root-senescence gate above
+  // (fS_reached_one_roots) only worked under preles=TRUE; now computed
+  // once per day in CASSIA.cpp's year loop regardless of which
+  // photosynthesis model is active (see
+  // fS_decoupled_from_preles_implementation_plan.md), and preles_cpp()
+  // consumes this same value instead of keeping its own separate copy.
+  // 20.0 matches PRELES's own Initials_snow.S baseline (preles_test.cpp)
+  // - reset to this on the same condition preles_cpp()'s reset_state
+  // already uses (day==0 && (soil_water_reset || year==start_year)), not
+  // left continuous across years, so each spring's ramp-up starts fresh
+  // from the same baseline PRELES always has.
+  double fS_temp_sum = 20.0;
 };
 
 /*
@@ -247,6 +300,7 @@ struct growth_vector {
   std::vector<double> root_litter = {0.0};
   std::vector<double> mycorrhiza_litter = {0.0};
   std::vector<double> needle_litter = {0.0};
+  std::vector<double> cone_litter = {0.0};
   std::vector<bool> tree_alive = {true};
 
   void resize(size_t new_size) {
@@ -271,6 +325,7 @@ struct growth_vector {
     root_litter.assign(new_size, 0.0);
     mycorrhiza_litter.assign(new_size, 0.0);
     needle_litter.assign(new_size, 0.0);
+    cone_litter.assign(new_size, 0.0);
     tree_alive.assign(new_size, true);
   }
 
@@ -715,6 +770,15 @@ struct output_vector {
   std::vector<double> root_litter = {0.0};
   std::vector<double> mycorrhiza_litter = {0.0};
   std::vector<double> needle_litter = {0.0};
+
+  // Cone litter (2026-11-10): masting-driven, see growth_state's
+  // cone_biomass_standing/years_since_masting (function_structures.h
+  // above) and actual_growth.cpp for the fixed day 121-273 shedding
+  // window. 0 except masting years (every 3rd year). No dedicated N
+  // model yet - cone_litter_N is a placeholder, always 0, same reasoning
+  // as branch_litter_N below.
+  std::vector<double> cone_litter = {0.0};
+  std::vector<double> cone_litter_N = {0.0};
 
   // Nitrogen content of the ABOVE litter fluxes, net of retranslocation -
   // i.e. the N actually leaving the tree in shed tissue, not the gross N

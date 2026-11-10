@@ -17,6 +17,7 @@ Rcpp::DataFrame createGrowthDataFrame(const output_vector& out) {
     Rcpp::_["roots_growth_potential"] = out.potential_roots,
     Rcpp::_["height_growth_potential"] = out.potential_height,
     Rcpp::_["bud_growth"] = out.bud,
+    Rcpp::_["bud_growth_cumulative"] = out.culm_growth.bud,
     Rcpp::_["diameter_growth"] = out.diameter,
     Rcpp::_["needle_growth"] = out.needles,
     Rcpp::_["root_growth"] = out.roots,
@@ -97,6 +98,7 @@ Rcpp::DataFrame createCulmGrowthDataFrame(const output_vector& out) {
   lst.push_back(out.culm_growth.root_litter, "culm_growth_root_litter");
   lst.push_back(out.culm_growth.mycorrhiza_litter, "culm_growth_mycorrhiza_litter");
   lst.push_back(out.culm_growth.needle_litter, "culm_growth_needle_litter");
+  lst.push_back(out.culm_growth.cone_litter, "culm_growth_cone_litter");
   lst.push_back(out.culm_growth.xylem_sh, "culm_growth_xylem_sh");
   lst.push_back(out.culm_growth.xylem_st, "culm_growth_xylem_st");
   lst.push_back(out.culm_growth.phloem, "culm_growth_phloem");
@@ -127,9 +129,11 @@ Rcpp::DataFrame createTurnoverDataFrame(const output_vector& out) {
     Rcpp::_["root_litter"] = out.root_litter,
     Rcpp::_["mycorrhiza_litter"] = out.mycorrhiza_litter,
     Rcpp::_["needle_litter"] = out.needle_litter,
+    Rcpp::_["cone_litter"] = out.cone_litter,
     Rcpp::_["root_litter_N"] = out.root_litter_N,
     Rcpp::_["mycorrhiza_litter_N"] = out.mycorrhiza_litter_N,
     Rcpp::_["needle_litter_N"] = out.needle_litter_N,
+    Rcpp::_["cone_litter_N"] = out.cone_litter_N,
     Rcpp::_["branch_litter"] = out.branch_litter,
     Rcpp::_["branch_litter_N"] = out.branch_litter_N
   );

@@ -36,10 +36,6 @@ double emergancy(double sugar, double starch, double tau_emergancy, double lower
 
 double storage_update(double alfa, double sugar, double starch, double Wala);
 
-// growth.cpp: fS^2-based needle litter bell curve (same functional form
-// as fN), used from actual_growth.cpp.
-double makela_bell_shape(double s, double sLc);
-
 // growth.cpp: symmetric Makela (1999)-style over/undershoot ratio,
 // uncapped (unlike makela_control_factor) - used from actual_growth.cpp
 // to compute litter's correction fresh each day from this year's own
@@ -233,6 +229,7 @@ photosynthesis_out preles_cpp(int day,
                               double D,
                               double CO2,
                               double fAPAR,
+                              double fS,
                               p1 Site_par,
                               p2 GPP_par,
                               p3 ET_par,
