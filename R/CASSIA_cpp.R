@@ -233,7 +233,26 @@
 #'   already discriminates a genuine autumn decline from a mid-summer
 #'   wobble on its own; see
 #'   \code{needle_litter_fS2_implementation_plan.md} for the validation
-#'   behind this. Default \code{FALSE}.
+#'   behind this. Default \code{FALSE}. Note: needle litter's own timing
+#'   has since moved to a skew-normal shape over day-of-year, and its
+#'   magnitude to real needle-cohort growth rather than Repola's
+#'   prediction directly - this doc describes the mechanism as
+#'   originally designed; see \code{growth.cpp}/\code{actual_growth.cpp}
+#'   for the current formula.
+#' @param cone_turnover Logical. If \code{TRUE}, cone litter
+#'   (\code{cone_litter}/\code{culm_growth_cone_litter}) follows a
+#'   masting cycle: standing cone biomass (\code{cone_biomass_standing})
+#'   accumulates every year from real bud growth
+#'   (\code{culm_growth_bud}), and every \code{n_age}-th simulated year
+#'   the whole accumulated stock sheds as litter, spread over a fixed
+#'   day 121-273 window (\code{actual_growth.cpp}) - a mature cone is a
+#'   discrete unit, not a continuously-turning-over pool, so nothing is
+#'   retained fractionally. Split out from \code{leaf_mass_correction}
+#'   (2026-11-10) - it only ever depended on \code{culm_growth.bud}
+#'   (always tracked) and its own state, not on that mechanism's needle
+#'   cohorts. Masting period/shed fraction are both uncalibrated
+#'   placeholders (period reuses \code{n_age}; fraction is 100%, not a
+#'   dedicated parameter). Default \code{FALSE}.
 #' @param phloem_trigger Logical. If \code{TRUE}, bud burst is triggered when
 #'   phloem sugar first drops below a threshold (requires
 #'   \code{organ_level_sugar = TRUE}). Default \code{FALSE}. Automatically set
@@ -443,6 +462,7 @@ CASSIA_cpp <- function(
     root_leaf_correction = FALSE,        # Makela & Valentine (2020) pipe-model control (Eq. 4.13, Wr=alpha_r*Wf), damping-only, roots referenced against leaf MASS - recomputed yearly not daily (see roxygen doc); alpha_r=0.47 is PREBAS/CROBAS's alfar3 (Scots pine, site type 3), not yet Hyde-validated
     root_turnover = FALSE,               # Root/mycorrhiza litter, driven by the same fS senescence signal as leaf area's own turnover (not a literal copy - see roxygen doc); turnover-time constant is an uncalibrated placeholder; root litter gets an extra pipe-model boost/damp when root_leaf_correction is also TRUE
     leaf_mass_correction = FALSE,        # Makela (1999) structural-balance control, damping-only, needle leaf_mass referenced against Repola's own prediction - replaces the memoryless annual-reset formula with a genuine accumulating pool, litter via fS^2 bell curve (see roxygen doc)
+    cone_turnover = FALSE,               # Cone litter, masting cycle driven by real bud growth, independent of leaf_mass_correction (split out 2026-11-10 - see roxygen doc); masting period/shed fraction are both uncalibrated placeholders
     # tau_H/tau_R/tau_N, sLc_litter, and theta_N_*/retrans_* all moved into
     # `parameters` (parameters_p), 2026-11-09 - see @param parameters above
     # and data-raw/building_data.R for sourcing.
@@ -529,6 +549,7 @@ CASSIA_cpp <- function(
     "root_leaf_correction" = root_leaf_correction,
     "root_turnover" = root_turnover,
     "leaf_mass_correction" = leaf_mass_correction,
+    "cone_turnover" = cone_turnover,
     "phloem_trigger" = phloem_trigger,
     "mycorrhiza" = mycorrhiza,
     "root_as_Ding" = root_as_Ding,

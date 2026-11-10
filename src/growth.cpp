@@ -270,6 +270,11 @@ void growth(int day,
   // (C_N_year sits at exactly 1 all year regardless, confirmed via
   // isolation test - the pool never overshoots), but removes that latent
   // risk for conditions where it might.
+  // n_age_int: shared by both the needle cohorts (leaf_mass_correction)
+  // and cone litter's masting cycle (cone_turnover) below - computed
+  // once here so neither toggle depends on the other being on too.
+  int n_age_int = static_cast<int>(std::round(parameters.n_age));
+
   if (boolsettings.leaf_mass_correction && day == 0) {
     double leaf_mass_max_last_year = state.max_leaf_mass_running;
     state.C_N_year = makela_control_factor(N_repo, leaf_mass_max_last_year, parameters.tau_N);
@@ -311,7 +316,6 @@ void growth(int day,
     // resets to 0 each day==0 - still holding LAST year's final total
     // here, since actual_growth.cpp's reset for THIS year hasn't run yet
     // today) as the new youngest cohort.
-    int n_age_int = static_cast<int>(std::round(parameters.n_age));
     if (state.needle_cohort_mass.empty()) {
       state.needle_cohort_mass.assign(n_age_int, N_repo / parameters.n_age);
       // Read back from the cohort itself (same N_repo/n_age every slot,
@@ -331,28 +335,32 @@ void growth(int day,
       }
       state.needle_cohort_mass[0] = last_year_real_needle_growth;
     }
+  }
 
-    // Cone litter (masting cycle, independent of the needle cohorts
-    // above): standing cone biomass accumulates every year from last
-    // year's actual bud growth (out.culm_growth.bud - same per-year
-    // running total out.culm_growth.needles is, read the same way just
-    // above). Every n_age-th year (years_since_masting resets to 0), the
-    // WHOLE accumulated stock sheds as litter (read by actual_growth.cpp's
-    // fixed day 121-273 window) and standing drops back to 0 - mature
-    // cones are a discrete unit that eventually all fall, unlike needles'
-    // continuous age-class turnover, so there's no "retained fraction" to
-    // carry forward. Masting period reuses n_age_int (above) rather than
-    // its own hardcoded constant - no dedicated masting-period parameter
-    // exists, and n_age is already the site-specific multi-year cycle
-    // length CASSIA has (3 Hyde, 5 Vario), so this makes the period
-    // dynamic per-site instead of a second magic number to keep in sync.
-    // years_since_masting starts at 0 and increments here every year from
-    // the very first simulated year, so masting lands on simulation year
-    // n_age, 2*n_age, 3*n_age, ... unconditionally - no special
-    // first-call bootstrap is needed, since the index_ref_year_bud clamp
-    // below already yields a correctly-zero (not garbage) contribution
-    // for the very first year, when no prior year's bud growth exists
-    // yet.
+  // Cone litter (masting cycle) - own toggle, independent of
+  // leaf_mass_correction/needle cohorts above (2026-11-10, split out -
+  // this never actually depended on that mechanism, see cone_turnover's
+  // own comment, function_structures.h). Standing cone biomass
+  // accumulates every year from last year's actual bud growth
+  // (out.culm_growth.bud - same per-year running total
+  // out.culm_growth.needles is, read the same way needle cohorts do
+  // above). Every n_age-th year (years_since_masting resets to 0), the
+  // WHOLE accumulated stock sheds as litter (read by actual_growth.cpp's
+  // fixed day 121-273 window) and standing drops back to 0 - mature
+  // cones are a discrete unit that eventually all fall, unlike needles'
+  // continuous age-class turnover, so there's no "retained fraction" to
+  // carry forward. Masting period reuses n_age_int (above) rather than
+  // its own hardcoded constant - no dedicated masting-period parameter
+  // exists, and n_age is already the site-specific multi-year cycle
+  // length CASSIA has (3 Hyde, 5 Vario), so this makes the period
+  // dynamic per-site instead of a second magic number to keep in sync.
+  // years_since_masting starts at 0 and increments here every year from
+  // the very first simulated year, so masting lands on simulation year
+  // n_age, 2*n_age, 3*n_age, ... unconditionally - no special
+  // first-call bootstrap is needed, since the index_ref_year_bud clamp
+  // below already yields a correctly-zero (not garbage) contribution
+  // for the very first year, when no prior year's bud growth exists yet.
+  if (boolsettings.cone_turnover && day == 0) {
     int index_ref_year_bud = days_gone + day - 1;
     if (index_ref_year_bud < 0) index_ref_year_bud = 0;
     double last_year_bud_growth = out.culm_growth.bud[index_ref_year_bud];

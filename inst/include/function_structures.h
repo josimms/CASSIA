@@ -666,6 +666,17 @@ struct Settings {
   // sources/references. CASSIA_cpp()'s only non-toggle arguments are now
   // the big parameter/common/etc. tables.
 
+  // Cone litter (masting cycle, growth.cpp/actual_growth.cpp) - its own
+  // toggle (2026-11-10), split out from leaf_mass_correction. It was
+  // originally added inside that mechanism's own code blocks purely
+  // because that's where the needle work was happening, but it has no
+  // real dependency on leaf_mass_correction's needle cohorts/skew-normal
+  // - only on out.culm_growth.bud (always tracked, unconditional) and
+  // its own independent state (cone_biomass_standing/years_since_masting/
+  // cone_litter_magnitude_this_year). Same false default/opt-in pattern
+  // as root_turnover above.
+  bool cone_turnover = false;
+
   bool phloem_trigger = false;
   bool mycorrhiza = false;
   bool root_as_Ding = false;

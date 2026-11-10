@@ -24,6 +24,7 @@ Settings parseSettings(Rcpp::List settingsList) {
   settings.root_leaf_correction = Rcpp::as<bool>(settingsList["root_leaf_correction"]);
   settings.root_turnover = Rcpp::as<bool>(settingsList["root_turnover"]);
   settings.leaf_mass_correction = Rcpp::as<bool>(settingsList["leaf_mass_correction"]);
+  settings.cone_turnover = Rcpp::as<bool>(settingsList["cone_turnover"]);
   // tau_H/tau_R/tau_N/sLc_litter/theta_N_*/retrans_* moved to
   // CASSIA_parameters (2026-11-09) - read in structures_read.cpp's
   // make_CASSIA_parameters() instead.

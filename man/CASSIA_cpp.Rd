@@ -49,6 +49,7 @@ CASSIA_cpp(
   root_leaf_correction = FALSE,
   root_turnover = FALSE,
   leaf_mass_correction = FALSE,
+  cone_turnover = FALSE,
   phloem_trigger = FALSE,
   mycorrhiza = TRUE,
   root_as_Ding = TRUE,
@@ -350,7 +351,27 @@ running total - no sticky flag, since \code{fS^2}'s steeper decline
 already discriminates a genuine autumn decline from a mid-summer
 wobble on its own; see
 \code{needle_litter_fS2_implementation_plan.md} for the validation
-behind this. Default \code{FALSE}.}
+behind this. Default \code{FALSE}. Note: needle litter's own timing
+has since moved to a skew-normal shape over day-of-year, and its
+magnitude to real needle-cohort growth rather than Repola's
+prediction directly - this doc describes the mechanism as
+originally designed; see \code{growth.cpp}/\code{actual_growth.cpp}
+for the current formula.}
+
+\item{cone_turnover}{Logical. If \code{TRUE}, cone litter
+(\code{cone_litter}/\code{culm_growth_cone_litter}) follows a
+masting cycle: standing cone biomass (\code{cone_biomass_standing})
+accumulates every year from real bud growth
+(\code{culm_growth_bud}), and every \code{n_age}-th simulated year
+the whole accumulated stock sheds as litter, spread over a fixed
+day 121-273 window (\code{actual_growth.cpp}) - a mature cone is a
+discrete unit, not a continuously-turning-over pool, so nothing is
+retained fractionally. Split out from \code{leaf_mass_correction}
+(2026-11-10) - it only ever depended on \code{culm_growth.bud}
+(always tracked) and its own state, not on that mechanism's needle
+cohorts. Masting period/shed fraction are both uncalibrated
+placeholders (period reuses \code{n_age}; fraction is 100%, not a
+dedicated parameter). Default \code{FALSE}.}
 
 \item{phloem_trigger}{Logical. If \code{TRUE}, bud burst is triggered when
 phloem sugar first drops below a threshold (requires

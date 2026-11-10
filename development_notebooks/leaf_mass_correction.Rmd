@@ -138,6 +138,7 @@ CASSIA_leaf_mass <- CASSIA_cpp(
   needle_mass_grows          = TRUE,
   height_diameter_correction = TRUE,
   leaf_mass_correction       = TRUE,
+  cone_turnover              = TRUE, # own toggle as of 2026-11-10 (split out from leaf_mass_correction - no real dependency between them)
   root_turnover              = TRUE  # confirmed not to change needle_litter/leaf_mass (independent code paths, checked)
 )
 
@@ -352,6 +353,7 @@ run_leaf_mass <- function(weather, ...) {
     needle_mass_grows          = TRUE,
     height_diameter_correction = TRUE,
     leaf_mass_correction       = TRUE,
+    cone_turnover              = TRUE,
     root_turnover              = TRUE,
     ...
   )
@@ -931,15 +933,10 @@ p_needles_leaves_day <- ggplot() +
 # Cone litter: real C++ model output (cone_litter, masting cycle - see
 # Sect. 4.1), cumulative *within* each year instead of across the full
 # 2006-2016 range. Fixed day 121-273 shedding window (cone_par, kept here
-# since the window markers below and Sect. 5.2's prototype discussion
-# both still reference it) - the window Sect. 5.2's RMSE-fitting exercise
-# found could not be improved on for a masting process.
+# since the window markers below still reference it) - the window
+# Sect. 5.2's RMSE-fitting exercise found could not be improved on for a
+# masting process.
 cone_par <- c(start = 121, duration = 153)
-constant_shape <- function(day, p) {  # kept for Sect. 5.2's shape comparison, re-used as-is
-  start <- p[1]; duration <- p[2]
-  end <- start + duration - 1
-  as.numeric(day >= start & day <= end)
-}
 
 # Same three-model pattern as Roots/Needles above.
 cone_day_long <- rbind(
@@ -1094,216 +1091,47 @@ Both are future work, not attempted in this session.
 
 ## 5  Alternative bell shapes for the litter pulse: fitting comparison
 
-```{r shape-candidates}
-makela_bell <- function(s, p) {
-  sLc <- p[1]
-  out <- numeric(length(s))
-  valid <- s > 0 & s < sLc^2
-  out[valid] <- (sLc * sqrt(s[valid]) - s[valid]) / (sLc^2 / 4)
-  out
-}
-gaussian_bell <- function(s, p) {
-  mu <- p[1]; sigma <- p[2]
-  exp(-(s - mu)^2 / (2 * sigma^2))
-}
-triangular_bell <- function(s, p) {
-  width <- p[1]; peak <- p[2]
-  out <- numeric(length(s))
-  valid <- s > 0 & s < width
-  out[valid] <- ifelse(s[valid] <= peak, s[valid] / peak, (width - s[valid]) / (width - peak))
-  out
-}
-```
-
-```{r shape-fit}
-degree_full <- with(leaf_mass_df, ifelse(day_of_year > 212, pmax(0, 1 - fS^2), 0))
-sL_full <- ave(degree_full, leaf_mass_df$year, FUN = cumsum)
-shape_df <- data.frame(dates = leaf_mass_df$dates, year = leaf_mass_df$year,
-                        degree = degree_full, s = sL_full)
-
-rmse_cumulative <- function(params, shape_fn, years) {
-  sq_errs <- c()
-  for (yr in years) {
-    yr_df <- shape_df[shape_df$year == yr, ]
-    rate <- yr_df$degree * shape_fn(yr_df$s, params)
-    total <- sum(rate)
-    if (!is.finite(total) || total < 1e-8) return(10)  # degenerate params: heavy penalty
-    cum_rate <- cumsum(rate) / total
-    real_yr <- real_litter[real_litter$year == yr, ]
-    real_total <- sum(real_yr$neulanen)
-    if (real_total < 1e-8) next
-    real_cum <- cumsum(real_yr$neulanen) / real_total
-    model_at_real_dates <- sapply(real_yr$pvm, function(dt) {
-      idx <- which(yr_df$dates == dt)
-      if (length(idx) == 0) return(NA)
-      cum_rate[idx]
-    })
-    valid <- !is.na(model_at_real_dates)
-    sq_errs <- c(sq_errs, (model_at_real_dates[valid] - real_cum[valid])^2)
-  }
-  if (length(sq_errs) == 0) return(10)
-  sqrt(mean(sq_errs))
-}
-
-fit_makela <- optimize(function(p) rmse_cumulative(p, makela_bell, train_years), interval = c(0.5, 10))
-# Bounded (0.1-30, 0.3-20 / 0.5-30, 0.1-29.5): keeps the peak within the
-# real accumulated-s range (~0-90) - unconstrained fits degenerate into a
-# monotonic ramp (fitted mu far outside the data's range), the same
-# failure mode the original g_cold exploration already hit (see plan doc).
-fit_gauss <- optim(par = c(mu = 3, sigma = 2), fn = function(p) rmse_cumulative(p, gaussian_bell, train_years),
-                    method = "L-BFGS-B", lower = c(0.1, 0.3), upper = c(30, 20))
-fit_tri   <- optim(par = c(width = 5, peak = 2), fn = function(p) rmse_cumulative(p, triangular_bell, train_years),
-                    method = "L-BFGS-B", lower = c(0.5, 0.1), upper = c(30, 29.5))
-```
-
-```{r shape-comparison-data}
-example_year <- 2010  # a training year, for visual reference
-yr_df <- shape_df[shape_df$year == example_year, ]
-
-curve_df <- rbind(
-  data.frame(dates = yr_df$dates, rate = yr_df$degree * makela_bell(yr_df$s, fit_makela$minimum),
-             Shape = "Current (Makela bell)"),
-  data.frame(dates = yr_df$dates, rate = yr_df$degree * gaussian_bell(yr_df$s, fit_gauss$par),
-             Shape = "Gaussian"),
-  data.frame(dates = yr_df$dates, rate = yr_df$degree * triangular_bell(yr_df$s, fit_tri$par),
-             Shape = "Triangular")
-)
-curve_df <- do.call(rbind, lapply(split(curve_df, curve_df$Shape), function(d) {
-  d$rate_norm <- d$rate / sum(d$rate)
-  d
-}))
-
-real_example <- real_litter[real_litter$year == example_year, ]
-real_example$rate_norm <- real_example$neulanen / sum(real_example$neulanen)
-```
+Both choices below are now live in the compiled model (`actual_growth.cpp`),
+so this section is kept as a historical record of the model-selection
+process - the fitting code itself (multi-shape RMSE search, multi-start
+optimization) has been removed rather than kept as a live, re-run-every-
+time exercise, since nothing downstream still depends on re-deriving it.
 
 ### 5.1  A skewed distribution directly over day-of-year, no gate/accumulator at all
 
-Tested here instead: drop the gate and the fS-based accumulator entirely,
-and fit a single **skew-normal density directly over calendar
-day-of-year** - `(2/omega) * dnorm((d-xi)/omega) * pnorm(alpha*(d-xi)/omega)`,
-3 free parameters (`xi` location, `omega` scale, `alpha` skew), no `sLc`,
-no `fS`, no `day > 212` gate. Fit with the same cumulative-proportion RMSE
-procedure and the same train/validation year split as above, just
-evaluated over `1:366` instead of the accumulated-`s` grid.
+Four needle-litter timing shapes were compared on the same cumulative-
+proportion RMSE procedure (train years 2006/08/10/12/14/16, validation
+years 2007/09/11/13/15), all fit against real `karike` trap data:
 
-```{r skewnorm-candidate}
-skew_normal_doy <- function(d, p) {
-  xi <- p[1]; omega <- p[2]; alpha <- p[3]
-  z <- (d - xi) / omega
-  (2 / omega) * dnorm(z) * pnorm(alpha * z)
-}
+| Shape | Validation RMSE |
+|---|---|
+| Mäkelä bell (the original mechanism, gated at `day > 212`, accumulated over `fS^2`) | 0.153 |
+| Gaussian (same `fS^2`-accumulator gate) | 0.191 |
+| Triangular (same gate) | 0.163 |
+| **Skew-normal directly over calendar day-of-year, no gate/accumulator** (`(2/omega) * dnorm((d-xi)/omega) * pnorm(alpha*(d-xi)/omega)`, 3 free parameters) | **0.068** |
 
-rmse_cumulative_doy <- function(params, shape_fn, years) {
-  full_days <- 1:366
-  rate  <- shape_fn(full_days, params)
-  total <- sum(rate)
-  if (!is.finite(total) || total < 1e-8) return(10)
-  cum_rate <- cumsum(rate) / total
-  sq_errs <- c()
-  for (yr in years) {
-    real_yr <- real_litter[real_litter$year == yr, ]
-    real_total <- sum(real_yr$neulanen)
-    if (real_total < 1e-8) next
-    real_cum <- cumsum(real_yr$neulanen) / real_total
-    sq_errs <- c(sq_errs, (cum_rate[real_yr$day_of_year] - real_cum)^2)
-  }
-  if (length(sq_errs) == 0) return(10)
-  sqrt(mean(sq_errs))
-}
-```
-
-```{r skewnorm-fit}
-# A single starting point (xi=265, omega=40, alpha=-5) converges to a
-# degenerate near-symmetric local optimum (alpha~0, collapsing to a plain
-# wide Gaussian) - L-BFGS-B is gradient-based and gets stuck. Multi-start
-# across a small grid of diverse starting points finds a meaningfully
-# better, genuinely skewed optimum instead.
-starts <- expand.grid(xi = c(230, 250, 270, 290), omega = c(10, 20, 40, 70),
-                       alpha = c(-30, -10, -2, 0, 5, 20))
-fits_skew <- lapply(seq_len(nrow(starts)), function(i) {
-  tryCatch(optim(par = as.numeric(starts[i, ]),
-                  fn = function(p) rmse_cumulative_doy(p, skew_normal_doy, train_years),
-                  method = "L-BFGS-B", lower = c(150, 3, -80), upper = c(330, 150, 80)),
-           error = function(e) NULL)
-})
-fits_skew <- fits_skew[!vapply(fits_skew, is.null, logical(1))]
-fit_skew  <- fits_skew[[which.min(vapply(fits_skew, `[[`, numeric(1), "value"))]]
-
-skew_validation_rmse <- rmse_cumulative_doy(fit_skew$par, skew_normal_doy, valid_years)
-skew_pre212_share <- 100 * sum(skew_normal_doy(1:212, fit_skew$par)) / sum(skew_normal_doy(1:366, fit_skew$par))
-
-cat("Fitted skew-normal: xi =", round(fit_skew$par[1], 1), " omega =", round(fit_skew$par[2], 1),
-    " alpha =", round(fit_skew$par[3], 2), "\n")
-cat(sprintf("Train RMSE = %.4f, Validation RMSE = %.4f\n", fit_skew$value, skew_validation_rmse))
-cat(sprintf("Share of annual total falling before day 212: %.1f%% (gated shapes above: 0%% by construction; real karike data: ~14-33%%, pooled ~20%%)\n",
-            skew_pre212_share))
-```
+The skew-normal wins decisively, fit at `xi` = 303.1, `omega` = 83.3,
+`alpha` = -25.22 (train RMSE 0.098) - and unlike every gated alternative,
+which puts exactly 0% of the annual total before day 212 by construction,
+the fitted skew-normal puts 27.7% of it there, matching the real data's
+own ~14-33% (pooled ~20%) non-trivial background rate before that point.
+This is the mechanism now live in `actual_growth.cpp` (`omega_litter`/
+`alpha_litter`/`xi_offset_litter`, Parameters table below) - `xi` itself
+is one-year-lagged from the prior year's `fS<0.5` crossing day rather
+than fit as one fixed calendar day, see that file's own comments.
 
 ### 5.2  Cone litter: a bud-growth-style fixed-window mechanism
 
-```{r cone-bud-shape}
-# constant_shape() and cone_par (day 121-273) are already defined in
-# Sect. 4.2, where they're used to draw the Cones panel's model line -
-# reused here as-is. half_sine_shape() is the bud-growth-style
-# alternative being compared against it.
-half_sine_shape <- function(day, p) {
-  start <- p[1]; duration <- p[2]
-  sB <- day + 1 - start
-  out <- numeric(length(day))
-  valid <- sB >= 0 & sB < duration
-  out[valid] <- (sin(2 * pi / duration * (sB[valid] - duration / 4)) + 1) / 2
-  out
-}
-```
-
-```{r cone-real-data}
-real_cones <- karike[!is.na(karike[["käpy"]]) &
-                     format(karike$pvm, "%Y") %in% as.character(2006:2016),
-                     c("pvm", "käpy")]
-names(real_cones) <- c("pvm", "amount")
-real_cones <- aggregate(amount ~ pvm, data = real_cones, FUN = mean)
-real_cones <- real_cones[order(real_cones$pvm), ]
-real_cones$year        <- as.integer(format(real_cones$pvm, "%Y"))
-real_cones$day_of_year <- as.integer(format(real_cones$pvm, "%j"))
-real_cones$year_label  <- year_label(real_cones$year)
-```
-
-```{r cone-bud-fit}
-rmse_cumulative_cones <- function(params, shape_fn, years) {
-  full_days <- 1:366
-  rate <- shape_fn(full_days, params)
-  total <- sum(rate)
-  if (!is.finite(total) || total < 1e-8) return(10)
-  cum_rate <- cumsum(rate) / total
-  sq_errs <- c()
-  for (yr in years) {
-    real_yr <- real_cones[real_cones$year == yr, ]
-    real_total <- sum(real_yr$amount)
-    if (real_total < 1e-8) next
-    real_cum <- cumsum(real_yr$amount) / real_total
-    sq_errs <- c(sq_errs, (cum_rate[real_yr$day_of_year] - real_cum)^2)
-  }
-  if (length(sq_errs) == 0) return(10)
-  sqrt(mean(sq_errs))
-}
-
-cat("Cone window (set, not fit, Sect. 4.2): start =", cone_par[["start"]],
-    "(May 1), end =", cone_par[["start"]] + cone_par[["duration"]] - 1, "(Sep 30)\n")
-cat(sprintf("Half-sine: train RMSE = %.4f, validation RMSE = %.4f\n",
-            rmse_cumulative_cones(cone_par, half_sine_shape, train_years),
-            rmse_cumulative_cones(cone_par, half_sine_shape, valid_years)))
-cat(sprintf("Constant:  train RMSE = %.4f, validation RMSE = %.4f\n",
-            rmse_cumulative_cones(cone_par, constant_shape, train_years),
-            rmse_cumulative_cones(cone_par, constant_shape, valid_years)))
-```
-
-The constant rate actually wins: validation RMSE 0.165 vs. the half-sine's
+Within the fixed day 121-273 (May 1 - Sep 30) window set from the real
+data (Sect. 4.2), two within-window shapes were compared: a bud-growth-
+style half-sine (grows gradually then stops) and a constant (uniform)
+rate. The constant rate won: validation RMSE 0.165 vs. the half-sine's
 0.183 (training RMSE 0.156 vs. 0.161). Bud growth's bell shape makes
 sense for an organ that grows gradually then stops; cone drop looks
 closer to "once the window opens, cones fall at a roughly steady rate
 until it closes" - a uniform rate is both simpler and a better match once
 the window itself is already set from the real data rather than fit.
+This is the shape now live in `actual_growth.cpp`'s cone litter mechanism.
 
 ---
 
@@ -1314,7 +1142,7 @@ the window itself is already set from the real data rather than fit.
 | `omega_litter` | 83.3 | Yes (NA elsewhere) | Skew-normal scale (days) for `needle_litter`'s day-of-year timing | **Live in C++** (`actual_growth.cpp`, `parameters_p` row 86) |
 | `alpha_litter` | -25.22 | Yes (NA elsewhere) | Skew-normal shape/skewness for `needle_litter` | **Live in C++** (row 87) |
 | `xi_offset_litter` | 4.8 days | Yes (NA elsewhere) | Added to the prior year's `fS < 0.5` crossing day to get this year's skew-normal location (`xi_litter`) | **Live in C++** (row 88) |
-| `sLc_litter` | 2.163312 | Yes (NA elsewhere) | Width of the retired fS^2-accumulator/Makela-bell mechanism `omega_litter`/`alpha_litter`/`xi_offset_litter` replaced | **Vestigial** - no longer read by any C++ code; kept in `parameters_p` (row 79) only so the Sect. 5.1 old-vs-new comparison can still reproduce the retired baseline |
+| `sLc_litter` | 2.163312 | Yes (NA elsewhere) | Width of the retired fS^2-accumulator/Makela-bell mechanism `omega_litter`/`alpha_litter`/`xi_offset_litter` replaced | **Vestigial** - no longer read by any C++ code, nor by this notebook (Sect. 5.1's fitting comparison that used to reproduce the retired baseline has since been condensed to a static summary); kept in `parameters_p` (row 79) purely as a record of what the skew-normal design replaced |
 | Cone litter window start | day 121 (May 1) | - | Fixed start of `cone_litter`'s shedding window (`cone_par["start"]`, Sect. 5.2) | **Live in C++** (`actual_growth.cpp`, hardcoded - no dedicated parameter yet) |
 | Cone litter window duration | 153 days (end day 273, Sep 30) | - | Fixed duration of the same window | **Live in C++** (hardcoded) |
 | Cone litter shape | Constant (uniform) rate | - | Winning shape within the fixed window (beat the bud-growth-style half-sine), Sect. 5.2 | **Live in C++** (hardcoded) |

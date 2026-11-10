@@ -196,6 +196,12 @@ void actual_growth(int day,
     all_out.mycorrhiza_litter_N[days_gone+day] = 0.0;
   }
 
+  // day is 0-indexed here (day==0 is Jan 1); day_of_year is converted to
+  // the 1-indexed convention (1-366) the R-side fit used - shared by
+  // leaf_mass_correction's needle litter and cone_turnover's cone litter
+  // below, neither of which depends on the other being on too.
+  double day_of_year = static_cast<double>(day) + 1.0;
+
   // leaf_mass_correction: leaf_mass becomes a genuinely accumulating pool
   // (growth.cpp's tree_state.needles in - the real, Makela-reduced and
   // sugar/nitrogen-gated needle growth demand, see that file's comment -
@@ -210,9 +216,6 @@ void actual_growth(int day,
   // dormant-season smear and mid-summer-wobble false triggers in an even
   // earlier, pre-fS^2 formula).
   if (boolsettings.leaf_mass_correction) {
-    // day is 0-indexed here (day==0 is Jan 1); day_of_year is converted
-    // to the 1-indexed convention (1-366) the R-side fit used.
-    double day_of_year = static_cast<double>(day) + 1.0;
 
     // Detect the first day this year fS drops below 0.5 (searched only
     // after day_of_year 150, to skip the mid-summer wobble - fS sitting
@@ -284,14 +287,19 @@ void actual_growth(int day,
     if (!tree_state.needle_growth_season_ended) {
       tree_state.max_leaf_mass_running = std::max(tree_state.max_leaf_mass_running, all_out.culm_growth.leaf_mass[days_gone+day]);
     }
+  }
 
-    // Cone litter (masting cycle, growth.cpp's day==0 block): this
-    // year's whole cone_litter_magnitude_this_year (0 except masting
-    // years) spread evenly over a fixed day 121-273 window, not a fitted
-    // continuous shape - RMSE-fitting a cone window was found to be
-    // meaningless for a masting process (leaf_mass_correction.Rmd Sect.
-    // 5.2: it just inflates duration chasing masting noise), so this
-    // reuses that section's own fixed-window choice directly.
+  // Cone litter (masting cycle) - own toggle, independent of
+  // leaf_mass_correction above (2026-11-10, split out - see
+  // cone_turnover's own comment, function_structures.h). Magnitude set
+  // in growth.cpp's day==0 block: this year's whole
+  // cone_litter_magnitude_this_year (0 except masting years) spread
+  // evenly over a fixed day 121-273 window, not a fitted continuous
+  // shape - RMSE-fitting a cone window was found to be meaningless for a
+  // masting process (leaf_mass_correction.Rmd Sect. 5.2: it just
+  // inflates duration chasing masting noise), so this reuses that
+  // section's own fixed-window choice directly.
+  if (boolsettings.cone_turnover) {
     double cone_litter_today = 0.0;
     if (day_of_year >= 121.0 && day_of_year <= 273.0) {
       cone_litter_today = tree_state.cone_litter_magnitude_this_year / 153.0;
