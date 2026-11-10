@@ -160,7 +160,14 @@ Rcpp::List CASSIA_yearly(int start_year,
   if (needle_mass_in == 0) { // The value of this should be 0 if you want the needle value to be calculated
     repola_values = repola(all_out.culm_growth.diameter[0], all_out.culm_growth.height[0], parameters);
   } else {
-    repola_values.needle_mass = needle_mass_in;
+    // needle_mass_in is documented (CASSIA_cpp.R roxygen) as kg C, so it
+    // sets m_N_tot directly - needle_mass (dry mass) is derived from it
+    // the same way repola() itself derives it (divide by carbon_share,
+    // the inverse of repola.cpp's own needle_mass*carbon_share), keeping
+    // both fields consistent regardless of which branch ran. needle_mass
+    // is still read elsewhere as dry mass (fAPAR_and_LAI.cpp's LAI calc).
+    repola_values.m_N_tot = needle_mass_in;
+    repola_values.needle_mass = needle_mass_in / parameters.carbon_share;
   }
 
   // Seed leaf_mass_correction's accumulating pool (actual_growth.cpp) at
@@ -175,7 +182,11 @@ Rcpp::List CASSIA_yearly(int start_year,
   // starting from an unseeded 0.0. Harmless when leaf_mass_correction =
   // FALSE: the old fAPAR_and_LAI.cpp pathway never reads index 0 (it is
   // memoryless).
-  all_out.culm_growth.leaf_mass[0] = repola_values.needle_mass * (parameters.n_age - 1.0) / parameters.n_age;
+  // m_N_tot (carbon), not needle_mass (dry mass, repola.cpp) - leaf_mass
+  // is a carbon pool (confirmed via theta_N_needles/carbon_share's own
+  // unit logic, actual_growth.cpp), so its seed needs to match (2026-11-10
+  // fix - needle_mass is ~2x too large here, the Repola/N_repo unit bug).
+  all_out.culm_growth.leaf_mass[0] = repola_values.m_N_tot * (parameters.n_age - 1.0) / parameters.n_age;
 
   // Bootstraps C_N_year's and litter's first (day == 0, year 1)
   // computation in growth.cpp/actual_growth.cpp from this same seed,
@@ -337,7 +348,11 @@ Rcpp::List CASSIA_yearly(int start_year,
       repola_values = repola(all_out.culm_growth.diameter[index],
                              all_out.culm_growth.height[index], parameters); // Needle mass is then calculated on the net D and h values
     } else {
-      repola_values.needle_mass = needle_mass_in;
+      // Same dual-field consistency as the day-0 setup above - needle_mass_in
+      // is kg C (sets m_N_tot directly); needle_mass (dry mass) derived
+      // from it for fAPAR_and_LAI.cpp's own LAI calc.
+      repola_values.m_N_tot = needle_mass_in;
+      repola_values.needle_mass = needle_mass_in / parameters.carbon_share;
     }
 
     /*
@@ -535,7 +550,12 @@ Rcpp::List CASSIA_yearly(int start_year,
              // Last iteration value
              last_year_HH,
              days_per_year,
-             repola_values.needle_mass);
+             // N_repo: m_N_tot (carbon), not needle_mass (dry mass) - this
+             // is compared directly against leaf_mass/state.needles
+             // (growth.cpp's C_N_year and needle_cohort_mass bootstrap),
+             // both carbon pools (2026-11-10 fix - needle_mass made this
+             // target ~2x too large).
+             repola_values.m_N_tot);
 
       // Saved for the next iteration
       release[days_gone + day] = tree_state.use;

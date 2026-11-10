@@ -190,10 +190,14 @@ n_repo_of_year <- function(y) {
     d_prev <- prev_rows$diameter[nrow(prev_rows)]
     h_prev <- prev_rows$height[nrow(prev_rows)]
   }
+  # m.N.tot (carbon), not needle_mass (dry mass) - N_repo is compared
+  # directly against leaf_mass (a carbon pool), mirroring the 2026-11-10
+  # C++ fix (CASSIA.cpp's growth() call site) - needle_mass made this
+  # target ~2x too large.
   repola(D0 = d_prev, h0 = h_prev, n.year = 1,
          needle_mas = list(0), ste = "Hyde",
          params = parameters_2015$parameters_test,
-         reps = repo_p)$needle_mass[[1]]
+         reps = repo_p)$m.N.tot[[1]]
 }
 
 n_repo_df <- data.frame(year = years, N_repo = sapply(years, n_repo_of_year))
