@@ -171,15 +171,14 @@ cat("any NaN/Inf in leaf_mass:", any(!is.finite(leaf_mass_df$leaf_mass)), "\n")
 cat("any NaN/Inf in litter:", any(!is.finite(leaf_mass_df$litter)), "\n")
 ```
 
-### 2.1  N_repo per year
-
-`N_repo` is recomputed once per year (`CASSIA.cpp`) from **last year's**
-Dec-31 diameter/height via Repola's `needle_mass` formula - the first
-simulated year uses the initial `D0`/`h0` instead, since there is no prior
-year. Mirrored here with the package's own `repola()` (R/repola.R), not a
-re-derivation.
-
-```{r n-repo-per-year}
+```{r n-repo-per-year, include=FALSE}
+# N_repo (needed by Sect. 2.2's mass-balance diagnostic and the leaf_mass
+# trajectory plot below) - recomputed once per year (CASSIA.cpp) from
+# last year's Dec-31 diameter/height via Repola's m.N.tot (carbon, not
+# dry-mass needle_mass - see that fix's own commit), mirrored here with
+# the package's own repola() (R/repola.R), not a re-derivation. The first
+# simulated year uses the initial D0/h0 instead, since there is no prior
+# year.
 years <- sort(unique(leaf_mass_df$year))
 
 n_repo_of_year <- function(y) {
@@ -204,8 +203,6 @@ n_repo_of_year <- function(y) {
 n_repo_df <- data.frame(year = years, N_repo = sapply(years, n_repo_of_year))
 n_repo_df$start <- as.Date(paste0(n_repo_df$year, "-01-01"))
 n_repo_df$end   <- as.Date(paste0(n_repo_df$year, "-12-31"))
-
-print(n_repo_df)
 ```
 
 ### 2.2  Year-by-year mass balance diagnostic
