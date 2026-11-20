@@ -368,6 +368,8 @@
 #'   \code{photosynthesis_as_input} and \code{phydro} forced to
 #'   \code{FALSE}) when \code{myco_model = TRUE}.
 #' @param tests Logical. Enable internal diagnostic tests. Default \code{FALSE}.
+#' @param .return_run Logical. Internal: return a step-wise run handle instead of running
+#'   (used by \code{\link{cassia_init}}). Default \code{FALSE}.
 #'
 #' @return A named list with three elements:
 #'   \describe{
@@ -553,7 +555,8 @@ CASSIA_cpp <- function(
     phydro = FALSE,
     preles = FALSE,
 
-    tests = FALSE) {
+    tests = FALSE,
+    .return_run = FALSE) {
 
   ####
   # Testing the input and initial conditions
@@ -670,6 +673,19 @@ CASSIA_cpp <- function(
       "weather must cover complete calendar years with no gaps: expected %d rows from %s to %s, got %d rows from %s to %s.",
       expected_days, expected_start, expected_end,
       nrow(weather), weather$dates[1], weather$dates[nrow(weather)]))
+  }
+
+  # Step-wise run (cassia_init()): same set-up as CASSIA_yearly, returned as a run handle
+  if (.return_run) {
+    if (soil || ecoevolutionary) {
+      stop("the step-wise run supports the standard CASSIA path only (soil = FALSE, ecoevolutionary = FALSE)")
+    }
+    ptr <- cassia_init_cpp(start_year, end_year, weather, GPP_ref_in,
+                           pPREL, t(parameters), common, t(ratios), t(sperling), phydro_param, no_trees,
+                           needle_mass_in,
+                           Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance,
+                           updated_settings)
+    return(structure(list(ptr = ptr, dates = as.Date(weather$dates)), class = "cassia_run"))
   }
 
   if (soil) {

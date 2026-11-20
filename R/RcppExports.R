@@ -6,6 +6,26 @@ CASSIA_yearly <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA
     .Call(`_CASSIA_CASSIA_yearly`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, pPhydro, no_trees, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings)
 }
 
+cassia_init_cpp <- function(start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, pPhydro, no_trees, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings) {
+    .Call(`_CASSIA_cassia_init_cpp`, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common, pCASSIA_ratios, pCASSIA_sperling, pPhydro, no_trees, needle_mass_in, Throughfall, surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings)
+}
+
+cassia_step_cpp <- function(run_ptr, n) {
+    .Call(`_CASSIA_cassia_step_cpp`, run_ptr, n)
+}
+
+cassia_cursor_cpp <- function(run_ptr) {
+    .Call(`_CASSIA_cassia_cursor_cpp`, run_ptr)
+}
+
+cassia_outputs_cpp <- function(run_ptr) {
+    .Call(`_CASSIA_cassia_outputs_cpp`, run_ptr)
+}
+
+cassia_set_forcing_cpp <- function(run_ptr, values) {
+    invisible(.Call(`_CASSIA_cassia_set_forcing_cpp`, run_ptr, values))
+}
+
 replace_value_DataFrame <- function(df, value, ref) {
     .Call(`_CASSIA_replace_value_DataFrame`, df, value, ref)
 }

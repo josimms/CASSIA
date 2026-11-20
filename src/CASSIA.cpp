@@ -55,9 +55,83 @@ int days_inclusive(int start_year, int start_month, int start_day,
   return days;
 }
 
-//' @export
-// [[Rcpp::export]]
-Rcpp::List CASSIA_yearly(int start_year,
+
+/*
+ * Step-wise run (step API, 2026-11)
+ *
+ * Everything CASSIA_yearly kept in local variables between days lives in one CassiaRun, so the
+ * run can be advanced a day at a time: cassia_init (set-up), cassia_step (one day: the start-of-
+ * year block on the first day of a year, the day-loop body, the end-of-year block after the last
+ * day), cassia_outputs (data frames). The statements are those of the former CASSIA_yearly, in
+ * the same order; CASSIA_yearly is now init + step until the end + outputs. PRELES's state, held
+ * before in static variables of preles_cpp, is part of the run (no state shared between runs).
+ */
+
+struct CassiaRun {
+  int start_year{};
+  int end_year{};
+  std::vector<double> GPP_ref{};
+  int no_trees{};
+  double needle_mass_in{};
+  double Throughfall{};
+  bool surplus_c{};
+  bool nitrogen_change{};
+  bool nitrogen_contrast{};
+  double nitrogen_balance{};
+  p1 parSite{};
+  p2 parGPP{};
+  p3 parET{};
+  p4 parSnowRain{};
+  p5 parWater{};
+  p7 parN{};
+  CASSIA_common common{};
+  CASSIA_parameters parameters{};
+  CASSIA_ratios ratios{};
+  Settings boolsettings{};
+  phydro_canopy_parameters parPhydro{};
+  weather_all climate{};
+  int simulation_time{};
+  output_vector all_out{};
+  double last_year_HH{};
+  double last_year_ring_width{};
+  double ring_width_total{};
+  double last_year_maxN{};
+  double GPP_mean{};
+  double HH{};
+  double GPP_sum_yesterday{};
+  double GPP_sum{};
+  double needles_last{};
+  double winter_state{};
+  std::vector<double> GPP_previous_sum{};
+  std::vector<double> potenital_growth_use{};
+  std::vector<double> release{};
+  photosynthesis_out photosynthesis{};
+  growth_state tree_state{};
+  carbo_tracker sugar{};
+  carbo_tracker starch{};
+  carbo_tracker storage_term{};
+  growth_out nitrogen_capacity{};
+  uptake_structre uptake{};
+  bool tree_alive{};
+  double CH{};
+  double M_suc{};
+  double max_needles{};
+  repola_out repola_values{};
+  int days_gone{};
+  double LAI{};
+  bool fS_reached_one{};
+  bool fN_reached_one{};
+  double B0{};
+  double D00{};
+  double h00{};
+  int days_per_year{};
+  preles_state preles{};
+  int year{};          // year of the next day to simulate
+  int day{};           // 0-based day of that year
+};
+
+static void cassia_init(CassiaRun& run,
+  int start_year,
                          int end_year,
 
                          Rcpp::DataFrame weather,
@@ -83,7 +157,6 @@ Rcpp::List CASSIA_yearly(int start_year,
                          double nitrogen_balance,
 
                          Rcpp::List settings) {
-
   /*
    * Read into structures
    */
@@ -303,8 +376,131 @@ Rcpp::List CASSIA_yearly(int start_year,
   int days_gone = 0;
   double LAI = 5; // TODO: check value
 
-  for (int year = start_year; year <= end_year; year++) {
+  /*
+   * Keep everything in the run
+   */
+  run.start_year = start_year;
+  run.end_year = end_year;
+  run.GPP_ref = GPP_ref;
+  run.no_trees = no_trees;
+  run.needle_mass_in = needle_mass_in;
+  run.Throughfall = Throughfall;
+  run.surplus_c = surplus_c;
+  run.nitrogen_change = nitrogen_change;
+  run.nitrogen_contrast = nitrogen_contrast;
+  run.nitrogen_balance = nitrogen_balance;
+  run.parSite = std::move(parSite);
+  run.parGPP = std::move(parGPP);
+  run.parET = std::move(parET);
+  run.parSnowRain = std::move(parSnowRain);
+  run.parWater = std::move(parWater);
+  run.parN = std::move(parN);
+  run.common = std::move(common);
+  run.parameters = std::move(parameters);
+  run.ratios = std::move(ratios);
+  run.boolsettings = std::move(boolsettings);
+  run.parPhydro = std::move(parPhydro);
+  run.climate = std::move(climate);
+  run.simulation_time = std::move(simulation_time);
+  run.all_out = std::move(all_out);
+  run.last_year_HH = std::move(last_year_HH);
+  run.last_year_ring_width = std::move(last_year_ring_width);
+  run.ring_width_total = std::move(ring_width_total);
+  run.last_year_maxN = std::move(last_year_maxN);
+  run.GPP_mean = std::move(GPP_mean);
+  run.HH = std::move(HH);
+  run.GPP_sum_yesterday = std::move(GPP_sum_yesterday);
+  run.GPP_sum = std::move(GPP_sum);
+  run.needles_last = std::move(needles_last);
+  run.winter_state = std::move(winter_state);
+  run.GPP_previous_sum = std::move(GPP_previous_sum);
+  run.potenital_growth_use = std::move(potenital_growth_use);
+  run.release = std::move(release);
+  run.photosynthesis = std::move(photosynthesis);
+  run.tree_state = std::move(tree_state);
+  run.sugar = std::move(sugar);
+  run.starch = std::move(starch);
+  run.storage_term = std::move(storage_term);
+  run.nitrogen_capacity = std::move(nitrogen_capacity);
+  run.uptake = std::move(uptake);
+  run.tree_alive = std::move(tree_alive);
+  run.CH = std::move(CH);
+  run.M_suc = std::move(M_suc);
+  run.max_needles = std::move(max_needles);
+  run.repola_values = std::move(repola_values);
+  run.days_gone = std::move(days_gone);
+  run.LAI = std::move(LAI);
+  run.year = start_year;
+  run.day = 0;
+}
 
+static bool cassia_done(const CassiaRun& run) {
+  return run.year > run.end_year;
+}
+
+static void cassia_step(CassiaRun& run) {
+  int& start_year = run.start_year;
+  int& end_year = run.end_year;
+  std::vector<double>& GPP_ref = run.GPP_ref;
+  int& no_trees = run.no_trees;
+  double& needle_mass_in = run.needle_mass_in;
+  double& Throughfall = run.Throughfall;
+  bool& surplus_c = run.surplus_c;
+  bool& nitrogen_change = run.nitrogen_change;
+  bool& nitrogen_contrast = run.nitrogen_contrast;
+  double& nitrogen_balance = run.nitrogen_balance;
+  p1& parSite = run.parSite;
+  p2& parGPP = run.parGPP;
+  p3& parET = run.parET;
+  p4& parSnowRain = run.parSnowRain;
+  p5& parWater = run.parWater;
+  p7& parN = run.parN;
+  CASSIA_common& common = run.common;
+  CASSIA_parameters& parameters = run.parameters;
+  CASSIA_ratios& ratios = run.ratios;
+  Settings& boolsettings = run.boolsettings;
+  phydro_canopy_parameters& parPhydro = run.parPhydro;
+  weather_all& climate = run.climate;
+  int& simulation_time = run.simulation_time;
+  output_vector& all_out = run.all_out;
+  double& last_year_HH = run.last_year_HH;
+  double& last_year_ring_width = run.last_year_ring_width;
+  double& ring_width_total = run.ring_width_total;
+  double& last_year_maxN = run.last_year_maxN;
+  double& GPP_mean = run.GPP_mean;
+  double& HH = run.HH;
+  double& GPP_sum_yesterday = run.GPP_sum_yesterday;
+  double& GPP_sum = run.GPP_sum;
+  double& needles_last = run.needles_last;
+  double& winter_state = run.winter_state;
+  std::vector<double>& GPP_previous_sum = run.GPP_previous_sum;
+  std::vector<double>& potenital_growth_use = run.potenital_growth_use;
+  std::vector<double>& release = run.release;
+  photosynthesis_out& photosynthesis = run.photosynthesis;
+  growth_state& tree_state = run.tree_state;
+  carbo_tracker& sugar = run.sugar;
+  carbo_tracker& starch = run.starch;
+  carbo_tracker& storage_term = run.storage_term;
+  growth_out& nitrogen_capacity = run.nitrogen_capacity;
+  uptake_structre& uptake = run.uptake;
+  bool& tree_alive = run.tree_alive;
+  double& CH = run.CH;
+  double& M_suc = run.M_suc;
+  double& max_needles = run.max_needles;
+  repola_out& repola_values = run.repola_values;
+  int& days_gone = run.days_gone;
+  double& LAI = run.LAI;
+  bool& fS_reached_one = run.fS_reached_one;
+  bool& fN_reached_one = run.fN_reached_one;
+  double& B0 = run.B0;
+  double& D00 = run.D00;
+  double& h00 = run.h00;
+  int& days_per_year = run.days_per_year;
+  preles_state& preles = run.preles;
+  const int year = run.year;
+  const int day = run.day;
+
+  if (day == 0) {
     /*
      * Daily output
      */
@@ -316,19 +512,19 @@ Rcpp::List CASSIA_yearly(int start_year,
     // state behind it (tree_state.fS_temp_sum) carries its own reset
     // logic there, tied to soil_water_reset - so nothing here needs to
     // zero it first.
-    bool fS_reached_one = false;
-    bool fN_reached_one = false;
+    fS_reached_one = false;
+    fN_reached_one = false;
 
     /*
      * Yearly initialization
      */
 
     // B0, D00 and h00
-    double B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
+    B0 = M_PI/4.0 * pow(parameters.D0, 2.0);
 
     // TODO: should make this before the yearly thing?
-    double D00 = parameters.D0; // Used to make the storage things in CASSIA
-    double h00 = parameters.h0; // TODO: this has never been used
+    D00 = parameters.D0; // Used to make the storage things in CASSIA
+    h00 = parameters.h0; // TODO: this has never been used
     if (boolsettings.xylogensis_option) {
       double LH0 = parameters.h_increment / (0.5 * parameters.sHc);
       double LN0 = parameters.n_length / (0.5 * parameters.sNc); // TODO: check the 2.64 which is in CASSIA_soil
@@ -367,12 +563,11 @@ Rcpp::List CASSIA_yearly(int start_year,
      * Days per year
      */
 
-    int days_per_year = leap_year(year);
+    days_per_year = leap_year(year);
 
-    /*
-     * DAYS LOOP
-     */
-    for (int day = 0; day < days_per_year; day++) {
+  }
+
+  {
       all_out.year[days_gone + day] = year;
       all_out.day[days_gone + day] = day + 1;
 
@@ -440,7 +635,7 @@ Rcpp::List CASSIA_yearly(int start_year,
         photosynthesis.SoilWater = 0.0;
         photosynthesis_per_stem = climate.Photosynthesis_IN[day + days_gone] / no_trees * 10000/1000;
       } else if (boolsettings.preles) {
-        photosynthesis = preles_cpp(day, preles_reset_state, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
+        photosynthesis = preles_cpp(preles, day, preles_reset_state, climate.PAR[days_gone + day], climate.TAir[days_gone + day], climate.Precip[days_gone + day],
                                     climate.VPD[days_gone + day], climate.CO2[days_gone + day], all_out.fAPAR[days_gone + day], photosynthesis.fS,
                                     parSite, parGPP, parET, parSnowRain, parWater, 0.0, 1);
         photosynthesis_per_stem = photosynthesis.GPP / no_trees * 10000/1000;
@@ -648,8 +843,10 @@ Rcpp::List CASSIA_yearly(int start_year,
         //all_out.culm_growth.print(day + days_gone, "culm");
       //}
 
-    } // End of the days loop
+  }
 
+  run.day = day + 1;
+  if (run.day == days_per_year) {
     // Updating parameters!
 
     last_year_HH = HH;
@@ -663,9 +860,15 @@ Rcpp::List CASSIA_yearly(int start_year,
     max_needles          = end_needles - start_needles;
 
     days_gone = days_gone + days_per_year;
-  } // End of the years loop
 
+    run.year = year + 1;
+    run.day = 0;
+  }
+}
 
+static Rcpp::List cassia_outputs(CassiaRun& run) {
+  output_vector& all_out = run.all_out;
+  const bool nitrogen_change = run.nitrogen_change;
   ///////////////////////
   // Output
   ///////////////////////
@@ -702,4 +905,127 @@ Rcpp::List CASSIA_yearly(int start_year,
 
   }
 
+}
+
+//' @export
+// [[Rcpp::export]]
+Rcpp::List CASSIA_yearly(int start_year,
+                         int end_year,
+
+                         Rcpp::DataFrame weather,
+                         std::vector<double> GPP_ref,
+
+                         std::vector<double> pPREL,
+                         Rcpp::DataFrame pCASSIA_parameters,
+                         Rcpp::DataFrame pCASSIA_common,
+                         Rcpp::DataFrame pCASSIA_ratios,
+                         Rcpp::DataFrame pCASSIA_sperling,
+
+                         std::vector<double> pPhydro,
+
+                         int no_trees,
+
+                         double needle_mass_in, // The value of this should be 0 if you want the needle value to be calculated
+                         double Throughfall,
+
+                         bool surplus_c,
+                         bool nitrogen_change,
+                         bool nitrogen_contrast,
+
+                         double nitrogen_balance,
+
+                         Rcpp::List settings) {
+  CassiaRun run;
+  cassia_init(run, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common,
+              pCASSIA_ratios, pCASSIA_sperling, pPhydro, no_trees, needle_mass_in, Throughfall,
+              surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings);
+  while (!cassia_done(run)) {
+    cassia_step(run);
+  }
+  return cassia_outputs(run);
+}
+
+/*
+ * R interface of the step-wise run: a run handle (external pointer) and functions to advance it,
+ * set one day's drivers, read the cursor and get the outputs. Used by cassia_init(), cassia_step(),
+ * cassia_set_forcing(), cassia_day() and cassia_outputs() in R/cassia_step.R.
+ */
+
+// [[Rcpp::export]]
+SEXP cassia_init_cpp(int start_year,
+                     int end_year,
+                     Rcpp::DataFrame weather,
+                     std::vector<double> GPP_ref,
+                     std::vector<double> pPREL,
+                     Rcpp::DataFrame pCASSIA_parameters,
+                     Rcpp::DataFrame pCASSIA_common,
+                     Rcpp::DataFrame pCASSIA_ratios,
+                     Rcpp::DataFrame pCASSIA_sperling,
+                     std::vector<double> pPhydro,
+                     int no_trees,
+                     double needle_mass_in,
+                     double Throughfall,
+                     bool surplus_c,
+                     bool nitrogen_change,
+                     bool nitrogen_contrast,
+                     double nitrogen_balance,
+                     Rcpp::List settings) {
+  Rcpp::XPtr<CassiaRun> run(new CassiaRun(), true);
+  cassia_init(*run, start_year, end_year, weather, GPP_ref, pPREL, pCASSIA_parameters, pCASSIA_common,
+              pCASSIA_ratios, pCASSIA_sperling, pPhydro, no_trees, needle_mass_in, Throughfall,
+              surplus_c, nitrogen_change, nitrogen_contrast, nitrogen_balance, settings);
+  return run;
+}
+
+static int cassia_days_done(const CassiaRun& run) {
+  return run.days_gone + run.day;
+}
+
+// [[Rcpp::export]]
+int cassia_step_cpp(SEXP run_ptr, int n) {
+  Rcpp::XPtr<CassiaRun> run(run_ptr);
+  for (int i = 0; i < n && !cassia_done(*run); i++) {
+    cassia_step(*run);
+  }
+  return cassia_days_done(*run);
+}
+
+// [[Rcpp::export]]
+Rcpp::List cassia_cursor_cpp(SEXP run_ptr) {
+  Rcpp::XPtr<CassiaRun> run(run_ptr);
+  return Rcpp::List::create(
+    Rcpp::_["year"] = run->year,
+    Rcpp::_["day"] = run->day + 1,
+    Rcpp::_["days_done"] = cassia_days_done(*run),
+    Rcpp::_["days_total"] = run->simulation_time,
+    Rcpp::_["done"] = cassia_done(*run));
+}
+
+// [[Rcpp::export]]
+Rcpp::List cassia_outputs_cpp(SEXP run_ptr) {
+  Rcpp::XPtr<CassiaRun> run(run_ptr);
+  return cassia_outputs(*run);
+}
+
+// Overwrite drivers of the next day to simulate. Names are the weather column names of CASSIA_cpp.
+// [[Rcpp::export]]
+void cassia_set_forcing_cpp(SEXP run_ptr, Rcpp::List values) {
+  Rcpp::XPtr<CassiaRun> run(run_ptr);
+  if (cassia_done(*run)) Rcpp::stop("the run is finished");
+  weather_all& c = run->climate;
+  std::map<std::string, std::vector<double>*> columns = {
+    {"T", &c.TAir}, {"TSA", &c.TSoil_A}, {"TSB", &c.TSoil_B}, {"MB", &c.Soil_Moisture},
+    {"Rain", &c.Precip}, {"P", &c.Photosynthesis_IN}, {"PAR", &c.PAR}, {"PPFD", &c.PAR},
+    {"PPFD_max", &c.PAR_max}, {"VPD", &c.VPD}, {"CO2", &c.CO2}, {"fAPAR", &c.fAPAR},
+    {"Nitrogen", &c.Nitrogen}, {"AvailableN", &c.AvailableN}, {"PA", &c.PA}, {"SWP", &c.SWP}};
+  const int index = cassia_days_done(*run);
+  Rcpp::CharacterVector names = values.names();
+  for (int i = 0; i < values.size(); i++) {
+    std::string name = Rcpp::as<std::string>(names[i]);
+    auto found = columns.find(name);
+    if (found == columns.end()) Rcpp::stop("unknown driver '" + name + "'");
+    std::vector<double>& column = *found->second;
+    if (index >= static_cast<int>(column.size())) Rcpp::stop("driver '" + name + "' is not used by this run");
+    column[index] = Rcpp::as<double>(values[i]);
+  }
 }

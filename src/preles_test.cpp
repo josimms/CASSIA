@@ -1,6 +1,7 @@
 #include "CASSIA.h"
 
-photosynthesis_out preles_cpp(int day,
+photosynthesis_out preles_cpp(preles_state& state,
+                              int day,
                               bool reset_state,
                               double I,
                               double T,
@@ -16,11 +17,14 @@ photosynthesis_out preles_cpp(int day,
                               p5 Initials_snow,
                               double LOGFLAG,
                               int CO2model) {
-  // TODO: initialise / make these into values that are inputs as well!
-  static double PhenoS, fD, fW, fEgpp, gpp380;
-  static double theta, theta_canopy, theta_snow, Snowmelt;
-  static double Interception, Drainage, etmodel, transp, evap;
-  static double GPP, fE, fWE, fPheno;
+  // Day-to-day state of this run (formerly static variables shared by every run in a session).
+  double &PhenoS = state.PhenoS, &fD = state.fD, &fW = state.fW,
+         &fEgpp = state.fEgpp, &gpp380 = state.gpp380;
+  double &theta = state.theta, &theta_canopy = state.theta_canopy, &theta_snow = state.theta_snow,
+         &Snowmelt = state.Snowmelt;
+  double &Interception = state.Interception, &Drainage = state.Drainage, &etmodel = state.etmodel,
+         &transp = state.transp, &evap = state.evap;
+  double &GPP = state.GPP, &fE = state.fE, &fWE = state.fWE, &fPheno = state.fPheno;
 
   photosynthesis_out out;
   // reset_state replaces a plain day==0 check (2026-11-09) so the caller
@@ -109,6 +113,28 @@ photosynthesis_out preles_cpp(int day,
   out.fS = fS;
 
   return out;
+}
+
+// Former signature: one state shared by all calls, as before (used outside CASSIA_yearly).
+photosynthesis_out preles_cpp(int day,
+                              bool reset_state,
+                              double I,
+                              double T,
+                              double P,
+                              double D,
+                              double CO2,
+                              double fAPAR,
+                              double fS,
+                              p1 Site_par,
+                              p2 GPP_par,
+                              p3 ET_par,
+                              p4 SnowRain_par,
+                              p5 Initials_snow,
+                              double LOGFLAG,
+                              int CO2model) {
+  static preles_state shared_state;
+  return preles_cpp(shared_state, day, reset_state, I, T, P, D, CO2, fAPAR, fS, Site_par, GPP_par, ET_par,
+                    SnowRain_par, Initials_snow, LOGFLAG, CO2model);
 }
 
 // [[Rcpp::export]]

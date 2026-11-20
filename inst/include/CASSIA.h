@@ -223,6 +223,33 @@ xylogenesis_out xylogenesis(int no_day,
  * Preles
  */
 
+// PRELES state carried from day to day (formerly static variables of preles_cpp), so that each
+// CASSIA run has its own (step API, 2026-11).
+struct preles_state {
+  double PhenoS = 0.0, fD = 0.0, fW = 0.0, fEgpp = 0.0, gpp380 = 0.0;
+  double theta = 0.0, theta_canopy = 0.0, theta_snow = 0.0, Snowmelt = 0.0;
+  double Interception = 0.0, Drainage = 0.0, etmodel = 0.0, transp = 0.0, evap = 0.0;
+  double GPP = 0.0, fE = 0.0, fWE = 0.0, fPheno = 0.0;
+};
+
+photosynthesis_out preles_cpp(preles_state& state,
+                              int day,
+                              bool reset_state,
+                              double I,
+                              double T,
+                              double P,
+                              double D,
+                              double CO2,
+                              double fAPAR,
+                              double fS,
+                              p1 Site_par,
+                              p2 GPP_par,
+                              p3 ET_par,
+                              p4 SnowRain_par,
+                              p5 Initials_snow,
+                              double LOGFLAG,
+                              int CO2model);
+
 photosynthesis_out preles_cpp(int day,
                               bool reset_state,
                               double I,
